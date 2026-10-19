@@ -1,8 +1,9 @@
 ---
 title: Self-implication
-authors:
-  - name: Lemmata maintainers
 ---
+
+```{include} ../_generated/provenance/self-implication.md
+```
 
 The smallest theorem worth stating, used here to show how an entry is put together.
 

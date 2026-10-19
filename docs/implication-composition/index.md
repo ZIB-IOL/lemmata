@@ -1,8 +1,9 @@
 ---
 title: Composition of implications
-authors:
-  - name: Lemmata maintainers
 ---
+
+```{include} ../_generated/provenance/implication-composition.md
+```
 
 Implications chain. This entry builds on [self-implication](#thm-self-implication),
 and its Lean proof imports that entry's module.

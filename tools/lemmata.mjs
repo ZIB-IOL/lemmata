@@ -14,6 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 import YAML from "yaml";
 
 // LEMMATA_ROOT lets the cluster run its own (trusted) copy of this file against a
@@ -166,6 +167,15 @@ function loadManifests(categories = loadCategories()) {
       if (pageSet.has(p)) fail(`${where}: page ${p} listed twice`);
       pageSet.add(p);
     }
+    // The two generated panels are not optional: an entry must show who contributed it
+    // (from git) and what was checked (from the verifier), and only the tools write them.
+    if (pageSet.has("index.md")) {
+      const idx = fs.readFileSync(path.join(DOCS, dir, "index.md"), "utf8");
+      for (const [kind, what] of [["provenance", "contributors line"], ["verification", "verification panel"]]) {
+        const inc = `{include} ../_generated/${kind}/${dir}.md`;
+        if (idx.split(inc).length - 1 !== 1) fail(`${where}/index.md: must include the ${what} exactly once: \`\`\`${inc}\``);
+      }
+    }
     for (const f of walk(path.join(DOCS, dir), ".md")) {
       const rel = path.relative(path.join(DOCS, dir), f);
       if (!pageSet.has(rel)) fail(`${where}: page ${rel} is not listed in contribution.yml`);
@@ -271,6 +281,36 @@ function titleOf(m) {
   return (fm && YAML.parse(fm[1])?.title) || m.id;
 }
 
+// .lemmata/provenance.json if the cluster supplied it; otherwise compute the same shape
+// from local git (a working checkout), or null if there is no git at all.
+function loadProvenance(manifests, commit) {
+  const shipped = path.join(ROOT, ".lemmata", "provenance.json");
+  if (fs.existsSync(shipped)) {
+    const p = JSON.parse(fs.readFileSync(shipped, "utf8"));
+    if (commit && p.source_commit !== commit) fail(`.lemmata/provenance.json is for ${p.source_commit}, not ${commit}`);
+    return p;
+  }
+  const git = (...a) => execFileSync("git", ["-C", ROOT, ...a], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+  try { git("rev-parse", "HEAD"); } catch { return null; }
+  const out = { schema_version: 1, entries: {} };
+  for (const m of manifests) {
+    const log = git("log", "--no-merges", "--format=%H%x1f%an%x1f%ae%x1f%aI", "HEAD", "--", `docs/${m.dir}`, `lean/${LIB}/${m.leanDir}`);
+    const commits = log.split("\n").filter(Boolean).map((l) => { const [hash, name, email, date] = l.split("\x1f"); return { hash, name, email: email.toLowerCase(), date }; });
+    if (!commits.length) continue;
+    const people = new Map();
+    for (const c of [...commits].reverse()) {
+      const p = people.get(c.email) ?? { name: c.name, commits: 0, first: c.date };
+      p.commits++; p.name = c.name; people.set(c.email, p);
+    }
+    out.entries[m.id] = {
+      contributors: [...people.values()].sort((a, b) => b.commits - a.commits || a.first.localeCompare(b.first)).map(({ name, commits }) => ({ name, commits })),
+      first: { commit: commits.at(-1).hash, date: commits.at(-1).date },
+      last: { commit: commits[0].hash, date: commits[0].date },
+    };
+  }
+  return out;
+}
+
 // Panels and catalog come only from the verifier's report, never from page content.
 function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const gen = path.join(DOCS, "_generated");
@@ -305,6 +345,29 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       "The formal statement is machine-checked; that it matches the prose is checked by review.",
       ":::", "");
     fs.writeFileSync(path.join(gen, "verification", `${m.id}.md`), lines.join("\n"));
+  }
+
+  // Contributors line per entry. In the cluster the controller computes it from git and
+  // ships .lemmata/provenance.json with the source (the build sees no history); locally the
+  // same is computed from this checkout's git log. Names only -- never email addresses.
+  const prov = loadProvenance(manifests, commit);
+  fs.mkdirSync(path.join(gen, "provenance"), { recursive: true });
+  const day = (iso) => String(iso ?? "").slice(0, 10);
+  const commitLink = (c) => sourceUrl ? `[${c.slice(0, 7)}](${sourceUrl.replace(/\/$/, "")}/-/commit/${c})` : `\`${c.slice(0, 7)}\``;
+  for (const m of manifests) {
+    const p = prov?.entries?.[m.id];
+    const lines = [":::{div}", ":class: lemmata-provenance", ""];
+    if (!p) lines.push("*Not yet committed.*");
+    else {
+      lines.push(`Contributed by ${p.contributors.map((c) => `**${esc(c.name)}**`).join(", ")}  `);
+      lines.push(p.first.commit === p.last.commit
+        ? `Published ${day(p.first.date)} (${commitLink(p.first.commit)})`
+        : day(p.first.date) === day(p.last.date)
+          ? `Published ${day(p.first.date)} · last changed in ${commitLink(p.last.commit)}`
+          : `First published ${day(p.first.date)} · last changed ${day(p.last.date)} (${commitLink(p.last.commit)})`);
+    }
+    lines.push(":::", "");
+    fs.writeFileSync(path.join(gen, "provenance", `${m.id}.md`), lines.join("\n"));
   }
 
   // Entries per category: primary members (sidebar + catalog) and tagged members (also
@@ -375,7 +438,9 @@ function scaffold(id, lean, category) {
   fs.writeFileSync(path.join(d, "contribution.yml"), YAML.stringify({ schema_version: 1, id,
     lean_namespace: `${LIB}.${lean}`, category, pages: ["index.md"],
     exports: [{ name: thm, kind: "theorem", page: "index.md", label: `thm-${id}` }] }));
-  fs.writeFileSync(path.join(d, "index.md"), `---\ntitle: ${id}\nauthors:\n  - name: Your Name\n---\n\n` +
+  // No `authors:` block: who contributed is shown from git, under the title.
+  fs.writeFileSync(path.join(d, "index.md"), `---\ntitle: ${id}\n---\n\n` +
+    "```{include} ../_generated/provenance/" + id + ".md\n```\n\n" +
     "```{prf:theorem} Statement\n:label: thm-" + id + "\n\nState the result here.\n```\n\n" +
     "```{literalinclude} ../../lean/" + LIB + "/" + lean + "/Main.lean\n:language: lean\n" +
     ":start-after: -- DOCS_BEGIN_MAIN\n:end-before: -- DOCS_END_MAIN\n```\n\n" +
@@ -394,6 +459,7 @@ switch (cmd) {
   case "validate": {
     const ms = loadManifests(); checkSnippets(ms); checkUmbrella(false);
     if (fs.existsSync(path.join(ROOT, ".publication"))) fail(".publication/ must not be committed");
+    if (fs.existsSync(path.join(ROOT, ".lemmata"))) fail(".lemmata/ is reserved for data the cluster adds; it must not be committed");
     finish(`ok: ${ms.length} contribution(s), ${ms.reduce((n, m) => n + m.exports.length, 0)} export(s)`);
     break;
   }
