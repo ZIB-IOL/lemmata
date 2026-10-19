@@ -82,6 +82,14 @@
   transform: none !important;
   transition: none !important;
 }
+/* The theme sizes the sidebar only after hydration (inline height on
+   .myst-primary-sidebar-pointer: min(100vh - 60px, page height)). Until then the column
+   is as short as its content, so the footer first sat under the last category and then
+   dropped to the bottom -- the original fade-in hid that. Give it the same height from
+   the first paint; the later inline style wins and matches it. 60px = top bar. */
+@media (min-width: 1280px) {
+  .myst-primary-sidebar-pointer { height: calc(100vh - 60px); }
+}
 .lemmata-sidebar-footer { font-size: 0.8rem; text-align: center; }
 .lemmata-sidebar-footer, .lemmata-sidebar-footer a { color: var(--myst-color-text-secondary, #6b7280); }
 .lemmata-sidebar-footer a:hover { color: var(--myst-color-link, #2563eb); }
