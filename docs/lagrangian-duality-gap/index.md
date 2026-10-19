@@ -5,9 +5,6 @@ title: A Lagrangian duality gap that survives closed convexification
 ```{include} ../_generated/provenance/lagrangian-duality-gap.md
 ```
 
-**Mathematical authors:** Santanu S. Dey, Frédéric Meunier, Nico Pelleriti,
-and Sebastian Pokutta.
-
 Lagrangian relaxation replaces selected constraints by weighted terms in the
 objective. For a minimization problem, each choice of nonnegative multipliers
 gives a lower bound; the best such bound is the Lagrangian dual value. Another
