@@ -1,0 +1,10 @@
+schema_version: 1
+id: self-implication
+lean_namespace: Lemmata.SelfImplication
+pages:
+  - index.md
+exports:
+  - name: Lemmata.SelfImplication.self_implication
+    kind: theorem
+    page: index.md
+    label: thm-self-implication

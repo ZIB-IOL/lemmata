@@ -1,0 +1,4 @@
+.lemmata-chain { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center;
+  padding: 0.75rem 1rem; border: 1px solid #8884; border-radius: 6px; }
+.lemmata-chain p { flex-basis: 100%; margin: 0; font-weight: 600; }
+.lemmata-chain p[data-r="true"] { color: #1a7f37; }

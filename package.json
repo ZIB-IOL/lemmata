@@ -1,0 +1,20 @@
+{
+  "name": "lemmata",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "validate": "node tools/lemmata.mjs validate",
+    "preview": "node tools/lemmata.mjs prepare --preview && cd docs && myst start --config myst.runtime.yml",
+    "check": "tools/check.sh"
+  },
+  "dependencies": {
+    "mystmd": "1.11.0",
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
+  }
+}

@@ -1,0 +1,10 @@
+# build outputs and generated inputs -- never committed
+docs/_build/
+docs/_generated/
+docs/myst.runtime.yml
+lean/.lake/
+checker/.lake/
+node_modules/
+.publication/
+/out/
+.DS_Store

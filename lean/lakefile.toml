@@ -1,0 +1,15 @@
+name = "lemmata"
+version = "0.1.0"
+defaultTargets = ["Lemmata"]
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4.git"
+rev = "v4.35.0"
+
+# `globs = ["Lemmata.*"]` builds every module under Lemmata/, including files nothing
+# imports -- Lake's default would build only what the root reaches. The glob also covers
+# the root module `Lemmata` itself, the umbrella maintained by `tools/umbrella.py`.
+[[lean_lib]]
+name = "Lemmata"
+globs = ["Lemmata.*"]

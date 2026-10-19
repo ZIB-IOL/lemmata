@@ -1,0 +1,14 @@
+schema_version: 1
+id: implication-composition
+lean_namespace: Lemmata.ImplicationComposition
+pages:
+  - index.md
+exports:
+  - name: Lemmata.ImplicationComposition.implication_composition
+    kind: theorem
+    page: index.md
+    label: thm-implication-composition
+  - name: Lemmata.ImplicationComposition.le_compose
+    kind: theorem
+    page: index.md
+    label: cor-implication-composition-le

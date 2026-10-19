@@ -1,0 +1,24 @@
+# Authoring configuration. Contributors never edit the TOC: tools/lemmata.mjs prepare
+# writes docs/myst.runtime.yml (git-ignored) with a TOC generated from the manifests,
+# and the build uses that file.
+version: 1
+project:
+  id: lemmata
+  title: Lemmata
+  description: A living archive of mathematics, each result written for people and checked by Lean.
+  bibliography:
+    - references.bib
+  error_rules:
+    - rule: reference-target-resolves
+      severity: error
+    - rule: identifier-is-unique
+      severity: error
+  numbering:
+    headings: false
+site:
+  template: book-theme
+  title: Lemmata
+  options:
+    folders: true
+    logo_text: Lemmata
+    favicon: _static/favicon.svg

@@ -1,0 +1,12 @@
+# The trusted verifier. It is deliberately NOT part of the archive's Lake package:
+# it has no dependencies besides the Lean core library, is built from this directory only,
+# and in production comes from iol-gitops (cluster-side copy), never from the content repo
+# being checked. A content PR therefore cannot weaken the policy it is checked against.
+name = "lemmata-check"
+version = "0.1.0"
+defaultTargets = ["lemmata-check"]
+
+[[lean_exe]]
+name = "lemmata-check"
+root = "Main"
+supportInterpreter = true
