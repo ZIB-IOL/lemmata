@@ -300,6 +300,33 @@ function titleOf(m) {
   return (fm && YAML.parse(fm[1])?.title) || m.id;
 }
 
+// BibTeX for one entry. Every field comes from data the tools trust: title from the page,
+// authors and year from git (provenance), ids from the manifest, URLs from the site.
+// `url` is the STABLE address (/<id>/, which redirects to the current release); the
+// immutable snapshot of this exact version goes in `note`, so a citation is both durable
+// and exact. No `urldate`: it would be the build date, not the reader's.
+const bibEscape = (v) => String(v).replace(/[\\{}]/g, "").replace(/([&%$#_])/g, "\\$1");
+// Names stay exactly as git has them ("Ludwig van Beethoven"): BibTeX parses
+// "First von Last" itself, particles included, which a naive reordering gets wrong.
+const bibName = (n) => n.trim().replace(/\s+/g, " ");
+function bibtex(m, title, p, { siteUrl, releaseUrl, commit, checked }) {
+  const stable = `${siteUrl}/${m.dir}/`;
+  const fields = [
+    ["title", `{${bibEscape(title)}}`],
+    ["author", p ? p.contributors.map((c) => bibEscape(bibName(c.name))).join(" and ") : "{Lemmata contributors}"],
+    ["howpublished", `Lemmata, \\url{${stable}}`],
+    ["year", p ? p.first.date.slice(0, 4) : String(new Date().getUTCFullYear())],
+    ["url", stable],
+  ];
+  const note = [commit ? `Version ${commit.slice(0, 12)}` : null, checked ? "formal statements checked in Lean 4" : null,
+    releaseUrl ? `snapshot: \\url{${releaseUrl}/${m.dir}/}` : null].filter(Boolean).join("; ");
+  fields.push(["note", note]);
+  if (m.arxiv.length) fields.push(["eprint", m.arxiv[0]], ["archivePrefix", "arXiv"]);
+  const key = `lemmata:${m.dir}`;
+  const w = Math.max(...fields.map(([k]) => k.length));
+  return `@misc{${key},\n` + fields.map(([k, v]) => `  ${k.padEnd(w)} = {${v.replace(/^\{(.*)\}$/s, "$1")}}`).join(",\n") + "\n}";
+}
+
 // .lemmata/provenance.json if the cluster supplied it; otherwise compute the same shape
 // from local git (a working checkout), or null if there is no git at all.
 function loadProvenance(manifests, commit) {
@@ -369,6 +396,11 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   // Contributors line per entry. In the cluster the controller computes it from git and
   // ships .lemmata/provenance.json with the source (the build sees no history); locally the
   // same is computed from this checkout's git log. Names only -- never email addresses.
+  // Public address of the site, and of this build's immutable release. In the cluster the
+  // build Job sets both (SITE_URL, and BASE_URL = /_releases/<id>); locally they default to
+  // the production site and no snapshot link.
+  const siteUrl = (process.env.SITE_URL ?? "https://lemmata.iol.berlin").replace(/\/$/, "");
+  const releaseUrl = process.env.BASE_URL?.startsWith("/_releases/") ? siteUrl + process.env.BASE_URL : null;
   const prov = loadProvenance(manifests, commit);
   fs.mkdirSync(path.join(gen, "provenance"), { recursive: true });
   const day = (iso) => String(iso ?? "").slice(0, 10);
@@ -390,6 +422,9 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       lines.push(`Additional material: ${m.arxiv.map((a) => `[arXiv:${a}](https://arxiv.org/abs/${a})`).join(", ")}`);
     }
     lines.push(":::", "");
+    // "Cite as": a collapsed dropdown with a bibtex block (MyST adds the copy button).
+    lines.push("::::{dropdown} Cite as", "", "```bibtex",
+      bibtex(m, titleOf(m), p, { siteUrl, releaseUrl, commit, checked: statusOf(m) === "checked" }), "```", "::::", "");
     fs.writeFileSync(path.join(gen, "provenance", `${m.id}.md`), lines.join("\n"));
   }
 

@@ -27,6 +27,16 @@ step "3/5 kernel check (leanchecker)"
 ( cd lean && LEAN_NUM_THREADS=1 lake env leanchecker Lemmata </dev/null )
 echo "leanchecker: ok"
 
+# Same rule as the cluster's verify step: compiled modules and source modules must match
+# exactly. lemmata-check audits every Lemmata.* olean on disk, so a leftover from a
+# deleted file (or from another clone sharing .lake/build) would otherwise be audited.
+if ! ( cd lean &&
+  diff <( { find Lemmata -name '*.lean' | sed 's/\.lean$//'; echo Lemmata; } | sort ) \
+       <( cd .lake/build/lib/lean && { find Lemmata -name '*.olean' | sed 's/\.olean$//'; [ -f Lemmata.olean ] && echo Lemmata; } | sort ) ); then
+  echo "compiled modules without source (or vice versa): delete lean/.lake/build and rebuild"
+  exit 1
+fi
+
 step "4/5 axiom audit + export bindings (lemmata-check)"
 ( cd checker && lake build -q )
 mkdir -p out

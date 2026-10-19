@@ -47,8 +47,10 @@ npm ci
 tools/check.sh                      # must pass on a clean checkout before you change anything
 ```
 
-Working in several clones? Download the cache once and share it: `ln -s
-/path/to/first/clone/lean/.lake lean/.lake` (the link is git-ignored, like the directory).
+Working in several clones? Share only the downloaded dependencies, never the whole
+`.lake` (its `build/` holds your compiled modules, and another clone's leftovers would be
+audited as yours): `mkdir -p lean/.lake && ln -s /path/to/first/clone/lean/.lake/packages
+lean/.lake/packages`.
 
 Never run `lake update`. The dependency set in `lean/lake-manifest.json` is pinned, and the
 cluster rejects any commit whose manifest differs from its cache in any package.
@@ -157,6 +159,9 @@ The informal proof.
   who committed to your entry's files, plus first/last commit, names only). The last is
   the verification panel, from the verifier's report. Neither can be edited: do not add
   an `authors:` block, and never write "checked", "verified" or a badge yourself.
+- The first include also renders a collapsed **Cite as** box with a BibTeX entry for the
+  page (stable URL, contributors, year, arXiv if given, and a link to the exact snapshot).
+  It is generated; there is nothing to write.
 - Your name on the page is the **git author name** of your commits. Set it before
   committing: `git config user.name "Full Name"`.
 - Never paste Lean into Markdown by hand; always `literalinclude`.
