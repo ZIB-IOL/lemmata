@@ -73,10 +73,15 @@
 @media (max-width: 640px) { .myst-home-link > span::after { display: none; } }
 
 /* Sidebar footer: "Made with MyST" and the maintainer line, small and centred. */
-/* The theme fades the whole sidebar footer out on load (opacity ~0.1) and in on the
-   first mouse move; the maintainer line should be readable straight away, also on
-   touch screens. Colours match the theme's own "Made with MyST". */
-.myst-primary-sidebar-footer { opacity: 1 !important; }
+/* The theme animates the sidebar footer in on load: transparent and 24px low, sliding
+   up over ~0.7s. With it forced visible (so the maintainer line is readable at once,
+   also on touch screens) the slide showed as a jump. Pin it in place: visible, not
+   shifted, no transition. Colours match the theme's own "Made with MyST". */
+.myst-primary-sidebar-footer {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
 .lemmata-sidebar-footer { font-size: 0.8rem; text-align: center; }
 .lemmata-sidebar-footer, .lemmata-sidebar-footer a { color: var(--myst-color-text-secondary, #6b7280); }
 .lemmata-sidebar-footer a:hover { color: var(--myst-color-link, #2563eb); }
