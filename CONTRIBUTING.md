@@ -5,8 +5,13 @@ An entry is a pair: a page in `docs/<id>/` and a Lean module in `lean/Lemmata/<L
 ## 1. Scaffold
 
 ```bash
-node tools/lemmata.mjs new prime-infinitude PrimeInfinitude
+node tools/lemmata.mjs new prime-infinitude PrimeInfinitude number-theory
 ```
+
+The last argument is the entry's category, one of the ids in `docs/categories.yml`. If
+your entry needs a category that does not exist yet, add it to that file in the same
+merge request (id, title, one-line description); its position in the file is its position
+in the sidebar.
 
 This creates `docs/prime-infinitude/{contribution.yml,index.md}` and
 `lean/Lemmata/PrimeInfinitude/Main.lean`, and adds the module to the umbrella. The id is
@@ -42,6 +47,8 @@ UpperCamelCase. Neither can change after publication.
 schema_version: 1
 id: prime-infinitude
 lean_namespace: Lemmata.PrimeInfinitude
+category: number-theory      # where it sits in the sidebar (docs/categories.yml)
+tags: [logic]                # optional: also listed on these categories' pages
 pages: [index.md]            # first page must be index.md; list every page
 exports:
   - name: Lemmata.PrimeInfinitude.exists_infinite_primes
@@ -49,6 +56,9 @@ exports:
     page: index.md
     label: thm-prime-infinitude
 ```
+
+The URL of an entry is `/<id>/` and does not contain its category, so recategorising an
+entry later never breaks links to it. Category pages live at `/c/<category>/`.
 
 Each export says "this label on this page is formalized by this declaration". The binding
 is checked; whether the two say the same thing is what your reviewer checks.

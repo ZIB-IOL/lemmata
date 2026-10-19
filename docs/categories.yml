@@ -1,0 +1,13 @@
+# The categories of the archive, in the order they appear in the sidebar and on the
+# landing page. Every entry names one of these ids as its `category` in contribution.yml
+# (where it sits in the sidebar) and may list others as `tags` (it is then also listed
+# on those categories' pages). An id that is not here is an error.
+#
+# Category pages live at /c/<id>/. Entry URLs do not contain the category, so moving an
+# entry to another category never breaks a link to it.
+- id: logic
+  title: Logic
+  description: Propositional and first-order reasoning — the rules everything else uses.
+- id: order
+  title: Order theory
+  description: Preorders, partial orders and lattices.

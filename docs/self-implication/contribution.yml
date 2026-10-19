@@ -1,6 +1,7 @@
 schema_version: 1
 id: self-implication
 lean_namespace: Lemmata.SelfImplication
+category: logic
 pages:
   - index.md
 exports:

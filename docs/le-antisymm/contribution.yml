@@ -1,0 +1,15 @@
+schema_version: 1
+id: le-antisymm
+lean_namespace: Lemmata.LeAntisymm
+category: order
+pages:
+  - index.md
+exports:
+  - name: Lemmata.LeAntisymm.le_antisymm'
+    kind: theorem
+    page: index.md
+    label: thm-le-antisymm
+  - name: Lemmata.LeAntisymm.eq_iff_le_and_ge
+    kind: theorem
+    page: index.md
+    label: cor-le-antisymm-eq-iff

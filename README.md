@@ -6,6 +6,7 @@ cross-references, Mermaid and small JavaScript widgets) and as a Lean 4 formaliz
 top of Mathlib that the kernel has checked.
 
 ```
+docs/categories.yml            the categories, in sidebar order
 docs/<id>/                     prose: contribution.yml + index.md (+ more pages, figures, widgets)
 lean/Lemmata/<LeanName>/       formal: Main.lean (+ more modules), one shared Lake package
 lean/Lemmata/Shared/           helpers used by more than one entry

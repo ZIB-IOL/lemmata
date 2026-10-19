@@ -8,3 +8,4 @@ node_modules/
 .publication/
 /out/
 .DS_Store
+docs/c/

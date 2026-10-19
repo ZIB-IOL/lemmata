@@ -7,7 +7,7 @@
 //   node tools/lemmata.mjs request <out.json>  verifier request built from the manifests
 //   node tools/lemmata.mjs prepare <report.json> [--commit SHA] [--source-url URL]
 //                                              generated pages + docs/myst.runtime.yml
-//   node tools/lemmata.mjs new <id> <LeanName> scaffold a new contribution
+//   node tools/lemmata.mjs new <id> <LeanName> <category>   scaffold a new contribution
 //
 // Exit status is non-zero on any problem; every problem is printed, not just the first.
 
@@ -27,9 +27,13 @@ const POLICY_ID = "lemmata-verification-v1";
 
 // Directories in docs/ and lean/Lemmata/ that are infrastructure, not contributions.
 const RESERVED_DOCS = new Set(["_static", "_generated", "_build", "_releases", "_status",
-  "index", "healthz", "readyz", "node_modules"]);
+  "index", "healthz", "readyz", "node_modules", "c"]);
+// Category overview pages are generated at docs/c/<category>/index.md (URL /c/<category>/),
+// under a reserved prefix so category ids and entry ids can never collide.
+const CATEGORY_DIR = "c";
+const CATEGORY_KEYS = new Set(["id", "title", "description"]);
 const RESERVED_LEAN = new Set(["Shared"]);
-const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "pages", "exports"]);
+const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "pages", "exports"]);
 const EXPORT_KEYS = new Set(["name", "kind", "page", "label"]);
 const KINDS = new Set(["theorem", "definition"]);
 const ID_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
@@ -80,9 +84,39 @@ function walk(dir, ext, out = []) {
   return out;
 }
 
+// --------------------------------------------------------------------------- categories
+
+// docs/categories.yml is the one list of allowed categories, in display order. Entries
+// name one primary `category` (where they sit in the sidebar) and optional `tags`
+// (further categories whose overview pages also list them). An unknown id is an error,
+// so a typo cannot quietly create a new category.
+function loadCategories() {
+  const file = path.join(DOCS, "categories.yml");
+  if (!fs.existsSync(file)) { fail("docs/categories.yml is missing"); return []; }
+  let list;
+  try { list = YAML.parse(fs.readFileSync(file, "utf8"), { uniqueKeys: true }); }
+  catch (e) { fail(`docs/categories.yml: ${e.message}`); return []; }
+  if (!Array.isArray(list) || !list.length) { fail("docs/categories.yml must be a non-empty list"); return []; }
+  const seen = new Set();
+  const out = [];
+  for (const [i, c] of list.entries()) {
+    const at = `docs/categories.yml[${i}]`;
+    if (!c || typeof c !== "object") { fail(`${at}: not a mapping`); continue; }
+    for (const k of Object.keys(c)) if (!CATEGORY_KEYS.has(k)) fail(`${at}: unknown field ${k}`);
+    if (typeof c.id !== "string" || !ID_RE.test(c.id)) { fail(`${at}: id must be lowercase kebab-case`); continue; }
+    if (seen.has(c.id)) fail(`${at}: duplicate id ${c.id}`);
+    if (typeof c.title !== "string" || !c.title.trim()) fail(`${at}: title is required`);
+    if (c.description !== undefined && typeof c.description !== "string") fail(`${at}: description must be text`);
+    seen.add(c.id);
+    out.push({ id: c.id, title: String(c.title ?? c.id), description: c.description ?? "" });
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------- manifests
 
-function loadManifests() {
+function loadManifests(categories = loadCategories()) {
+  const catIds = new Set(categories.map((c) => c.id));
   const manifests = [];
   const seen = { ids: new Map(), ns: new Map(), labels: new Map(), lower: new Map() };
   for (const dir of listDirs(DOCS)) {
@@ -98,6 +132,13 @@ function loadManifests() {
     for (const k of Object.keys(m)) if (!MANIFEST_KEYS.has(k)) fail(`${where}/contribution.yml: unknown field ${k}`);
     if (m.schema_version !== 1) fail(`${where}/contribution.yml: schema_version must be 1`);
     if (m.id !== dir) fail(`${where}/contribution.yml: id ${JSON.stringify(m.id)} does not match directory`);
+    if (!catIds.has(m.category))
+      fail(`${where}/contribution.yml: category ${JSON.stringify(m.category)} is not in docs/categories.yml (${[...catIds].join(", ")})`);
+    if (m.tags !== undefined && !Array.isArray(m.tags)) fail(`${where}/contribution.yml: tags must be a list`);
+    for (const t of Array.isArray(m.tags) ? m.tags : []) {
+      if (!catIds.has(t)) fail(`${where}/contribution.yml: tag ${JSON.stringify(t)} is not in docs/categories.yml`);
+      if (t === m.category) fail(`${where}/contribution.yml: tag ${t} repeats the primary category`);
+    }
 
     const ns = String(m.lean_namespace ?? "");
     const comps = ns.split(".");
@@ -149,7 +190,7 @@ function loadManifests() {
         if (n !== 1) fail(`${at}: label ${e.label} appears ${n} times in ${e.page}, expected exactly once`);
       }
     }
-    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages });
+    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [] });
   }
   // Every Lean contribution directory needs a manifest.
   if (fs.existsSync(path.join(LEAN, LIB))) {
@@ -231,15 +272,18 @@ function titleOf(m) {
 }
 
 // Panels and catalog come only from the verifier's report, never from page content.
-function prepare(manifests, report, { commit, sourceUrl }) {
+function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const gen = path.join(DOCS, "_generated");
-  fs.rmSync(gen, { recursive: true, force: true });
+  const catRoot = path.join(DOCS, CATEGORY_DIR);
+  for (const d of [gen, catRoot]) fs.rmSync(d, { recursive: true, force: true });
   fs.mkdirSync(path.join(gen, "verification"), { recursive: true });
   const passed = report?.result === "passed";
   const byName = new Map((report?.exports ?? []).map((e) => [e.name, e]));
   const link = (file) => sourceUrl && commit ? `${sourceUrl.replace(/\/$/, "")}/-/blob/${commit}/${file}` : null;
+  const statusOf = (m) => !report ? "preview"
+    : m.exports.every((e) => passed && byName.get(e.name)?.status === "checked") ? "checked" : "failed";
 
-  const rows = [];
+  // Verification panel per entry, from the verifier's report only.
   for (const m of manifests) {
     const lines = [":::{card} Formal verification", ""];
     for (const e of m.exports) {
@@ -261,37 +305,75 @@ function prepare(manifests, report, { commit, sourceUrl }) {
       "The formal statement is machine-checked; that it matches the prose is checked by review.",
       ":::", "");
     fs.writeFileSync(path.join(gen, "verification", `${m.id}.md`), lines.join("\n"));
-    // Relative to docs/index.md, which includes this file: MyST resolves links in an
-    // included file against the INCLUDING page. `../<id>/index.md` (relative to
-    // _generated/) rendered as a raw href and 404'd in the browser (2026-10-19).
-    rows.push(`| [${esc(titleOf(m))}](${m.dir}/index.md) | ${m.exports.length} | ` +
-      (!report ? "preview" : m.exports.every((e) => passed && byName.get(e.name)?.status === "checked") ? "checked" : "failed") + " |");
   }
-  fs.writeFileSync(path.join(gen, "catalog.md"),
-    ["## Entries", "", "| Entry | Formal results | Status |", "|---|---|---|", ...rows, ""].join("\n"));
+
+  // Entries per category: primary members (sidebar + catalog) and tagged members (also
+  // listed on the category page), each sorted by title.
+  const byTitle = (a, b) => titleOf(a).localeCompare(titleOf(b));
+  const primary = new Map(categories.map((c) => [c.id, manifests.filter((m) => m.category === c.id).sort(byTitle)]));
+  const tagged = new Map(categories.map((c) => [c.id, manifests.filter((m) => m.tags.includes(c.id)).sort(byTitle)]));
+  const used = categories.filter((c) => primary.get(c.id).length || tagged.get(c.id).length);
+  // `rel` is the path prefix from the page that will contain the table to docs/: links in
+  // generated text must be relative to the page MyST renders them on (an included file
+  // resolves against the INCLUDING page; `../<id>/index.md` from _generated/ once
+  // rendered as a raw href and 404'd).
+  const table = (list, rel) => ["| Entry | Formal results | Status |", "|---|---|---|",
+    ...list.map((m) => `| [${esc(titleOf(m))}](${rel}${m.dir}/index.md) | ${m.exports.length} | ${statusOf(m)} |`)];
+
+  // Landing page catalog (included from docs/index.md, so rel = "").
+  const cat = ["## Entries", ""];
+  for (const c of used) {
+    if (!primary.get(c.id).length) continue;
+    cat.push(`### [${esc(c.title)}](${CATEGORY_DIR}/${c.id}/index.md)`, "");
+    if (c.description) cat.push(esc(c.description), "");
+    cat.push(...table(primary.get(c.id), ""), "");
+  }
+  fs.writeFileSync(path.join(gen, "catalog.md"), cat.join("\n"));
+
+  // One overview page per category at /c/<id>/ (a real page, so the URL is stable and
+  // the sidebar group header is clickable). Written into the build tree only.
+  for (const c of used) {
+    const dir = path.join(catRoot, c.id);
+    fs.mkdirSync(dir, { recursive: true });
+    const lines = ["---", `title: ${JSON.stringify(c.title)}`, "---", ""];
+    if (c.description) lines.push(esc(c.description), "");
+    if (primary.get(c.id).length) lines.push(...table(primary.get(c.id), "../../"), "");
+    if (tagged.get(c.id).length) {
+      lines.push("## Also related", "", ...table(tagged.get(c.id), "../../"), "");
+    }
+    fs.writeFileSync(path.join(dir, "index.md"), lines.join("\n"));
+  }
 
   // Effective MyST config: the authored one plus the generated TOC. Parsed and re-emitted
   // as YAML, never patched as text. Kept next to myst.yml so relative paths mean the same.
+  // The sidebar groups entries under their category page; entry URLs come from their own
+  // directories (/<id>/), so moving an entry to another category never breaks a link.
   const cfg = YAML.parse(fs.readFileSync(path.join(DOCS, "myst.yml"), "utf8"));
   if (cfg.extends) fail("docs/myst.yml: `extends` is not allowed");
   if (cfg.project?.plugins) fail("docs/myst.yml: build plugins are not allowed");
+  const entryToc = (m) => m.pages.length === 1 ? { file: `${m.dir}/index.md` }
+    : { file: `${m.dir}/index.md`, children: m.pages.slice(1).map((p) => ({ file: `${m.dir}/${p}` })) };
   cfg.project.toc = [{ file: "index.md" },
-    ...manifests.map((m) => m.pages.length === 1 ? { file: `${m.dir}/index.md` }
-      : { file: `${m.dir}/index.md`, children: m.pages.slice(1).map((p) => ({ file: `${m.dir}/${p}` })) })];
+    ...used.filter((c) => primary.get(c.id).length).map((c) => ({
+      file: `${CATEGORY_DIR}/${c.id}/index.md`,
+      children: primary.get(c.id).map(entryToc),
+    }))];
   if (process.env.LEMMATA_THEME) cfg.site.template = process.env.LEMMATA_THEME;
   fs.writeFileSync(path.join(DOCS, "myst.runtime.yml"),
     "# Generated by tools/lemmata.mjs prepare -- do not edit, not committed.\n" + YAML.stringify(cfg));
 }
 
-function scaffold(id, lean) {
+function scaffold(id, lean, category) {
   if (!ID_RE.test(id) || RESERVED_DOCS.has(id)) { fail(`bad id ${id}`); return; }
   if (!LEAN_COMPONENT_RE.test(lean) || RESERVED_LEAN.has(lean)) { fail(`bad Lean name ${lean}`); return; }
+  const cats = loadCategories().map((c) => c.id);
+  if (!cats.includes(category)) { fail(`category ${JSON.stringify(category)} is not in docs/categories.yml (${cats.join(", ")})`); return; }
   const d = path.join(DOCS, id), l = path.join(LEAN, LIB, lean);
   if (fs.existsSync(d) || fs.existsSync(l)) { fail(`docs/${id} or lean/${LIB}/${lean} already exists`); return; }
   fs.mkdirSync(d, { recursive: true }); fs.mkdirSync(l, { recursive: true });
   const thm = `${LIB}.${lean}.main`;
   fs.writeFileSync(path.join(d, "contribution.yml"), YAML.stringify({ schema_version: 1, id,
-    lean_namespace: `${LIB}.${lean}`, pages: ["index.md"],
+    lean_namespace: `${LIB}.${lean}`, category, pages: ["index.md"],
     exports: [{ name: thm, kind: "theorem", page: "index.md", label: `thm-${id}` }] }));
   fs.writeFileSync(path.join(d, "index.md"), `---\ntitle: ${id}\nauthors:\n  - name: Your Name\n---\n\n` +
     "```{prf:theorem} Statement\n:label: thm-" + id + "\n\nState the result here.\n```\n\n" +
@@ -321,13 +403,13 @@ switch (cmd) {
     fs.writeFileSync(args[0], JSON.stringify(verifierRequest(ms), null, 2) + "\n"); break;
   }
   case "prepare": {
-    const ms = loadManifests(); finish();
+    const cats = loadCategories(); const ms = loadManifests(cats); finish();
     const report = args[0] && args[0] !== "--preview" ? JSON.parse(fs.readFileSync(args[0], "utf8")) : null;
-    prepare(ms, report, { commit: flag("--commit"), sourceUrl: flag("--source-url") });
+    prepare(ms, cats, report, { commit: flag("--commit"), sourceUrl: flag("--source-url") });
     finish("prepared docs/_generated and docs/myst.runtime.yml"); break;
   }
-  case "new": scaffold(args[0], args[1]); finish(); break;
+  case "new": scaffold(args[0], args[1], args[2]); finish(); break;
   default:
-    console.error("usage: lemmata.mjs validate | umbrella [--write] | request <out> | prepare <report.json>|--preview [--commit SHA] [--source-url URL] | new <id> <LeanName>");
+    console.error("usage: lemmata.mjs validate | umbrella [--write] | request <out> | prepare <report.json>|--preview [--commit SHA] [--source-url URL] | new <id> <LeanName> <category>");
     process.exit(2);
 }

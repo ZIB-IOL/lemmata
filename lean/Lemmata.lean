@@ -4,5 +4,6 @@ module
 -- Imports every module under Lemmata/, for downstream users. Contributions import the
 -- specific modules they need instead, which keeps the import graph acyclic.
 public import Lemmata.ImplicationComposition.Main
+public import Lemmata.LeAntisymm.Main
 public import Lemmata.SelfImplication.Main
 public import Lemmata.Shared.Basic
