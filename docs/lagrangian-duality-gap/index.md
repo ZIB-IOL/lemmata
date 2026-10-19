@@ -1,11 +1,12 @@
 ---
 title: A Lagrangian duality gap that survives closed convexification
-authors:
-  - name: Santanu S. Dey
-  - name: Frédéric Meunier
-  - name: Nico Pelleriti
-  - name: Sebastian Pokutta
 ---
+
+```{include} ../_generated/provenance/lagrangian-duality-gap.md
+```
+
+**Mathematical authors:** Santanu S. Dey, Frédéric Meunier, Nico Pelleriti,
+and Sebastian Pokutta.
 
 Lagrangian relaxation replaces selected constraints by weighted terms in the
 objective. For a minimization problem, each choice of nonnegative multipliers
