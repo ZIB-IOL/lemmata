@@ -7,6 +7,8 @@ title: Lemmata
 A living archive of mathematics. Every entry is written twice: once for people, in the
 prose you are reading, and once for Lean, in a formal proof that the kernel has checked.
 New entries arrive by merge request; the site rebuilds itself from `main` within minutes.
+The [build status](https://lemmata.iol.berlin/_status) shows which version is live and,
+for a commit that was not published, why.
 
 ```{include} _generated/catalog.md
 ```
