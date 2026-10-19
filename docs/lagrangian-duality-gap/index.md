@@ -1,7 +1,10 @@
 ---
 title: A Lagrangian duality gap that survives closed convexification
 authors:
-  - name: Geoffrion theorem experiment contributors
+  - name: Santanu S. Dey
+  - name: Frédéric Meunier
+  - name: Nico Pelleriti
+  - name: Sebastian Pokutta
 ---
 
 Replacing an integer feasible set by its closed convex hull need not remove a
