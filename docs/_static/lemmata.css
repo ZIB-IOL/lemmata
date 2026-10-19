@@ -59,3 +59,26 @@
 /* The theme's open state is rotate(90deg) plus a -5px shift that compensated for its old
    position; without the shift the chevron stays centred when it turns. */
 .lemmata-header details[open] > summary .details-toggle { transform: rotate(90deg); }
+
+/* Tagline under the site name, top left. logo_text is plain text only, so the second
+   line is added here. Hidden on narrow screens, where the header has no room. */
+.myst-home-link > span { display: flex; flex-direction: column; line-height: 1.15; }
+.myst-home-link > span::after {
+  content: "experimental mathematics repository";
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  opacity: 0.65;
+}
+@media (max-width: 640px) { .myst-home-link > span::after { display: none; } }
+
+/* Sidebar footer: "Made with MyST" and the maintainer line, small and centred. */
+/* The theme fades the whole sidebar footer out on load (opacity ~0.1) and in on the
+   first mouse move; the maintainer line should be readable straight away, also on
+   touch screens. Colours match the theme's own "Made with MyST". */
+.myst-primary-sidebar-footer { opacity: 1 !important; }
+.lemmata-sidebar-footer { font-size: 0.8rem; text-align: center; }
+.lemmata-sidebar-footer, .lemmata-sidebar-footer a { color: var(--myst-color-text-secondary, #6b7280); }
+.lemmata-sidebar-footer a:hover { color: var(--myst-color-link, #2563eb); }
+.lemmata-sidebar-footer p { margin: 0.15rem 0; }
+.lemmata-sidebar-footer a { text-decoration: none; }
