@@ -34,7 +34,10 @@ const RESERVED_DOCS = new Set(["_static", "_generated", "_build", "_releases", "
 const CATEGORY_DIR = "c";
 const CATEGORY_KEYS = new Set(["id", "title", "description"]);
 const RESERVED_LEAN = new Set(["Shared"]);
-const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "pages", "exports"]);
+const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "arxiv", "pages", "exports"]);
+// arXiv identifiers: new style 2301.01234 (4 or 5 digits after the dot, since 2015), old
+// style math/0601001 or math.AG/0601001; each optionally with a version vN.
+const ARXIV_RE = /^(?:\d{4}\.\d{4,5}|[a-z-]+(?:\.[A-Z]{2})?\/\d{7})(?:v\d+)?$/;
 const EXPORT_KEYS = new Set(["name", "kind", "page", "label"]);
 const KINDS = new Set(["theorem", "definition"]);
 const ID_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
@@ -83,6 +86,13 @@ function walk(dir, ext, out = []) {
     else if (d.name.endsWith(ext)) out.push(p);
   }
   return out;
+}
+
+function arxivIds(source) {
+  const node = YAML.parseDocument(source).get("arxiv", true);
+  if (node === undefined || node === null) return [];
+  const items = YAML.isSeq(node) ? node.items : [node];
+  return items.map((x) => (YAML.isScalar(x) ? (x.source ?? String(x.value)) : x)).map((v) => typeof v === "string" ? v.trim() : v);
 }
 
 // --------------------------------------------------------------------------- categories
@@ -200,7 +210,16 @@ function loadManifests(categories = loadCategories()) {
         if (n !== 1) fail(`${at}: label ${e.label} appears ${n} times in ${e.page}, expected exactly once`);
       }
     }
-    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [] });
+    // Optional arXiv id(s) for additional material; shown linked under the title. Read
+    // from the YAML source text, not the parsed value: unquoted, 2301.10230 parses as the
+    // number 2301.1023 -- a link to a different paper.
+    const arxiv = arxivIds(fs.readFileSync(mfPath, "utf8"));
+    for (const a of arxiv) {
+      if (typeof a !== "string" || !ARXIV_RE.test(a))
+        fail(`${where}/contribution.yml: arxiv ${JSON.stringify(a)} is not an arXiv identifier (e.g. 2301.01234, 2301.01234v2, math/0601001)`);
+    }
+    if (new Set(arxiv).size !== arxiv.length) fail(`${where}/contribution.yml: arxiv lists an identifier twice`);
+    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [], arxiv });
   }
   // Every Lean contribution directory needs a manifest.
   if (fs.existsSync(path.join(LEAN, LIB))) {
@@ -366,6 +385,10 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
           ? `Published ${day(p.first.date)} · last changed in ${commitLink(p.last.commit)}`
           : `First published ${day(p.first.date)} · last changed ${day(p.last.date)} (${commitLink(p.last.commit)})`);
     }
+    if (m.arxiv.length) {
+      if (lines.at(-1) !== "" && !lines.at(-1).endsWith("  ")) lines[lines.length - 1] += "  ";
+      lines.push(`Additional material: ${m.arxiv.map((a) => `[arXiv:${a}](https://arxiv.org/abs/${a})`).join(", ")}`);
+    }
     lines.push(":::", "");
     fs.writeFileSync(path.join(gen, "provenance", `${m.id}.md`), lines.join("\n"));
   }
@@ -459,7 +482,11 @@ switch (cmd) {
   case "validate": {
     const ms = loadManifests(); checkSnippets(ms); checkUmbrella(false);
     if (fs.existsSync(path.join(ROOT, ".publication"))) fail(".publication/ must not be committed");
-    if (fs.existsSync(path.join(ROOT, ".lemmata"))) fail(".lemmata/ is reserved for data the cluster adds; it must not be committed");
+    // .lemmata/ is where the cluster puts data it adds to the source (provenance.json).
+    // Locally it must not exist; in a build (LEMMATA_BUILD=1) it is expected, and the
+    // controller has already refused any commit that contained it.
+    if (!process.env.LEMMATA_BUILD && fs.existsSync(path.join(ROOT, ".lemmata")))
+      fail(".lemmata/ is reserved for data the cluster adds; it must not be committed");
     finish(`ok: ${ms.length} contribution(s), ${ms.reduce((n, m) => n + m.exports.length, 0)} export(s)`);
     break;
   }

@@ -55,6 +55,7 @@ id: prime-infinitude
 lean_namespace: Lemmata.PrimeInfinitude
 category: number-theory      # where it sits in the sidebar (docs/categories.yml)
 tags: [logic]                # optional: also listed on these categories' pages
+arxiv: 2301.01234            # optional: linked under the title; one id or a list
 pages: [index.md]            # first page must be index.md; list every page
 exports:
   - name: Lemmata.PrimeInfinitude.exists_infinite_primes

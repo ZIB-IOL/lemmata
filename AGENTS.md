@@ -173,6 +173,7 @@ id: <id>                              # = directory name
 lean_namespace: Lemmata.<LeanName>
 category: <category>                  # an id from docs/categories.yml
 tags: [<other-category>]              # optional; never the primary category
+arxiv: 2301.01234                     # optional; one id or a list, e.g. [2301.01234v2, math/0601001]
 pages:
   - index.md
 exports:                              # at least one theorem
@@ -181,6 +182,11 @@ exports:                              # at least one theorem
     page: index.md
     label: thm-<id>                   # must contain <id>; must occur exactly once on that page
 ```
+
+`arxiv` links additional material (a paper, a longer write-up) under the title as
+`arXiv:<id>` → `https://arxiv.org/abs/<id>`. Give the bare identifier, without an
+`arXiv:` prefix; validation checks the format, so a typo fails instead of becoming a
+dead link. Unquoted is fine (`2301.10230` keeps its trailing zero).
 
 Each export binds one label in the prose to one Lean declaration. The tools check that the
 declaration exists, has that kind, lives in your namespace, and depends only on allowed
