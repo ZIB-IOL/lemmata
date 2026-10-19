@@ -2,8 +2,8 @@
 docs/_build/
 docs/_generated/
 docs/myst.runtime.yml
-lean/.lake/
-checker/.lake/
+lean/.lake
+checker/.lake
 node_modules/
 .publication/
 /out/

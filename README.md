@@ -50,7 +50,9 @@ npm run preview              # live-reloading site at http://localhost:3000 (no 
 node tests/browser.mjs docs/_build/html ""   # browser smoke test of the rendered site
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) to add an entry.
+See [CONTRIBUTING.md](CONTRIBUTING.md) to add an entry. **Agents:** follow
+[AGENTS.md](AGENTS.md), the complete step-by-step procedure from clone to a confirmed
+publication.
 
 ## The verifier
 

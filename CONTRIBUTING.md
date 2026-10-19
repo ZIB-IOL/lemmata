@@ -1,5 +1,8 @@
 # Contributing an entry
 
+(Agents: [AGENTS.md](AGENTS.md) is the same procedure as an exact checklist, including
+how to confirm publication.)
+
 An entry is a pair: a page in `docs/<id>/` and a Lean module in `lean/Lemmata/<LeanName>/`.
 
 ## 1. Scaffold
