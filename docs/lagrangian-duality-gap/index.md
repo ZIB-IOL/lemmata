@@ -7,10 +7,28 @@ authors:
   - name: Sebastian Pokutta
 ---
 
-Replacing an integer feasible set by its closed convex hull need not remove a
-Lagrangian duality gap. This example uses four integer variables and two linear
-constraints with integral coefficients: all three primal problems attain value
-$1$, while the Lagrangian dual value is $0$.
+Lagrangian relaxation replaces selected constraints by weighted terms in the
+objective. For a minimization problem, each choice of nonnegative multipliers
+gives a lower bound; the best such bound is the Lagrangian dual value. Another
+way to obtain a lower bound is to replace the underlying integer set $X$ by
+its convex hull, or its closed convex hull, before imposing those constraints.
+When do these approaches give the same bound?
+
+Geoffrion's theorem gives equality when $X$ is finite or is the set of integer
+points of a rational polyhedron. Beyond those assumptions, taking the closure
+of the convex hull need not restore equality. The paper
+[Geoffrion's theorem beyond finiteness and rationality](https://arxiv.org/html/2510.10966v1)
+studies this question. Its Theorem 1.4 establishes equality for a single relaxed
+linear inequality with rational data, provided the objective has a finite
+infimum over $X$.
+
+This entry shows why the single-inequality assumption matters: the analogous
+conclusion fails for two inequalities, even with integral coefficients and an
+objective bounded below on $X$. The example uses four integer variables, with
+$X$ the integer points of an explicit closed convex set. All three primal
+problems attain value $1$, while the Lagrangian dual value is $0$. The proof
+below identifies the gap exactly and explains how points escaping to infinity
+prevent closed convexification from eliminating it.
 
 Write $x=(u,v,r,z)\in\mathbb R^4$ and let $\ell(x)=\sqrt2\,u+v$. Define
 
