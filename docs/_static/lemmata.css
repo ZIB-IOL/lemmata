@@ -1,0 +1,39 @@
+/* Lemmata site styles. Kept small: the book theme does the rest. */
+
+/* Entry header: contributors line + "Cite as", set apart from the mathematics below.
+   Neutral colours via currentColor so it works in light and dark mode. */
+.lemmata-header {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0 0 2rem;
+  padding: 0 0 1.25rem;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+}
+.lemmata-header .lemmata-provenance { opacity: 0.8; margin-bottom: 0.75rem; }
+.lemmata-header .lemmata-provenance p { margin: 0; }
+.lemmata-header details { margin: 0; font-size: 0.875rem; }
+
+/* "Cite as" as a quiet inline control rather than a content box: no card, no shadow,
+   metadata-sized text. The opened panel keeps its code block (with the copy button). */
+.lemmata-header details.myst-dropdown {
+  box-shadow: none;
+  background: transparent;
+  border-radius: 0;
+  overflow: visible;
+}
+.lemmata-header summary.myst-dropdown-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 0;
+  padding: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: transparent;
+  box-shadow: none;
+  opacity: 0.8;
+}
+.lemmata-header summary.myst-dropdown-header:hover { opacity: 1; box-shadow: none; }
+/* The copy button is invisible until hover by default; show it here, where copying is
+   the whole point (and touch screens have no hover). */
+.lemmata-header details button { opacity: 1 !important; }

@@ -26,3 +26,4 @@ site:
     folders: true
     logo_text: Lemmata
     favicon: _static/favicon.svg
+    style: _static/lemmata.css

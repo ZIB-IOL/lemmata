@@ -407,7 +407,9 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const commitLink = (c) => sourceUrl ? `[${c.slice(0, 7)}](${sourceUrl.replace(/\/$/, "")}/-/commit/${c})` : `\`${c.slice(0, 7)}\``;
   for (const m of manifests) {
     const p = prov?.entries?.[m.id];
-    const lines = [":::{div}", ":class: lemmata-provenance", ""];
+    // One header block per entry: contributors line + "Cite as", visually set apart from
+    // the mathematics below (styled by docs/_static/lemmata.css, class lemmata-header).
+    const lines = [":::::{div}", ":class: lemmata-header", "", ":::{div}", ":class: lemmata-provenance", ""];
     if (!p) lines.push("*Not yet committed.*");
     else {
       lines.push(`Contributed by ${p.contributors.map((c) => `**${esc(c.name)}**`).join(", ")}  `);
@@ -424,7 +426,8 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     lines.push(":::", "");
     // "Cite as": a collapsed dropdown with a bibtex block (MyST adds the copy button).
     lines.push("::::{dropdown} Cite as", "", "```bibtex",
-      bibtex(m, titleOf(m), p, { siteUrl, releaseUrl, commit, checked: statusOf(m) === "checked" }), "```", "::::", "");
+      bibtex(m, titleOf(m), p, { siteUrl, releaseUrl, commit, checked: statusOf(m) === "checked" }), "```", "::::", "",
+      ":::::", "");
     fs.writeFileSync(path.join(gen, "provenance", `${m.id}.md`), lines.join("\n"));
   }
 
