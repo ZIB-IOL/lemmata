@@ -259,7 +259,10 @@ function prepare(manifests, report, { commit, sourceUrl }) {
       "The formal statement is machine-checked; that it matches the prose is checked by review.",
       ":::", "");
     fs.writeFileSync(path.join(gen, "verification", `${m.id}.md`), lines.join("\n"));
-    rows.push(`| [${esc(titleOf(m))}](../${m.dir}/index.md) | ${m.exports.length} | ` +
+    // Relative to docs/index.md, which includes this file: MyST resolves links in an
+    // included file against the INCLUDING page. `../<id>/index.md` (relative to
+    // _generated/) rendered as a raw href and 404'd in the browser (2026-10-19).
+    rows.push(`| [${esc(titleOf(m))}](${m.dir}/index.md) | ${m.exports.length} | ` +
       (!report ? "preview" : m.exports.every((e) => passed && byName.get(e.name)?.status === "checked") ? "checked" : "failed") + " |");
   }
   fs.writeFileSync(path.join(gen, "catalog.md"),

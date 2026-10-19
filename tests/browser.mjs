@@ -67,6 +67,28 @@ check(await page.locator("#thm-self-implication").count() === 1, "target theorem
 const resp = await page.goto(`${origin}${base}/self-implication/`, { waitUntil: "networkidle" });
 check(resp.status() === 200, "deep page loads directly");
 
+// Follow every same-site link on every page, both as a fresh page load and as the
+// href the browser actually resolved. Counting links is not enough: the catalog's links
+// once rendered as raw "../x/index.md" hrefs that 404'd (2026-10-19).
+const seen = new Set(), queue = [`${origin}${base}/`], broken = [];
+while (queue.length && seen.size < 200) {
+  const url = queue.shift().split("#")[0];
+  if (seen.has(url)) continue;
+  seen.add(url);
+  const r = await page.goto(url, { waitUntil: "domcontentloaded" });
+  if (!r || r.status() >= 400) { broken.push(`${r?.status()} ${url}`); continue; }
+  for (const href of await page.locator("a[href]").evaluateAll((as) => as.map((a) => a.href))) {
+    if (!href.startsWith(origin)) continue;
+    if (!href.startsWith(`${origin}${base}/`)) { broken.push(`outside the release: ${href} (on ${url})`); continue; }
+    if (/\.(md|json|zip|pdf|txt|xml|ico)$/.test(new URL(href).pathname)) {
+      if (/\.md$/.test(new URL(href).pathname)) broken.push(`raw .md link: ${href} (on ${url})`);
+      continue;
+    }
+    queue.push(href);
+  }
+}
+check(broken.length === 0, `all ${seen.size} internal pages and links resolve${broken.length ? ":\n  " + broken.join("\n  ") : ""}`);
+
 check(errors.length === 0, `no console errors or failed requests${errors.length ? ":\n  " + errors.join("\n  ") : ""}`);
 await browser.close(); server.close();
 process.exit(failures.length ? 1 : 0);

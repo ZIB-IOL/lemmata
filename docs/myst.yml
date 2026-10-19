@@ -13,6 +13,10 @@ project:
       severity: error
     - rule: identifier-is-unique
       severity: error
+    # A link MyST cannot resolve is emitted as raw text and 404s in the browser. Found
+    # 2026-10-19: the catalog's links were relative to the included file, not to index.md.
+    - rule: link-resolves
+      severity: error
   numbering:
     headings: false
 site:
