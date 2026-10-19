@@ -11,6 +11,6 @@
 - id: order
   title: Order theory
   description: Preorders, partial orders and lattices.
-- id: polyhedral-combinatorics
-  title: Polyhedral combinatorics
-  description: Polytopes, slack matrices and combinatorial optimization.
+- id: optimization
+  title: Optimization
+  description: Optimization problems, convex relaxations and duality.

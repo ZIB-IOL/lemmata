@@ -1,7 +1,7 @@
 schema_version: 1
 id: spanning-tree-min-split
 lean_namespace: Lemmata.SpanningTreeMinSplit
-category: polyhedral-combinatorics
+category: optimization
 pages:
   - index.md
 exports:
