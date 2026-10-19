@@ -311,7 +311,7 @@ function loadProvenance(manifests, commit) {
   }
   const git = (...a) => execFileSync("git", ["-C", ROOT, ...a], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
   try { git("rev-parse", "HEAD"); } catch { return null; }
-  const out = { schema_version: 1, entries: {} };
+  const out = { schema_version: 1, source_commit: git("rev-parse", "HEAD").trim(), entries: {} };
   for (const m of manifests) {
     const log = git("log", "--no-merges", "--format=%H%x1f%an%x1f%ae%x1f%aI", "HEAD", "--", `docs/${m.dir}`, `lean/${LIB}/${m.leanDir}`);
     const commits = log.split("\n").filter(Boolean).map((l) => { const [hash, name, email, date] = l.split("\x1f"); return { hash, name, email: email.toLowerCase(), date }; });
@@ -502,6 +502,10 @@ switch (cmd) {
     finish("prepared docs/_generated and docs/myst.runtime.yml"); break;
   }
   case "new": scaffold(args[0], args[1], args[2]); finish(); break;
+  case "provenance": {            // what the controller ships for HEAD, from local git
+    const ms = loadManifests(); finish();
+    process.stdout.write(JSON.stringify(loadProvenance(ms, null), null, 2) + "\n"); break;
+  }
   default:
     console.error("usage: lemmata.mjs validate | umbrella [--write] | request <out> | prepare <report.json>|--preview [--commit SHA] [--source-url URL] | new <id> <LeanName> <category>");
     process.exit(2);
