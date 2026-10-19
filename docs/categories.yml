@@ -11,3 +11,6 @@
 - id: order
   title: Order theory
   description: Preorders, partial orders and lattices.
+- id: optimization
+  title: Optimization
+  description: Optimization problems, convex relaxations and duality.

@@ -1,0 +1,11 @@
+schema_version: 1
+id: lagrangian-duality-gap
+lean_namespace: Lemmata.LagrangianDualityGap
+category: optimization
+pages:
+  - index.md
+exports:
+  - name: Lemmata.LagrangianDualityGap.duality_gap
+    kind: theorem
+    page: index.md
+    label: thm-lagrangian-duality-gap
