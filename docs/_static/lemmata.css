@@ -37,3 +37,25 @@
 /* The copy button is invisible until hover by default; show it here, where copying is
    the whole point (and touch screens have no hover). */
 .lemmata-header details button { opacity: 1 !important; }
+
+/* The theme floats the chevron right inside the title and nudges it up 1px, so next to
+   our small inline label it sat ~3px above the text. Lay title and chevron out as one
+   centred row and size the chevron to the text. */
+.lemmata-header .myst-dropdown-header-title {
+  display: inline-flex;
+  flex-direction: row-reverse;   /* the chevron's span comes first in the markup */
+  align-items: center;
+  gap: 0.25rem;
+  line-height: 1.25rem;
+}
+.lemmata-header .myst-dropdown-header-title > span { float: none; display: inline-flex; }
+.lemmata-header .myst-dropdown-header-icon {
+  width: 1em;
+  height: 1em;
+  padding: 0;
+  margin: 0;
+  transform: none;
+}
+/* The theme's open state is rotate(90deg) plus a -5px shift that compensated for its old
+   position; without the shift the chevron stays centred when it turns. */
+.lemmata-header details[open] > summary .details-toggle { transform: rotate(90deg); }
