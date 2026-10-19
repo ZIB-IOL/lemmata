@@ -16,7 +16,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+// LEMMATA_ROOT lets the cluster run its own (trusted) copy of this file against a
+// checkout somewhere else; locally the repository is the file's parent directory.
+const ROOT = path.resolve(process.env.LEMMATA_ROOT ?? path.join(path.dirname(fileURLToPath(import.meta.url)), ".."));
 const DOCS = path.join(ROOT, "docs");
 const LEAN = path.join(ROOT, "lean");
 const LIB = "Lemmata";
