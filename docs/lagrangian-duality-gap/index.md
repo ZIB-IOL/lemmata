@@ -153,10 +153,5 @@ with finite infimum zero, from which the dual value follows.
 :end-before: -- DOCS_END_MAIN
 ```
 
-The construction and proof are adapted from the Geoffrion theorem experiment,
-specifically `formalizations/theorem14-multirow/Theorem14Counterexample.lean`
-and its accompanying multirow report, at source revision
-`e6c64b90ba8b15f4939e9650a13742c39c893efa`.
-
 ```{include} ../_generated/verification/lagrangian-duality-gap.md
 ```
