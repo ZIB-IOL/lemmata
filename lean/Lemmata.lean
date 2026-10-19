@@ -8,3 +8,9 @@ public import Lemmata.LagrangianDualityGap.Main
 public import Lemmata.LeAntisymm.Main
 public import Lemmata.SelfImplication.Main
 public import Lemmata.Shared.Basic
+public import Lemmata.SpanningTreeMinSplit.Certificates
+public import Lemmata.SpanningTreeMinSplit.Checks
+public import Lemmata.SpanningTreeMinSplit.FullSlack
+public import Lemmata.SpanningTreeMinSplit.Main
+public import Lemmata.SpanningTreeMinSplit.Rank
+public import Lemmata.SpanningTreeMinSplit.Trees

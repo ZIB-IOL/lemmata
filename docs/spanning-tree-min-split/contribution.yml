@@ -1,0 +1,19 @@
+schema_version: 1
+id: spanning-tree-min-split
+lean_namespace: Lemmata.SpanningTreeMinSplit
+category: optimization
+pages:
+  - index.md
+exports:
+  - name: Lemmata.SpanningTreeMinSplit.fullSlack
+    kind: definition
+    page: index.md
+    label: def-spanning-tree-min-split-matrix
+  - name: Lemmata.SpanningTreeMinSplit.fullSlack_rank_bound
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-min-split
+  - name: Lemmata.SpanningTreeMinSplit.fullSlack_factorization
+    kind: theorem
+    page: index.md
+    label: prop-spanning-tree-min-split-factorization
