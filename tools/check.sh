@@ -39,5 +39,28 @@ echo "lemmata-check: ok ($(node -e 'const r=require("./out/verification.json");c
 step "5/5 render"
 node tools/lemmata.mjs prepare out/verification.json --commit "$(git rev-parse HEAD 2>/dev/null || echo local)"
 ( cd docs && HOST=127.0.0.1 ../node_modules/.bin/myst build --config myst.runtime.yml --html --strict --ci --keep-host )
+
+# The same render the way the cluster does it: a copy of the tracked files (no git
+# history), with .lemmata/provenance.json added as the controller would, LEMMATA_BUILD=1,
+# and validate before prepare. Catches tool changes that only break inside the build Job
+# (2026-10-19: validate refused the cluster's own .lemmata/ and every build failed).
+step "5b/5 render as in the cluster"
+SIM=$(mktemp -d)
+trap 'rm -rf "$SIM"' EXIT
+git ls-files -z | tar --null -T - -cf - | tar -xf - -C "$SIM"
+mkdir -p "$SIM/.lemmata"
+# `provenance` prints what the controller would ship for HEAD, computed from local git.
+node tools/lemmata.mjs provenance > "$SIM/.lemmata/provenance.json"
+# Chained with && on purpose: set -e is suspended inside a `( ... ) || ...` list, so
+# without it a failing validate would not stop the chain (the first version of this
+# step passed with the bug it was written for reinstated).
+REPO=$(pwd)
+( export LEMMATA_ROOT="$SIM" LEMMATA_BUILD=1 &&
+  node tools/lemmata.mjs validate &&
+  node tools/lemmata.mjs prepare out/verification.json --commit "$(git rev-parse HEAD)" >/dev/null &&
+  cd "$SIM/docs" &&
+  HOST=127.0.0.1 "$REPO/node_modules/.bin/myst" build --config myst.runtime.yml --html --strict --ci --keep-host >/dev/null 2>&1 ) \
+  || { echo "cluster-style render FAILED"; exit 1; }
+echo "cluster-style render: ok"
 echo
 echo "all checks passed. Preview: npx serve docs/_build/html  (or: npm run preview)"

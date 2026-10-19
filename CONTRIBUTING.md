@@ -39,7 +39,10 @@ UpperCamelCase. Neither can change after publication.
   `:label:` containing your id, e.g. `thm-prime-infinitude`.
 - Include the Lean with `literalinclude` from `../../lean/...`. Never paste a proof by hand.
 - Refer to other entries' results by label: `[](#thm-self-implication)`.
-- Keep the `{include} ../_generated/verification/<id>.md` line: that is the verification panel.
+- Keep both generated includes the scaffold writes: `../_generated/provenance/<id>.md`
+  under the title (who contributed, from git — your name is your git author name) and
+  `../_generated/verification/<id>.md` at the end (what was checked). Validation requires
+  both. Do not add an `authors:` block; the git line replaces it.
 - Widgets: an ES module next to the page, loaded with `{anywidget}`. Use only
   `model.get`, `model.set` and `model.on` — there is no kernel. Widgets run in readers'
   browsers and are reviewed as code.
@@ -52,6 +55,7 @@ id: prime-infinitude
 lean_namespace: Lemmata.PrimeInfinitude
 category: number-theory      # where it sits in the sidebar (docs/categories.yml)
 tags: [logic]                # optional: also listed on these categories' pages
+arxiv: 2301.01234            # optional: linked under the title; one id or a list
 pages: [index.md]            # first page must be index.md; list every page
 exports:
   - name: Lemmata.PrimeInfinitude.exists_infinite_primes

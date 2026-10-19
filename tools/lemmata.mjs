@@ -14,6 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 import YAML from "yaml";
 
 // LEMMATA_ROOT lets the cluster run its own (trusted) copy of this file against a
@@ -33,7 +34,10 @@ const RESERVED_DOCS = new Set(["_static", "_generated", "_build", "_releases", "
 const CATEGORY_DIR = "c";
 const CATEGORY_KEYS = new Set(["id", "title", "description"]);
 const RESERVED_LEAN = new Set(["Shared"]);
-const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "pages", "exports"]);
+const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "arxiv", "pages", "exports"]);
+// arXiv identifiers: new style 2301.01234 (4 or 5 digits after the dot, since 2015), old
+// style math/0601001 or math.AG/0601001; each optionally with a version vN.
+const ARXIV_RE = /^(?:\d{4}\.\d{4,5}|[a-z-]+(?:\.[A-Z]{2})?\/\d{7})(?:v\d+)?$/;
 const EXPORT_KEYS = new Set(["name", "kind", "page", "label"]);
 const KINDS = new Set(["theorem", "definition"]);
 const ID_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
@@ -82,6 +86,13 @@ function walk(dir, ext, out = []) {
     else if (d.name.endsWith(ext)) out.push(p);
   }
   return out;
+}
+
+function arxivIds(source) {
+  const node = YAML.parseDocument(source).get("arxiv", true);
+  if (node === undefined || node === null) return [];
+  const items = YAML.isSeq(node) ? node.items : [node];
+  return items.map((x) => (YAML.isScalar(x) ? (x.source ?? String(x.value)) : x)).map((v) => typeof v === "string" ? v.trim() : v);
 }
 
 // --------------------------------------------------------------------------- categories
@@ -166,6 +177,15 @@ function loadManifests(categories = loadCategories()) {
       if (pageSet.has(p)) fail(`${where}: page ${p} listed twice`);
       pageSet.add(p);
     }
+    // The two generated panels are not optional: an entry must show who contributed it
+    // (from git) and what was checked (from the verifier), and only the tools write them.
+    if (pageSet.has("index.md")) {
+      const idx = fs.readFileSync(path.join(DOCS, dir, "index.md"), "utf8");
+      for (const [kind, what] of [["provenance", "contributors line"], ["verification", "verification panel"]]) {
+        const inc = `{include} ../_generated/${kind}/${dir}.md`;
+        if (idx.split(inc).length - 1 !== 1) fail(`${where}/index.md: must include the ${what} exactly once: \`\`\`${inc}\``);
+      }
+    }
     for (const f of walk(path.join(DOCS, dir), ".md")) {
       const rel = path.relative(path.join(DOCS, dir), f);
       if (!pageSet.has(rel)) fail(`${where}: page ${rel} is not listed in contribution.yml`);
@@ -190,7 +210,16 @@ function loadManifests(categories = loadCategories()) {
         if (n !== 1) fail(`${at}: label ${e.label} appears ${n} times in ${e.page}, expected exactly once`);
       }
     }
-    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [] });
+    // Optional arXiv id(s) for additional material; shown linked under the title. Read
+    // from the YAML source text, not the parsed value: unquoted, 2301.10230 parses as the
+    // number 2301.1023 -- a link to a different paper.
+    const arxiv = arxivIds(fs.readFileSync(mfPath, "utf8"));
+    for (const a of arxiv) {
+      if (typeof a !== "string" || !ARXIV_RE.test(a))
+        fail(`${where}/contribution.yml: arxiv ${JSON.stringify(a)} is not an arXiv identifier (e.g. 2301.01234, 2301.01234v2, math/0601001)`);
+    }
+    if (new Set(arxiv).size !== arxiv.length) fail(`${where}/contribution.yml: arxiv lists an identifier twice`);
+    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [], arxiv });
   }
   // Every Lean contribution directory needs a manifest.
   if (fs.existsSync(path.join(LEAN, LIB))) {
@@ -271,6 +300,36 @@ function titleOf(m) {
   return (fm && YAML.parse(fm[1])?.title) || m.id;
 }
 
+// .lemmata/provenance.json if the cluster supplied it; otherwise compute the same shape
+// from local git (a working checkout), or null if there is no git at all.
+function loadProvenance(manifests, commit) {
+  const shipped = path.join(ROOT, ".lemmata", "provenance.json");
+  if (fs.existsSync(shipped)) {
+    const p = JSON.parse(fs.readFileSync(shipped, "utf8"));
+    if (commit && p.source_commit !== commit) fail(`.lemmata/provenance.json is for ${p.source_commit}, not ${commit}`);
+    return p;
+  }
+  const git = (...a) => execFileSync("git", ["-C", ROOT, ...a], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+  try { git("rev-parse", "HEAD"); } catch { return null; }
+  const out = { schema_version: 1, source_commit: git("rev-parse", "HEAD").trim(), entries: {} };
+  for (const m of manifests) {
+    const log = git("log", "--no-merges", "--format=%H%x1f%an%x1f%ae%x1f%aI", "HEAD", "--", `docs/${m.dir}`, `lean/${LIB}/${m.leanDir}`);
+    const commits = log.split("\n").filter(Boolean).map((l) => { const [hash, name, email, date] = l.split("\x1f"); return { hash, name, email: email.toLowerCase(), date }; });
+    if (!commits.length) continue;
+    const people = new Map();
+    for (const c of [...commits].reverse()) {
+      const p = people.get(c.email) ?? { name: c.name, commits: 0, first: c.date };
+      p.commits++; p.name = c.name; people.set(c.email, p);
+    }
+    out.entries[m.id] = {
+      contributors: [...people.values()].sort((a, b) => b.commits - a.commits || a.first.localeCompare(b.first)).map(({ name, commits }) => ({ name, commits })),
+      first: { commit: commits.at(-1).hash, date: commits.at(-1).date },
+      last: { commit: commits[0].hash, date: commits[0].date },
+    };
+  }
+  return out;
+}
+
 // Panels and catalog come only from the verifier's report, never from page content.
 function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const gen = path.join(DOCS, "_generated");
@@ -305,6 +364,33 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       "The formal statement is machine-checked; that it matches the prose is checked by review.",
       ":::", "");
     fs.writeFileSync(path.join(gen, "verification", `${m.id}.md`), lines.join("\n"));
+  }
+
+  // Contributors line per entry. In the cluster the controller computes it from git and
+  // ships .lemmata/provenance.json with the source (the build sees no history); locally the
+  // same is computed from this checkout's git log. Names only -- never email addresses.
+  const prov = loadProvenance(manifests, commit);
+  fs.mkdirSync(path.join(gen, "provenance"), { recursive: true });
+  const day = (iso) => String(iso ?? "").slice(0, 10);
+  const commitLink = (c) => sourceUrl ? `[${c.slice(0, 7)}](${sourceUrl.replace(/\/$/, "")}/-/commit/${c})` : `\`${c.slice(0, 7)}\``;
+  for (const m of manifests) {
+    const p = prov?.entries?.[m.id];
+    const lines = [":::{div}", ":class: lemmata-provenance", ""];
+    if (!p) lines.push("*Not yet committed.*");
+    else {
+      lines.push(`Contributed by ${p.contributors.map((c) => `**${esc(c.name)}**`).join(", ")}  `);
+      lines.push(p.first.commit === p.last.commit
+        ? `Published ${day(p.first.date)} (${commitLink(p.first.commit)})`
+        : day(p.first.date) === day(p.last.date)
+          ? `Published ${day(p.first.date)} · last changed in ${commitLink(p.last.commit)}`
+          : `First published ${day(p.first.date)} · last changed ${day(p.last.date)} (${commitLink(p.last.commit)})`);
+    }
+    if (m.arxiv.length) {
+      if (lines.at(-1) !== "" && !lines.at(-1).endsWith("  ")) lines[lines.length - 1] += "  ";
+      lines.push(`Additional material: ${m.arxiv.map((a) => `[arXiv:${a}](https://arxiv.org/abs/${a})`).join(", ")}`);
+    }
+    lines.push(":::", "");
+    fs.writeFileSync(path.join(gen, "provenance", `${m.id}.md`), lines.join("\n"));
   }
 
   // Entries per category: primary members (sidebar + catalog) and tagged members (also
@@ -375,7 +461,9 @@ function scaffold(id, lean, category) {
   fs.writeFileSync(path.join(d, "contribution.yml"), YAML.stringify({ schema_version: 1, id,
     lean_namespace: `${LIB}.${lean}`, category, pages: ["index.md"],
     exports: [{ name: thm, kind: "theorem", page: "index.md", label: `thm-${id}` }] }));
-  fs.writeFileSync(path.join(d, "index.md"), `---\ntitle: ${id}\nauthors:\n  - name: Your Name\n---\n\n` +
+  // No `authors:` block: who contributed is shown from git, under the title.
+  fs.writeFileSync(path.join(d, "index.md"), `---\ntitle: ${id}\n---\n\n` +
+    "```{include} ../_generated/provenance/" + id + ".md\n```\n\n" +
     "```{prf:theorem} Statement\n:label: thm-" + id + "\n\nState the result here.\n```\n\n" +
     "```{literalinclude} ../../lean/" + LIB + "/" + lean + "/Main.lean\n:language: lean\n" +
     ":start-after: -- DOCS_BEGIN_MAIN\n:end-before: -- DOCS_END_MAIN\n```\n\n" +
@@ -394,6 +482,11 @@ switch (cmd) {
   case "validate": {
     const ms = loadManifests(); checkSnippets(ms); checkUmbrella(false);
     if (fs.existsSync(path.join(ROOT, ".publication"))) fail(".publication/ must not be committed");
+    // .lemmata/ is where the cluster puts data it adds to the source (provenance.json).
+    // Locally it must not exist; in a build (LEMMATA_BUILD=1) it is expected, and the
+    // controller has already refused any commit that contained it.
+    if (!process.env.LEMMATA_BUILD && fs.existsSync(path.join(ROOT, ".lemmata")))
+      fail(".lemmata/ is reserved for data the cluster adds; it must not be committed");
     finish(`ok: ${ms.length} contribution(s), ${ms.reduce((n, m) => n + m.exports.length, 0)} export(s)`);
     break;
   }
@@ -409,6 +502,10 @@ switch (cmd) {
     finish("prepared docs/_generated and docs/myst.runtime.yml"); break;
   }
   case "new": scaffold(args[0], args[1], args[2]); finish(); break;
+  case "provenance": {            // what the controller ships for HEAD, from local git
+    const ms = loadManifests(); finish();
+    process.stdout.write(JSON.stringify(loadProvenance(ms, null), null, 2) + "\n"); break;
+  }
   default:
     console.error("usage: lemmata.mjs validate | umbrella [--write] | request <out> | prepare <report.json>|--preview [--commit SHA] [--source-url URL] | new <id> <LeanName> <category>");
     process.exit(2);

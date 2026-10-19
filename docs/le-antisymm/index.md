@@ -1,8 +1,9 @@
 ---
 title: Antisymmetry of order
-authors:
-  - name: Lemmata maintainers
 ---
+
+```{include} ../_generated/provenance/le-antisymm.md
+```
 
 What separates a partial order from a mere preorder: elements cannot sit below each
 other without being equal. Transitivity, the other half of the axioms, is
