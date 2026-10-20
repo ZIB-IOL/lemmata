@@ -25,7 +25,7 @@ UpperCamelCase. Neither can change after publication.
 
 - Start files with `module` and use `public import` (Mathlib uses the module system).
 - Everything lives in `namespace Lemmata.<LeanName>`.
-- Import other entries' modules directly (`public import Lemmata.SelfImplication.Main`),
+- Import other entries' modules directly (`public import Lemmata.ImplicationComposition.Main`),
   never the umbrella `Lemmata`. Do not copy another entry's definitions; move shared
   material into `lean/Lemmata/Shared/` in its own pull request.
 - No `sorry`, no `native_decide`, no `axiom`. The audit covers every declaration in
@@ -38,7 +38,7 @@ UpperCamelCase. Neither can change after publication.
 - State results with `prf:theorem` (or `prf:lemma`, `prf:definition`, …) and give each a
   `:label:` containing your id, e.g. `thm-prime-infinitude`.
 - Include the Lean with `literalinclude` from `../../lean/...`. Never paste a proof by hand.
-- Refer to other entries' results by label: `[](#thm-self-implication)`.
+- Refer to other entries' results by label: `[](#thm-implication-composition)`.
 - Keep both generated includes the scaffold writes: `../_generated/provenance/<id>.md`
   under the title (who contributed, from git — your name is your git author name) and
   `../_generated/verification/<id>.md` at the end (what was checked). Validation requires
@@ -59,6 +59,10 @@ arxiv: 2301.01234            # optional: linked under the title; one id or a lis
 contributors:                # optional: credit these people instead of the git authors
   - Ada Lovelace
   - {first: Ludwig, last: van Beethoven}   # multi-part surname
+ai_use: >-                   # optional: how AI tools were used (end of the page)
+  ...
+acknowledgements: >-         # optional: funding, thanks (end of the page); $math$ allowed
+  ...
 pages: [index.md]            # first page must be index.md; list every page
 exports:
   - name: Lemmata.PrimeInfinitude.exists_infinite_primes
@@ -80,6 +84,8 @@ node tools/lemmata.mjs umbrella --write   # if you added or removed Lean files
 tools/check.sh
 ```
 
-Open a pull request against `main` on [GitHub](https://github.com/ZIB-IOL/lemmata). Reviewers read the mathematics, compare the prose
+Open a pull request against `main` on [GitHub](https://github.com/ZIB-IOL/lemmata). If
+the change matters to readers (a new entry, a correction), add a line to
+`docs/changelog.md` in the same pull request. Reviewers read the mathematics, compare the prose
 with the Lean statement, and review any JavaScript. Once merged, the entry is live within
 a few minutes, or the status page says why not.

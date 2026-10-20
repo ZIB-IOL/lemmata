@@ -49,6 +49,7 @@ check(await page.locator("pre code", { hasText: "theorem implication_composition
 await page.waitForSelector("svg[id^=mermaid], .mermaid svg, [class*=mermaid] svg", { timeout: 15000 }).catch(() => {});
 check(await page.locator("svg[id^=mermaid], .mermaid svg, [class*=mermaid] svg").count() > 0, "Mermaid diagram renders");
 check(await page.getByText("✓ checked").count() === 2, "verification panel shows two checked results");
+check(await page.locator(".lemmata-header").count() === 1, "header block (contributors, Cite as) present");
 const widget = page.locator(".lemmata-chain");
 await widget.waitFor({ timeout: 15000 }).catch(() => {});
 check(await widget.count() === 1, "anywidget loads");
@@ -57,14 +58,16 @@ if (await widget.count()) {
   await widget.locator("input").nth(2).uncheck();
   check((await widget.locator("p").textContent()).includes("cannot reach R"), "widget reacts to input");
 }
-// Cross-page reference: clicking the link to the other entry's theorem navigates there.
-await page.locator("a", { hasText: "self-implication" }).first().click();
-await page.waitForURL(/self-implication/, { timeout: 10000 }).catch(() => {});
-check(page.url().includes(`${base}/self-implication`), `cross-reference navigates inside the release (${page.url().replace(origin, "")})`);
-check(await page.locator("#thm-self-implication").count() === 1, "target theorem anchor exists");
+// Cross-page navigation: from a category page to an entry, client-side, staying inside
+// the release, and landing on the entry's theorem anchor.
+await page.goto(`${origin}${base}/c/logic/`, { waitUntil: "networkidle" });
+await page.locator("table a", { hasText: "Composition of implications" }).first().click();
+await page.waitForURL(/implication-composition/, { timeout: 10000 }).catch(() => {});
+check(page.url().includes(`${base}/implication-composition`), `category link navigates inside the release (${page.url().replace(origin, "")})`);
+check(await page.locator("#thm-implication-composition").count() === 1, "target theorem anchor exists");
 
 // Direct load of a deep page, not via client-side navigation.
-const resp = await page.goto(`${origin}${base}/self-implication/`, { waitUntil: "networkidle" });
+const resp = await page.goto(`${origin}${base}/implication-composition/`, { waitUntil: "networkidle" });
 check(resp.status() === 200, "deep page loads directly");
 
 // Follow every same-site link on every page, both as a fresh page load and as the

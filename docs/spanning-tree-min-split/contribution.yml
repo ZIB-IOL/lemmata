@@ -17,3 +17,11 @@ exports:
     kind: theorem
     page: index.md
     label: prop-spanning-tree-min-split-factorization
+ai_use: >-
+  Obtained as auxiliary result when using GPT-6 Astra to formalize other research.
+acknowledgements: >-
+  Research reported in this paper was partially supported by the Berlin Mathematics
+  Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche
+  Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
+  Strategy. This work has been partially supported by OpenAI's Academic Researchers
+  program.

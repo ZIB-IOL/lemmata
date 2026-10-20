@@ -109,3 +109,15 @@
 .lemmata-sidebar-footer a:hover { color: var(--myst-color-link, #2563eb); }
 .lemmata-sidebar-footer p { margin: 0.15rem 0; }
 .lemmata-sidebar-footer a { text-decoration: none; }
+
+/* AI use statement and acknowledgements at the end of an entry: small, set apart from
+   the verification panel by a rule, like the header block at the top. */
+.lemmata-notes {
+  font-size: 0.875rem;
+  line-height: 1.55;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  opacity: 0.85;
+}
+.lemmata-notes p { margin: 0 0 0.6rem; }

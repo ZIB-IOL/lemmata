@@ -5,8 +5,9 @@ title: Composition of implications
 ```{include} ../_generated/provenance/implication-composition.md
 ```
 
-Implications chain. This entry builds on [self-implication](#thm-self-implication),
-and its Lean proof imports that entry's module.
+Implications chain. This is the archive's worked example: it shows the pieces an entry
+can use — numbered results, a diagram, a widget, a Mathlib corollary — on a result small
+enough to read at a glance.
 
 ```{prf:theorem} Composition
 :label: thm-implication-composition
@@ -24,8 +25,7 @@ flowchart LR
   P -.->|"composition"| R
 ```
 
-Composing with [](#thm-self-implication) on either side changes nothing, which is how the
-Lean file uses the other entry:
+Composing with self-implication ($P \to P$) on either side changes nothing:
 
 ```{literalinclude} ../../lean/Lemmata/ImplicationComposition/Main.lean
 :language: lean

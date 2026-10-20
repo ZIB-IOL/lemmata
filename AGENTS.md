@@ -165,7 +165,7 @@ The informal proof.
 - Your name on the page is the **git author name** of your commits, unless the manifest
   lists `contributors` (step 4). Set it before committing: `git config user.name "Full Name"`.
 - Never paste Lean into Markdown by hand; always `literalinclude`.
-- Refer to results by label: `[](#thm-self-implication)`. Labels from other entries work.
+- Refer to results by label: `[](#thm-implication-composition)`. Labels from other entries work.
 - Other environments: `prf:lemma`, `prf:definition`, `prf:corollary`, `prf:proposition`.
   Display equations: `$$ … $$ (eq-<id>-name)`.
 - Every page in `docs/<id>/` must be listed in `pages:` below, `index.md` first.
@@ -182,6 +182,10 @@ arxiv: 2301.01234                     # optional; one id or a list, e.g. [2301.0
 contributors:                         # optional; replaces the names taken from git
   - Ada Lovelace                      #   "First Last"
   - {first: Ludwig, last: van Beethoven}   # surnames with several parts
+ai_use: >-                            # optional; shown at the end of the entry
+  Lean proofs drafted with an AI assistant, reviewed and completed by the authors.
+acknowledgements: >-                  # optional; shown at the end of the entry
+  Supported by the Berlin Mathematics Research Center MATH$^+$.
 pages:
   - index.md
 exports:                              # at least one theorem
@@ -197,6 +201,13 @@ If present, it replaces the git names in the contributors line and in the BibTeX
 `author` field, in the order given; the dates and commit link still come from git.
 Write `First Last`, or `{first: …, last: …}` when the surname has several parts (it is
 then kept whole in BibTeX: `{van Beethoven}, Ludwig`). Names only — no emails.
+
+`ai_use` and `acknowledgements` are short notes rendered at the end of the entry, below the
+verification panel. Say honestly how AI tools were used, if at all; there is no default
+text. Both are inline only: text, `*emphasis*`, `[links](...)` and math `$...$` /
+`$$...$$` (rendered by KaTeX). Directives, code fences, headings, lists and HTML are
+refused, a literal dollar must be written `\$`, and each note is at most 2000 characters.
+Use a YAML block (`>-`) so math and apostrophes need no quoting.
 
 `arxiv` links additional material (a paper, a longer write-up) under the title as
 `arXiv:<id>` → `https://arxiv.org/abs/<id>`. Give the bare identifier, without an
@@ -220,7 +231,7 @@ node tests/browser.mjs docs/_build/html ""    # follows every link; needs: npx p
 
 | Step | Fails when |
 |---|---|
-| validate | a manifest or category is wrong, a label is missing or duplicated, snippet markers are wrong, the umbrella is stale, an `index.md` lacks one of the two `{include}` lines, `.lemmata/` is committed |
+| validate | a manifest or category is wrong, a note uses non-inline markup, a label is missing or duplicated, snippet markers are wrong, the umbrella is stale, an `index.md` lacks one of the two `{include}` lines, `.lemmata/` is committed |
 | lake build | any module does not compile |
 | leanchecker | the kernel rejects a declaration |
 | lemmata-check | any declaration uses a disallowed axiom (`sorryAx`, `native_decide`'s auxiliary axioms, custom `axiom`), or an export is missing, misclassified, or outside its namespace |
@@ -278,6 +289,8 @@ tools/check.sh                                          # everything the cluster
 npm run preview                                         # live preview at :3000 (unverified)
 ```
 
-Worked examples to copy from: `docs/self-implication/` (minimal),
-`docs/implication-composition/` (imports another entry, Mermaid, widget, tag),
-`docs/le-antisymm/` (Mathlib, two exports, second category).
+Worked examples to copy from: `docs/implication-composition/` (the reference example:
+numbered results, Mermaid, a widget, a Mathlib corollary, a tag), and the real entries
+`docs/spanning-tree-min-split/` (several Lean modules, a definition export, AI-use and
+acknowledgement notes) and `docs/lagrangian-duality-gap/` (a long single-module proof).
+
