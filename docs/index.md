@@ -1,8 +1,8 @@
 ---
-title: Lemmata
+title: Lemmata Repository
 ---
 
-# Lemmata
+# Lemmata Repository
 
 A living archive of mathematics. Every entry is written twice: once for people, in the
 prose you are reading, and once for Lean, in a formal proof that the kernel has checked.

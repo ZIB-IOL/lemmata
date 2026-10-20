@@ -779,7 +779,7 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
 
   const line = (e) => `- [${e.title}](${e.url})${e.identifier ? ` (${e.identifier})` : ""}: ${e.status}` +
     `${e.contributors.length ? `; ${e.contributors.join(", ")}` : ""}${e.arxiv.length ? `; arXiv:${e.arxiv.join(", arXiv:")}` : ""}`;
-  const md = ["# Lemmata", "",
+  const md = ["# Lemmata Repository", "",
     "> An experimental mathematics repository: each entry is a result written as prose and formalized in Lean 4 on Mathlib. " +
     "\"kernel-checked\" means the formal statements compile and were accepted by Lean's kernel using only the standard " +
     `axioms (${siteUrl}/checked/). Whether the prose and the Lean statement say the same thing is checked by human review.`, "",
