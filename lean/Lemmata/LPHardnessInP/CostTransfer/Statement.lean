@@ -4,7 +4,7 @@ public import Lemmata.SpanningTreeMinSplit.Main
 
 @[expose] public section
 
-namespace Lemmata.MatchingCostTransfer
+namespace Lemmata.LPHardnessInP.CostTransfer
 
 open Lemmata.SpanningTreeMinSplit
 
@@ -59,4 +59,4 @@ def CutMetricProperties : Prop :=
     (∀ u v w, cutMetric side γ u w ≤
       cutMetric side γ u v + cutMetric side γ v w)
 
-end Lemmata.MatchingCostTransfer
+end Lemmata.LPHardnessInP.CostTransfer

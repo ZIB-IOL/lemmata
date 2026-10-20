@@ -1,0 +1,85 @@
+schema_version: 1
+id: lp-hardness-in-p
+lean_namespace: Lemmata.LPHardnessInP
+category: optimization
+abstract: >-
+  We give concrete reductions from shifted matching matrices to approximate
+  LP formulations for four polynomial-time solvable problems: metric
+  minimum-cost perfect matching, minimum-cost T-join, minimum odd cut,
+  and minimum-cost odd-red bipartite perfect matching. The first three
+  yield exponential lower bounds for every fixed approximation factor
+  from the Braun--Pokutta matching bound. The fourth uses a separate
+  shifted parity-matching rank bound. Lean proves the combinatorial
+  constructions, optimum identities, and transfers to formulation size;
+  source rank bounds and affine Farkas certificates are explicit inputs.
+ai_use: >-
+  The exposition and Lean formalization were developed with OpenAI Codex.
+  Source rank lower bounds and the existence of affine Farkas certificates
+  are external to the formalization; no custom axioms are introduced.
+pages:
+  - index.md
+exports:
+  - name: Lemmata.LPHardnessInP.Formulation.certified_slack_factorization
+    kind: theorem
+    page: index.md
+    label: thm-lp-hardness-in-p-factorization
+  - name: Lemmata.LPHardnessInP.Matching.matching_minimum
+    kind: theorem
+    page: index.md
+    label: lem-lp-hardness-in-p-matching-optimum
+  - name: Lemmata.LPHardnessInP.Matching.matching_lp_lower_bound
+    kind: theorem
+    page: index.md
+    label: thm-lp-hardness-in-p-matching
+  - name: Lemmata.LPHardnessInP.CostTransfer.cut_metric_properties
+    kind: theorem
+    page: index.md
+    label: prop-lp-hardness-in-p-metric
+  - name: Lemmata.LPHardnessInP.Joins.vjoin_minimum
+    kind: theorem
+    page: index.md
+    label: lem-lp-hardness-in-p-join-optimum
+  - name: Lemmata.LPHardnessInP.Joins.vjoin_lp_lower_bound
+    kind: theorem
+    page: index.md
+    label: thm-lp-hardness-in-p-join
+  - name: Lemmata.LPHardnessInP.Matching.oddCut_minimum
+    kind: theorem
+    page: index.md
+    label: lem-lp-hardness-in-p-odd-cut-optimum
+  - name: Lemmata.LPHardnessInP.Matching.oddCut_lp_lower_bound
+    kind: theorem
+    page: index.md
+    label: thm-lp-hardness-in-p-odd-cut
+  - name: Lemmata.LPHardnessInP.Parity.matchingCost_minimum
+    kind: theorem
+    page: index.md
+    label: lem-lp-hardness-in-p-parity-optimum
+  - name: Lemmata.LPHardnessInP.Parity.parity_matching_lp_lower_bound
+    kind: theorem
+    page: index.md
+    label: thm-lp-hardness-in-p-parity
+  - name: Lemmata.LPHardnessInP.RankReduction.factorization_reduction
+    kind: theorem
+    page: index.md
+    label: thm-lp-hardness-in-p-reduction
+  - name: Lemmata.LPHardnessInP.Formulation.certified_reduction_rank_lower_bound
+    kind: theorem
+    page: index.md
+    label: cor-lp-hardness-in-p-general-transfer
+  - name: Lemmata.LPHardnessInP.RankReduction.rank_transpose
+    kind: theorem
+    page: index.md
+    label: prop-lp-hardness-in-p-transpose
+  - name: Lemmata.LPHardnessInP.RankReduction.rank_rowScale_eq
+    kind: theorem
+    page: index.md
+    label: prop-lp-hardness-in-p-scaling
+  - name: Lemmata.LPHardnessInP.Formulation.bounded_baseline_lp_lower_bound
+    kind: theorem
+    page: index.md
+    label: cor-lp-hardness-in-p-baseline
+  - name: Lemmata.LPHardnessInP.Formulation.near_exact_reversal_lp_lower_bound
+    kind: theorem
+    page: index.md
+    label: cor-lp-hardness-in-p-reversal

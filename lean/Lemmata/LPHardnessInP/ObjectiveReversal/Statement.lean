@@ -4,7 +4,7 @@ public import Lemmata.SpanningTreeMinSplit.Main
 
 @[expose] public section
 
-namespace Lemmata.ObjectiveReversal
+namespace Lemmata.LPHardnessInP.ObjectiveReversal
 
 /-- A maximization-to-minimization reduction with maps independent of the instance.
 The completion map may replace a target solution by an encoded source solution
@@ -28,4 +28,4 @@ def OptimumTransfer : Prop :=
 noncomputable def reversalOffset (N C opt : ℝ) : ℝ :=
   C - opt - (1 - 1 / (1 + 1 / (4 * N))) * (N - opt)
 
-end Lemmata.ObjectiveReversal
+end Lemmata.LPHardnessInP.ObjectiveReversal

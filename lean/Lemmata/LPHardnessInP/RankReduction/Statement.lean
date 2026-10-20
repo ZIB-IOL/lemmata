@@ -4,7 +4,7 @@ public import Lemmata.SpanningTreeMinSplit.Main
 
 @[expose] public section
 
-namespace Lemmata.NonnegativeRankReduction
+namespace Lemmata.LPHardnessInP.RankReduction
 
 open Lemmata.SpanningTreeMinSplit
 
@@ -30,4 +30,4 @@ axiom or choosing a particular optimal factorization. -/
 def FactorizationLowerBound (M : I → J → ℝ) (L : ℕ) : Prop :=
   ∀ k : ℕ, NonnegativeFactorization M k → L ≤ k
 
-end Lemmata.NonnegativeRankReduction
+end Lemmata.LPHardnessInP.RankReduction

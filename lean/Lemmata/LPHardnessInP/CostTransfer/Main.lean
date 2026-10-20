@@ -1,7 +1,7 @@
 module
 
-public import Lemmata.MatchingCostTransfer.Statement
-public import Lemmata.NonnegativeRankReduction.Main
+public import Lemmata.LPHardnessInP.CostTransfer.Statement
+public import Lemmata.LPHardnessInP.RankReduction.Main
 public import Mathlib.Tactic.FieldSimp
 public import Mathlib.Tactic.Linarith
 public import Mathlib.Tactic.Positivity
@@ -9,10 +9,10 @@ public import Mathlib.Tactic.Ring
 
 @[expose] public section
 
-namespace Lemmata.MatchingCostTransfer
+namespace Lemmata.LPHardnessInP.CostTransfer
 
 open Lemmata.SpanningTreeMinSplit
-open Lemmata.NonnegativeRankReduction
+open Lemmata.LPHardnessInP.RankReduction
 open scoped BigOperators
 
 -- DOCS_BEGIN_MAIN
@@ -205,4 +205,4 @@ theorem cut_metric_properties : CutMetricProperties := by
         split_ifs <;> linarith
 -- DOCS_END_MAIN
 
-end Lemmata.MatchingCostTransfer
+end Lemmata.LPHardnessInP.CostTransfer

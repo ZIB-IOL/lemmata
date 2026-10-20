@@ -5,7 +5,7 @@ public import Mathlib.LinearAlgebra.AffineSpace.AffineMap
 
 @[expose] public section
 
-namespace Lemmata.FormulationReduction
+namespace Lemmata.LPHardnessInP.Formulation
 
 open scoped BigOperators
 open Lemmata.SpanningTreeMinSplit
@@ -41,4 +41,4 @@ def CertifiedSlackFactorization : Prop :=
     CertifiedLP (V := V) value bound m →
       Nonempty (NonnegativeFactorization (fun i j => value i j - bound i) (m + 1))
 
-end Lemmata.FormulationReduction
+end Lemmata.LPHardnessInP.Formulation

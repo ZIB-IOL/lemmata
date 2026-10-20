@@ -1,16 +1,16 @@
 module
 
-public import Lemmata.ObjectiveReversal.Statement
-public import Lemmata.NonnegativeRankReduction.Main
+public import Lemmata.LPHardnessInP.ObjectiveReversal.Statement
+public import Lemmata.LPHardnessInP.RankReduction.Main
 public import Mathlib.Tactic.FieldSimp
 public import Mathlib.Tactic.Linarith
 public import Mathlib.Tactic.Ring
 
 @[expose] public section
 
-namespace Lemmata.ObjectiveReversal
+namespace Lemmata.LPHardnessInP.ObjectiveReversal
 
-open Lemmata.SpanningTreeMinSplit Lemmata.NonnegativeRankReduction
+open Lemmata.SpanningTreeMinSplit Lemmata.LPHardnessInP.RankReduction
 
 -- DOCS_BEGIN_MAIN
 /-- An instance-independent completion transfers the maximum exactly to the
@@ -98,4 +98,4 @@ theorem near_exact_rank_transfer
   exact ENat.natCast_le_natCast.mp (source_lower_bound.trans (nonnegativeRank_le G))
 -- DOCS_END_MAIN
 
-end Lemmata.ObjectiveReversal
+end Lemmata.LPHardnessInP.ObjectiveReversal

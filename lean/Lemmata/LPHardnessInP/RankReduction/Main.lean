@@ -1,6 +1,6 @@
 module
 
-public import Lemmata.NonnegativeRankReduction.Statement
+public import Lemmata.LPHardnessInP.RankReduction.Statement
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Data.Fintype.Sum
 public import Mathlib.Data.Fintype.Prod
@@ -9,7 +9,7 @@ public import Mathlib.Tactic.Ring
 
 @[expose] public section
 
-namespace Lemmata.NonnegativeRankReduction
+namespace Lemmata.LPHardnessInP.RankReduction
 
 open Lemmata.SpanningTreeMinSplit
 open scoped BigOperators
@@ -237,4 +237,4 @@ theorem rank_reduction (f : I → I') (g : J → J')
   exact_mod_cast rank_reduction_le f g h FA' FT' FB'
 -- DOCS_END_MAIN
 
-end Lemmata.NonnegativeRankReduction
+end Lemmata.LPHardnessInP.RankReduction

@@ -1,17 +1,17 @@
 module
 
-public import Lemmata.FormulationReduction.Statement
-public import Lemmata.NonnegativeRankReduction.Main
-public import Lemmata.MatchingCostTransfer.Main
-public import Lemmata.ObjectiveReversal.Main
+public import Lemmata.LPHardnessInP.Formulation.Statement
+public import Lemmata.LPHardnessInP.RankReduction.Main
+public import Lemmata.LPHardnessInP.CostTransfer.Main
+public import Lemmata.LPHardnessInP.ObjectiveReversal.Main
 
 @[expose] public section
 
-namespace Lemmata.FormulationReduction
+namespace Lemmata.LPHardnessInP.Formulation
 
 open scoped BigOperators
 open Lemmata.SpanningTreeMinSplit
-open Lemmata.NonnegativeRankReduction
+open Lemmata.LPHardnessInP.RankReduction
 
 variable {I J V : Type*} [AddCommGroup V] [Module ℝ V]
 variable {value : I → J → ℝ} {bound : I → ℝ} {m : ℕ}
@@ -156,7 +156,7 @@ theorem positive_cost_lp_lower_bound
     (source_lower_bound :
       (L : ℕ∞) ≤ nonnegativeRank (fun i j => q i j - 1 / (2 * α))) :
     L ≤ m + 1 :=
-  Lemmata.MatchingCostTransfer.positive_cost_lower_bound q α H hα hH
+  Lemmata.LPHardnessInP.CostTransfer.positive_cost_lower_bound q α H hα hH
     source_lower_bound (certifiedSlackFactorization C)
 
 /-- If the positive-cost LP certificates have zero constant remainder,
@@ -171,7 +171,7 @@ theorem positive_cost_lp_lower_bound_zero_offset
     (source_lower_bound :
       (L : ℕ∞) ≤ nonnegativeRank (fun i j => q i j - 1 / (2 * α))) :
     L ≤ m :=
-  Lemmata.MatchingCostTransfer.positive_cost_lower_bound q α H hα hH
+  Lemmata.LPHardnessInP.CostTransfer.positive_cost_lower_bound q α H hα hH
     source_lower_bound (certifiedSlackFactorizationZeroOffset C hzero)
 
 /-- A bounded baseline uses one factor for the LP's constant remainder and
@@ -182,9 +182,9 @@ theorem bounded_baseline_lp_lower_bound
     (C : CertifiedLP (V := V) (fun i j => a i * q i j + b i)
       (fun i => (a i + b i) / α) m)
     (source_lower_bound : (L : ℕ∞) ≤ nonnegativeRank
-      (fun i j => q i j - Lemmata.MatchingCostTransfer.retainedShift α B)) :
+      (fun i j => q i j - Lemmata.LPHardnessInP.CostTransfer.retainedShift α B)) :
     L ≤ m + 2 := by
-  exact Lemmata.MatchingCostTransfer.bounded_baseline_lower_bound q a b α B
+  exact Lemmata.LPHardnessInP.CostTransfer.bounded_baseline_lower_bound q a b α B
     hα ha hbase source_lower_bound (certifiedSlackFactorization C)
 
 /-- The near-exact objective-reversal transfer, composed with the LP certificate
@@ -192,7 +192,7 @@ factorization. Graph-specific maps and completion are explicit in `D`. -/
 theorem near_exact_reversal_lp_lower_bound
     {S T : Type*} {sourceValue : I → S → ℝ} {cost : I → T → ℝ}
     {C opt : I → ℝ} {N : ℝ} {L : ℕ}
-    (D : Lemmata.ObjectiveReversal.Reversal sourceValue cost (fun _ => N))
+    (D : Lemmata.LPHardnessInP.ObjectiveReversal.Reversal sourceValue cost (fun _ => N))
     (hN : 0 < N) (hopt : ∀ i, 0 ≤ opt i)
     (hmargin : ∀ i, 1 / 4 ≤ C i - opt i)
     (P : CertifiedLP (V := V) cost
@@ -200,8 +200,8 @@ theorem near_exact_reversal_lp_lower_bound
     (source_lower_bound :
       (L : ℕ∞) ≤ nonnegativeRank (fun i s => C i - sourceValue i s)) :
     L ≤ m + 2 := by
-  exact Lemmata.ObjectiveReversal.near_exact_rank_transfer D hN hopt hmargin
+  exact Lemmata.LPHardnessInP.ObjectiveReversal.near_exact_rank_transfer D hN hopt hmargin
     source_lower_bound (certifiedSlackFactorization P)
 -- DOCS_END_MAIN
 
-end Lemmata.FormulationReduction
+end Lemmata.LPHardnessInP.Formulation
