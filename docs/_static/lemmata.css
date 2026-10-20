@@ -91,6 +91,19 @@
   .myst-primary-sidebar-pointer { height: calc(100vh - 60px); }
 }
 .lemmata-sidebar-footer { font-size: 0.8rem; text-align: center; }
+/* Centre the words, not words + external-link icon: the icon hangs off the end of each
+   link without taking space, otherwise every line looks shifted left (measured ~9px).
+   The footer box itself is aligned to the navigation column (text edge .. chevrons). */
+.lemmata-sidebar-footer a { position: relative; }
+.lemmata-sidebar-footer a svg { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 2px; }
+@media (min-width: 1280px) {
+  /* Outer footer box = navigation column: content from the text edge (40px) to the
+     right edge of the chevrons (240px). */
+  .myst-primary-sidebar-footer.flex-none { margin-right: 20px !important; padding-left: 12px; }
+}
+/* The part is rendered inside a second element that also carries the theme's `article`
+   class, whose grid gutters indented the lines by 12px on each side. */
+.article.myst-primary-sidebar-footer { display: block; padding: 0; margin: 0; }
 .lemmata-sidebar-footer, .lemmata-sidebar-footer a { color: var(--myst-color-text-secondary, #6b7280); }
 .lemmata-sidebar-footer a:hover { color: var(--myst-color-link, #2563eb); }
 .lemmata-sidebar-footer p { margin: 0.15rem 0; }
