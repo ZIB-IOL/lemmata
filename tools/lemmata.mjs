@@ -760,7 +760,8 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
       return { name: e.name, kind: e.kind, label: e.label, status: passed && r?.status === "checked" ? "checked" : "failed",
                axioms: r?.axioms ?? [], source_file: r?.source_file ?? null }; });
     return {
-      identifier: ident ? `lemmata:${ident}` : null, url, title: titleOf(m),
+      identifier: ident ? `lemmata:${ident}` : null, url, html_url: ident ? `${siteUrl}/html/${ident}` : `${siteUrl}/${m.dir}/`,
+      title: titleOf(m),
       category: m.category, category_title: catTitle.get(m.category) ?? m.category, tags: m.tags,
       contributors: people(m, p).map((c) => c.name),
       first_published: p?.first.date ?? null, last_changed: p?.last.date ?? null,
@@ -780,9 +781,10 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
     `${e.contributors.length ? `; ${e.contributors.join(", ")}` : ""}${e.arxiv.length ? `; arXiv:${e.arxiv.join(", arXiv:")}` : ""}`;
   const md = ["# Lemmata", "",
     "> An experimental mathematics repository: each entry is a result written as prose and formalized in Lean 4 on Mathlib. " +
-    "\"checked\" means the formal statements compile, are accepted by Lean's kernel, and use no axioms beyond " +
-    `${ALLOWED_AXIOMS.join(", ")}. Whether the prose and the Lean statement say the same thing is checked by human review.`, "",
-    `Cite an entry by its identifier and permanent URL (${siteUrl}/abs/YYYY.NNNNN). Machine-readable index with exported Lean ` +
+    "\"kernel-checked\" means the formal statements compile and were accepted by Lean's kernel using only the standard " +
+    `axioms (${siteUrl}/checked/). Whether the prose and the Lean statement say the same thing is checked by human review.`, "",
+    `Each entry has an identifier lemmata:YYMM.NNNNN, a landing page ${siteUrl}/abs/YYMM.NNNNN (abstract, status, BibTeX) ` +
+    `and the full entry at ${siteUrl}/html/YYMM.NNNNN. Cite the /abs/ URL. Machine-readable index with exported Lean ` +
     `declarations, axioms and BibTeX: ${siteUrl}/lemmata.json`, ""];
   for (const c of categories) {
     const list = entries.filter((e) => e.category === c.id);
@@ -802,12 +804,14 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
       `- [CONTRIBUTING.md](${file("CONTRIBUTING.md")}): the same for people`,
       `- [Repository](${repo})`, "");
   }
-  md.push("## Optional", "", `- [Changelog](${siteUrl}/changelog/)`, `- [Build status](${siteUrl}/_status)`, "");
+  md.push("## Optional", "", `- [What "kernel-checked" means](${siteUrl}/checked/)`, `- [Changelog](${siteUrl}/changelog/)`,
+    `- [Build status](${siteUrl}/_status)`, "");
   fs.writeFileSync(path.join(outDir, "llms.txt"), md.join("\n"));
 
   const xmlEsc = (u) => u.replace(/&/g, "&amp;").replace(/</g, "&lt;");
   const urls = [`${siteUrl}/`, ...categories.filter((c) => entries.some((e) => e.category === c.id)).map((c) => `${siteUrl}/c/${c.id}/`),
-    ...entries.map((e) => e.url), `${siteUrl}/changelog/`];
+    ...entries.map((e) => e.url), ...entries.filter((e) => e.identifier).map((e) => e.url.replace("/abs/", "/html/")),
+    `${siteUrl}/checked/`, `${siteUrl}/changelog/`];
   fs.writeFileSync(path.join(outDir, "sitemap.xml"), ['<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     ...urls.map((u) => `  <url><loc>${xmlEsc(u)}</loc></url>`), "</urlset>", ""].join("\n"));
@@ -815,6 +819,35 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
   // would hide every page from crawlers that honour robots.txt.
   fs.writeFileSync(path.join(outDir, "robots.txt"), ["User-agent: *", "Allow: /",
     `Sitemap: ${siteUrl}/sitemap.xml`, ""].join("\n"));
+}
+
+// ------------------------------------------------------------------------- analytics
+
+// Privacy-friendly analytics (Plausible), added to every page's <head> after the build.
+// The theme's own analytics_plausible option is hard-wired to plausible.io, so it cannot
+// point at a self-hosted instance. The script URL comes from the cluster (ANALYTICS_SCRIPT,
+// a trusted setting); without it nothing is added, so local builds and previews are not
+// tracked. The URL must be https and is checked before it is written into HTML.
+function injectAnalytics(siteDir, scriptUrl) {
+  if (!scriptUrl) return 0;
+  let u; try { u = new URL(scriptUrl); } catch { fail(`ANALYTICS_SCRIPT is not a URL: ${scriptUrl}`); return 0; }
+  if (u.protocol !== "https:" || /["'<>\s]/.test(scriptUrl)) { fail(`ANALYTICS_SCRIPT must be a plain https URL`); return 0; }
+  // transformRequest strips the release prefix (/_releases/<id>) from the page URL and the
+  // referrer, so statistics are per stable page (/implication-composition), not split anew
+  // with every release.
+  const strip = "function(u){return u&&u.replace(/\\/_releases\\/[^/]+(?=\\/|$)/,'')}";
+  const snippet = `<script async src="${scriptUrl}"></script>` +
+    `<script>window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},` +
+    `plausible.init=plausible.init||function(i){plausible.o=i||{}};` +
+    `plausible.init({transformRequest:function(e){var s=${strip};e.u=s(e.u);if(e.r)e.r=s(e.r);return e}})</script>`;
+  let n = 0;
+  for (const f of walk(siteDir, ".html")) {
+    const html = fs.readFileSync(f, "utf8");
+    if (html.includes(scriptUrl) || !html.includes("</head>")) continue;
+    fs.writeFileSync(f, html.replace("</head>", snippet + "</head>"));
+    n++;
+  }
+  return n;
 }
 
 // ------------------------------------------------------------------------------- main
@@ -850,6 +883,10 @@ switch (cmd) {
     const report = args[0] ? JSON.parse(fs.readFileSync(args[0], "utf8")) : null;
     siteIndex(ms, cats, report, args[1], { commit: flag("--commit"), sourceUrl: flag("--source-url") });
     finish(`wrote llms.txt, lemmata.json, sitemap.xml, robots.txt to ${args[1]}`); break;
+  }
+  case "analytics": {             // after the build: add the analytics snippet to every page
+    const n = injectAnalytics(args[0], process.env.ANALYTICS_SCRIPT ?? "");
+    finish(process.env.ANALYTICS_SCRIPT ? `analytics added to ${n} page(s)` : "no ANALYTICS_SCRIPT: no analytics"); break;
   }
   case "provenance": {            // what the controller ships for HEAD, from local git
     const ms = loadManifests(); finish();

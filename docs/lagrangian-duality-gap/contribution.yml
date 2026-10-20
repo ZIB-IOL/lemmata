@@ -9,6 +9,10 @@ exports:
     kind: theorem
     page: index.md
     label: thm-lagrangian-duality-gap
+# The mathematics and the Lean proof are Nico Pelleriti's; a later maintenance commit (the
+# abstract) would otherwise list the maintainer as co-contributor.
+contributors:
+  - Nico Pelleriti
 abstract: >-
   Lagrangian relaxation and convexification give two lower bounds for a minimization
   problem; Geoffrion's theorem says they agree when the underlying integer set is finite

@@ -27,7 +27,8 @@ lean/Lemmata/<LeanName>/Main.lean the formalization (Lean 4 + Mathlib)
 - `<id>`: lowercase kebab-case, e.g. `prime-infinitude`. It becomes the URL `/<id>/`. It
   cannot change after publication.
 - `<LeanName>`: UpperCamelCase, e.g. `PrimeInfinitude`. Namespace `Lemmata.<LeanName>`.
-- Reserved, never use as `<id>`: `c`, `index`, `healthz`, `readyz`, anything starting with
+- Reserved, never use as `<id>` (they are site paths): `abs`, `html`, `c`, `changelog`,
+  `checked`, `llms`, `index`, `healthz`, `readyz`, `node_modules`, and anything starting with
   `_`. Never use `Shared` as `<LeanName>` (it is for helpers several entries use).
 
 **Published means checked.** The cluster refuses the whole commit if *any* declaration
@@ -276,6 +277,11 @@ your copies anyway), and never commit `docs/_generated/`, `docs/c/`, `docs/_buil
 `docs/myst.runtime.yml`, `lean/.lake/` or `out/` (they are git-ignored).
 
 ## 6. Submit
+
+**Commit with a public email.** GitHub refuses a push whose commits carry an email the
+account keeps private ("push declined due to email privacy restrictions"). Use the account's
+noreply address — `git config user.email <id>+<user>@users.noreply.github.com` — before you
+commit; the name you set (`user.name`) is the one shown on the page.
 
 ```bash
 git add -A

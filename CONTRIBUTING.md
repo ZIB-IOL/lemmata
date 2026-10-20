@@ -19,7 +19,9 @@ in the sidebar.
 This creates `docs/prime-infinitude/{contribution.yml,index.md}` and
 `lean/Lemmata/PrimeInfinitude/Main.lean`, and adds the module to the umbrella. The id is
 lowercase kebab-case and becomes the URL (`/prime-infinitude/`); the Lean name is
-UpperCamelCase. Neither can change after publication.
+UpperCamelCase. Neither can change after publication. Some ids are reserved because they are
+site paths: `abs`, `html`, `c`, `changelog`, `checked`, `llms`, `index`, and anything starting
+with `_`; the Lean name `Shared` is reserved for helpers used by several entries.
 
 ## 2. Write the Lean
 
@@ -104,6 +106,17 @@ exports:
     label: thm-prime-infinitude
 ```
 
+Rules the tools enforce for these fields:
+
+- `category` must be an id in `docs/categories.yml`; `tags` are further category ids and may
+  not repeat the primary category.
+- `arxiv` is the bare identifier (`2301.01234`, `2301.01234v2`, `math/0601001`), without an
+  `arXiv:` prefix; the format is checked so a typo cannot become a dead link.
+- `abstract`, `ai_use` and `acknowledgements` are inline text only: words, `*emphasis*`,
+  `[links](…)` and math `$…$` / `$$…$$`. No directives, code fences, headings, lists or HTML;
+  write a literal dollar as `\$`; at most 2000 characters each. Use a YAML block (`>-`).
+- `contributors` items are `First Last` or `{first: …, last: …}`; names only, no emails.
+
 The URL of an entry is `/<id>/` and does not contain its category, so recategorising an
 entry later never breaks links to it. Category pages live at `/c/<category>/`.
 
@@ -111,6 +124,13 @@ Each export says "this label on this page is formalized by this declaration". Th
 is checked; whether the two say the same thing is what your reviewer checks.
 
 ## 5. Check and open a pull request
+
+Do not run `lake update`: the dependency set in `lean/lake-manifest.json` is pinned, and the
+build rejects a commit whose manifest differs. Never commit `.lemmata/`, `docs/_generated/`,
+`docs/c/`, `docs/abs/` or build output (they are git-ignored). Commit with your GitHub noreply
+address (`git config user.email <id>+<user>@users.noreply.github.com`): GitHub refuses pushes
+that expose a private email, and `user.name` is the name shown on the page.
+
 
 ```bash
 node tools/lemmata.mjs umbrella --write   # if you added or removed Lean files
@@ -122,3 +142,14 @@ the change matters to readers (a new entry, a correction), add a line to
 `docs/changelog.md` in the same pull request. Reviewers read the mathematics, compare the prose
 with the Lean statement, and review any JavaScript. Once merged, the entry is live within
 a few minutes, or the status page says why not.
+
+## Identifiers, later changes, and Lean upgrades
+
+On first publication an entry gets a stable identifier `lemmata:YYMM.NNNNN` with a landing
+page `/abs/YYMM.NNNNN` and the full entry at `/html/YYMM.NNNNN`; cite that. To change an entry
+later, open another pull request on the same directories — the identifier stays.
+
+The archive builds with one Lean and Mathlib version. If an upgrade breaks an entry, the
+maintainers may **freeze** it: it stays published, marked with the Lean version and date of
+its last successful check, and is left out of later builds while its files are unchanged. To
+bring it back, port it to the current version and ask for it to be unfrozen.
