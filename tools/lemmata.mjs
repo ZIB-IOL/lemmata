@@ -447,14 +447,14 @@ const people = (m, p) => m.contributors.length ? m.contributors : (p?.contributo
 const bibAuthor = (c) => c.last !== undefined
   ? (c.first ? `{${bibEscape(c.last)}}, ${bibEscape(c.first)}` : `{${bibEscape(c.last)}}`)
   : bibEscape(bibName(c.name));
-function bibtex(m, title, p, { siteUrl, releaseUrl, commit, checked, ident }) {
+function bibtex(m, title, p, { siteUrl, commit, checked, ident }) {
   // With an identifier, both the key and the URL are the permanent ones; the directory
   // name is an internal detail that may change.
   const stable = ident ? `${siteUrl}/abs/${ident}` : `${siteUrl}/${m.dir}/`;
   const fields = [
     ["title", `{${bibEscape(title)}}`],
-    ["author", people(m, p).length ? people(m, p).map(bibAuthor).join(" and ") : "{Lemmata contributors}"],
-    ["howpublished", ident ? `Lemmata, lemmata:${ident}, \\url{${stable}}` : `Lemmata, \\url{${stable}}`],
+    ["author", people(m, p).length ? people(m, p).map(bibAuthor).join(" and ") : "{Lemmata Repository contributors}"],
+    ["howpublished", ident ? `Lemmata Repository, lemmata:${ident}, \\url{${stable}}` : `Lemmata Repository, \\url{${stable}}`],
     ["year", p ? p.first.date.slice(0, 4) : String(new Date().getUTCFullYear())],
     ["url", stable],
   ];
@@ -598,11 +598,8 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   // Contributors line per entry. In the cluster the controller computes it from git and
   // ships .lemmata/provenance.json with the source (the build sees no history); locally the
   // same is computed from this checkout's git log. Names only -- never email addresses.
-  // Public address of the site, and of this build's immutable release. In the cluster the
-  // build Job sets both (SITE_URL, and BASE_URL = /_releases/<id>); locally they default to
-  // the production site and no snapshot link.
+  // Public address of the site (SITE_URL, set by the build Job; locally the production site).
   const siteUrl = (process.env.SITE_URL ?? "https://lemmata.iol.berlin").replace(/\/$/, "");
-  const releaseUrl = process.env.BASE_URL?.startsWith("/_releases/") ? siteUrl + process.env.BASE_URL : null;
   const prov = loadProvenance(manifests, commit);
   const idents = loadIdentifiers(commit);
   fs.mkdirSync(path.join(gen, "provenance"), { recursive: true });
@@ -646,7 +643,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     lines.push(":::", "");
     // "Cite as": a collapsed dropdown with a bibtex block (MyST adds the copy button).
     lines.push("::::{dropdown} Cite as", "", "```bibtex",
-      bibtex(m, titleOf(m), p, { siteUrl, releaseUrl, commit, checked: statusOf(m) === "checked", ident }), "```", "::::", "",
+      bibtex(m, titleOf(m), p, { siteUrl, commit, checked: statusOf(m) === "checked", ident }), "```", "::::", "",
       ":::::", "");
     fs.writeFileSync(path.join(gen, "provenance", `${m.id}.md`), lines.join("\n"));
   }
@@ -715,7 +712,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       ":::{div}", ":class: lemmata-provenance", "",
       ...(who ? [`Contributed by ${who}  `] : []), ...(dates ? [`${dates}  `] : []), licenseLine(m), ":::", "",
       "::::{dropdown} Cite as", "", "```bibtex",
-      bibtex(m, titleOf(m), p, { siteUrl, releaseUrl, commit, checked: statusOf(m) === "checked", ident }), "```", "::::", "",
+      bibtex(m, titleOf(m), p, { siteUrl, commit, checked: statusOf(m) === "checked", ident }), "```", "::::", "",
       ":::::", "",
       // Not "## Abstract": MyST lifts a section of that name above everything else on the
       // page. A bold label keeps the abstract below the header block, as on arXiv.
@@ -860,7 +857,7 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
       status: fz ? (allOk ? "frozen" : "failed") : allOk ? "checked" : "failed",
       last_checked: fz ? { lean_version: fz.lean_version ?? null, checked_at: fz.checked_at ?? null, commit: fz.commit ?? null } : null,
       exports, arxiv: m.arxiv, license: m.license, license_url: LICENSES[m.license].url, ai_use: m.notes?.ai_use ?? null, acknowledgements: m.notes?.acknowledgements ?? null,
-      bibtex: bibtex(m, titleOf(m), p, { siteUrl, releaseUrl: null, commit, checked: !fz && allOk, ident }),
+      bibtex: bibtex(m, titleOf(m), p, { siteUrl, commit, checked: !fz && allOk, ident }),
     };
   }).sort((a, b) => (a.identifier ?? "~").localeCompare(b.identifier ?? "~") || a.title.localeCompare(b.title));
 
@@ -910,9 +907,11 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
   fs.writeFileSync(path.join(outDir, "sitemap.xml"), ['<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     ...urls.map((u) => `  <url><loc>${xmlEsc(u)}</loc></url>`), "</urlset>", ""].join("\n"));
-  // No Disallow for /_releases/: the stable and /abs/ URLs redirect there, so blocking it
-  // would hide every page from crawlers that honour robots.txt.
+  // Pages built for the site root are served at their stable URLs; /_releases/<id>/ are
+  // copies for debugging that go stale, so keep crawlers off them. A release built with
+  // the prefix lives only there, so it is left crawlable.
   fs.writeFileSync(path.join(outDir, "robots.txt"), ["User-agent: *", "Allow: /",
+    ...(process.env.BASE_URL ? [] : ["Disallow: /_releases/"]),
     `Sitemap: ${siteUrl}/sitemap.xml`, ""].join("\n"));
   dedupeTitles(outDir);
 }
@@ -939,9 +938,10 @@ function injectAnalytics(siteDir, scriptUrl) {
   if (!scriptUrl) return 0;
   let u; try { u = new URL(scriptUrl); } catch { fail(`ANALYTICS_SCRIPT is not a URL: ${scriptUrl}`); return 0; }
   if (u.protocol !== "https:" || /["'<>\s]/.test(scriptUrl)) { fail(`ANALYTICS_SCRIPT must be a plain https URL`); return 0; }
-  // transformRequest strips the release prefix (/_releases/<id>) from the page URL and the
+  // transformRequest strips a release prefix (/_releases/<id>) from the page URL and the
   // referrer, so statistics are per stable page (/implication-composition), not split anew
-  // with every release.
+  // with every release. A no-op for releases built for the site root (pins.json
+  // release_prefix: false), whose pages are already at their stable URLs.
   const strip = "function(u){return u&&u.replace(/\\/_releases\\/[^/]+(?=\\/|$)/,'')}";
   const snippet = `<script async src="${scriptUrl}"></script>` +
     `<script>window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},` +
