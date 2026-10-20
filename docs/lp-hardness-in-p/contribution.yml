@@ -8,14 +8,18 @@ abstract: >-
   minimum-cost perfect matching, minimum-cost T-join, minimum odd cut,
   and minimum-cost odd-red bipartite perfect matching. The first three
   yield exponential lower bounds for every fixed approximation factor
-  from the Braun--Pokutta matching bound. The fourth uses a separate
-  shifted parity-matching rank bound. Lean proves the combinatorial
-  constructions, optimum identities, and transfers to formulation size;
-  source rank bounds and affine Farkas certificates are explicit inputs.
+  from the shifted matching-matrix rank theorem of Braun and Pokutta.
+  For parity matching, Lean also proves the new charging argument and
+  finite shifted-rank bound from explicit partition and entropy hypotheses
+  of Jia, Svensson, and Yuan. The concrete constructions, optimum identities,
+  and transfers to formulation size are formalized; the earlier source
+  theorems and the existence of affine Farkas certificates remain external.
 ai_use: >-
   The exposition and Lean formalization were developed with OpenAI Codex.
-  Source rank lower bounds and the existence of affine Farkas certificates
-  are external to the formalization; no custom axioms are introduced.
+  The published matching rank theorem, the earlier parity partition and
+  entropy assertions, and affine Farkas certificate existence remain
+  external. The new parity extension is formalized conditionally on precise
+  hypotheses; no custom axioms are introduced.
 pages:
   - index.md
 exports:
@@ -83,3 +87,31 @@ exports:
     kind: theorem
     page: index.md
     label: cor-lp-hardness-in-p-reversal
+  - name: Lemmata.LPHardnessInP.ParityExtension.coreProbability_supported
+    kind: theorem
+    page: index.md
+    label: prop-lp-hardness-in-p-core-distribution
+  - name: Lemmata.LPHardnessInP.ParityExtension.ConcreteJSYRectangleData.corruption_bound
+    kind: theorem
+    page: index.md
+    label: thm-lp-hardness-in-p-formal-corruption
+  - name: Lemmata.LPHardnessInP.ParityExtension.pairing_factorization_le
+    kind: theorem
+    page: index.md
+    label: thm-lp-hardness-in-p-separation
+  - name: Lemmata.LPHardnessInP.ParityExtension.calibrated_witness_gap
+    kind: theorem
+    page: index.md
+    label: prop-lp-hardness-in-p-parameters
+  - name: Lemmata.LPHardnessInP.ParityExtension.calibrated_shifted_rank_from_jsy
+    kind: theorem
+    page: index.md
+    label: thm-lp-hardness-in-p-finite-extension
+  - name: Lemmata.LPHardnessInP.ParityExtension.parity_lp_lower_bound_from_jsy
+    kind: theorem
+    page: index.md
+    label: cor-lp-hardness-in-p-jsy-lp
+  - name: Lemmata.LPHardnessInP.ParityExtension.shifted_rank_mono
+    kind: theorem
+    page: index.md
+    label: prop-lp-hardness-in-p-padding

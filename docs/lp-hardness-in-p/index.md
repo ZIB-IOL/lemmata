@@ -16,28 +16,32 @@ formulation supporting all objectives.
 We give the four applications together with the factorization argument
 that underlies them. The Lean development includes the actual graph and
 matching domains, objective sums, attaining solutions, and reductions.
-The nonnegative-rank lower bounds for the source matrices are explicit
-inputs. This permits the use of external rank theorems without introducing
-axioms into Lean.
+The published matching-matrix rank bound is an explicit theorem hypothesis.
+For parity matching, Lean also proves the new finite extension of the
+rectangle argument, from explicitly stated hypotheses describing the
+Jia–Svensson–Yuan partition framework. No external theorem is introduced
+as a Lean axiom.
 
 For every fixed $\alpha>1$, the implications are as follows.
 Here $n$ is the number of vertices in the first three rows and the number
 of vertices in each bipartition class in the last row.
 
-| Problem | Restricted objectives | Lower bound on LP size | Source rank input |
+| Problem | Restricted objectives | Lower bound on LP size | Nonnegative-rank lower bound used |
 | --- | --- | --- | --- |
 | Minimum-cost perfect matching | Strictly positive metric costs on $K_n$ | $2^{\Omega_\alpha(n)}$ | Shifted ordinary matching matrix |
 | Minimum-cost $T$-join | $T=V(K_n)$, the same metric costs | $2^{\Omega_\alpha(n)}$ | Shifted ordinary matching matrix |
 | Minimum odd cut | Weights in $\{0,1\}$ on $K_n$ | $2^{\Omega_\alpha(n)}$ | Transpose of the shifted ordinary matching matrix |
 | Minimum-cost odd-red bipartite perfect matching | Positive costs on a fixed two-colored complete bipartite multigraph | $2^{\Omega_\alpha(n)}$ | Shifted parity-matching matrix |
 
-The ordinary matching input follows from
-[Braun and Pokutta](https://arxiv.org/abs/1403.6710). The parity input is
-separate: the published exact extension-complexity bound of
-[Jia, Svensson, and Yuan](https://arxiv.org/abs/2211.09106) alone does not
-give the positive shift needed for a fixed-factor approximation. The final
-source-bound section proves the required extension, outside the Lean
-formalization.
+The first three applications use the exponential nonnegative-rank bound
+for the shifted odd-cut versus perfect-matching matrix proved by
+[Braun and Pokutta](https://arxiv.org/abs/1403.6710). The fourth uses a
+different matrix, from
+[Jia, Svensson, and Yuan](https://arxiv.org/abs/2211.09106). Their published
+exact bound alone does not give the shift needed for a fixed-factor
+approximation. Below we prove the required extension; Lean checks its
+new construction, charging estimate, and finite rank consequence, while
+their partition and entropy assertions remain explicit hypotheses.
 
 ## Formulations and source matrices
 
@@ -75,7 +79,7 @@ q_n(U,M)=|\delta(U)\cap M|,
 Q_{n,r}(U,M)=q_n(U,M)-r.
 $$
 
-The external ordinary matching bound used here is
+The theorem of Braun and Pokutta used here states that
 
 $$
 r_+(Q_{n,r})=2^{\Omega_r(n)}
@@ -85,7 +89,7 @@ $$ (eq-lp-hardness-in-p-matching-source)
 In Section 2.2.3 and the proof of Theorem 3.1 of
 [Braun and Pokutta](https://arxiv.org/html/1403.6710), the relevant
 submatrix has entries $(q_n-1+\beta)/2$ for fixed $0<\beta<1$.
-Taking $\beta=1-r$ and rescaling gives the stated input.
+Taking $\beta=1-r$ and rescaling gives the stated nonnegative-rank bound.
 [Rothvoss's exact matching bound](https://arxiv.org/abs/1311.2369)
 corresponds to $r=1$; it is not by itself a bound for $r<1$.
 
@@ -209,8 +213,10 @@ Since $\lambda>0$, scaling preserves nonnegative rank. Apply
 [](#thm-lp-hardness-in-p-factorization).
 ```
 
-The Braun--Pokutta input gives $m=2^{\Omega_\alpha(n)}$ for every fixed
-$\alpha>1$, although weighted perfect matching is polynomial-time
+Applying the bound $r_+(Q_{n,r})=2^{\Omega_r(n)}$ of
+[Braun and Pokutta](https://arxiv.org/abs/1403.6710) with $r=1/(2\alpha)$
+gives $m=2^{\Omega_\alpha(n)}$ for every fixed $\alpha>1$, although
+weighted perfect matching is polynomial-time
 solvable. The costs are $1$ and $1+(\alpha-1)n$. Thus their aspect ratio
 grows with $n$; this is not a bounded-aspect-ratio claim.
 
@@ -327,7 +333,7 @@ $$
 P_{n,r}(a,M)=t_n(a,M)-r.
 $$
 
-The source input for this application is
+The nonnegative-rank bound needed for this application is
 
 $$
 r_+(P_{n,r})=2^{\Omega_r(n)}
@@ -335,11 +341,13 @@ r_+(P_{n,r})=2^{\Omega_r(n)}
 $$ (eq-lp-hardness-in-p-parity-source)
 
 The mathematical proof of this separate shifted parity-matching assertion
-is given in [](#thm-lp-hardness-in-p-parity-source). It remains an explicit
-hypothesis of the Lean reduction. The argument extends the rectangle
-estimates of Jia--Svensson--Yuan; their exact bound at $r=1$ alone would
-not suffice, and the ordinary Braun--Pokutta bound concerns a different
-matrix.
+is given in [](#thm-lp-hardness-in-p-parity-source). The original reduction
+accepts this rank bound as a hypothesis. The additional Lean theorem
+[](#cor-lp-hardness-in-p-jsy-lp) instead derives a finite lower bound
+from explicit partition and probability-comparison hypotheses.
+The argument extends the rectangle estimates of Jia, Svensson, and Yuan;
+their exact bound at $r=1$ alone would not suffice, and the ordinary
+matching bound of Braun and Pokutta concerns a different matrix.
 
 ```{prf:lemma} Parity-matching optimum
 :label: lem-lp-hardness-in-p-parity-optimum
@@ -541,14 +549,17 @@ silently assume them.
 
 ## Source bound for the shifted parity matrix
 
-This section gives a mathematical proof of the additional source bound
-used for odd-red bipartite matching. **This source proof is not formalized
-in Lean.** The Lean reduction above takes its conclusion as an explicit
-hypothesis. The proof uses the small- and bad-triple estimates, Equations
-(4.5)--(4.6), and the permutation lemma, Lemma 4.4, of
-[Jia, Svensson, and Yuan, Sections 4.2--4.6](https://arxiv.org/html/2211.09106#S4).
-The finite charge for one-violation entries below is an additional argument;
-it is not part of their published exact extension-complexity theorem.
+This section proves the additional rank bound for odd-red bipartite
+matching. **The new extension is formalized in Lean, conditional on
+explicit assertions from the earlier partition framework.** These
+assertions include the small- and bad-triple estimates, Equations
+(4.5)–(4.6), and the permutation lemma, Lemma 4.4, of
+[Jia, Svensson, and Yuan, Sections 4.2–4.6](https://arxiv.org/html/2211.09106#S4).
+Their entropy proofs and the complete outside-partition construction are
+not formalized here. The one-violation construction, its admissibility,
+the new charging estimate, conversion to finite rank bounds, numerical
+parameter choice, and padding are proved in Lean. The precise conditional
+statements appear at the end of this section.
 
 Write $L$ for a vertex labeling and $E_L$ for its violating edges; thus
 $t(L,M)=t_n(L,M)=|M\cap E_L|$ and $P_{n,r}(L,M)=t(L,M)-r$.
@@ -721,21 +732,24 @@ $$
 =2r-A(h-r)-(B-3)(1-r).
 $$
 Choose $\varepsilon=r/100$ and $k\ge400/r$, also sufficiently large
-for the permutation lemma. Since $\varepsilon\le1/100$,
-$B\le3+30\varepsilon$ and $A\le11/k^2$; hence the displayed value is
-greater than $1.5r$.
+for the permutation lemma. The formal parameter estimates give
+$A(4k+3)\le r/10$ and $B-3\le r/4$; hence the displayed value is
+greater than $3r/2$.
 
 For completeness, if a finite signed matrix $W$ has value at most $E$
 on every rectangle indicator, then any nonnegative matrix $S$ satisfies
 $$
 r_+(S)\ge\frac{\langle W,S\rangle}{E\|S\|_\infty}
 $$
-whenever the numerator and $E$ are positive. Indeed, a nonnegative
-rank-one summand $ab^{\mathsf T}$ is an integral of indicators of
-rectangles $\{i:a_i>x\}\times\{j:b_j>y\}$, with total weight
-$\|a\|_\infty\|b\|_\infty$. In a nonnegative factorization of $S$,
-each summand is entrywise at most $S$, so this weight is at most
-$\|S\|_\infty$. Summing the rectangle estimate proves the inequality.
+whenever the numerator and $E$ are positive. Normalize a nonzero
+nonnegative rank-one summand $ab^{\mathsf T}$ by the maxima of its two
+factors. The resulting factors lie in unit cubes. Maximizing a linear
+functional in each factor in turn shows that their signed pairing is
+at most the largest rectangle weight. The original summand therefore
+contributes at most $E\|a\|_\infty\|b\|_\infty$. Since each summand of a
+nonnegative factorization is entrywise at most $S$, this is at most
+$E\|S\|_\infty$. Summing proves the inequality. This finite argument,
+including empty index sets and zero factors, is formalized in Lean.
 
 Here $0\le P_{n,r}\le n$, while $E_s$ is exponentially small in $s$ and
 $s=\Theta_r(n)$. This proves the lower bound for
@@ -745,6 +759,203 @@ $(1,0)$. They add no violations, preserve odd red parity, and change the
 label parity by precisely $n-n_0$. Thus $P_{n_0,r}$ occurs as a submatrix
 of $P_{n,r}$, with $n-n_0<8k$. The bound follows for all sufficiently
 large $n$.
+```
+
+### Formal statements for the extension
+
+The finite statements below specify exactly which part of the preceding
+argument Lean proves. They use the same costs and violation matrices as
+the four applications.
+
+```{prf:proposition} The new one-violation distribution
+:label: prop-lp-hardness-in-p-core-distribution
+
+Let $h$ be odd. Take any finite probability distribution on samples
+$(H',i,j)$ with $H'\subseteq[h]$, $|H'|=3$, and distinct $i,j\in H'$.
+Apply the core matching and labeling construction above to each sample.
+Its distribution on actual admissible labelings and odd-red matchings
+is supported on pairs with exactly one violation.
+```
+
+```{prf:proof} of [](#prop-lp-hardness-in-p-core-distribution)
+:nonumber:
+
+The matching has $h-2$ red edges and the labeling has $2h-3$ labels
+equal to one. The two swapped blue edges do not violate, and precisely
+the third element of $H'$ contributes a violating red edge. Pushing
+forward the sample weights preserves total mass and this support
+property, including when several samples give the same outcome.
+```
+
+For clarity, call the following the *finite partition hypotheses*.
+There is a finite set of partitions with nonnegative averaging weights
+and a finite set of $p$ triples. Each partition specifies its good triples,
+canonical and high-violation completions, and nonnegative row and column
+membership probabilities. The following assertions are supplied:
+
+- Every family of at least $K$ good triples contains the witness pair
+  guaranteed by the permutation-family property.
+- For a good triple, the probability of every permitted completion is
+  within a factor $c=1+\varepsilon$ of its canonical probability.
+  Permitted matchings agree with the red identity matching on that
+  triple and are consistent with the complementary labeling.
+  Permitted labelings have the canonical values on the triple and
+  are consistent with the complementary matching.
+- The high completions are permitted. The old canonical matchings
+  and labelings have the block properties described above; the
+  witness relation gives two opposite labels outside the witness triple.
+- The averages of the high-completion probabilities and the new
+  one-violation sample probabilities equal the respective rectangle
+  masses. The three-violation mass is covered by the good, small,
+  and bad contributions, with
+  $\mathrm{Small}\le e_s$ and
+  $\mathrm{Bad}\le\varepsilon\mu_3(\mathcal R)+e_b$.
+
+These are explicit fields of `ConcreteJSYRectangleData`. Its new matching
+and labeling are the concrete core constructions, not arbitrary
+replacement objects. Lean proves that they are permitted and derives
+their probability comparisons from the generic goodness condition.
+The sampling identities, permutation-family assertion, and small-/bad-triple
+estimates remain hypotheses; their proofs in the earlier framework are
+outside this formalization.
+
+```{prf:theorem} Finite corruption inequality from the partition hypotheses
+:label: thm-lp-hardness-in-p-formal-corruption
+
+Assume the finite partition hypotheses, $p>0$, and
+$0\le\varepsilon<1$. Then
+
+$$
+\mu_3(\mathcal R)\le
+\frac{K(1+\varepsilon)^2}{(1-\varepsilon)p}\,\mu_h(\mathcal R)
++\frac{3(1+\varepsilon)^6}{1-\varepsilon}\,\nu_1(\mathcal R)
++\frac{e_s+e_b}{1-\varepsilon}.
+$$
+
+Neither this corruption inequality nor a rank lower bound is a hypothesis.
+```
+
+```{prf:proof} of [](#thm-lp-hardness-in-p-formal-corruption)
+:nonumber:
+
+Apply the permutation property to the exceptional family itself to
+bound its size by $K$. For every regular triple, the new permitted
+matching and labeling have product probability at least $w/c^4$,
+whereas its canonical product is at most $c^2w$. Its contribution is
+therefore at most $c^6$ times the sum of its three new sample
+probabilities. Sum over triples, divide by $p$, average over
+partitions, and absorb the bad contribution
+$\varepsilon\mu_3(\mathcal R)$. This proves the displayed coefficients.
+```
+
+```{prf:theorem} Separation from rectangle bounds
+:label: thm-lp-hardness-in-p-separation
+
+Let $S,W$ be real matrices on finite index sets. Suppose every rectangle
+has signed $W$-weight at most $E\ge0$ and $S(i,j)\le U$ for all entries,
+where $U\ge0$. Every nonnegative factorization of $S$ with $q$ terms
+satisfies
+
+$$
+\langle W,S\rangle\le qEU.
+$$
+```
+
+```{prf:proof} of [](#thm-lp-hardness-in-p-separation)
+:nonumber:
+
+Apply the finite unit-cube argument from the preceding proof to each
+rank-one summand. Its entries are bounded above by those of $S$, so
+each summand contributes at most $EU$.
+```
+
+```{prf:proposition} Explicit parameter choice
+:label: prop-lp-hardness-in-p-parameters
+
+Let $0<r\le1$, $\varepsilon=r/100$, and $k\in\mathbb N$ satisfy
+$k\ge400/r$. With $A,B$ defined in the finite rectangle inequality,
+
+$$
+(3-r)-A(4k+3-r)-B(1-r)>\frac{3r}{2}.
+$$
+```
+
+```{prf:proof} of [](#prop-lp-hardness-in-p-parameters)
+:nonumber:
+
+The exact identity
+$6\binom{2k+3}{3}=(2k+3)(2k+2)(2k+1)$ gives $A\le8/k^2$.
+Also $(1+\varepsilon)^6\le1+7\varepsilon$ for
+$0\le\varepsilon\le1/100$, giving $B-3\le25\varepsilon$.
+Consequently $A(4k+3)\le r/10$ and $B-3\le r/4$.
+Substitute these bounds into
+$2r-A(4k+3-r)-(B-3)(1-r)$.
+```
+
+```{prf:theorem} Finite shifted-rank bound
+:label: thm-lp-hardness-in-p-finite-extension
+
+Let $\mu_3,\mu_h,\nu_1$ be probability matrices supported on
+$t=3,h,1$, respectively, where $h=4k+3$. Assume the finite partition
+hypotheses for every rectangle, with
+$K=10k$, $p=\binom{2k+3}{3}$, $\varepsilon=r/100$,
+$0<r\le1$, and $k\ge400/r$. Suppose $e_s,e_b\ge0$ and
+$t(i,j)-r\le U$, where $U\ge0$. Set
+$E=(e_s+e_b)/(1-r/100)$.
+For every $L\in\mathbb N$,
+
+$$
+(L-1)EU\le\frac{3r}{2}
+\quad\Longrightarrow\quad
+L\le r_+(t-r).
+$$
+
+Here $L-1$ is subtraction in the real numbers.
+```
+
+```{prf:proof} of [](#thm-lp-hardness-in-p-finite-extension)
+:nonumber:
+
+The corruption theorem bounds every rectangle of
+$W=\mu_3-A\mu_h-B\nu_1$ by $E$. Support and normalization give
+$\langle W,t-r\rangle=(3-r)-A(h-r)-B(1-r)>3r/2$.
+A factorization with fewer than $L$ terms would contradict
+[](#thm-lp-hardness-in-p-separation).
+```
+
+```{prf:corollary} Parity-matching LP bound from the partition hypotheses
+:label: cor-lp-hardness-in-p-jsy-lp
+
+In the preceding theorem take the actual parity violation matrix $t_n$,
+$r=1/(2\alpha)$, $\alpha>1$, and $U=n\ge1$.
+Assume the concrete finite partition hypotheses.
+Every certified $\alpha$-approximate formulation for the positive-cost
+odd-red matching family has $L\le m+1$ whenever
+$(L-1)En\le3r/2$.
+```
+
+```{prf:proof} of [](#cor-lp-hardness-in-p-jsy-lp)
+:nonumber:
+
+Every matching has at most $n$ violations, so $t_n-r\le n$.
+Derive the shifted rank bound from the partition hypotheses and apply
+[](#thm-lp-hardness-in-p-parity). The formal endpoint performs both
+steps; it does not assume a source rank bound.
+```
+
+```{prf:proposition} Padding the parity matrix
+:label: prop-lp-hardness-in-p-padding
+
+For $n\le N$ and every real $r$,
+$r_+(P_{n,r})\le r_+(P_{N,r})$.
+```
+
+```{prf:proof} of [](#prop-lp-hardness-in-p-padding)
+:nonumber:
+
+Add blue identity edges and label the new endpoint pairs $(1,0)$.
+These independent maps preserve both parity conditions and the exact
+violation count. The smaller matrix is a pullback of the larger one.
 ```
 
 ## Scope of the formalization
@@ -764,20 +975,24 @@ The metric property is proved for the actual cost function.
 The first three applications use a graph with $n$ vertices; the
 parity application uses a multigraph with $2n$ vertices.
 
-The external inputs are precisely:
+The remaining external hypotheses and results are:
 
-- the source nonnegative-rank inequalities, provided as theorem
-  hypotheses;
+- the ordinary matching-matrix nonnegative-rank theorem of Braun and Pokutta;
+- for the new parity extension, the permutation-family property, generic
+  good-completion comparisons, sampling identities, and small-/bad-triple
+  estimates of the Jia–Svensson–Yuan framework; the full-graph completion
+  maps are required to preserve the core violation count;
 - the existence of affine Farkas certificates, provided as data in
   `CertifiedLP`;
 - the cited polynomial-time algorithms, whose running times are not
   formalized here.
 
-Accordingly, the Lean results are finite conditional inequalities.
-The exponential conclusions follow by inserting the specified source
-rank bounds. The ordinary matching bound is cited from Braun--Pokutta;
-the shifted parity bound is proved in the preceding mathematical section,
-which is not among the Lean exports.
+The original four transfer theorems remain available with an assumed
+source rank bound. The additional parity theorem instead derives that
+rank bound, in finite quantitative form, from the displayed partition
+hypotheses. The mathematical exponential statement also uses the
+exponential decay in the external small-/bad-triple estimates.
+The Lean development does not formalize the earlier paper in its entirety.
 
 All four applications can be imported from one module:
 
