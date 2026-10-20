@@ -358,12 +358,14 @@ const people = (m, p) => m.contributors.length ? m.contributors : (p?.contributo
 const bibAuthor = (c) => c.last !== undefined
   ? (c.first ? `{${bibEscape(c.last)}}, ${bibEscape(c.first)}` : `{${bibEscape(c.last)}}`)
   : bibEscape(bibName(c.name));
-function bibtex(m, title, p, { siteUrl, releaseUrl, commit, checked }) {
-  const stable = `${siteUrl}/${m.dir}/`;
+function bibtex(m, title, p, { siteUrl, releaseUrl, commit, checked, ident }) {
+  // With an identifier, both the key and the URL are the permanent ones; the directory
+  // name is an internal detail that may change.
+  const stable = ident ? `${siteUrl}/abs/${ident}` : `${siteUrl}/${m.dir}/`;
   const fields = [
     ["title", `{${bibEscape(title)}}`],
     ["author", people(m, p).length ? people(m, p).map(bibAuthor).join(" and ") : "{Lemmata contributors}"],
-    ["howpublished", `Lemmata, \\url{${stable}}`],
+    ["howpublished", ident ? `Lemmata, lemmata:${ident}, \\url{${stable}}` : `Lemmata, \\url{${stable}}`],
     ["year", p ? p.first.date.slice(0, 4) : String(new Date().getUTCFullYear())],
     ["url", stable],
   ];
@@ -371,13 +373,25 @@ function bibtex(m, title, p, { siteUrl, releaseUrl, commit, checked }) {
     releaseUrl ? `snapshot: \\url{${releaseUrl}/${m.dir}/}` : null].filter(Boolean).join("; ");
   fields.push(["note", note]);
   if (m.arxiv.length) fields.push(["eprint", m.arxiv[0]], ["archivePrefix", "arXiv"]);
-  const key = `lemmata:${m.dir}`;
+  const key = ident ? `lemmata:${ident}` : `lemmata:${m.dir}`;
   const w = Math.max(...fields.map(([k]) => k.length));
   return `@misc{${key},\n` + fields.map(([k, v]) => `  ${k.padEnd(w)} = {${v.replace(/^\{(.*)\}$/s, "$1")}}`).join(",\n") + "\n}";
 }
 
 // .lemmata/provenance.json if the cluster supplied it; otherwise compute the same shape
 // from local git (a working checkout), or null if there is no git at all.
+// Stable identifiers (lemmata:YYYY.NNNNN) are assigned by the cluster and shipped as
+// .lemmata/identifiers.json; a local preview has none ("assigned on publication").
+function loadIdentifiers(commit) {
+  const shipped = path.join(ROOT, ".lemmata", "identifiers.json");
+  if (!fs.existsSync(shipped)) return {};
+  const d = JSON.parse(fs.readFileSync(shipped, "utf8"));
+  if (commit && d.source_commit && d.source_commit !== commit) fail(`.lemmata/identifiers.json is for ${d.source_commit}, not ${commit}`);
+  for (const [entry, ident] of Object.entries(d.entries ?? {}))
+    if (!/^\d{4}\.\d{5}$/.test(ident)) fail(`.lemmata/identifiers.json: bad identifier ${ident} for ${entry}`);
+  return d.entries ?? {};
+}
+
 function loadProvenance(manifests, commit) {
   const shipped = path.join(ROOT, ".lemmata", "provenance.json");
   if (fs.existsSync(shipped)) {
@@ -473,6 +487,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const siteUrl = (process.env.SITE_URL ?? "https://lemmata.iol.berlin").replace(/\/$/, "");
   const releaseUrl = process.env.BASE_URL?.startsWith("/_releases/") ? siteUrl + process.env.BASE_URL : null;
   const prov = loadProvenance(manifests, commit);
+  const idents = loadIdentifiers(commit);
   fs.mkdirSync(path.join(gen, "provenance"), { recursive: true });
   const day = (iso) => String(iso ?? "").slice(0, 10);
   const commitLink = (c) => forge ? `[${c.slice(0, 7)}](${forge.commit(c)})` : `\`${c.slice(0, 7)}\``;
@@ -480,7 +495,10 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     const p = prov?.entries?.[m.id];
     // One header block per entry: contributors line + "Cite as", visually set apart from
     // the mathematics below (styled by docs/_static/lemmata.css, class lemmata-header).
+    const ident = idents[m.id];
     const lines = [":::::{div}", ":class: lemmata-header", "", ":::{div}", ":class: lemmata-provenance", ""];
+    // The stable identifier and its permanent URL, the address to cite and link to.
+    lines.push(ident ? `[**lemmata:${ident}**](${siteUrl}/abs/${ident})  ` : "*Identifier assigned on publication.*  ");
     if (!p && !m.contributors.length) lines.push("*Not yet committed.*");
     else if (!p) lines.push(`Contributed by ${people(m, p).map((c) => `**${esc(c.name)}**`).join(", ")}`);
     else {
@@ -498,7 +516,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     lines.push(":::", "");
     // "Cite as": a collapsed dropdown with a bibtex block (MyST adds the copy button).
     lines.push("::::{dropdown} Cite as", "", "```bibtex",
-      bibtex(m, titleOf(m), p, { siteUrl, releaseUrl, commit, checked: statusOf(m) === "checked" }), "```", "::::", "",
+      bibtex(m, titleOf(m), p, { siteUrl, releaseUrl, commit, checked: statusOf(m) === "checked", ident }), "```", "::::", "",
       ":::::", "");
     fs.writeFileSync(path.join(gen, "provenance", `${m.id}.md`), lines.join("\n"));
   }

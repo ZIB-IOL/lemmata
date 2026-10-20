@@ -255,6 +255,19 @@ and say what the result is and how the Lean statement corresponds to the prose. 
 is publishing**: a human reviews and merges. Do not push to `main` yourself unless you have
 been explicitly told to.
 
+## Identifiers and later changes
+
+On its first publication every entry gets a **stable identifier**, `lemmata:YYYY.NNNNN`,
+with a **permanent URL** `https://lemmata.iol.berlin/abs/YYYY.NNNNN`. The cluster assigns it;
+you do not write it anywhere. It is shown at the top of the page and used as the BibTeX key
+and URL. Link to and cite that URL, not the directory-based one.
+
+To change an entry later, open another pull request against the same `docs/<id>/` and
+`lean/Lemmata/<LeanName>/`. The identifier stays the same. The header's "last changed"
+line and commit link update by themselves; the BibTeX `note` names the immutable snapshot
+of each published version, so earlier citations stay exact. Note substantive corrections
+in `docs/changelog.md`.
+
 ## 7. Confirm it is live
 
 After the merge, the cluster builds the new `main` within about a minute; a build takes
