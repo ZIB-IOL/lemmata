@@ -89,7 +89,8 @@ For an edge row $\{a,b\}$ with $a<b$, its row factor is one at $(0,b,b)$ if $a=0
 if $a>0$, it is one at the two slots $(0,a,b)$ and $(0,b,a)$. All its other
 coefficients are zero.
 
-```{prf:proof}
+```{prf:proof} of [](#prop-spanning-tree-min-split-factorization) and [](#thm-spanning-tree-min-split)
+:nonumber:
 All factors are nonnegative. For a subtour row, only the root $r=\min S$ contributes.
 If the parent of $v\in S\setminus\{r\}$ lies below $r$, it is outside $S$ and the
 diagonal slot $(r,v,v)$ fires. If it lies above $r$ and outside $S$, exactly the slot

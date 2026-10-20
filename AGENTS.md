@@ -172,7 +172,9 @@ One or two sentences of context.
 The statement in mathematical language, with $\LaTeX$ math.
 ```
 
-```{prf:proof}
+```{prf:proof} of [](#thm-<id>)
+:nonumber:
+
 The informal proof.
 ```
 
@@ -192,10 +194,16 @@ The informal proof.
   the verification panel, from the verifier's report. Neither can be edited: do not add
   an `authors:` block, and never write "checked", "verified" or a badge yourself.
 - The first include also renders a collapsed **Cite as** box with a BibTeX entry for the
-  page (stable URL, contributors, year, arXiv if given, and a link to the exact snapshot).
+  page (permanent `/abs/` URL, contributors, year, arXiv if given, and the version
+  commit in `note`).
   It is generated; there is nothing to write.
 - Your name on the page is the **git author name** of your commits, unless the manifest
   lists `contributors` (step 4). Set it before committing: `git config user.name "Full Name"`.
+- Every `prf:proof` names what it proves and carries `:nonumber:`, exactly as above;
+  it renders as "Proof (of Theorem 1)" with a link. Validation fails otherwise: MyST
+  numbers proofs on their own, so a page with a theorem, a proposition and one proof
+  would say "Proof 1" and leave the reader guessing. A proof of several statements
+  lists them all: `of [](#prop-<id>-…) and [](#thm-<id>)`.
 - Never paste Lean into Markdown by hand; always `literalinclude`.
 - Refer to results by label: `[](#thm-implication-composition)`. Labels from other entries work.
 - Other environments: `prf:lemma`, `prf:definition`, `prf:corollary`, `prf:proposition`.
@@ -304,7 +312,7 @@ and URL. Link to and cite that URL, not the directory-based one.
 
 To change an entry later, open another pull request against the same `docs/<id>/` and
 `lean/Lemmata/<LeanName>/`. The identifier stays the same. The header's "last changed"
-line and commit link update by themselves; the BibTeX `note` names the immutable snapshot
+line and commit link update by themselves; the BibTeX `note` names the commit
 of each published version, so earlier citations stay exact. Note substantive corrections
 in `docs/changelog.md`.
 

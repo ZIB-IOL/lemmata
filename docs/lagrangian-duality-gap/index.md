@@ -80,7 +80,8 @@ $$
 In particular, $v^L=0<1=v_{\rm cl}$.
 ```
 
-```{prf:proof}
+```{prf:proof} of [](#thm-lagrangian-duality-gap)
+:nonumber:
 The inequalities defining $K$ are closed conditions. Its last three conditions
 say that the symmetric matrix
 

@@ -15,7 +15,8 @@ enough to read at a glance.
 Let $P$, $Q$, $R$ be propositions. If $P \to Q$ and $Q \to R$, then $P \to R$.
 ```
 
-```{prf:proof}
+```{prf:proof} of [](#thm-implication-composition)
+:nonumber:
 Assume $P$. From $P \to Q$ we get $Q$, and from $Q \to R$ we get $R$.
 ```
 

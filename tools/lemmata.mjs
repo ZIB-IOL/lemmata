@@ -210,6 +210,7 @@ function loadManifests(categories = loadCategories()) {
     for (const f of walk(path.join(DOCS, dir), ".md")) {
       const rel = path.relative(path.join(DOCS, dir), f);
       if (!pageSet.has(rel)) fail(`${where}: page ${rel} is not listed in contribution.yml`);
+      else checkProofs(fs.readFileSync(f, "utf8"), `${where}/${rel}`);
     }
 
     const exports = Array.isArray(m.exports) ? m.exports : [];
@@ -282,6 +283,27 @@ function loadManifests(categories = loadCategories()) {
 
 // Every literalinclude must point inside the repo at an existing file, and its
 // start-after/end-before markers must each occur exactly once, in that order.
+// MyST numbers proofs like theorems, so an entry with a theorem, a proposition and one
+// proof shows "Proof 1" and leaves the reader guessing what it proves. Every proof is
+// therefore unnumbered and names its statement with a link:
+//   ```{prf:proof} of [](#thm-<id>)
+//   :nonumber:
+// which renders as "Proof (of Theorem 1)". No project-wide switch does this: MyST's
+// numbering config ignores proofs.
+function checkProofs(text, where) {
+  const lines = text.split("\n");
+  for (const [i, line] of lines.entries()) {
+    const m = line.match(/^\s*(`{3,}|:{3,})\{prf:proof\}(.*)$/);
+    if (!m) continue;
+    const at = `${where}:${i + 1}`;
+    if (!/\]\(#[^)\s]+\)/.test(m[2])) fail(`${at}: a proof must say what it proves, e.g. \`${m[1]}{prf:proof} of [](#thm-…)\``);
+    let nonumber = false;
+    for (let j = i + 1; j < lines.length && /^\s*:[\w-]+:/.test(lines[j]); j++)
+      if (/^\s*:nonumber:/.test(lines[j])) nonumber = true;
+    if (!nonumber) fail(`${at}: a proof must be unnumbered: add \`:nonumber:\` on the line after the directive`);
+  }
+}
+
 function checkSnippets(manifests) {
   const pages = [path.join(DOCS, "index.md"),
     ...manifests.flatMap((m) => m.pages.map((p) => path.join(DOCS, m.dir, p)))];
@@ -701,6 +723,7 @@ function scaffold(id, lean, category) {
   fs.writeFileSync(path.join(d, "index.md"), `---\ntitle: ${id}\n---\n\n` +
     "```{include} ../_generated/provenance/" + id + ".md\n```\n\n" +
     "```{prf:theorem} Statement\n:label: thm-" + id + "\n\nState the result here.\n```\n\n" +
+    "```{prf:proof} of [](#thm-" + id + ")\n:nonumber:\n\nProve it here.\n```\n\n" +
     "```{literalinclude} ../../lean/" + LIB + "/" + lean + "/Main.lean\n:language: lean\n" +
     ":start-after: -- DOCS_BEGIN_MAIN\n:end-before: -- DOCS_END_MAIN\n```\n\n" +
     "```{include} ../_generated/verification/" + id + ".md\n```\n");
@@ -819,6 +842,18 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
   // would hide every page from crawlers that honour robots.txt.
   fs.writeFileSync(path.join(outDir, "robots.txt"), ["User-agent: *", "Allow: /",
     `Sitemap: ${siteUrl}/sitemap.xml`, ""].join("\n"));
+  dedupeTitles(outDir);
+}
+
+// The theme titles every page "<page title> - <site title>". On the start page both are
+// the site title, so tabs and link previews (Slack, og:title) read "X - X". Collapse that
+// one case to "X"; every other page keeps its suffix.
+function dedupeTitles(siteDir) {
+  for (const f of walk(siteDir, ".html")) {
+    const html = fs.readFileSync(f, "utf8");
+    const out = html.replace(/(<title>|<meta property="og:title" content=")([^<"]+) - \2(<\/title>|")/g, "$1$2$3");
+    if (out !== html) fs.writeFileSync(f, out);
+  }
 }
 
 // ------------------------------------------------------------------------- analytics

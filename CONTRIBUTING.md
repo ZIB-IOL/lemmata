@@ -71,6 +71,9 @@ small entries may keep everything in `Main.lean` — but new entries should foll
 - State results with `prf:theorem` (or `prf:lemma`, `prf:definition`, …) and give each a
   `:label:` containing your id, e.g. `thm-prime-infinitude`.
 - Include the Lean with `literalinclude` from `../../lean/...`. Never paste a proof by hand.
+- Write each informal proof as ```` ```{prf:proof} of [](#thm-<id>) ```` with `:nonumber:` on
+  the next line, so it reads "Proof (of Theorem 1)" instead of a bare "Proof 1".
+  Validation enforces this.
 - Refer to other entries' results by label: `[](#thm-implication-composition)`.
 - Keep both generated includes the scaffold writes: `../_generated/provenance/<id>.md`
   under the title (who contributed, from git — your name is your git author name) and
