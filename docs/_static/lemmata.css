@@ -121,3 +121,7 @@
   opacity: 0.85;
 }
 .lemmata-notes p { margin: 0 0 0.6rem; }
+
+/* Identifier line (rendered by a widget, which styles its own link and "copy" control):
+   no extra margin around the widget inside the header. */
+.lemmata-header .myst-anywidget, .lemmata-header [class*="anywidget"] { margin: 0 0 0.15rem; }

@@ -489,6 +489,9 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const prov = loadProvenance(manifests, commit);
   const idents = loadIdentifiers(commit);
   fs.mkdirSync(path.join(gen, "provenance"), { recursive: true });
+  // The identifier line's "copy" control: a tiny anywidget module written by the tools,
+  // not taken from the content repo, so contributors cannot change what it does.
+  fs.writeFileSync(path.join(gen, "provenance", "ident.mjs"), IDENT_WIDGET);
   const day = (iso) => String(iso ?? "").slice(0, 10);
   const commitLink = (c) => forge ? `[${c.slice(0, 7)}](${forge.commit(c)})` : `\`${c.slice(0, 7)}\``;
   for (const m of manifests) {
@@ -498,7 +501,15 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     const ident = idents[m.id];
     const lines = [":::::{div}", ":class: lemmata-header", "", ":::{div}", ":class: lemmata-provenance", ""];
     // The stable identifier and its permanent URL, the address to cite and link to.
-    lines.push(ident ? `[**lemmata:${ident}**](${siteUrl}/abs/${ident})  ` : "*Identifier assigned on publication.*  ");
+    if (ident) {
+      // The identifier as permanent link + "copy" (copies the permanent URL), rendered by a
+      // widget. Without JavaScript the identifier and URL are still in the Cite-as BibTeX.
+      lines.push(":::",
+        // Path relative to the entry page that includes this file (docs/<id>/index.md):
+        // MyST resolves widget modules from the including page, not from _generated/.
+        "", "```{anywidget} ../_generated/provenance/ident.mjs", JSON.stringify({ ident: `lemmata:${ident}`, url: `${siteUrl}/abs/${ident}` }), "```",
+        "", ":::{div}", ":class: lemmata-provenance", "");
+    } else lines.push("*Identifier assigned on publication.*  ");
     if (!p && !m.contributors.length) lines.push("*Not yet committed.*");
     else if (!p) lines.push(`Contributed by ${people(m, p).map((c) => `**${esc(c.name)}**`).join(", ")}`);
     else {
@@ -603,6 +614,32 @@ function scaffold(id, lean, category) {
   checkUmbrella(true);
   console.log(`created docs/${id}/ and lean/${LIB}/${lean}/; umbrella updated`);
 }
+
+// The identifier line as a widget: the permanent link, and "copy" which puts the permanent
+// URL on the clipboard (feedback "copied" for 1.5 s). Only model.get is used -- the static
+// MyST theme has no kernel.
+const IDENT_WIDGET = `function render({ model, el }) {
+  const ident = model.get("ident"), url = model.get("url");
+  const box = document.createElement("span"); box.className = "lemmata-ident";
+  const a = document.createElement("a"); a.href = url; a.className = "lemmata-ident-link";
+  const b = document.createElement("strong"); b.textContent = ident; a.append(b);
+  const btn = document.createElement("button"); btn.type = "button"; btn.className = "lemmata-ident-copy";
+  btn.textContent = "copy"; btn.title = "Copy the permanent URL " + url;
+  btn.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(url); }
+    catch { const t = document.createElement("textarea"); t.value = url; document.body.append(t); t.select(); document.execCommand("copy"); t.remove(); }
+    btn.textContent = "copied"; setTimeout(() => { btn.textContent = "copy"; }, 1500);
+  });
+  const css = document.createElement("style");
+  css.textContent = ".lemmata-ident{display:inline-flex;align-items:center;gap:.5rem;font-size:.875rem}" +
+    ".lemmata-ident-link{color:inherit}" +
+    ".lemmata-ident-copy{font:inherit;font-size:.75rem;line-height:1.3;padding:.05rem .45rem;cursor:pointer;" +
+    "color:inherit;background:transparent;border:1px solid color-mix(in srgb,currentColor 35%,transparent);" +
+    "border-radius:4px;opacity:.75}.lemmata-ident-copy:hover{opacity:1}";
+  box.append(a, btn); el.append(css, box);
+}
+export default { render };
+`;
 
 // ------------------------------------------------------------------------- site index
 
