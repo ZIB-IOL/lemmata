@@ -101,6 +101,7 @@ ai_use: >-                   # optional: how AI tools were used (end of the page
   ...
 acknowledgements: >-         # optional: funding, thanks (end of the page); $math$ allowed
   ...
+license: CC-BY-4.0           # optional: CC-BY-4.0 (default), CC-BY-SA-4.0 or CC0-1.0
 pages: [index.md]            # first page must be index.md; list every page
 exports:
   - name: Lemmata.PrimeInfinitude.exists_infinite_primes
@@ -119,6 +120,9 @@ Rules the tools enforce for these fields:
   `[links](…)` and math `$…$` / `$$…$$`. No directives, code fences, headings, lists or HTML;
   write a literal dollar as `\$`; at most 2000 characters each. Use a YAML block (`>-`).
 - `contributors` items are `First Last` or `{first: …, last: …}`; names only, no emails.
+- `license` covers the whole entry, prose and Lean. Without it the entry is **CC BY 4.0**;
+  the only other choices are `CC-BY-SA-4.0` and `CC0-1.0`. It is shown under the title.
+  Only contribute what you may license this way.
 
 The URL of an entry is `/<id>/` and does not contain its category, so recategorising an
 entry later never breaks links to it. Category pages live at `/c/<category>/`.

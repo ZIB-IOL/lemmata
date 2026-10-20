@@ -38,7 +38,15 @@ const CATEGORY_DIR = "c";
 const CATEGORY_KEYS = new Set(["id", "title", "description"]);
 const RESERVED_LEAN = new Set(["Shared"]);
 const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "arxiv", "contributors",
-  "ai_use", "acknowledgements", "abstract", "pages", "exports"]);
+  "ai_use", "acknowledgements", "abstract", "license", "pages", "exports"]);
+// Licence of an entry (prose and Lean). Optional; without it the entry is CC BY 4.0. Only
+// these SPDX ids are accepted, so every entry stays reusable and its link is known.
+const LICENSES = {
+  "CC-BY-4.0": { name: "CC BY 4.0", url: "https://creativecommons.org/licenses/by/4.0/" },
+  "CC-BY-SA-4.0": { name: "CC BY-SA 4.0", url: "https://creativecommons.org/licenses/by-sa/4.0/" },
+  "CC0-1.0": { name: "CC0 1.0", url: "https://creativecommons.org/publicdomain/zero/1.0/" },
+};
+const DEFAULT_LICENSE = "CC-BY-4.0";
 // Free-text notes rendered at the bottom of an entry. Inline MyST only: text, emphasis,
 // links and math ($...$, $$...$$, rendered by KaTeX). Anything that could create page
 // structure or pull in other content is refused, so a note cannot impersonate the
@@ -268,7 +276,10 @@ function loadManifests(categories = loadCategories()) {
     for (const k of Object.keys(NOTE_KEYS)) if (m[k] !== undefined) notes[k] = checkNote(m[k], `${where}/contribution.yml: ${k}`);
     // Optional abstract for the entry's /abs/ page; inline only, like the notes.
     if (m.abstract !== undefined) notes.abstract = checkNote(m.abstract, `${where}/contribution.yml: abstract`);
-    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [], arxiv, contributors, notes });
+    if (m.license !== undefined && !Object.hasOwn(LICENSES, m.license))
+      fail(`${where}/contribution.yml: license must be one of ${Object.keys(LICENSES).join(", ")} (default ${DEFAULT_LICENSE})`);
+    const license = Object.hasOwn(LICENSES, m.license) ? m.license : DEFAULT_LICENSE;
+    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [], arxiv, contributors, notes, license });
   }
   // Every Lean contribution directory needs a manifest.
   if (fs.existsSync(path.join(LEAN, LIB))) {
@@ -381,6 +392,7 @@ const bibEscape = (v) => String(v).replace(/[\\{}]/g, "").replace(/([&%$#_])/g, 
 // "First von Last" itself, particles included, which a naive reordering gets wrong.
 const bibName = (n) => n.trim().replace(/\s+/g, " ");
 // Who to credit: the manifest's explicit list if given, else everyone who committed.
+const licenseLine = (m) => `License: [${LICENSES[m.license].name}](${LICENSES[m.license].url})`;
 const people = (m, p) => m.contributors.length ? m.contributors : (p?.contributors ?? []);
 // A {first, last} name is written "{Last}, First": braces keep a multi-part surname whole.
 const bibAuthor = (c) => c.last !== undefined
@@ -580,6 +592,8 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       if (lines.at(-1) !== "" && !lines.at(-1).endsWith("  ")) lines[lines.length - 1] += "  ";
       lines.push(`Additional material: ${m.arxiv.map((a) => `[arXiv:${a}](https://arxiv.org/abs/${a})`).join(", ")}`);
     }
+    if (lines.at(-1) !== "" && !lines.at(-1).endsWith("  ")) lines[lines.length - 1] += "  ";
+    lines.push(licenseLine(m));
     lines.push(":::", "");
     // "Cite as": a collapsed dropdown with a bibtex block (MyST adds the copy button).
     lines.push("::::{dropdown} Cite as", "", "```bibtex",
@@ -650,7 +664,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       "```{anywidget} ../../_generated/provenance/ident.mjs",
       JSON.stringify({ ident: `lemmata:${ident}`, url: `${siteUrl}/abs/${ident}` }), "```", "",
       ":::{div}", ":class: lemmata-provenance", "",
-      ...(who ? [`Contributed by ${who}  `] : []), ...(dates ? [dates] : []), ":::", "",
+      ...(who ? [`Contributed by ${who}  `] : []), ...(dates ? [`${dates}  `] : []), licenseLine(m), ":::", "",
       "::::{dropdown} Cite as", "", "```bibtex",
       bibtex(m, titleOf(m), p, { siteUrl, releaseUrl, commit, checked: statusOf(m) === "checked", ident }), "```", "::::", "",
       ":::::", "",
@@ -789,7 +803,7 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
       contributors: people(m, p).map((c) => c.name),
       first_published: p?.first.date ?? null, last_changed: p?.last.date ?? null,
       status: exports.every((x) => x.status === "checked") ? "checked" : "failed",
-      exports, arxiv: m.arxiv, ai_use: m.notes?.ai_use ?? null, acknowledgements: m.notes?.acknowledgements ?? null,
+      exports, arxiv: m.arxiv, license: m.license, license_url: LICENSES[m.license].url, ai_use: m.notes?.ai_use ?? null, acknowledgements: m.notes?.acknowledgements ?? null,
       bibtex: bibtex(m, titleOf(m), p, { siteUrl, releaseUrl: null, commit, checked: exports.every((x) => x.status === "checked"), ident }),
     };
   }).sort((a, b) => (a.identifier ?? "~").localeCompare(b.identifier ?? "~") || a.title.localeCompare(b.title));
@@ -808,7 +822,8 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
     `axioms (${siteUrl}/checked/). Whether the prose and the Lean statement say the same thing is checked by human review.`, "",
     `Each entry has an identifier lemmata:YYMM.NNNNN, a landing page ${siteUrl}/abs/YYMM.NNNNN (abstract, status, BibTeX) ` +
     `and the full entry at ${siteUrl}/html/YYMM.NNNNN. Cite the /abs/ URL. Machine-readable index with exported Lean ` +
-    `declarations, axioms and BibTeX: ${siteUrl}/lemmata.json`, ""];
+    `declarations, axioms, licence and BibTeX: ${siteUrl}/lemmata.json. Entries are licensed CC BY 4.0 unless the ` +
+    "entry says otherwise (CC BY-SA 4.0 or CC0 1.0).", ""];
   for (const c of categories) {
     const list = entries.filter((e) => e.category === c.id);
     if (list.length) md.push(`## ${c.title}`, "", ...list.map(line), "");

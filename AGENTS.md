@@ -228,6 +228,7 @@ ai_use: >-                            # optional; shown at the end of the entry
   Lean proofs drafted with an AI assistant, reviewed and completed by the authors.
 acknowledgements: >-                  # optional; shown at the end of the entry
   Supported by the Berlin Mathematics Research Center MATH$^+$.
+license: CC-BY-4.0                    # optional; CC-BY-4.0 (default), CC-BY-SA-4.0 or CC0-1.0
 pages:
   - index.md
 exports:                              # at least one theorem
@@ -243,6 +244,12 @@ If present, it replaces the git names in the contributors line and in the BibTeX
 `author` field, in the order given; the dates and commit link still come from git.
 Write `First Last`, or `{first: …, last: …}` when the surname has several parts (it is
 then kept whole in BibTeX: `{van Beethoven}, Ludwig`). Names only — no emails.
+
+`license` is the licence of the whole entry, prose and Lean, shown under the title and in
+`lemmata.json`. Leave it out for **CC BY 4.0**, the default; `CC-BY-SA-4.0` and `CC0-1.0`
+are the only alternatives, and anything else fails validation. Do not contribute text or
+code you cannot license this way, e.g. passages copied from a paper whose publisher holds
+the copyright; ask the human you work for when unsure.
 
 `ai_use` and `acknowledgements` are short notes rendered at the end of the entry, below the
 verification panel. Say honestly how AI tools were used, if at all; there is no default
