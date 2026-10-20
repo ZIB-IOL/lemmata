@@ -2,7 +2,7 @@
 # Run the full Lemmata pipeline locally -- the same steps, in the same order, that the
 # cluster runs on every push to main:
 #
-#   1. validate   manifests, docs<->lean pairing, labels, snippet markers, umbrella
+#   1. validate   manifests, docs<->lean pairing, labels, snippet markers, DOIs, umbrella
 #   2. build      lake build of every Lemmata.* module (Mathlib from the cache)
 #   3. kernel     leanchecker re-checks our modules' declarations in the kernel
 #   4. audit      lemmata-check: axiom policy over ALL our declarations + export bindings
@@ -69,8 +69,21 @@ REPO=$(pwd)
   node tools/lemmata.mjs validate &&
   node tools/lemmata.mjs prepare out/verification.json --commit "$(git rev-parse HEAD)" >/dev/null &&
   cd "$SIM/docs" &&
-  HOST=127.0.0.1 "$REPO/node_modules/.bin/myst" build --config myst.runtime.yml --html --strict --ci --keep-host >/dev/null 2>&1 ) \
-  || { echo "cluster-style render FAILED"; exit 1; }
+  HOST=127.0.0.1 "$REPO/node_modules/.bin/myst" build --config myst.runtime.yml --html --strict --ci --keep-host >"$SIM/render.log" 2>&1 ) \
+  || { echo "cluster-style render FAILED"; grep -E "⛔|Error" "$SIM/render.log" | head -20; exit 1; }
 echo "cluster-style render: ok"
+# And offline, as the build Job renders: network refused except MyST's own local server,
+# with the theme step 5 already downloaded. Anything that needs the internet while
+# rendering -- an unresolved DOI link, say -- fails here instead of in the cluster.
+THEME="$REPO/docs/_build/templates/site/myst/book-theme"
+if [[ -d $THEME ]]; then
+  ( export LEMMATA_ROOT="$SIM" LEMMATA_BUILD=1 LEMMATA_THEME="$THEME" &&
+    node tools/lemmata.mjs prepare out/verification.json --commit "$(git rev-parse HEAD)" >/dev/null &&
+    cd "$SIM/docs" && rm -rf _build &&
+    HTTPS_PROXY=http://127.0.0.1:9 HTTP_PROXY=http://127.0.0.1:9 NO_PROXY=localhost,127.0.0.1 NODE_USE_ENV_PROXY=1 \
+    HOST=127.0.0.1 "$REPO/node_modules/.bin/myst" build --config myst.runtime.yml --html --strict --ci --keep-host >"$SIM/offline.log" 2>&1 ) \
+    || { echo "offline render FAILED (the cluster renders without internet):"; grep -E "⛔|Error" "$SIM/offline.log" | head -20; exit 1; }
+  echo "offline render: ok"
+fi
 echo
 echo "all checks passed. Preview: npx serve docs/_build/html  (or: npm run preview)"

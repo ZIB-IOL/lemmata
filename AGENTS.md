@@ -204,6 +204,14 @@ The informal proof.
   numbers proofs on their own, so a page with a theorem, a proposition and one proof
   would say "Proof 1" and leave the reader guessing. A proof of several statements
   lists them all: `of [](#prop-<id>-…) and [](#thm-<id>)`.
+- **DOI links need a BibTeX entry.** MyST turns every `https://doi.org/…` (or `doi:…`)
+  link into a citation and looks it up online while rendering; the cluster renders
+  **without internet**, so the lookup fails there and the entry is not published. After
+  adding a DOI link, run `node tools/lemmata.mjs doi`: it fetches the entry from doi.org
+  into `docs/references.bib`. Commit that file too. `validate` refuses a linked DOI that is
+  not in `references.bib`, and `tools/check.sh` also renders offline to catch anything
+  else that would need the network. Tidy the fetched entry if you like (doi.org's titles
+  can contain HTML such as `<i>b</i>`; write `$b$`); keep its `doi` field.
 - Never paste Lean into Markdown by hand; always `literalinclude`.
 - Refer to results by label: `[](#thm-implication-composition)`. Labels from other entries work.
 - Other environments: `prf:lemma`, `prf:definition`, `prf:corollary`, `prf:proposition`.

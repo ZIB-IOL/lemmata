@@ -75,6 +75,10 @@ small entries may keep everything in `Main.lean` — but new entries should foll
   the next line, so it reads "Proof (of Theorem 1)" instead of a bare "Proof 1".
   Validation enforces this.
 - Refer to other entries' results by label: `[](#thm-implication-composition)`.
+- A `https://doi.org/…` link needs a BibTeX entry in `docs/references.bib`: the cluster
+  renders without internet, so MyST cannot look the DOI up there. Run
+  `node tools/lemmata.mjs doi` to fetch missing entries from doi.org and commit the file.
+  Validation refuses a linked DOI that is missing.
 - Keep both generated includes the scaffold writes: `../_generated/provenance/<id>.md`
   under the title (who contributed, from git — your name is your git author name) and
   `../_generated/verification/<id>.md` at the end (what was checked). Validation requires

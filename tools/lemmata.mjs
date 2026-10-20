@@ -315,6 +315,55 @@ function checkProofs(text, where) {
   }
 }
 
+// DOI links. MyST treats every doi.org link (and doi:…) as a citation and looks it up
+// online while rendering, unless docs/references.bib already has an entry with that DOI.
+// The cluster renders offline -- the render step shares its pod, and so its network
+// policy, with the untrusted Lean build -- so an unresolved DOI fails only there
+// ("Could not find DOI"), long after a local check passed. Hence: every DOI linked from
+// docs/ must be in references.bib, and `lemmata.mjs doi` fetches the missing entries on
+// the contributor's (online) machine.
+const BIB = path.join(DOCS, "references.bib");
+const DOI_LINK_RE = /(?:https?:\/\/(?:dx\.|www\.)?doi\.org\/|\bdoi:)(10\.\d{4,9}\/[^\s)>\]"'`]+)/gi;
+const doiNorm = (d) => decodeURIComponent(d).replace(/[.,;:]+$/, "").toLowerCase();
+// The hand-written pages: the start page, checked/changelog, and every entry's pages.
+function linkedDois(manifests) {
+  const out = new Map();     // normalised DOI -> first place it is linked
+  const pages = ["index.md", "checked.md", "changelog.md"].map((p) => path.join(DOCS, p))
+    .concat(manifests.flatMap((m) => m.pages.map((p) => path.join(DOCS, m.dir, p))));
+  for (const f of pages) {
+    if (!fs.existsSync(f)) continue;
+    const rel = path.relative(ROOT, f);
+    fs.readFileSync(f, "utf8").split("\n").forEach((line, i) => {
+      for (const m of line.matchAll(DOI_LINK_RE)) { const d = doiNorm(m[1]); if (!out.has(d)) out.set(d, `${rel}:${i + 1}`); }
+    });
+  }
+  return out;
+}
+const bibDois = () => new Set([...(fs.existsSync(BIB) ? fs.readFileSync(BIB, "utf8") : "")
+  .matchAll(/(?:^|[\s,{])doi\s*=\s*[{"]\s*([^}"]+?)\s*[}"]/gim)].map((m) => doiNorm(m[1])));
+function checkDois(manifests) {
+  const have = bibDois();
+  for (const [d, at] of linkedDois(manifests))
+    if (!have.has(d)) fail(`${at}: DOI ${d} is not in docs/references.bib (the cluster renders offline); run: node tools/lemmata.mjs doi`);
+}
+// `doi`: append a BibTeX entry from doi.org for every linked DOI that references.bib lacks.
+async function fetchDois(manifests) {
+  const have = bibDois(), missing = [...linkedDois(manifests).keys()].filter((d) => !have.has(d));
+  if (!missing.length) { console.log("references.bib already has every linked DOI"); return; }
+  let bib = fs.existsSync(BIB) ? fs.readFileSync(BIB, "utf8") : "";
+  for (const d of missing) {
+    const r = await fetch(`https://doi.org/${d}`, { headers: { accept: "application/x-bibtex; charset=utf-8" } });
+    const text = (await r.text()).trim();
+    if (!r.ok || !text.startsWith("@")) { fail(`DOI ${d}: doi.org answered ${r.status}; check the DOI, or add its entry to docs/references.bib by hand`); continue; }
+    // doi.org's own keys (Padberg_1982) can collide; make them unique and readable.
+    let key = text.match(/^@\w+\{([^,]+),/)?.[1] ?? "ref", k = key, n = 1;
+    while (new RegExp(`\\{${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")},`).test(bib)) k = `${key}_${++n}`;
+    bib = bib.replace(/\s*$/, "\n\n") + text.replace(/^(@\w+\{)[^,]+,/, `$1${k},`).replace(/\s+\n/g, "\n") + "\n";
+    console.log(`added ${d} as ${k}`);
+  }
+  fs.writeFileSync(BIB, bib);
+}
+
 function checkSnippets(manifests) {
   const pages = [path.join(DOCS, "index.md"),
     ...manifests.flatMap((m) => m.pages.map((p) => path.join(DOCS, m.dir, p)))];
@@ -914,7 +963,7 @@ const [cmd, ...args] = process.argv.slice(2);
 const flag = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; };
 switch (cmd) {
   case "validate": {
-    const ms = loadManifests(); checkSnippets(ms); checkUmbrella(false);
+    const ms = loadManifests(); checkSnippets(ms); checkDois(ms); checkUmbrella(false);
     if (fs.existsSync(path.join(ROOT, ".publication"))) fail(".publication/ must not be committed");
     // .lemmata/ is where the cluster puts data it adds to the source (provenance.json).
     // Locally it must not exist; in a build (LEMMATA_BUILD=1) it is expected, and the
@@ -936,6 +985,7 @@ switch (cmd) {
     finish("prepared docs/_generated and docs/myst.runtime.yml"); break;
   }
   case "new": scaffold(args[0], args[1], args[2]); finish(); break;
+  case "doi": { const ms = loadManifests(); finish(); await fetchDois(ms); finish(); break; }
   case "site-index": {            // after myst build: llms.txt, lemmata.json, sitemap, robots
     const cats = loadCategories(); const ms = loadManifests(cats); finish();
     const report = args[0] ? JSON.parse(fs.readFileSync(args[0], "utf8")) : null;
