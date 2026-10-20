@@ -413,7 +413,7 @@ function bibtex(m, title, p, { siteUrl, releaseUrl, commit, checked, ident }) {
   // permanent /abs/ URL always resolves; the commit names the exact version cited.
   const note = [commit ? `Version ${commit.slice(0, 12)}` : null, checked ? "formal statements checked in Lean 4" : null]
     .filter(Boolean).join("; ");
-  fields.push(["note", note]);
+  if (note) fields.push(["note", note]);
   if (m.arxiv.length) fields.push(["eprint", m.arxiv[0]], ["archivePrefix", "arXiv"]);
   const key = ident ? `lemmata:${ident}` : `lemmata:${m.dir}`;
   const w = Math.max(...fields.map(([k]) => k.length));
@@ -790,21 +790,28 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
   const passed = report?.result === "passed";
   const byName = new Map((report?.exports ?? []).map((e) => [e.name, e]));
   const catTitle = new Map(categories.map((c) => [c.id, c.title]));
+  // Frozen entries are not in this build's report (they were not built); they keep the
+  // results of their last check, exactly as the rendered pages show them.
+  const frozen = loadFrozen();
   const entries = manifests.map((m) => {
-    const ident = idents[m.id] ?? null, p = prov?.entries?.[m.id];
+    const ident = idents[m.id] ?? null, p = prov?.entries?.[m.id], fz = frozen[m.id];
     const url = ident ? `${siteUrl}/abs/${ident}` : `${siteUrl}/${m.dir}/`;
+    const old = new Map((fz?.results ?? []).map((x) => [x.name, x]));
     const exports = m.exports.map((e) => { const r = byName.get(e.name);
-      return { name: e.name, kind: e.kind, label: e.label, status: passed && r?.status === "checked" ? "checked" : "failed",
+      const ok = fz ? old.get(e.name)?.status === "checked" : passed && r?.status === "checked";
+      return { name: e.name, kind: e.kind, label: e.label, status: ok ? "checked" : "failed",
                axioms: r?.axioms ?? [], source_file: r?.source_file ?? null }; });
+    const allOk = exports.every((x) => x.status === "checked");
     return {
       identifier: ident ? `lemmata:${ident}` : null, url, html_url: ident ? `${siteUrl}/html/${ident}` : `${siteUrl}/${m.dir}/`,
       title: titleOf(m),
       category: m.category, category_title: catTitle.get(m.category) ?? m.category, tags: m.tags,
       contributors: people(m, p).map((c) => c.name),
       first_published: p?.first.date ?? null, last_changed: p?.last.date ?? null,
-      status: exports.every((x) => x.status === "checked") ? "checked" : "failed",
+      status: fz ? (allOk ? "frozen" : "failed") : allOk ? "checked" : "failed",
+      last_checked: fz ? { lean_version: fz.lean_version ?? null, checked_at: fz.checked_at ?? null, commit: fz.commit ?? null } : null,
       exports, arxiv: m.arxiv, license: m.license, license_url: LICENSES[m.license].url, ai_use: m.notes?.ai_use ?? null, acknowledgements: m.notes?.acknowledgements ?? null,
-      bibtex: bibtex(m, titleOf(m), p, { siteUrl, releaseUrl: null, commit, checked: exports.every((x) => x.status === "checked"), ident }),
+      bibtex: bibtex(m, titleOf(m), p, { siteUrl, releaseUrl: null, commit, checked: !fz && allOk, ident }),
     };
   }).sort((a, b) => (a.identifier ?? "~").localeCompare(b.identifier ?? "~") || a.title.localeCompare(b.title));
 
@@ -814,7 +821,8 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
     entries,
   }, null, 2) + "\n");
 
-  const line = (e) => `- [${e.title}](${e.url})${e.identifier ? ` (${e.identifier})` : ""}: ${e.status}` +
+  const line = (e) => `- [${e.title}](${e.url})${e.identifier ? ` (${e.identifier})` : ""}: ` +
+    (e.status === "frozen" ? `last checked with Lean v${e.last_checked.lean_version ?? "?"} on ${String(e.last_checked.checked_at ?? "").slice(0, 10)}` : e.status) +
     `${e.contributors.length ? `; ${e.contributors.join(", ")}` : ""}${e.arxiv.length ? `; arXiv:${e.arxiv.join(", arXiv:")}` : ""}`;
   const md = ["# Lemmata Repository", "",
     "> An experimental mathematics repository: each entry is a result written as prose and formalized in Lean 4 on Mathlib. " +
