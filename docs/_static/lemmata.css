@@ -125,3 +125,22 @@
 /* Identifier line (rendered by a widget, which styles its own link and "copy" control):
    no extra margin around the widget inside the header. */
 .lemmata-header .myst-anywidget, .lemmata-header [class*="anywidget"] { margin: 0 0 0.15rem; }
+
+/* End-of-proof square, right-aligned on the last line of every proof. MyST uses
+   .myst-proof-body for every prf: environment; only proofs get a header with
+   bg-myst-proof-bg (theorems: -theorem-bg, corollaries: -example-bg), so select on that.
+   The square is absolutely positioned at the bottom right of the body, level with the
+   last line of text (or below a closing display formula). */
+.myst-proof-header.bg-myst-proof-bg + .myst-proof-body { position: relative; }
+.myst-proof-header.bg-myst-proof-bg + .myst-proof-body > :last-child { padding-right: 1.6em; }
+.myst-proof-header.bg-myst-proof-bg + .myst-proof-body::after {
+  content: "∎";
+  position: absolute;
+  right: 1rem;
+  /* The last line box ends at the body's bottom edge (the paragraph's margin collapses
+     through it), so a square with the text's own line height and bottom: 0 sits exactly
+     on that line. Measured: 0px offset. */
+  bottom: 0;
+  line-height: inherit;
+  opacity: 0.8;
+}
