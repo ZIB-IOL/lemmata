@@ -20,6 +20,12 @@ ai_use: >-
   entropy assertions, and affine Farkas certificate existence remain
   external. The new parity extension is formalized conditionally on precise
   hypotheses; no custom axioms are introduced.
+acknowledgements: >-
+  Research reported in this paper was partially supported by the Berlin Mathematics
+  Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche
+  Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
+  Strategy. This work has been partially supported by OpenAI's Academic Researchers
+  program.
 pages:
   - index.md
 exports:
