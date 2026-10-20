@@ -162,8 +162,8 @@ The informal proof.
 - The first include also renders a collapsed **Cite as** box with a BibTeX entry for the
   page (stable URL, contributors, year, arXiv if given, and a link to the exact snapshot).
   It is generated; there is nothing to write.
-- Your name on the page is the **git author name** of your commits. Set it before
-  committing: `git config user.name "Full Name"`.
+- Your name on the page is the **git author name** of your commits, unless the manifest
+  lists `contributors` (step 4). Set it before committing: `git config user.name "Full Name"`.
 - Never paste Lean into Markdown by hand; always `literalinclude`.
 - Refer to results by label: `[](#thm-self-implication)`. Labels from other entries work.
 - Other environments: `prf:lemma`, `prf:definition`, `prf:corollary`, `prf:proposition`.
@@ -179,6 +179,9 @@ lean_namespace: Lemmata.<LeanName>
 category: <category>                  # an id from docs/categories.yml
 tags: [<other-category>]              # optional; never the primary category
 arxiv: 2301.01234                     # optional; one id or a list, e.g. [2301.01234v2, math/0601001]
+contributors:                         # optional; replaces the names taken from git
+  - Ada Lovelace                      #   "First Last"
+  - {first: Ludwig, last: van Beethoven}   # surnames with several parts
 pages:
   - index.md
 exports:                              # at least one theorem
@@ -187,6 +190,13 @@ exports:                              # at least one theorem
     page: index.md
     label: thm-<id>                   # must contain <id>; must occur exactly once on that page
 ```
+
+`contributors` is for when the git authors are not the right credit: several people
+wrote the result, someone committed on behalf of others, or an agent did the commit.
+If present, it replaces the git names in the contributors line and in the BibTeX
+`author` field, in the order given; the dates and commit link still come from git.
+Write `First Last`, or `{first: …, last: …}` when the surname has several parts (it is
+then kept whole in BibTeX: `{van Beethoven}, Ludwig`). Names only — no emails.
 
 `arxiv` links additional material (a paper, a longer write-up) under the title as
 `arXiv:<id>` → `https://arxiv.org/abs/<id>`. Give the bare identifier, without an

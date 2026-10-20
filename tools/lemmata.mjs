@@ -34,7 +34,7 @@ const RESERVED_DOCS = new Set(["_static", "_generated", "_build", "_releases", "
 const CATEGORY_DIR = "c";
 const CATEGORY_KEYS = new Set(["id", "title", "description"]);
 const RESERVED_LEAN = new Set(["Shared"]);
-const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "arxiv", "pages", "exports"]);
+const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "arxiv", "contributors", "pages", "exports"]);
 // arXiv identifiers: new style 2301.01234 (4 or 5 digits after the dot, since 2015), old
 // style math/0601001 or math.AG/0601001; each optionally with a version vN.
 const ARXIV_RE = /^(?:\d{4}\.\d{4,5}|[a-z-]+(?:\.[A-Z]{2})?\/\d{7})(?:v\d+)?$/;
@@ -219,7 +219,30 @@ function loadManifests(categories = loadCategories()) {
         fail(`${where}/contribution.yml: arxiv ${JSON.stringify(a)} is not an arXiv identifier (e.g. 2301.01234, 2301.01234v2, math/0601001)`);
     }
     if (new Set(arxiv).size !== arxiv.length) fail(`${where}/contribution.yml: arxiv lists an identifier twice`);
-    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [], arxiv });
+    // Optional explicit contributors: replaces the git-derived names (git knows who
+    // committed, not who wrote it). Each item is "First Last" or {first, last} -- the
+    // mapping form is for surnames with several parts ("van Beethoven", "García Márquez").
+    const contributors = [];
+    if (m.contributors !== undefined) {
+      if (!Array.isArray(m.contributors) || !m.contributors.length) fail(`${where}/contribution.yml: contributors must be a non-empty list`);
+      for (const [i, c] of (Array.isArray(m.contributors) ? m.contributors : []).entries()) {
+        const at = `${where}/contribution.yml: contributors[${i}]`;
+        if (typeof c === "string") {
+          const t = c.trim().replace(/\s+/g, " ");
+          if (!t || /[{}\\@<>]/.test(t)) { fail(`${at}: ${JSON.stringify(c)} is not a plain name`); continue; }
+          contributors.push({ name: t });
+        } else if (c && typeof c === "object" && !Array.isArray(c)) {
+          for (const k of Object.keys(c)) if (!["first", "last"].includes(k)) fail(`${at}: unknown field ${k} (use first, last)`);
+          const first = String(c.first ?? "").trim(), last = String(c.last ?? "").trim();
+          if (!last) { fail(`${at}: last is required`); continue; }
+          if (/[{}\\@<>]/.test(first + last)) { fail(`${at}: names must be plain text`); continue; }
+          contributors.push({ name: first ? `${first} ${last}` : last, first, last });
+        } else fail(`${at}: must be a name or {first, last}`);
+      }
+      const seen = new Set();
+      for (const c of contributors) { if (seen.has(c.name)) fail(`${where}/contribution.yml: contributor ${c.name} listed twice`); seen.add(c.name); }
+    }
+    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [], arxiv, contributors });
   }
   // Every Lean contribution directory needs a manifest.
   if (fs.existsSync(path.join(LEAN, LIB))) {
@@ -309,11 +332,17 @@ const bibEscape = (v) => String(v).replace(/[\\{}]/g, "").replace(/([&%$#_])/g, 
 // Names stay exactly as git has them ("Ludwig van Beethoven"): BibTeX parses
 // "First von Last" itself, particles included, which a naive reordering gets wrong.
 const bibName = (n) => n.trim().replace(/\s+/g, " ");
+// Who to credit: the manifest's explicit list if given, else everyone who committed.
+const people = (m, p) => m.contributors.length ? m.contributors : (p?.contributors ?? []);
+// A {first, last} name is written "{Last}, First": braces keep a multi-part surname whole.
+const bibAuthor = (c) => c.last !== undefined
+  ? (c.first ? `{${bibEscape(c.last)}}, ${bibEscape(c.first)}` : `{${bibEscape(c.last)}}`)
+  : bibEscape(bibName(c.name));
 function bibtex(m, title, p, { siteUrl, releaseUrl, commit, checked }) {
   const stable = `${siteUrl}/${m.dir}/`;
   const fields = [
     ["title", `{${bibEscape(title)}}`],
-    ["author", p ? p.contributors.map((c) => bibEscape(bibName(c.name))).join(" and ") : "{Lemmata contributors}"],
+    ["author", people(m, p).length ? people(m, p).map(bibAuthor).join(" and ") : "{Lemmata contributors}"],
     ["howpublished", `Lemmata, \\url{${stable}}`],
     ["year", p ? p.first.date.slice(0, 4) : String(new Date().getUTCFullYear())],
     ["url", stable],
@@ -410,9 +439,10 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     // One header block per entry: contributors line + "Cite as", visually set apart from
     // the mathematics below (styled by docs/_static/lemmata.css, class lemmata-header).
     const lines = [":::::{div}", ":class: lemmata-header", "", ":::{div}", ":class: lemmata-provenance", ""];
-    if (!p) lines.push("*Not yet committed.*");
+    if (!p && !m.contributors.length) lines.push("*Not yet committed.*");
+    else if (!p) lines.push(`Contributed by ${people(m, p).map((c) => `**${esc(c.name)}**`).join(", ")}`);
     else {
-      lines.push(`Contributed by ${p.contributors.map((c) => `**${esc(c.name)}**`).join(", ")}  `);
+      lines.push(`Contributed by ${people(m, p).map((c) => `**${esc(c.name)}**`).join(", ")}  `);
       lines.push(p.first.commit === p.last.commit
         ? `Published ${day(p.first.date)} (${commitLink(p.first.commit)})`
         : day(p.first.date) === day(p.last.date)
