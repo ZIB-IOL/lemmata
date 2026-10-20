@@ -9,3 +9,10 @@ exports:
     kind: theorem
     page: index.md
     label: thm-lagrangian-duality-gap
+abstract: >-
+  Lagrangian relaxation and convexification give two lower bounds for a minimization
+  problem; Geoffrion's theorem says they agree when the underlying integer set is finite
+  or the integer points of a rational polyhedron. An explicit example with an irrational
+  constraint shows that the gap can survive even closed convexification: the Lagrangian
+  dual value is $0$, while the integer, convex-hull and closed-convex-hull problems all
+  have value $1$.

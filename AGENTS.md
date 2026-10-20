@@ -114,6 +114,37 @@ Rules (each enforced):
   any `.lean` file run `node tools/lemmata.mjs umbrella --write`. Every file is compiled and
   audited, including files nothing imports.
 
+### Separate statements from proofs (recommended)
+
+Put the **definitions and formal statements** in one module and the **proofs** in another,
+so the statement never depends on the proof — only the proof on the statement. This is what
+[Lax](https://laxarchive.org/about.html) (`concepts/` vs `proofs/`) and DeepMind's
+[formal-conjectures](https://github.com/google-deepmind/formal-conjectures) do, and it is
+what a reader reviews: the statement is the claim, the proof is the evidence.
+
+```
+lean/Lemmata/<LeanName>/
+  Statement.lean   definitions and the theorem statements, as `def … : Prop := …`
+  Main.lean        `public import Lemmata.<LeanName>.Statement`; the proofs
+```
+
+In `Statement.lean`, state the claim as a proposition:
+
+```lean
+/-- Composition of implications. -/
+def Composition : Prop := ∀ {P Q R : Prop}, (P → Q) → (Q → R) → P → R
+```
+
+and in `Main.lean` prove exactly that proposition, and export this theorem:
+
+```lean
+theorem composition : Composition := fun hpq hqr hp => hqr (hpq hp)
+```
+
+Then the statement a reviewer compares with the prose is short and proof-free, and a
+proof can be replaced later without touching what was claimed. This is not enforced —
+small entries may keep everything in `Main.lean` — but new entries should follow it.
+
 Fast loop while proving:
 
 ```bash
@@ -179,6 +210,8 @@ lean_namespace: Lemmata.<LeanName>
 category: <category>                  # an id from docs/categories.yml
 tags: [<other-category>]              # optional; never the primary category
 arxiv: 2301.01234                     # optional; one id or a list, e.g. [2301.01234v2, math/0601001]
+abstract: >-                          # optional; shown on the entry's /abs/ landing page
+  One paragraph stating the result; inline text and $math$ only.
 contributors:                         # optional; replaces the names taken from git
   - Ada Lovelace                      #   "First Last"
   - {first: Ludwig, last: van Beethoven}   # surnames with several parts
@@ -257,8 +290,9 @@ been explicitly told to.
 
 ## Identifiers and later changes
 
-On its first publication every entry gets a **stable identifier**, `lemmata:YYYY.NNNNN`,
-with a **permanent URL** `https://lemmata.iol.berlin/abs/YYYY.NNNNN`. The cluster assigns it;
+On its first publication every entry gets a **stable identifier**, `lemmata:YYMM.NNNNN`
+(like arXiv), with a landing page `https://lemmata.iol.berlin/abs/YYMM.NNNNN` and the full
+entry at `/html/YYMM.NNNNN`. The cluster assigns it;
 you do not write it anywhere. It is shown at the top of the page and used as the BibTeX key
 and URL. Link to and cite that URL, not the directory-based one.
 
@@ -267,6 +301,14 @@ To change an entry later, open another pull request against the same `docs/<id>/
 line and commit link update by themselves; the BibTeX `note` names the immutable snapshot
 of each published version, so earlier citations stay exact. Note substantive corrections
 in `docs/changelog.md`.
+
+### After a Lean or Mathlib upgrade
+
+The archive builds with one Lean and Mathlib version. When an upgrade breaks an entry, the
+maintainers may **freeze** it: it stays published, marked "last checked with Lean v… on …",
+and its Lean code is left out of later builds. A frozen entry can only be shown with its old
+result while its files are unchanged. To bring it back, port it to the current version in a
+pull request and ask for it to be unfrozen; once it passes, it is current again.
 
 ## 7. Confirm it is live
 

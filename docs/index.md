@@ -29,11 +29,6 @@ results that come before, or alongside, a paper.
 
 ## What "checked" means here
 
-A **checked** badge says three things, all established by machinery rather than by the
-author: the formal declaration exists and compiles, Lean's kernel accepted it, and it
-depends on no axioms beyond `propext`, `Classical.choice` and `Quot.sound`. The formal
-library builds on Mathlib [@mathlib2020].
-
-It does **not** say that the English statement means the same as the Lean statement.
-That correspondence is checked by human review, and every page links to the exact formal
-source it was reviewed against.
+A **kernel-checked** result is one whose formal statement compiles and was accepted by
+Lean's kernel, using only the standard axioms. That the English statement means the same
+as the Lean statement is checked by human review. [Read the full definition](checked.md).

@@ -48,7 +48,9 @@ check(await page.locator(".katex").count() >= 3, "KaTeX renders inline and displ
 check(await page.locator("pre code", { hasText: "theorem implication_composition" }).count() > 0, "Lean snippet included from lean/");
 await page.waitForSelector("svg[id^=mermaid], .mermaid svg, [class*=mermaid] svg", { timeout: 15000 }).catch(() => {});
 check(await page.locator("svg[id^=mermaid], .mermaid svg, [class*=mermaid] svg").count() > 0, "Mermaid diagram renders");
-check(await page.getByText("✓ checked").count() === 2, "verification panel shows two checked results");
+check(await page.getByText(/✓ kernel-checked/).count() === 2, "verification panel shows two kernel-checked results");
+check(await page.locator("a", { hasText: 'What "checked" means' }).count() >= 1, "verification panel links to the 'checked' page");
+check(!(await page.locator("body").innerText()).includes("axioms: propext"), "panel no longer lists axioms");
 check(await page.locator(".lemmata-header").count() === 1, "header block (contributors, Cite as) present");
 const widget = page.locator(".lemmata-chain");
 await widget.waitFor({ timeout: 15000 }).catch(() => {});
@@ -69,6 +71,10 @@ check(await page.locator("#thm-implication-composition").count() === 1, "target 
 // Direct load of a deep page, not via client-side navigation.
 const resp = await page.goto(`${origin}${base}/implication-composition/`, { waitUntil: "networkidle" });
 check(resp.status() === 200, "deep page loads directly");
+
+// The "What checked means" subpage exists.
+const ck = await page.goto(`${origin}${base}/checked/`, { waitUntil: "networkidle" });
+check(ck.status() === 200 && (await page.locator("h1").first().textContent()).includes("checked"), "'checked' subpage renders");
 
 // Follow every same-site link on every page, both as a fresh page load and as the
 // href the browser actually resolved. Counting links is not enough: the catalog's links

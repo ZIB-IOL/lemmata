@@ -5,5 +5,7 @@
 
 maintained by [IOL @ ZIB](https://iol.zib.de)
 
-[Changelog](/changelog/) · [Legal notice & privacy](https://www.zib.de/impressum)
+[Changelog](/changelog/)
+
+[Legal notice & privacy](https://www.zib.de/impressum)
 :::

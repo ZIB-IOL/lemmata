@@ -33,6 +33,37 @@ UpperCamelCase. Neither can change after publication.
 - Mark the part to show on the page with `-- DOCS_BEGIN_MAIN` / `-- DOCS_END_MAIN`.
   Each marker must occur exactly once.
 
+### Separate statements from proofs (recommended)
+
+Put the **definitions and formal statements** in one module and the **proofs** in another,
+so the statement never depends on the proof — only the proof on the statement. This is what
+[Lax](https://laxarchive.org/about.html) (`concepts/` vs `proofs/`) and DeepMind's
+[formal-conjectures](https://github.com/google-deepmind/formal-conjectures) do, and it is
+what a reader reviews: the statement is the claim, the proof is the evidence.
+
+```
+lean/Lemmata/<LeanName>/
+  Statement.lean   definitions and the theorem statements, as `def … : Prop := …`
+  Main.lean        `public import Lemmata.<LeanName>.Statement`; the proofs
+```
+
+In `Statement.lean`, state the claim as a proposition:
+
+```lean
+/-- Composition of implications. -/
+def Composition : Prop := ∀ {P Q R : Prop}, (P → Q) → (Q → R) → P → R
+```
+
+and in `Main.lean` prove exactly that proposition, and export this theorem:
+
+```lean
+theorem composition : Composition := fun hpq hqr hp => hqr (hpq hp)
+```
+
+Then the statement a reviewer compares with the prose is short and proof-free, and a
+proof can be replaced later without touching what was claimed. This is not enforced —
+small entries may keep everything in `Main.lean` — but new entries should follow it.
+
 ## 3. Write the page
 
 - State results with `prf:theorem` (or `prf:lemma`, `prf:definition`, …) and give each a
@@ -56,6 +87,8 @@ lean_namespace: Lemmata.PrimeInfinitude
 category: number-theory      # where it sits in the sidebar (docs/categories.yml)
 tags: [logic]                # optional: also listed on these categories' pages
 arxiv: 2301.01234            # optional: linked under the title; one id or a list
+abstract: >-                 # optional: one paragraph, shown on the /abs/ landing page
+  ...
 contributors:                # optional: credit these people instead of the git authors
   - Ada Lovelace
   - {first: Ludwig, last: van Beethoven}   # multi-part surname

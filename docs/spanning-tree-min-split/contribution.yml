@@ -25,3 +25,9 @@ acknowledgements: >-
   Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
   Strategy. This work has been partially supported by OpenAI's Academic Researchers
   program.
+abstract: >-
+  A minimum-root decomposition of tree slacks can also accommodate every edge
+  nonnegativity row without adding factors. This gives an explicit cubic upper bound on
+  the nonnegative rank of the full spanning-tree slack matrix, saving $\binom n2$ factors
+  over appending a separate factor for every edge. No symmetry of the factorization is
+  required.

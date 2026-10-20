@@ -10,8 +10,17 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-10-20
 
-- Every entry has a **stable identifier** `lemmata:YYYY.NNNNN` with a permanent URL
-  `/abs/YYYY.NNNNN`, shown at the top of the page and used in the citation.
+- **Identifiers now follow arXiv's format**, `lemmata:YYMM.NNNNN` (e.g. `lemmata:2610.00003`).
+  Each entry has a landing page `/abs/YYMM.NNNNN` (abstract, status, citation) and the full
+  entry at `/html/YYMM.NNNNN`. The identifiers issued earlier today in the
+  `lemmata:2026.NNNNN` form were replaced.
+- Entries can carry an **abstract**, shown on their landing page.
+- The verification panel says **kernel-checked** and names the Lean version; the full
+  definition moved to [What "checked" means](checked.md).
+- Entries that no longer build after a Lean upgrade can be **frozen** by the maintainers:
+  they stay published with the version and date of their last successful check.
+- Every entry has a **stable identifier** with a permanent URL, shown at the top of the
+  page and used in the citation.
 - Machine-readable views for search engines and language models: `/llms.txt`,
   `/lemmata.json` (identifiers, Lean declarations, axioms, BibTeX) and a corrected
   `/sitemap.xml`.

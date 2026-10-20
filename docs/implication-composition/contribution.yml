@@ -14,3 +14,7 @@ exports:
     kind: theorem
     page: index.md
     label: cor-implication-composition-le
+abstract: >-
+  If $P \to Q$ and $Q \to R$ then $P \to R$. The archive's worked example: a result small
+  enough to read at a glance, used to show numbered results, a diagram, an interactive
+  widget and a Mathlib corollary.

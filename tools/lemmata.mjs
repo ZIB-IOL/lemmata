@@ -28,14 +28,17 @@ const POLICY_ID = "lemmata-verification-v1";
 
 // Directories in docs/ and lean/Lemmata/ that are infrastructure, not contributions.
 const RESERVED_DOCS = new Set(["_static", "_generated", "_build", "_releases", "_status",
-  "index", "healthz", "readyz", "node_modules", "c", "changelog", "abs", "llms"]);
+  "index", "healthz", "readyz", "node_modules", "c", "changelog", "abs", "html", "llms", "checked"]);
+// The page that explains what "checked" means (docs/checked.md), linked from every
+// verification panel; entries are at docs/<id>/, so the link is one level up.
+const CHECKED_PAGE_LINK = "../checked.md";
 // Category overview pages are generated at docs/c/<category>/index.md (URL /c/<category>/),
 // under a reserved prefix so category ids and entry ids can never collide.
 const CATEGORY_DIR = "c";
 const CATEGORY_KEYS = new Set(["id", "title", "description"]);
 const RESERVED_LEAN = new Set(["Shared"]);
 const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "arxiv", "contributors",
-  "ai_use", "acknowledgements", "pages", "exports"]);
+  "ai_use", "acknowledgements", "abstract", "pages", "exports"]);
 // Free-text notes rendered at the bottom of an entry. Inline MyST only: text, emphasis,
 // links and math ($...$, $$...$$, rendered by KaTeX). Anything that could create page
 // structure or pull in other content is refused, so a note cannot impersonate the
@@ -262,6 +265,8 @@ function loadManifests(categories = loadCategories()) {
     }
     const notes = {};
     for (const k of Object.keys(NOTE_KEYS)) if (m[k] !== undefined) notes[k] = checkNote(m[k], `${where}/contribution.yml: ${k}`);
+    // Optional abstract for the entry's /abs/ page; inline only, like the notes.
+    if (m.abstract !== undefined) notes.abstract = checkNote(m.abstract, `${where}/contribution.yml: abstract`);
     manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [], arxiv, contributors, notes });
   }
   // Every Lean contribution directory needs a manifest.
@@ -327,10 +332,11 @@ function checkUmbrella(write) {
 // ------------------------------------------------------------------------- generation
 
 function verifierRequest(manifests) {
+  const frozen = loadFrozen();          // not built, so not checked: they keep their last result
   return {
     root: LIB,
     allowed_axioms: ALLOWED_AXIOMS,
-    exports: manifests.flatMap((m) => m.exports.map((e) =>
+    exports: manifests.filter((m) => !frozen[m.id]).flatMap((m) => m.exports.map((e) =>
       ({ contribution: m.id, name: e.name, kind: e.kind, namespace: m.lean_namespace }))),
   };
 }
@@ -394,6 +400,13 @@ function loadIdentifiers(commit) {
   return d.entries ?? {};
 }
 
+// Entries an admin froze, with their last successful check (commit, versions, date,
+// results), shipped by the cluster as .lemmata/frozen.json. Empty outside the cluster.
+function loadFrozen() {
+  const f = path.join(ROOT, ".lemmata", "frozen.json");
+  return fs.existsSync(f) ? (JSON.parse(fs.readFileSync(f, "utf8")).entries ?? {}) : {};
+}
+
 function loadProvenance(manifests, commit) {
   const shipped = path.join(ROOT, ".lemmata", "provenance.json");
   if (fs.existsSync(shipped)) {
@@ -441,34 +454,53 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const forge = forgeLinks(sourceUrl);
   const gen = path.join(DOCS, "_generated");
   const catRoot = path.join(DOCS, CATEGORY_DIR);
-  for (const d of [gen, catRoot]) fs.rmSync(d, { recursive: true, force: true });
+  const absRoot = path.join(DOCS, "abs");
+  for (const d of [gen, catRoot, absRoot]) fs.rmSync(d, { recursive: true, force: true });
   fs.mkdirSync(path.join(gen, "verification"), { recursive: true });
   const passed = report?.result === "passed";
   const byName = new Map((report?.exports ?? []).map((e) => [e.name, e]));
   const link = (file) => forge && commit ? forge.blob(commit, file) : null;
-  const statusOf = (m) => !report ? "preview"
+  // Frozen entries (admin decision, see lemmata-code/frozen.json) were not built: they keep
+  // their last successful check, shown with its Lean version and date.
+  const frozen = loadFrozen();
+  const statusOf = (m) => frozen[m.id] ? "frozen" : !report ? "preview"
     : m.exports.every((e) => passed && byName.get(e.name)?.status === "checked") ? "checked" : "failed";
 
   // Verification panel per entry, from the verifier's report only.
   for (const m of manifests) {
     const lines = [":::{card} Formal verification", ""];
-    for (const e of m.exports) {
+    const fz = frozen[m.id];
+    if (fz) {
+      const old = new Map((fz.results ?? []).map((x) => [x.name, x]));
+      for (const e of m.exports) {
+        const ok = old.get(e.name)?.status === "checked";
+        const badge = ok ? (e.kind === "definition" ? "**◇ elaborated definition**" : "**✓ kernel-checked**") : "**✗ not checked**";
+        const src = forge ? forge.blob(fz.commit, `lean/${LIB}/${m.leanDir}`) : null;
+        lines.push(`- ${badge} [](#${e.label}) — \`${e.name}\`` + (src ? ` ([source](${src}))` : ""));
+      }
+      lines.push("", `**Last checked with Lean v${esc(fz.lean_version ?? "?")} on ${String(fz.checked_at ?? "").slice(0, 10)}** ` +
+        `(commit \`${String(fz.commit).slice(0, 12)}\`)` +
+        (report?.lean_version && report.lean_version !== fz.lean_version ? `; not re-checked with the current Lean v${esc(report.lean_version)}.` : ".") +
+        " The Lean source shown is unchanged since that check. " +
+        `[What "checked" means](${CHECKED_PAGE_LINK}).`, ":::", "");
+    }
+    else for (const e of m.exports) {
       const r = byName.get(e.name);
       const ok = passed && r?.status === "checked";
+      const lean = report?.lean_version ? ` (Lean v${esc(report.lean_version)})` : "";
       const badge = !report ? "**○ not verified (preview)**"
-        : ok ? (e.kind === "definition" ? "**◇ elaborated definition**" : "**✓ checked**")
+        : ok ? (e.kind === "definition" ? `**◇ elaborated definition${lean}**` : `**✓ kernel-checked${lean}**`)
         : "**✗ failed**";
       const src = r && link(r.source_file);
-      const axioms = r?.axioms?.length ? r.axioms.map((a) => `\`${a}\``).join(", ") : "none";
-      lines.push(`- ${badge} [](#${e.label}) — \`${e.name}\`` +
-        (src ? ` ([source](${src}))` : "") + ` — axioms: ${axioms}`);
+      // The axioms a result uses are not listed here: every published result is held to
+      // the same policy (see the "checked" page), and lemmata.json carries them per result.
+      lines.push(`- ${badge} [](#${e.label}) — \`${e.name}\`` + (src ? ` ([source](${src}))` : ""));
     }
-    lines.push("",
-      report ? `Checked by \`${esc(report.tool ?? "lemmata-check")}\` on Lean ${esc(report.lean_version ?? "?")}` +
-        `${commit ? ` at commit \`${commit.slice(0, 12)}\`` : ""}, policy \`${POLICY_ID}\`` +
-        ` (allowed axioms: ${ALLOWED_AXIOMS.map((a) => `\`${a}\``).join(", ")}).`
+    if (!fz) lines.push("",
+      report ? `Checked${commit ? ` at commit \`${commit.slice(0, 12)}\`` : ""}. The formal statement is ` +
+        "machine-checked; that it matches the prose is checked by review. " +
+        `[What "checked" means](${CHECKED_PAGE_LINK}).`
       : "This is a local preview: nothing on this page has been verified.",
-      "The formal statement is machine-checked; that it matches the prose is checked by review.",
       ":::", "");
     // AI use statement and acknowledgements close the entry, after the verification panel.
     const notes = Object.entries(NOTE_KEYS).filter(([k]) => m.notes?.[k]);
@@ -545,7 +577,8 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   // resolves against the INCLUDING page; `../<id>/index.md` from _generated/ once
   // rendered as a raw href and 404'd).
   const table = (list, rel) => ["| Entry | Formal results | Status |", "|---|---|---|",
-    ...list.map((m) => `| [${esc(titleOf(m))}](${rel}${m.dir}/index.md) | ${m.exports.length} | ${statusOf(m)} |`)];
+    ...list.map((m) => `| [${esc(titleOf(m))}](${rel}${m.dir}/index.md) | ${m.exports.length} | ` +
+      (statusOf(m) === "frozen" ? `checked with v${esc(frozen[m.id].lean_version ?? "?")}` : statusOf(m)) + " |")];
 
   // "Contributing" paragraph of the landing page, with the repository address from the
   // build (SOURCE_WEB_URL) rather than written into docs/index.md, so moving the
@@ -570,6 +603,49 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     cat.push(...table(primary.get(c.id), ""), "");
   }
   fs.writeFileSync(path.join(gen, "catalog.md"), cat.join("\n"));
+
+  // One landing page per entry with an identifier, at /abs/<ident>/ (like arXiv's abstract
+  // page): title, identifier with copy, contributors, dates, abstract, status, Cite as and
+  // a link to the full entry at /html/<ident>. Built here so it is part of each release.
+  const absPages = [];
+  for (const m of manifests) {
+    const ident = idents[m.id];
+    if (!ident) continue;
+    // Directory "2610-00001": MyST turns dots in a page path into hyphens, so the page is
+    // built at abs/2610-00001/ whatever we name it. The public URL keeps the identifier's
+    // dot (/abs/2610.00001); the supervisor maps one to the other.
+    const p = prov?.entries?.[m.id], dir = path.join(absRoot, ident.replace(".", "-"));
+    fs.mkdirSync(dir, { recursive: true });
+    const status = statusOf(m), lean = report?.lean_version ? ` with Lean v${esc(report.lean_version)}` : "";
+    // Header in the same style as the entry's, built here rather than included: the copy
+    // widget's module path is relative to the page, and this page sits one level deeper
+    // (docs/abs/<ident>/index.md) than an entry (docs/<id>/index.md).
+    const who = people(m, p).map((c) => `**${esc(c.name)}**`).join(", ");
+    const dates = p ? (p.first.commit === p.last.commit ? `Published ${day(p.first.date)}`
+      : `First published ${day(p.first.date)} · last changed ${day(p.last.date)}`) : "";
+    const L = ["---", `title: ${JSON.stringify(titleOf(m))}`, "---", "",
+      ":::::{div}", ":class: lemmata-header", "",
+      "```{anywidget} ../../_generated/provenance/ident.mjs",
+      JSON.stringify({ ident: `lemmata:${ident}`, url: `${siteUrl}/abs/${ident}` }), "```", "",
+      ":::{div}", ":class: lemmata-provenance", "",
+      ...(who ? [`Contributed by ${who}  `] : []), ...(dates ? [dates] : []), ":::", "",
+      "::::{dropdown} Cite as", "", "```bibtex",
+      bibtex(m, titleOf(m), p, { siteUrl, releaseUrl, commit, checked: statusOf(m) === "checked", ident }), "```", "::::", "",
+      ":::::", "",
+      // Not "## Abstract": MyST lifts a section of that name above everything else on the
+      // page. A bold label keeps the abstract below the header block, as on arXiv.
+      "**Abstract.** " + (m.notes?.abstract ?? "*No abstract provided.*"), "",
+      "## Status", "",
+      status === "frozen" ? `**Last checked with Lean v${esc(frozen[m.id].lean_version ?? "?")} on ${String(frozen[m.id].checked_at ?? "").slice(0, 10)}**` +
+        `${report?.lean_version && report.lean_version !== frozen[m.id].lean_version ? `; not re-checked with the current Lean v${esc(report.lean_version)}` : ""}. [What "checked" means](../../checked.md).`
+      : status === "checked" ? `All formal results are **kernel-checked**${lean}. [What "checked" means](../../checked.md).`
+        : status === "preview" ? "Not verified (local preview)." : "**Verification failed.**", "",
+      // Relative (two levels up, to the entry's directory) so it reads as an internal link.
+      `**[View the full entry →](../../${m.dir}/index.md)** · category: [${esc(categories.find((c) => c.id === m.category)?.title ?? m.category)}](../../${CATEGORY_DIR}/${m.category}/index.md)` +
+        (m.arxiv.length ? ` · ${m.arxiv.map((a) => `[arXiv:${a}](https://arxiv.org/abs/${a})`).join(", ")}` : ""), ""];
+    fs.writeFileSync(path.join(dir, "index.md"), L.join("\n"));
+    absPages.push(`abs/${ident.replace(".", "-")}/index.md`);
+  }
 
   // One overview page per category at /c/<id>/ (a real page, so the URL is stable and
   // the sidebar group header is clickable). Written into the build tree only.
@@ -600,7 +676,10 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       children: primary.get(c.id).map(entryToc),
     })),
     // The maintained changelog, a hand-written page (docs/changelog.md), last in the sidebar.
-    ...(fs.existsSync(path.join(DOCS, "changelog.md")) ? [{ file: "changelog.md" }] : [])];
+    ...(fs.existsSync(path.join(DOCS, "checked.md")) ? [{ file: "checked.md" }] : []),
+    ...(fs.existsSync(path.join(DOCS, "changelog.md")) ? [{ file: "changelog.md" }] : []),
+    // Landing pages: part of the site, not of the sidebar.
+    ...absPages.map((f) => ({ file: f, hidden: true }))];
   if (process.env.LEMMATA_THEME) cfg.site.template = process.env.LEMMATA_THEME;
   fs.writeFileSync(path.join(DOCS, "myst.runtime.yml"),
     "# Generated by tools/lemmata.mjs prepare -- do not edit, not committed.\n" + YAML.stringify(cfg));
