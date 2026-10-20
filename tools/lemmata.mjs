@@ -604,6 +604,70 @@ function scaffold(id, lean, category) {
   console.log(`created docs/${id}/ and lean/${LIB}/${lean}/; umbrella updated`);
 }
 
+// ------------------------------------------------------------------------- site index
+
+// Machine-readable views of the archive, written into the rendered site after `myst
+// build`: llms.txt (the llms.txt convention: Markdown, one line per entry), lemmata.json
+// (everything an agent needs to cite or link a result), and a sitemap.xml/robots.txt with
+// the public addresses -- MyST's own pointed at its internal build server
+// (http://localhost:3000). Entries are listed by their permanent /abs/ URL when they
+// have an identifier, so links into the index never depend on directory names.
+function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl }) {
+  const siteUrl = (process.env.SITE_URL ?? "https://lemmata.iol.berlin").replace(/\/$/, "");
+  const prov = loadProvenance(manifests, commit), idents = loadIdentifiers(commit);
+  const passed = report?.result === "passed";
+  const byName = new Map((report?.exports ?? []).map((e) => [e.name, e]));
+  const catTitle = new Map(categories.map((c) => [c.id, c.title]));
+  const entries = manifests.map((m) => {
+    const ident = idents[m.id] ?? null, p = prov?.entries?.[m.id];
+    const url = ident ? `${siteUrl}/abs/${ident}` : `${siteUrl}/${m.dir}/`;
+    const exports = m.exports.map((e) => { const r = byName.get(e.name);
+      return { name: e.name, kind: e.kind, label: e.label, status: passed && r?.status === "checked" ? "checked" : "failed",
+               axioms: r?.axioms ?? [], source_file: r?.source_file ?? null }; });
+    return {
+      identifier: ident ? `lemmata:${ident}` : null, url, title: titleOf(m),
+      category: m.category, category_title: catTitle.get(m.category) ?? m.category, tags: m.tags,
+      contributors: people(m, p).map((c) => c.name),
+      first_published: p?.first.date ?? null, last_changed: p?.last.date ?? null,
+      status: exports.every((x) => x.status === "checked") ? "checked" : "failed",
+      exports, arxiv: m.arxiv, ai_use: m.notes?.ai_use ?? null, acknowledgements: m.notes?.acknowledgements ?? null,
+      bibtex: bibtex(m, titleOf(m), p, { siteUrl, releaseUrl: null, commit, checked: exports.every((x) => x.status === "checked"), ident }),
+    };
+  }).sort((a, b) => (a.identifier ?? "~").localeCompare(b.identifier ?? "~") || a.title.localeCompare(b.title));
+
+  fs.writeFileSync(path.join(outDir, "lemmata.json"), JSON.stringify({
+    schema_version: 1, site: siteUrl, source_commit: commit ?? null,
+    checked_means: `formal statements compile, are accepted by Lean's kernel, and use no axioms beyond ${ALLOWED_AXIOMS.join(", ")}; the correspondence between prose and Lean statement is checked by human review`,
+    entries,
+  }, null, 2) + "\n");
+
+  const line = (e) => `- [${e.title}](${e.url})${e.identifier ? ` (${e.identifier})` : ""}: ${e.status}` +
+    `${e.contributors.length ? `; ${e.contributors.join(", ")}` : ""}${e.arxiv.length ? `; arXiv:${e.arxiv.join(", arXiv:")}` : ""}`;
+  const md = ["# Lemmata", "",
+    "> An experimental mathematics repository: each entry is a result written as prose and formalized in Lean 4 on Mathlib. " +
+    "\"checked\" means the formal statements compile, are accepted by Lean's kernel, and use no axioms beyond " +
+    `${ALLOWED_AXIOMS.join(", ")}. Whether the prose and the Lean statement say the same thing is checked by human review.`, "",
+    `Cite an entry by its identifier and permanent URL (${siteUrl}/abs/YYYY.NNNNN). Machine-readable index with exported Lean ` +
+    `declarations, axioms and BibTeX: ${siteUrl}/lemmata.json`, ""];
+  for (const c of categories) {
+    const list = entries.filter((e) => e.category === c.id);
+    if (list.length) md.push(`## ${c.title}`, "", ...list.map(line), "");
+  }
+  md.push("## Optional", "", `- [Changelog](${siteUrl}/changelog/)`, `- [Build status](${siteUrl}/_status)`, "");
+  fs.writeFileSync(path.join(outDir, "llms.txt"), md.join("\n"));
+
+  const xmlEsc = (u) => u.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  const urls = [`${siteUrl}/`, ...categories.filter((c) => entries.some((e) => e.category === c.id)).map((c) => `${siteUrl}/c/${c.id}/`),
+    ...entries.map((e) => e.url), `${siteUrl}/changelog/`];
+  fs.writeFileSync(path.join(outDir, "sitemap.xml"), ['<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...urls.map((u) => `  <url><loc>${xmlEsc(u)}</loc></url>`), "</urlset>", ""].join("\n"));
+  // No Disallow for /_releases/: the stable and /abs/ URLs redirect there, so blocking it
+  // would hide every page from crawlers that honour robots.txt.
+  fs.writeFileSync(path.join(outDir, "robots.txt"), ["User-agent: *", "Allow: /",
+    `Sitemap: ${siteUrl}/sitemap.xml`, ""].join("\n"));
+}
+
 // ------------------------------------------------------------------------------- main
 
 const [cmd, ...args] = process.argv.slice(2);
@@ -632,6 +696,12 @@ switch (cmd) {
     finish("prepared docs/_generated and docs/myst.runtime.yml"); break;
   }
   case "new": scaffold(args[0], args[1], args[2]); finish(); break;
+  case "site-index": {            // after myst build: llms.txt, lemmata.json, sitemap, robots
+    const cats = loadCategories(); const ms = loadManifests(cats); finish();
+    const report = args[0] ? JSON.parse(fs.readFileSync(args[0], "utf8")) : null;
+    siteIndex(ms, cats, report, args[1], { commit: flag("--commit"), sourceUrl: flag("--source-url") });
+    finish(`wrote llms.txt, lemmata.json, sitemap.xml, robots.txt to ${args[1]}`); break;
+  }
   case "provenance": {            // what the controller ships for HEAD, from local git
     const ms = loadManifests(); finish();
     process.stdout.write(JSON.stringify(loadProvenance(ms, null), null, 2) + "\n"); break;

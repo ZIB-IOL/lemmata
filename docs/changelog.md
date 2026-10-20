@@ -12,6 +12,9 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 - Every entry has a **stable identifier** `lemmata:YYYY.NNNNN` with a permanent URL
   `/abs/YYYY.NNNNN`, shown at the top of the page and used in the citation.
+- Machine-readable views for search engines and language models: `/llms.txt`,
+  `/lemmata.json` (identifiers, Lean declarations, axioms, BibTeX) and a corrected
+  `/sitemap.xml`.
 - **Moved** to [github.com/ZIB-IOL/lemmata](https://github.com/ZIB-IOL/lemmata). Source and
   commit links on every page now point there.
 - Entries can state an **AI use** note and **acknowledgements**, shown at the end of the page.
