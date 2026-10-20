@@ -21,14 +21,8 @@ document [@shihipar2026html]. [Lax](https://laxarchive.org/about.html) links Lea
 papers, which it keeps as the primary way of explaining a result; Lemmata is for the
 results that come before, or alongside, a paper.
 
-**Contributing.** The archive is a Git repository,
-[github.com/ZIB-IOL/lemmata](https://github.com/ZIB-IOL/lemmata). New entries and changes
-arrive by pull request; the
-[contribution guide](https://github.com/ZIB-IOL/lemmata/blob/main/CONTRIBUTING.md)
-(and [AGENTS.md](https://github.com/ZIB-IOL/lemmata/blob/main/AGENTS.md), the same
-procedure written for coding agents) explains every step. The site rebuilds itself from
-`main` within minutes; the [build status](https://lemmata.iol.berlin/_status) shows which
-version is live and, for a commit that was not published, why.
+```{include} _generated/contributing.md
+```
 
 ```{include} _generated/catalog.md
 ```

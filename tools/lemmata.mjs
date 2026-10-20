@@ -345,9 +345,9 @@ function titleOf(m) {
 
 // BibTeX for one entry. Every field comes from data the tools trust: title from the page,
 // authors and year from git (provenance), ids from the manifest, URLs from the site.
-// `url` is the STABLE address (/<id>/, which redirects to the current release); the
-// immutable snapshot of this exact version goes in `note`, so a citation is both durable
-// and exact. No `urldate`: it would be the build date, not the reader's.
+// `url` is the permanent identifier URL (/abs/YYYY.NNNNN, or /<dir>/ before one is
+// assigned); the commit in `note` names the exact version. No `urldate`: it would be the
+// build date, not the reader's.
 const bibEscape = (v) => String(v).replace(/[\\{}]/g, "").replace(/([&%$#_])/g, "\\$1");
 // Names stay exactly as git has them ("Ludwig van Beethoven"): BibTeX parses
 // "First von Last" itself, particles included, which a naive reordering gets wrong.
@@ -369,8 +369,10 @@ function bibtex(m, title, p, { siteUrl, releaseUrl, commit, checked, ident }) {
     ["year", p ? p.first.date.slice(0, 4) : String(new Date().getUTCFullYear())],
     ["url", stable],
   ];
-  const note = [commit ? `Version ${commit.slice(0, 12)}` : null, checked ? "formal statements checked in Lean 4" : null,
-    releaseUrl ? `snapshot: \\url{${releaseUrl}/${m.dir}/}` : null].filter(Boolean).join("; ");
+  // No snapshot URL: old releases are pruned, so a citation must not depend on one. The
+  // permanent /abs/ URL always resolves; the commit names the exact version cited.
+  const note = [commit ? `Version ${commit.slice(0, 12)}` : null, checked ? "formal statements checked in Lean 4" : null]
+    .filter(Boolean).join("; ");
   fields.push(["note", note]);
   if (m.arxiv.length) fields.push(["eprint", m.arxiv[0]], ["archivePrefix", "arXiv"]);
   const key = ident ? `lemmata:${ident}` : `lemmata:${m.dir}`;
@@ -545,6 +547,20 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const table = (list, rel) => ["| Entry | Formal results | Status |", "|---|---|---|",
     ...list.map((m) => `| [${esc(titleOf(m))}](${rel}${m.dir}/index.md) | ${m.exports.length} | ${statusOf(m)} |`)];
 
+  // "Contributing" paragraph of the landing page, with the repository address from the
+  // build (SOURCE_WEB_URL) rather than written into docs/index.md, so moving the
+  // repository needs no content change.
+  const repo = sourceUrl?.replace(/\/+$/, "").replace(/\.git$/, "");
+  const repoFile = (f) => forge?.blob("main", f) ?? null;
+  const repoLabel = repo ? repo.replace(/^https?:\/\//, "") : null;
+  fs.writeFileSync(path.join(gen, "contributing.md"), (repo
+    ? `**Contributing.** The archive is a Git repository, [${repoLabel}](${repo}). New entries and changes ` +
+      `arrive by pull request; the [contribution guide](${repoFile("CONTRIBUTING.md")}) (and ` +
+      `[AGENTS.md](${repoFile("AGENTS.md")}), the same procedure written for coding agents) explains every step. `
+    : "**Contributing.** New entries and changes arrive by pull request against the archive's Git repository. ") +
+    `The site rebuilds itself from \`main\` within minutes; the [build status](${siteUrl}/_status) shows which ` +
+    "version is live and, for a commit that was not published, why.\n");
+
   // Landing page catalog (included from docs/index.md, so rel = "").
   const cat = ["## Entries", ""];
   for (const c of used) {
@@ -618,24 +634,27 @@ function scaffold(id, lean, category) {
 // The identifier line as a widget: the permanent link, and "copy" which puts the permanent
 // URL on the clipboard (feedback "copied" for 1.5 s). Only model.get is used -- the static
 // MyST theme has no kernel.
-const IDENT_WIDGET = `function render({ model, el }) {
+const IDENT_WIDGET = `const COPY = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75"/></svg>';
+const DONE = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>';
+function render({ model, el }) {
   const ident = model.get("ident"), url = model.get("url");
   const box = document.createElement("span"); box.className = "lemmata-ident";
   const a = document.createElement("a"); a.href = url; a.className = "lemmata-ident-link";
   const b = document.createElement("strong"); b.textContent = ident; a.append(b);
+  // Same icon as the copy control on code blocks (the Cite-as BibTeX), check mark after copying.
   const btn = document.createElement("button"); btn.type = "button"; btn.className = "lemmata-ident-copy";
-  btn.textContent = "copy"; btn.title = "Copy the permanent URL " + url;
+  btn.innerHTML = COPY; btn.title = "Copy the permanent URL " + url; btn.setAttribute("aria-label", "Copy the permanent URL");
   btn.addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(url); }
     catch { const t = document.createElement("textarea"); t.value = url; document.body.append(t); t.select(); document.execCommand("copy"); t.remove(); }
-    btn.textContent = "copied"; setTimeout(() => { btn.textContent = "copy"; }, 1500);
+    btn.innerHTML = DONE; btn.setAttribute("aria-label", "Copied"); setTimeout(() => { btn.innerHTML = COPY; btn.setAttribute("aria-label", "Copy the permanent URL"); }, 1500);
   });
   const css = document.createElement("style");
-  css.textContent = ".lemmata-ident{display:inline-flex;align-items:center;gap:.5rem;font-size:.875rem}" +
+  css.textContent = ".lemmata-ident{display:inline-flex;align-items:center;gap:.3rem;font-size:.875rem}" +
     ".lemmata-ident-link{color:inherit}" +
-    ".lemmata-ident-copy{font:inherit;font-size:.75rem;line-height:1.3;padding:.05rem .45rem;cursor:pointer;" +
-    "color:inherit;background:transparent;border:1px solid color-mix(in srgb,currentColor 35%,transparent);" +
-    "border-radius:4px;opacity:.75}.lemmata-ident-copy:hover{opacity:1}";
+    ".lemmata-ident-copy{display:inline-flex;align-items:center;padding:0;border:0;background:transparent;cursor:pointer;" +
+    "color:var(--myst-color-link-underline,currentColor);opacity:.8}" +
+    ".lemmata-ident-copy:hover{opacity:1;color:var(--myst-color-link-hover,currentColor)}";
   box.append(a, btn); el.append(css, box);
 }
 export default { render };
@@ -689,6 +708,20 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
   for (const c of categories) {
     const list = entries.filter((e) => e.category === c.id);
     if (list.length) md.push(`## ${c.title}`, "", ...list.map(line), "");
+  }
+  // How to contribute, for agents reading this file. The repository address is the build's
+  // SOURCE_WEB_URL (the cluster's one CONTENT_WEB setting), never written in here, so a
+  // moved repository is reflected on the next build.
+  const repo = sourceUrl?.replace(/\/+$/, "").replace(/\.git$/, "");
+  if (repo) {
+    const file = (f) => forgeLinks(repo)?.blob("main", f) ?? `${repo}/${f}`;
+    md.push("## Contributing", "",
+      `New entries and corrections are pull requests against \`main\` of ${repo}. An agent should follow ` +
+      `AGENTS.md there: it is the complete procedure (scaffold, Lean and prose rules, local checks with ` +
+      `tools/check.sh, the pull request, and how to confirm publication via ${siteUrl}/_status.json).`, "",
+      `- [AGENTS.md](${file("AGENTS.md")}): step-by-step procedure for agents`,
+      `- [CONTRIBUTING.md](${file("CONTRIBUTING.md")}): the same for people`,
+      `- [Repository](${repo})`, "");
   }
   md.push("## Optional", "", `- [Changelog](${siteUrl}/changelog/)`, `- [Build status](${siteUrl}/_status)`, "");
   fs.writeFileSync(path.join(outDir, "llms.txt"), md.join("\n"));
