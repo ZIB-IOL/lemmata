@@ -4,6 +4,34 @@ module
 -- Imports every module under Lemmata/, for downstream users. Contributions import the
 -- specific modules they need instead, which keeps the import graph acyclic.
 public import Lemmata.ImplicationComposition.Main
+public import Lemmata.LPHardnessInP.CostTransfer.Main
+public import Lemmata.LPHardnessInP.CostTransfer.Statement
+public import Lemmata.LPHardnessInP.Formulation.Main
+public import Lemmata.LPHardnessInP.Formulation.Statement
+public import Lemmata.LPHardnessInP.Joins.Graph
+public import Lemmata.LPHardnessInP.Joins.Main
+public import Lemmata.LPHardnessInP.Joins.Statement
+public import Lemmata.LPHardnessInP.Main
+public import Lemmata.LPHardnessInP.Matching.Attainment
+public import Lemmata.LPHardnessInP.Matching.Main
+public import Lemmata.LPHardnessInP.Matching.Statement
+public import Lemmata.LPHardnessInP.ObjectiveReversal.Main
+public import Lemmata.LPHardnessInP.ObjectiveReversal.Statement
+public import Lemmata.LPHardnessInP.Parity.Main
+public import Lemmata.LPHardnessInP.Parity.Statement
+public import Lemmata.LPHardnessInP.ParityExtension.Charging
+public import Lemmata.LPHardnessInP.ParityExtension.ConcreteData
+public import Lemmata.LPHardnessInP.ParityExtension.Core
+public import Lemmata.LPHardnessInP.ParityExtension.Extension
+public import Lemmata.LPHardnessInP.ParityExtension.Goodness
+public import Lemmata.LPHardnessInP.ParityExtension.Main
+public import Lemmata.LPHardnessInP.ParityExtension.Padding
+public import Lemmata.LPHardnessInP.ParityExtension.Parameters
+public import Lemmata.LPHardnessInP.ParityExtension.Sampling
+public import Lemmata.LPHardnessInP.ParityExtension.Separation
+public import Lemmata.LPHardnessInP.ParityExtension.Witness
+public import Lemmata.LPHardnessInP.RankReduction.Main
+public import Lemmata.LPHardnessInP.RankReduction.Statement
 public import Lemmata.LagrangianDualityGap.Main
 public import Lemmata.Shared.Basic
 public import Lemmata.SpanningTreeMinSplit.Certificates
