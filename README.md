@@ -21,7 +21,7 @@ There is no CI. The cluster watches **`main`**: on every new commit it builds th
 library, re-checks it in the kernel, audits the axioms, renders the site and switches the
 site to the new version only if every step passed. A failed commit leaves the previous
 version online and shows the reason on the status page. Merging to `main` is publishing,
-so `main` is protected and changes arrive through merge requests.
+so `main` is protected and changes arrive through pull requests.
 
 | Step | What it guarantees |
 |---|---|

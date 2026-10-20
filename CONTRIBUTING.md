@@ -13,7 +13,7 @@ node tools/lemmata.mjs new prime-infinitude PrimeInfinitude number-theory
 
 The last argument is the entry's category, one of the ids in `docs/categories.yml`. If
 your entry needs a category that does not exist yet, add it to that file in the same
-merge request (id, title, one-line description); its position in the file is its position
+pull request (id, title, one-line description); its position in the file is its position
 in the sidebar.
 
 This creates `docs/prime-infinitude/{contribution.yml,index.md}` and
@@ -27,7 +27,7 @@ UpperCamelCase. Neither can change after publication.
 - Everything lives in `namespace Lemmata.<LeanName>`.
 - Import other entries' modules directly (`public import Lemmata.SelfImplication.Main`),
   never the umbrella `Lemmata`. Do not copy another entry's definitions; move shared
-  material into `lean/Lemmata/Shared/` in its own merge request.
+  material into `lean/Lemmata/Shared/` in its own pull request.
 - No `sorry`, no `native_decide`, no `axiom`. The audit covers every declaration in
   every file, not just the ones you export — a draft helper fails the whole archive.
 - Mark the part to show on the page with `-- DOCS_BEGIN_MAIN` / `-- DOCS_END_MAIN`.
@@ -73,13 +73,13 @@ entry later never breaks links to it. Category pages live at `/c/<category>/`.
 Each export says "this label on this page is formalized by this declaration". The binding
 is checked; whether the two say the same thing is what your reviewer checks.
 
-## 5. Check and open a merge request
+## 5. Check and open a pull request
 
 ```bash
 node tools/lemmata.mjs umbrella --write   # if you added or removed Lean files
 tools/check.sh
 ```
 
-Open a merge request against `main`. Reviewers read the mathematics, compare the prose
+Open a pull request against `main` on [GitHub](https://github.com/ZIB-IOL/lemmata). Reviewers read the mathematics, compare the prose
 with the Lean statement, and review any JavaScript. Once merged, the entry is live within
 a few minutes, or the status page says why not.

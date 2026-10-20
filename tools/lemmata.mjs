@@ -387,14 +387,29 @@ function loadProvenance(manifests, commit) {
 }
 
 // Panels and catalog come only from the verifier's report, never from page content.
+// Links into the content repository, for whichever forge hosts it. The repository's web
+// address is the only required input (the build Job gets it as SOURCE_WEB_URL, from the
+// cluster's one CONTENT_WEB setting), so moving the repo is a configuration change.
+// GitLab puts "/-/" before blob/commit; GitHub, Gitea and Forgejo do not. The style is
+// guessed from the host name ("gitlab" in it), and SOURCE_FORGE=gitlab|github overrides
+// the guess -- needed for self-hosted GitLab under another name, such as git.zib.de.
+function forgeLinks(webUrl, forge = process.env.SOURCE_FORGE) {
+  if (!webUrl) return null;
+  const base = webUrl.replace(/\/+$/, "").replace(/\.git$/, "");
+  const gitlab = forge ? forge === "gitlab" : /gitlab/i.test(new URL(base).host);
+  const sep = gitlab ? "/-" : "";
+  return { blob: (sha, file) => `${base}${sep}/blob/${sha}/${file}`, commit: (sha) => `${base}${sep}/commit/${sha}` };
+}
+
 function prepare(manifests, categories, report, { commit, sourceUrl }) {
+  const forge = forgeLinks(sourceUrl);
   const gen = path.join(DOCS, "_generated");
   const catRoot = path.join(DOCS, CATEGORY_DIR);
   for (const d of [gen, catRoot]) fs.rmSync(d, { recursive: true, force: true });
   fs.mkdirSync(path.join(gen, "verification"), { recursive: true });
   const passed = report?.result === "passed";
   const byName = new Map((report?.exports ?? []).map((e) => [e.name, e]));
-  const link = (file) => sourceUrl && commit ? `${sourceUrl.replace(/\/$/, "")}/-/blob/${commit}/${file}` : null;
+  const link = (file) => forge && commit ? forge.blob(commit, file) : null;
   const statusOf = (m) => !report ? "preview"
     : m.exports.every((e) => passed && byName.get(e.name)?.status === "checked") ? "checked" : "failed";
 
@@ -433,7 +448,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const prov = loadProvenance(manifests, commit);
   fs.mkdirSync(path.join(gen, "provenance"), { recursive: true });
   const day = (iso) => String(iso ?? "").slice(0, 10);
-  const commitLink = (c) => sourceUrl ? `[${c.slice(0, 7)}](${sourceUrl.replace(/\/$/, "")}/-/commit/${c})` : `\`${c.slice(0, 7)}\``;
+  const commitLink = (c) => forge ? `[${c.slice(0, 7)}](${forge.commit(c)})` : `\`${c.slice(0, 7)}\``;
   for (const m of manifests) {
     const p = prov?.entries?.[m.id];
     // One header block per entry: contributors line + "Cite as", visually set apart from

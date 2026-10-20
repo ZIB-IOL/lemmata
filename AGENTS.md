@@ -6,7 +6,7 @@ material for human contributors. Where they differ, the tools are right: every r
 is enforced by `tools/lemmata.mjs` and `checker/`, and the cluster runs its own copies of
 both.
 
-**Goal:** a merge to `main` of `git@git.zib.de:spokutta/lemmata.git` that the cluster
+**Goal:** a merge to `main` of `git@github.com:ZIB-IOL/lemmata.git` that the cluster
 accepts, after which the result is live at `https://lemmata.iol.berlin/<id>/`.
 
 There is no CI and no one to ask. Run the checks yourself (step 5). If `tools/check.sh`
@@ -41,7 +41,7 @@ Requirements: `git`, [elan](https://github.com/leanprover/elan) (installs the pi
 from `lean/lean-toolchain`), Node ≥ 24.
 
 ```bash
-git clone git@git.zib.de:spokutta/lemmata.git && cd lemmata
+git clone git@github.com:ZIB-IOL/lemmata.git && cd lemmata
 npm ci
 ( cd lean && lake exe cache get )   # Mathlib's compiled cache, ~7 GB, takes minutes
 tools/check.sh                      # must pass on a clean checkout before you change anything
@@ -239,7 +239,7 @@ git commit -m "<id>: <one line on what is proved>"
 git push -u origin entry/<id>
 ```
 
-Open a merge request against `main` at `https://git.zib.de/spokutta/lemmata/-/merge_requests`
+Open a pull request against `main` at `https://github.com/ZIB-IOL/lemmata/pulls`
 and say what the result is and how the Lean statement corresponds to the prose. **Merging
 is publishing**: a human reviews and merges. Do not push to `main` yourself unless you have
 been explicitly told to.
