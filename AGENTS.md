@@ -198,10 +198,18 @@ The informal proof.
   badge yourself.
 - The BibTeX (permanent `/abs/` URL, authors, year, arXiv if given, the version commit in
   `note`) is generated; there is nothing to write.
+- Under every result bound in `exports`, the page shows its Lean declaration with its
+  status and a link to the exact lines checked, and on request its Lean statement: a
+  theorem up to `:=` (never the proof), a definition in full. A theorem stated as a named
+  `Prop` (`theorem t : MyClaim`, with `def MyClaim : Prop := …` in `Statement.lean`)
+  also shows that definition. So **every export must be declared in a way the tools can
+  find**: `theorem <name>` / `def <name>` at the start of a line, in the file the verifier
+  reports. Write the statement readably; it is what reviewers compare with your prose.
 - On the built site (`tools/check.sh`, and in the cluster) proof titles read "Proof of
   Theorem 1", a result whose proof is not directly below it gets a `[↓]` link to it, proofs
-  fold by clicking their header, and the Lean source starts collapsed. A small script does
-  this in the browser; `npm run preview` (MyST's live server) does not run it.
+  fold by clicking their header, the Lean source starts collapsed, the Lean boxes sit under
+  their results, and the right-hand contents follow the section being read. A small script
+  does this in the browser; `npm run preview` (MyST's live server) does not run it.
 - Your name on the page is the **git author name** of your commits, unless the manifest
   lists `contributors` (step 4). Set it before committing: `git config user.name "Full Name"`.
 - Every `prf:proof` names what it proves and carries `:nonumber:`, exactly as above;

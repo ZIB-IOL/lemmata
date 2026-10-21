@@ -62,6 +62,11 @@ const proofTitles = await page.locator(".myst-proof.border-myst-proof .myst-proo
 check(proofTitles.length > 0 && proofTitles.every((t) => /^Proof\s+of\b/.test(t.trim()) && !t.includes("(")), "proof titles read 'Proof of ...'");
 check((await page.locator(".myst-primary-sidebar-toc .myst-toc > div").evaluateAll((xs) => xs.filter((x) => x.offsetParent).length)) === 0,
   "sidebar lists no entries or categories");
+// Lean next to each result: every box placed directly under the result it belongs to.
+const placement = await page.evaluate(() => { const bs = [...document.querySelectorAll(".lemmata-lean-for")];
+  return { n: bs.length, ok: bs.filter((b) => b.classList.contains("lemmata-placed") &&
+    b.previousElementSibling?.id === b.className.match(/lemmata-for-(\S+)/)[1]).length }; });
+check(placement.n > 0 && placement.ok === placement.n, `Lean box under each result (${placement.ok}/${placement.n})`);
 const widget = page.locator(".lemmata-chain");
 await widget.waitFor({ timeout: 15000 }).catch(() => {});
 check(await widget.count() === 1, "anywidget loads");

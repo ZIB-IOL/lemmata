@@ -5,9 +5,6 @@ site. Add items here rather than to issues while the repository is private.
 
 ## Next
 
-- **Statement, Lean and verification together.** Below each bound result, show its Lean
-  statement, its verification badge and a link to the exact lines of the proof file; the
-  panel at the end becomes a summary. The same for definitions. Being planned (2026-10-21).
 - **Comments with Giscus.** The code path exists (`GISCUS` in `tools/lemmata.mjs`, off). It
   needs a *public* GitHub repository with Discussions enabled (the content repository once
   public, or a separate `lemmata-discussions`), the Giscus app installed on it, and its

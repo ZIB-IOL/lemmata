@@ -202,3 +202,35 @@ details.lemmata-lean > .myst-code { margin: 0; }
    a list of every entry would grow without bound. They are on the start page instead.
    Category groups are the div children of the toc; site pages are its direct links. */
 .myst-primary-sidebar-toc .myst-toc > div { display: none; }
+
+/* Lean next to each result. The boxes are rendered at the end of the page and moved under
+   their result by the page script; until then (or without JavaScript) they stay hidden,
+   and the verification panel lists every result. */
+.lemmata-lean-boxes { display: none; }
+/* Attached to the result above it: no gap, same left edge, quieter than the result. */
+.myst-proof:has(+ .lemmata-lean-for.lemmata-placed) { margin-bottom: 0; }
+.lemmata-lean-for.lemmata-placed {
+  display: block; margin: 0 0 1.5rem; padding: 0.35rem 0.9rem 0.45rem;
+  border-left: 4px solid var(--myst-color-border, #e5e7eb); font-size: 0.85rem;
+  background: var(--myst-color-bg-secondary, #f8f9fb); border-radius: 0 0 0.375rem 0.375rem;
+}
+.lemmata-lean-for.lemmata-placed > p { margin: 0.1rem 0; }
+/* The "Statement in Lean" toggle: a small inline control, not a section bar. */
+.lemmata-lean-for details.myst-dropdown { margin: 0.25rem 0 0; box-shadow: none; border: 0; background: transparent; }
+.lemmata-lean-for details.myst-dropdown > summary { padding: 0.15rem 0; font-size: 0.85rem; font-weight: 500;
+  background: transparent; box-shadow: none; }
+.lemmata-lean-for details.myst-dropdown > summary .myst-dropdown-header-title { font-size: 0.85rem; }
+.lemmata-lean-for details.myst-dropdown > div { padding: 0.2rem 0 0; }
+.lemmata-lean-for .myst-code { margin: 0.4rem 0; }
+.dark .lemmata-lean-for.lemmata-placed { background: #161b22; border-left-color: #30363d; }
+
+/* Right-hand contents: our page script marks the section being read (lemmata-current); the
+   theme's own highlight, which drops out inside long sections, is neutralised once the
+   script runs (html.lemmata-outline). */
+html.lemmata-outline .myst-outline-item.myst-outline-item-active { background: transparent; border-left-color: var(--myst-color-border-strong, #d1d5db); }
+html.lemmata-outline .myst-outline-item.myst-outline-item-active > a { color: inherit; font-weight: inherit; }
+html.lemmata-outline .myst-outline-item.lemmata-current { border-left-color: var(--myst-color-active, #2563eb); background: var(--myst-color-active-surface, #eff6ff); }
+html.lemmata-outline .myst-outline-item.lemmata-current > a { color: var(--myst-color-active, #2563eb); font-weight: 700; }
+html.dark.lemmata-outline .myst-outline-item.lemmata-current > a { color: #e6edf3; }
+
+.lemmata-secnum { margin-right: 0.15rem; font-variant-numeric: tabular-nums; opacity: 0.75; }

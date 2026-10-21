@@ -564,6 +564,54 @@ function loadProvenance(manifests, commit) {
 // GitLab puts "/-/" before blob/commit; GitHub, Gitea and Forgejo do not. The style is
 // guessed from the host name ("gitlab" in it), and SOURCE_FORGE=gitlab|github overrides
 // the guess -- needed for self-hosted GitLab under another name, such as git.zib.de.
+// The source text of a Lean declaration, for showing it next to the result on the page.
+// Read from the trusted source tree (the render step's pristine copy), using the file the
+// verifier reported; the verifier itself loads no environment extensions, so it has no
+// declaration ranges to offer. A theorem or lemma is shown up to its first top-level ":="
+// (the statement, not the proof); a definition in full, since its body is what it means
+// (for a `def X : Prop := ...` the body is the claim itself). Returns { from, to, text }
+// with 1-based lines, or null.
+const DECL_KW = "(?:theorem|lemma|def|abbrev|structure|instance|inductive|class)";
+const DECL_START = new RegExp(`^(?:@\\[[^\\]]*\\]\\s*)*(?:(?:private|protected|noncomputable|nonrec|partial|unsafe|public)\\s+)*(?:${DECL_KW}|end|namespace|section|open|variable|set_option|attribute|example|#)\\b`);
+function leanStatement(file, shortName) {
+  let src; try { src = fs.readFileSync(path.join(ROOT, file), "utf8"); } catch { return null; }
+  const lines = src.split("\n");
+  const esc = shortName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const start = new RegExp(`^\\s*(?:@\\[[^\\]]*\\]\\s*)*(?:(?:private|protected|noncomputable|nonrec|partial|unsafe)\\s+)*(${DECL_KW})\\s+${esc}(?=[\\s:({\\[]|$)`);
+  const i = lines.findIndex((l) => start.test(l));
+  if (i < 0) return null;
+  const isTheorem = /^(theorem|lemma)$/.test(lines[i].match(start)[1]);
+  let end = -1, cut = null;
+  if (isTheorem) {
+    // First ":=" outside brackets.
+    let depth = 0;
+    for (let j = i; j < lines.length && end < 0 && j - i <= 80; j++) {
+      const l = lines[j].replace(/--.*$/, "");
+      for (let k = 0; k < l.length; k++) {
+        const c = l[k];
+        if ("([{⟨".includes(c)) depth++;
+        else if (")]}⟩".includes(c)) depth = Math.max(0, depth - 1);
+        else if (depth === 0 && l.startsWith(":=", k)) { end = j; cut = k; break; }
+      }
+    }
+  } else {
+    // The whole definition: until a blank line, a doc comment or the next top-level command.
+    end = i;
+    for (let j = i + 1; j < lines.length && j - i <= 80; j++) {
+      if (!lines[j].trim() || /^\s*\/--/.test(lines[j]) || DECL_START.test(lines[j])) break;
+      end = j;
+    }
+  }
+  if (end < 0) return null;
+  const body = lines.slice(i, end + 1);
+  if (cut !== null) body[body.length - 1] = body[body.length - 1].slice(0, cut).replace(/\s+$/, "");
+  if (!body[body.length - 1].trim()) body.pop();
+  // Keep a doc comment directly above it.
+  let from = i;
+  if (/-\/\s*$/.test(lines[i - 1] ?? "")) { let d = i - 1; while (d >= 0 && !/^\s*\/--/.test(lines[d])) d--; if (d >= 0) from = d; }
+  return { from: from + 1, to: end + 1, declLine: i + 1, text: [...lines.slice(from, i), ...body].join("\n").replace(/\s+$/, "") };
+}
+
 function forgeLinks(webUrl, forge = process.env.SOURCE_FORGE) {
   if (!webUrl) return null;
   const base = webUrl.replace(/\/+$/, "").replace(/\.git$/, "");
@@ -588,6 +636,52 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const frozen = loadFrozen();
   const statusOf = (m) => frozen[m.id] ? "frozen" : !report ? "preview"
     : m.exports.every((e) => passed && byName.get(e.name)?.status === "checked") ? "checked" : "failed";
+
+  // One box per bound result: "Lean `Name` · ✅ kernel-checked · source", then the
+  // statement (a theorem up to ":=", a definition in full; for a theorem whose type is a
+  // named Prop, that Prop's definition too), collapsed. Lines link to the source at the
+  // commit that was checked.
+  const leanBoxes = (m, fz) => {
+    const old = fz ? new Map((fz.results ?? []).map((x) => [x.name, x])) : null;
+    // Fence lengths nest outward: container 6 colons, box 5, dropdown 4 (an inner fence
+    // must be shorter than the one around it, or it closes the outer one).
+    const out = ["::::::{div}", ":class: lemmata-lean-boxes", ""];
+    for (const e of m.exports) {
+      const r = byName.get(e.name);
+      const file = r?.source_file;
+      const at = fz ? fz.commit : commit;
+      const ok = fz ? old.get(e.name)?.status === "checked" : passed && r?.status === "checked";
+      const badge = !report && !fz ? "○ not verified (preview)" : ok ? (e.kind === "definition" ? "◇ elaborated" : "✅ kernel-checked") : "✗ not checked";
+      const st = file ? leanStatement(file, e.name.split(".").pop()) : null;
+      // With a report, every checked export must be locatable in its source: otherwise its
+      // box would show no statement, and readers could not compare it with the prose.
+      if (file && !st && report) fail(`${m.dir}: cannot find the declaration of ${e.name} in ${file} ` +
+        "(write it as `theorem <name>` / `def <name>` at the start of a line)");
+      const range = (f, s) => forge && at && f ? `${forge.blob(at, f)}#L${s.from}${s.to > s.from ? `-L${s.to}` : ""}` : null;
+      const src = st && range(file, st);
+      out.push(`:::::{div}`, `:class: lemmata-lean-for lemmata-for-${e.label}`, "",
+        `**Lean** \`${e.name.split(".").slice(-1)[0]}\` · ${badge}` + (src ? ` · [source](${src})` : ""), "");
+      if (st) {
+        // A theorem stated as a named Prop (`theorem t : CertifiedSlackFactorization`): show
+        // that Prop's definition as well, from the entry's own Lean files.
+        let prop = null;
+        const named = r?.type && /^[\w.']+(\.\{[^}]*\})?$/.test(r.type) && r.type.includes(".") ? r.type.replace(/\.\{.*$/, "") : null;
+        if (named && e.kind === "theorem") {
+          const dir = path.dirname(file), short = named.split(".").pop();
+          for (const f of [file, ...fs.readdirSync(path.join(ROOT, dir)).filter((x) => x.endsWith(".lean")).map((x) => path.join(dir, x))]) {
+            const ps = leanStatement(f, short); if (ps) { prop = { file: f, ...ps }; break; }
+          }
+        }
+        out.push(`::::{dropdown} ${e.kind === "definition" ? "Definition" : "Statement"} in Lean`, "", "```lean", st.text, "```");
+        if (prop) out.push("", `where \`${named.split(".").pop()}\` is` + (range(prop.file, prop) ? ` ([source](${range(prop.file, prop)}))` : "") + ":", "",
+          "```lean", prop.text, "```");
+        out.push("::::", "");
+      }
+      out.push(":::::", "");
+    }
+    out.push("::::::");
+    return out;
+  };
 
   // Verification panel per entry, from the verifier's report only.
   for (const m of manifests) {
@@ -631,6 +725,11 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
         `[What "checked" means](${CHECKED_PAGE_LINK}).`
       : "This is a local preview: nothing on this page has been verified.",
       "::::", "");
+    // Lean next to each result: per bound result, its declaration, status, statement and a
+    // link to the exact lines. Rendered here, in one hidden block; the page script moves
+    // each box under the result with that label (class lemmata-for-<label>). Without the
+    // script they stay hidden and the panel above remains the complete list.
+    lines.push(...leanBoxes(m, fz), "");
     // Related material, AI use, acknowledgements and the license close the entry.
     const notes = Object.entries(NOTE_KEYS).filter(([k]) => m.notes?.[k]);
     lines.push(":::{div}", ":class: lemmata-notes", "");
@@ -1049,6 +1148,8 @@ function dedupeTitles(siteDir) {
 //     folds it (proofs start open)
 //   - results: a [↓] after the heading of a result whose proof is not directly below it
 //   - Lean code (MyST code blocks under an entry): collapsed behind a bar, copy button kept
+//   - Lean next to each result: the per-result boxes rendered at the end of the page are
+//     moved directly under the theorem or definition they belong to
 const ENHANCE_SCRIPT = `(function(){
 function proofs(){
   document.querySelectorAll(".myst-proof.border-myst-proof").forEach(function(box){
@@ -1104,7 +1205,44 @@ function lean(){
     code.parentNode.insertBefore(d,code); d.append(code);
   });
 }
-function run(){ try{ proofs(); proofLinks(); lean(); }catch(e){} }
+function leanNextToResults(){
+  // Move each per-result Lean box (rendered at the end of the page) under its result.
+  document.querySelectorAll(".lemmata-lean-boxes .lemmata-lean-for").forEach(function(box){
+    var m=(box.className.match(/lemmata-for-(\\S+)/)||[])[1]; if(!m) return;
+    var res=document.getElementById(m); if(!res||!res.parentNode) return;
+    box.classList.add("lemmata-placed");
+    res.parentNode.insertBefore(box,res.nextSibling);
+  });
+}
+// Right-hand contents: the theme highlights a heading only while it is in a narrow band at
+// the top of the window, so inside a long section nothing was highlighted (104 of 122
+// scroll positions, measured). Instead: the section being read is the last heading above
+// a third of the window; its contents item gets lemmata-current, and CSS shows only that.
+function outline(){
+  var items=[].slice.call(document.querySelectorAll(".myst-outline-item"));
+  if(!items.length) return;
+  var heads=[].slice.call(document.querySelectorAll("article h2[id], article h3[id], article h4[id]"));
+  var cur=null, line=window.innerHeight/3;
+  for(var i=0;i<heads.length;i++){ if(heads[i].getBoundingClientRect().top<line) cur=heads[i].id; else break; }
+  // At the very bottom, the last heading is the one being read even if it never got high.
+  if(window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2 && heads.length) cur=heads[heads.length-1].id;
+  items.forEach(function(li){
+    var a=li.querySelector("a[href^='#']"), on=!!(a&&cur&&a.getAttribute("href")==="#"+cur);
+    if(on!==li.classList.contains("lemmata-current")) li.classList.toggle("lemmata-current",on);
+    // Section numbers: the theme numbers the headings but not the contents list. Copy the
+    // heading's number (the text before its title) in front of the item.
+    if(a&&!a.querySelector(".lemmata-secnum")){
+      var h=document.getElementById(a.getAttribute("href").slice(1)), n=h&&h.querySelector("span");
+      var num=n&&/^\\s*[\\d.]+\\s*$/.test(n.textContent)?n.textContent.trim():null;
+      if(num){ var sp=document.createElement("span"); sp.className="lemmata-secnum"; sp.textContent=num+" "; a.insertBefore(sp,a.firstChild); }
+    }
+  });
+  document.documentElement.classList.add("lemmata-outline");
+}
+var ticking=false;
+window.addEventListener("scroll",function(){ if(!ticking){ ticking=true; requestAnimationFrame(function(){ ticking=false; try{ outline(); }catch(e){} }); } },{passive:true});
+window.addEventListener("resize",function(){ try{ outline(); }catch(e){} });
+function run(){ try{ leanNextToResults(); proofs(); proofLinks(); lean(); outline(); }catch(e){} }
 // Only after React has hydrated: changing the DOM before that is a hydration mismatch
 // (React error #418), after which React re-renders and drops the changes. Then re-apply
 // whenever React re-renders.
