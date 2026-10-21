@@ -132,7 +132,7 @@ Rules the tools enforce for these fields:
   write a literal dollar as `\$`; at most 2000 characters each. Use a YAML block (`>-`).
 - `contributors` items are `First Last`, `{name: …}` or `{first: …, last: …}`, one per
   person; names only, no emails. Add each person's **ORCID iD** as `orcid:` (please do):
-  with it, the name links to an author page at `/a/<ORCID iD>/` with all of that person's
+  with it, the name links to an author page at `/a/orcid-<ORCID iD>/` with all of that person's
   entries; without it, the name is shown unlinked, since a name alone does not identify
   someone. The iD's format and check digit are validated. Get yours at
   [orcid.org](https://orcid.org) if you do not have one.

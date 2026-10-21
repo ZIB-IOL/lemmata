@@ -278,7 +278,7 @@ emails.
 
 **Give every person's ORCID iD** (`orcid:` in the object form, one per person, as above;
 `https://orcid.org/` in front is accepted and dropped). The ORCID is what identifies a
-person: a contributor with one gets an author page at `/a/<ORCID iD>/` listing all their
+person: a contributor with one gets an author page at `/a/orcid-<ORCID iD>/` listing all their
 entries, and their name links to it; a name without one is shown but not linked, because
 two people can share a name. The iD is checked (format and its check digit), so a typo
 fails validation. Ask the human you work for for each person's ORCID iD; never guess or

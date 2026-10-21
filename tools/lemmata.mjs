@@ -508,7 +508,11 @@ function orcidValid(id) {
 }
 // An author's name in a header: linked to their author page when they have an ORCID iD,
 // plain otherwise (a name alone does not identify a person). `up` is the path to docs/.
-const authorName = (c, up) => c.orcid ? `[**${esc(c.name)}**](${up}${AUTHOR_DIR}/${c.orcid}/index.md)` : `**${esc(c.name)}**`;
+// The author page's directory. Not the bare iD: MyST strips leading digit groups from page
+// paths as an ordering prefix, so "0009-0000-5193-184X" was published at /a/x/ (measured).
+// A letter prefix, lower case, survives: /a/orcid-0009-0000-5193-184x/.
+const authorDir = (orcid) => `orcid-${orcid.toLowerCase()}`;
+const authorName = (c, up) => c.orcid ? `[**${esc(c.name)}**](${up}${AUTHOR_DIR}/${authorDir(c.orcid)}/index.md)` : `**${esc(c.name)}**`;
 // A {first, last} name is written "{Last}, First": braces keep a multi-part surname whole.
 const bibAuthor = (c) => c.last !== undefined
   ? (c.first ? `{${bibEscape(c.last)}}, ${bibEscape(c.first)}` : `{${bibEscape(c.last)}}`)
@@ -933,7 +937,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     fs.writeFileSync(path.join(dir, "index.md"), lines.join("\n"));
   }
 
-  // One page per author at /a/<ORCID iD>/, listing every entry they are credited on (current
+  // One page per author at /a/orcid-<ORCID iD>/ (see authorDir), listing every entry they are credited on (current
   // ones first, withdrawn ones after), and an index at /a/. Only contributors with an ORCID
   // iD get a page: the iD tells people with the same name apart, a name alone does not.
   // Keyed by the iD, so a page survives a change of spelling; it shows the most frequent
@@ -951,7 +955,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     .sort((x, y) => x.name.localeCompare(y.name));
   const authorPages = [];
   for (const a of authors) {
-    const dir = path.join(authorRoot, a.orcid);
+    const dir = path.join(authorRoot, authorDir(a.orcid));
     fs.mkdirSync(dir, { recursive: true });
     const cur = a.entries.filter((m) => !m.notes?.withdrawn).sort(byTitle), gone = a.entries.filter((m) => m.notes?.withdrawn).sort(byTitle);
     const lines = ["---", "numbering:", "  headings: false", `title: ${JSON.stringify(a.name)}`, "---", "",
@@ -960,12 +964,12 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     if (cur.length) lines.push(...table(cur, "../../"), "");
     if (gone.length) lines.push("## Withdrawn", "", ...table(gone, "../../"), "");
     fs.writeFileSync(path.join(dir, "index.md"), lines.join("\n"));
-    authorPages.push(`${AUTHOR_DIR}/${a.orcid}/index.md`);
+    authorPages.push(`${AUTHOR_DIR}/${authorDir(a.orcid)}/index.md`);
   }
   fs.mkdirSync(authorRoot, { recursive: true });
   fs.writeFileSync(path.join(authorRoot, "index.md"), ["---", "numbering:", "  headings: false", "title: Authors", "---", "",
     "Contributors who have given an ORCID iD in their entry's `contribution.yml`. Others are named on their entries but have no page here.", "",
-    ...(authors.length ? authors.map((a) => `- [${esc(a.name)}](${a.orcid}/index.md) (${a.entries.length})`) : ["*No contributor has given an ORCID iD yet.*"]), ""].join("\n"));
+    ...(authors.length ? authors.map((a) => `- [${esc(a.name)}](${authorDir(a.orcid)}/index.md) (${a.entries.length})`) : ["*No contributor has given an ORCID iD yet.*"]), ""].join("\n"));
   authorPages.unshift(`${AUTHOR_DIR}/index.md`);
 
   // Effective MyST config: the authored one plus the generated TOC. Parsed and re-emitted
