@@ -757,6 +757,10 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const siteUrl = (process.env.SITE_URL ?? "https://lemmata.iol.berlin").replace(/\/$/, "");
   const prov = loadProvenance(manifests, commit);
   const idents = loadIdentifiers(commit);
+  // Where links to an entry point: its identifier URL /html/<ident> once it has one (the
+  // address readers see and share, independent of the directory name), else its
+  // directory page, written relative to the linking page so MyST checks it.
+  const entryHref = (m, rel) => idents[m.id] ? `/html/${idents[m.id]}` : `${rel}${m.dir}/index.md`;
   fs.mkdirSync(path.join(gen, "provenance"), { recursive: true });
   // The identifier line's "copy" control: a tiny anywidget module written by the tools,
   // not taken from the content repo, so contributors cannot change what it does.
@@ -815,7 +819,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   // resolves against the INCLUDING page; `../<id>/index.md` from _generated/ once
   // rendered as a raw href and 404'd).
   const table = (list, rel) => ["| Entry | Formal results | Status |", "|---|---|---|",
-    ...list.map((m) => `| [${esc(titleOf(m))}](${rel}${m.dir}/index.md) | ${m.exports.length} | ` +
+    ...list.map((m) => `| [${esc(titleOf(m))}](${entryHref(m, rel)}) | ${m.exports.length} | ` +
       (statusOf(m) === "frozen" ? `checked with v${esc(frozen[m.id].lean_version ?? "?")}` : statusOf(m)) + " |")];
 
   // "Contributing" paragraph of the landing page, with the repository address from the
@@ -871,6 +875,11 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       JSON.stringify({ ident: `lemmata:${ident}`, url: `${siteUrl}/abs/${ident}`, bibtex: bib }), "```", "",
       ":::{div}", ":class: lemmata-provenance", "",
       ...(who ? [`${who}  `] : []), ...(dates ? [`${dates}  `] : []), licenseLine(m), ":::", "",
+      // The page's main action, in the header where it is seen first (it sat below the
+      // status and was missed, 2026-10-21). Relative, so it reads as an internal link.
+      ":::{div}", ":class: lemmata-view-full", "",
+      `**[View the full entry →](${entryHref(m, "../../")})** · category: [${esc(categories.find((c) => c.id === m.category)?.title ?? m.category)}](../../${CATEGORY_DIR}/${m.category}/index.md)` +
+        (m.arxiv.length ? ` · ${m.arxiv.map((a) => `[arXiv:${a}](https://arxiv.org/abs/${a})`).join(", ")}` : ""), ":::", "",
       ...(SHOW_CITE_BOX ? ["::::{dropdown} Cite as", "", "```bibtex", bib, "```", "::::", ""] : []),
       ":::::", "",
       // Not "## Abstract": MyST lifts a section of that name above everything else on the
@@ -880,10 +889,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       status === "frozen" ? `**Last checked with Lean v${esc(frozen[m.id].lean_version ?? "?")} on ${String(frozen[m.id].checked_at ?? "").slice(0, 10)}**` +
         `${report?.lean_version && report.lean_version !== frozen[m.id].lean_version ? `; not re-checked with the current Lean v${esc(report.lean_version)}` : ""}. [What "checked" means](../../checked.md).`
       : status === "checked" ? `All formal results are **kernel-checked**${lean}. [What "checked" means](../../checked.md).`
-        : status === "preview" ? "Not verified (local preview)." : "**Verification failed.**", "",
-      // Relative (two levels up, to the entry's directory) so it reads as an internal link.
-      `**[View the full entry →](../../${m.dir}/index.md)** · category: [${esc(categories.find((c) => c.id === m.category)?.title ?? m.category)}](../../${CATEGORY_DIR}/${m.category}/index.md)` +
-        (m.arxiv.length ? ` · ${m.arxiv.map((a) => `[arXiv:${a}](https://arxiv.org/abs/${a})`).join(", ")}` : ""), ""];
+        : status === "preview" ? "Not verified (local preview)." : "**Verification failed.**", ""];
     fs.writeFileSync(path.join(dir, "index.md"), L.join("\n"));
     absPages.push(`abs/${ident.replace(".", "-")}/index.md`);
   }
@@ -1124,12 +1130,34 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
     ...(process.env.BASE_URL ? [] : ["Disallow: /_releases/"]),
     `Sitemap: ${siteUrl}/sitemap.xml`, ""].join("\n"));
   dedupeTitles(outDir);
-  injectEnhancements(outDir);
+  injectEnhancements(outDir);           // before canonical(), which annotates its tag
+  // One preferred address per entry for search engines and link previews: the entry is
+  // reachable at /<dir>/ and /html/<ident>, its landing page at /abs/<ident>/.
+  for (const e of entries.filter((x) => x.identifier)) {
+    const ident = e.identifier.slice("lemmata:".length), dir = manifests.find((m) => idents[m.id] === ident)?.dir;
+    if (dir) canonical(path.join(outDir, dir, "index.html"), `${siteUrl}/html/${ident}`);
+    canonical(path.join(outDir, "abs", ident.replace(".", "-"), "index.html"), `${siteUrl}/abs/${ident}`);
+  }
 }
 
 // The theme titles every page "<page title> - <site title>". On the start page both are
 // the site title, so tabs and link previews (Slack, og:title) read "X - X". Collapse that
 // one case to "X"; every other page keeps its suffix.
+// <link rel="canonical"> and og:url in a page's <head> (React leaves the head alone).
+function canonical(file, url) {
+  if (!fs.existsSync(file)) return;
+  let html = fs.readFileSync(file, "utf8");
+  // Each part on its own, so a page that already has one of them still gets the others.
+  if (!html.includes('rel="canonical"'))
+    html = html.replace("</head>", `<link rel="canonical" href="${url}"/><meta property="og:url" content="${url}"/></head>`);
+  // The page script restores the link after React re-renders <head>; it reads the URL from
+  // its own <script> tag, which sits outside what React hydrates. An element added inside
+  // the page body would be a hydration mismatch (React #418).
+  if (!html.includes("data-lemmata-canonical="))
+    html = html.replace("<script data-lemmata-enhance>", `<script data-lemmata-enhance data-lemmata-canonical="${url}">`);
+  fs.writeFileSync(file, html);
+}
+
 function dedupeTitles(siteDir) {
   for (const f of walk(siteDir, ".html")) {
     const html = fs.readFileSync(f, "utf8");
@@ -1249,16 +1277,52 @@ function outline(){
   });
   document.documentElement.classList.add("lemmata-outline");
 }
+// Copying text with formulas gives their TeX ($z_x\\in P$), not the rendered glyphs, as
+// KaTeX's copy-tex add-on does: every formula carries its source in an annotation.
+document.addEventListener("copy",function(e){
+  var sel=window.getSelection(); if(!sel||sel.isCollapsed||!e.clipboardData) return;
+  var frag=sel.getRangeAt(0).cloneContents();
+  if(!frag.querySelector(".katex-mathml, .katex")) return;
+  // Outermost formulas only (a .katex-display wraps a .katex). The ancestor test stops at
+  // the fragment: when the selection starts inside a display, its wrapper is not copied.
+  var all=[].slice.call(frag.querySelectorAll(".katex-display, .katex"));
+  all.filter(function(k){ for(var a=k.parentElement; a; a=a.parentElement) if(all.indexOf(a)>=0) return false; return true; })
+  .forEach(function(k){
+    var ann=k.querySelector("annotation[encoding='application/x-tex']"); if(!ann) return;
+    var tex=ann.textContent.trim(), m=k.querySelector("math");
+    // Display math: the .katex-display wrapper, or -- when the selection starts inside it --
+    // the MathML's display="block", which KaTeX always writes.
+    var display=k.classList.contains("katex-display")||(m&&m.getAttribute("display")==="block");
+    var dl=display?"$"+"$":"$"; k.replaceWith(document.createTextNode(dl+tex+dl));
+  });
+  e.clipboardData.setData("text/plain",frag.textContent);
+  e.preventDefault();
+},true);
 var ticking=false;
 window.addEventListener("scroll",function(){ if(!ticking){ ticking=true; requestAnimationFrame(function(){ ticking=false; try{ outline(); }catch(e){} }); } },{passive:true});
 window.addEventListener("resize",function(){ try{ outline(); }catch(e){} });
-function run(){ try{ leanNextToResults(); proofs(); proofLinks(); lean(); outline(); }catch(e){} }
+// The canonical URL is written into the served HTML (what crawlers and link previews read);
+// React re-renders the <head> on load and drops it, so put it back for the live page too.
+var CANON=(document.querySelector("script[data-lemmata-canonical]")||{dataset:{}}).dataset.lemmataCanonical||null;   // see canonical() in lemmata.mjs
+function canon(){ if(CANON&&!document.querySelector("link[rel=canonical]")){ var l=document.createElement("link"); l.rel="canonical"; l.href=CANON; document.head.append(l); } }
+// On an entry page, show its identifier address (/html/<ident>) in the address bar, so that
+// is what readers copy and share; the page itself is served at its directory, which the
+// theme's router needs. Same document, so nothing reloads; anchors are kept.
+function idAddress(){
+  if(!CANON||!/\\/html\\/\\d{4}\\.\\d{5}$/.test(CANON)) return;
+  var u=new URL(CANON), here=location.pathname.replace(/\\/+$/,"");
+  if(here===u.pathname) return;
+  // Only from the entry's own directory page, never from a page the router moved to.
+  if(!document.querySelector(".lemmata-lean-for, .lemmata-header")) return;
+  try{ history.replaceState(history.state,"",u.pathname+location.search+location.hash); }catch(e){}
+}
+function run(){ try{ canon(); leanNextToResults(); proofs(); proofLinks(); lean(); outline(); }catch(e){} }
 // Only after React has hydrated: changing the DOM before that is a hydration mismatch
 // (React error #418), after which React re-renders and drops the changes. Then re-apply
 // whenever React re-renders.
 function start(){
   setTimeout(function(){
-    run();
+    run(); idAddress();
     var t=null; new MutationObserver(function(){ clearTimeout(t); t=setTimeout(run,50); }).observe(document.body,{childList:true,subtree:true});
   },300);
 }

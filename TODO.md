@@ -1,7 +1,7 @@
 # TODO
 
 Planned and proposed work on the Lemmata Repository, roughly in order. Not rendered on the
-site. Add items here rather than to issues while the repository is private.
+site. The repository is public; issues and pull requests are welcome too.
 
 ## Next
 

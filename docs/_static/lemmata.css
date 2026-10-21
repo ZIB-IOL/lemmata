@@ -239,3 +239,7 @@ html.lemmata-outline .myst-outline-item.lemmata-current > a { color: var(--myst-
 html.dark.lemmata-outline .myst-outline-item.lemmata-current > a { color: #e6edf3; }
 
 .lemmata-secnum { margin-right: 0.15rem; font-variant-numeric: tabular-nums; opacity: 0.75; }
+
+/* /abs/ page: "View the full entry" as the first thing after the metadata. */
+.lemmata-header .lemmata-view-full { margin: 0.6rem 0 0.2rem; }
+.lemmata-header .lemmata-view-full p { margin: 0; }
