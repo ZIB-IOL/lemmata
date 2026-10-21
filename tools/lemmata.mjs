@@ -670,18 +670,19 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     // authors (linked to their author pages), versions, and the abstract.
     const ident = idents[m.id];
     const bib = bibtex(m, titleOf(m), p, { siteUrl, commit, checked: statusOf(m) === "checked", ident });
-    const lines = [...withdrawnNotice(m), ":::::{div}", ":class: lemmata-header", "", ":::{div}", ":class: lemmata-provenance", ""];
-    // The stable identifier and its permanent URL, the address to cite and link to.
+    const lines = [...withdrawnNotice(m), ":::::{div}", ":class: lemmata-header", ""];
+    // The stable identifier and its permanent URL, the address to cite and link to: its own
+    // row above the text lines (an empty block before it once added a stray gap).
     if (ident) {
       // Identifier as permanent link, "copy URL" and "copy BibTeX", rendered by a widget.
       // Without JavaScript the identifier is still the page's /abs/ address.
-      lines.push(":::",
-        // Path relative to the entry page that includes this file (docs/<id>/index.md):
-        // MyST resolves widget modules from the including page, not from _generated/.
-        "", "```{anywidget} ../_generated/provenance/ident.mjs",
-        JSON.stringify({ ident: `lemmata:${ident}`, url: `${siteUrl}/abs/${ident}`, bibtex: bib }), "```",
-        "", ":::{div}", ":class: lemmata-provenance", "");
-    } else lines.push("*Identifier assigned on publication.*  ");
+      // Path relative to the entry page that includes this file (docs/<id>/index.md):
+      // MyST resolves widget modules from the including page, not from _generated/.
+      lines.push("```{anywidget} ../_generated/provenance/ident.mjs",
+        JSON.stringify({ ident: `lemmata:${ident}`, url: `${siteUrl}/abs/${ident}`, bibtex: bib }), "```", "");
+    }
+    lines.push(":::{div}", ":class: lemmata-provenance", "");
+    if (!ident) lines.push("*Identifier assigned on publication.*  ");
     const who = people(m, p).map((c) => `[**${esc(c.name)}**](../${AUTHOR_DIR}/${authorSlug(c.name)}/index.md)`).join(", ");
     if (!p && !m.contributors.length) lines.push("*Not yet committed.*");
     else lines.push(who + (p ? "  " : ""));

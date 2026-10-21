@@ -9,7 +9,7 @@
   padding: 0 0 1.25rem;
   border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent);
 }
-.lemmata-header .lemmata-provenance { opacity: 0.8; margin-bottom: 0.75rem; }
+.lemmata-header .lemmata-provenance { opacity: 0.8; margin: 0; line-height: 1.3125rem; }
 .lemmata-header .lemmata-provenance p { margin: 0; }
 .lemmata-header details { margin: 0; font-size: 0.875rem; }
 
@@ -124,7 +124,10 @@
 
 /* Identifier line (rendered by a widget, which styles its own link and "copy" control):
    no extra margin around the widget inside the header. */
-.lemmata-header .myst-anywidget, .lemmata-header [class*="anywidget"] { margin: 0 0 0.15rem; }
+/* Header rows on one rhythm: the identifier row is exactly one text line, like the author
+   and version lines below it, with no margins of its own. */
+.lemmata-header .myst-anywidget, .lemmata-header [class*="anywidget"] { margin: 0; line-height: 1.3125rem; }
+.lemmata-header .lemmata-ident { line-height: 1.3125rem; vertical-align: top; }
 
 /* End-of-proof square, right-aligned on the last line of every proof. MyST uses
    .myst-proof-body for every prf: environment; only proofs get a header with
