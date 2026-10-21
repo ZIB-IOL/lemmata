@@ -237,6 +237,8 @@ ai_use: >-                            # optional; shown at the end of the entry
 acknowledgements: >-                  # optional; shown at the end of the entry
   Supported by the Berlin Mathematics Research Center MATH$^+$.
 license: CC-BY-4.0                    # optional; CC-BY-4.0 (default), CC-BY-SA-4.0 or CC0-1.0
+withdrawn: >-                         # only to withdraw a published entry; the reason
+  The bound in the second theorem is wrong; see lemmata:2611.00004 for the correction.
 pages:
   - index.md
 exports:                              # at least one theorem
@@ -258,6 +260,13 @@ then kept whole in BibTeX: `{van Beethoven}, Ludwig`). Names only — no emails.
 are the only alternatives, and anything else fails validation. Do not contribute text or
 code you cannot license this way, e.g. passages copied from a paper whose publisher holds
 the copyright; ask the human you work for when unsure.
+
+`withdrawn` withdraws a published entry; its text is the reason. **Never delete a published
+entry**: its identifier is cited, and other entries may import its Lean. A withdrawn entry
+stays at its identifier with a notice under the title and keeps being built and checked, but
+leaves the sidebar, the catalog and the category pages (`lemmata.json` gives it status
+`withdrawn`). Correct mistakes by changing the entry instead, where you can. Withdraw only
+when the human you work for asks you to; see the About page for the policy.
 
 `ai_use` and `acknowledgements` are short notes rendered at the end of the entry, below the
 verification panel. Say honestly how AI tools were used, if at all; there is no default

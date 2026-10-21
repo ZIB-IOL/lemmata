@@ -28,7 +28,7 @@ const POLICY_ID = "lemmata-verification-v1";
 
 // Directories in docs/ and lean/Lemmata/ that are infrastructure, not contributions.
 const RESERVED_DOCS = new Set(["_static", "_generated", "_build", "_releases", "_status",
-  "index", "healthz", "readyz", "node_modules", "c", "changelog", "abs", "html", "llms", "checked"]);
+  "index", "healthz", "readyz", "node_modules", "c", "changelog", "abs", "html", "llms", "checked", "about"]);
 // The page that explains what "checked" means (docs/checked.md), linked from every
 // verification panel; entries are at docs/<id>/, so the link is one level up.
 const CHECKED_PAGE_LINK = "../checked.md";
@@ -38,7 +38,7 @@ const CATEGORY_DIR = "c";
 const CATEGORY_KEYS = new Set(["id", "title", "description"]);
 const RESERVED_LEAN = new Set(["Shared"]);
 const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "arxiv", "contributors",
-  "ai_use", "acknowledgements", "abstract", "license", "pages", "exports"]);
+  "ai_use", "acknowledgements", "abstract", "license", "withdrawn", "pages", "exports"]);
 // Licence of an entry (prose and Lean). Optional; without it the entry is CC BY 4.0. Only
 // these SPDX ids are accepted, so every entry stays reusable and its link is known.
 const LICENSES = {
@@ -276,6 +276,10 @@ function loadManifests(categories = loadCategories()) {
     for (const k of Object.keys(NOTE_KEYS)) if (m[k] !== undefined) notes[k] = checkNote(m[k], `${where}/contribution.yml: ${k}`);
     // Optional abstract for the entry's /abs/ page; inline only, like the notes.
     if (m.abstract !== undefined) notes.abstract = checkNote(m.abstract, `${where}/contribution.yml: abstract`);
+    // Withdrawn: the reason, shown as a notice on the entry and its /abs/ page. A withdrawn
+    // entry is never deleted (identifiers are cited, other entries may import its Lean):
+    // it is still built and checked, only left out of the sidebar and the listings.
+    if (m.withdrawn !== undefined) notes.withdrawn = checkNote(m.withdrawn, `${where}/contribution.yml: withdrawn`);
     if (m.license !== undefined && !Object.hasOwn(LICENSES, m.license))
       fail(`${where}/contribution.yml: license must be one of ${Object.keys(LICENSES).join(", ")} (default ${DEFAULT_LICENSE})`);
     const license = Object.hasOwn(LICENSES, m.license) ? m.license : DEFAULT_LICENSE;
@@ -328,7 +332,7 @@ const doiNorm = (d) => decodeURIComponent(d).replace(/[.,;:]+$/, "").toLowerCase
 // The hand-written pages: the start page, checked/changelog, and every entry's pages.
 function linkedDois(manifests) {
   const out = new Map();     // normalised DOI -> first place it is linked
-  const pages = ["index.md", "checked.md", "changelog.md"].map((p) => path.join(DOCS, p))
+  const pages = ["index.md", "checked.md", "changelog.md", "about.md"].map((p) => path.join(DOCS, p))
     .concat(manifests.flatMap((m) => m.pages.map((p) => path.join(DOCS, m.dir, p))));
   for (const f of pages) {
     if (!fs.existsSync(f)) continue;
@@ -441,6 +445,11 @@ const bibEscape = (v) => String(v).replace(/[\\{}]/g, "").replace(/([&%$#_])/g, 
 // "First von Last" itself, particles included, which a naive reordering gets wrong.
 const bibName = (n) => n.trim().replace(/\s+/g, " ");
 // Who to credit: the manifest's explicit list if given, else everyone who committed.
+// The withdrawal notice, first thing on the entry and on its /abs/ page.
+const withdrawnNotice = (m) => m.notes?.withdrawn
+  ? [":::{div}", ":class: lemmata-withdrawn", "", `**Withdrawn.** ${m.notes.withdrawn}`, "",
+     "The entry stays available under its identifier as a record; it is no longer listed as a current entry.", ":::", ""]
+  : [];
 const licenseLine = (m) => `License: [${LICENSES[m.license].name}](${LICENSES[m.license].url})`;
 const people = (m, p) => m.contributors.length ? m.contributors : (p?.contributors ?? []);
 // A {first, last} name is written "{Last}, First": braces keep a multi-part surname whole.
@@ -613,7 +622,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     // One header block per entry: contributors line + "Cite as", visually set apart from
     // the mathematics below (styled by docs/_static/lemmata.css, class lemmata-header).
     const ident = idents[m.id];
-    const lines = [":::::{div}", ":class: lemmata-header", "", ":::{div}", ":class: lemmata-provenance", ""];
+    const lines = [...withdrawnNotice(m), ":::::{div}", ":class: lemmata-header", "", ":::{div}", ":class: lemmata-provenance", ""];
     // The stable identifier and its permanent URL, the address to cite and link to.
     if (ident) {
       // The identifier as permanent link + "copy" (copies the permanent URL), rendered by a
@@ -651,8 +660,10 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   // Entries per category: primary members (sidebar + catalog) and tagged members (also
   // listed on the category page), each sorted by title.
   const byTitle = (a, b) => titleOf(a).localeCompare(titleOf(b));
-  const primary = new Map(categories.map((c) => [c.id, manifests.filter((m) => m.category === c.id).sort(byTitle)]));
-  const tagged = new Map(categories.map((c) => [c.id, manifests.filter((m) => m.tags.includes(c.id)).sort(byTitle)]));
+  // Withdrawn entries are not listed (they keep their pages and identifiers).
+  const current = manifests.filter((m) => !m.notes?.withdrawn);
+  const primary = new Map(categories.map((c) => [c.id, current.filter((m) => m.category === c.id).sort(byTitle)]));
+  const tagged = new Map(categories.map((c) => [c.id, current.filter((m) => m.tags.includes(c.id)).sort(byTitle)]));
   const used = categories.filter((c) => primary.get(c.id).length || tagged.get(c.id).length);
   // `rel` is the path prefix from the page that will contain the table to docs/: links in
   // generated text must be relative to the page MyST renders them on (an included file
@@ -668,13 +679,16 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const repo = sourceUrl?.replace(/\/+$/, "").replace(/\.git$/, "");
   const repoFile = (f) => forge?.blob("main", f) ?? null;
   const repoLabel = repo ? repo.replace(/^https?:\/\//, "") : null;
-  fs.writeFileSync(path.join(gen, "contributing.md"), (repo
-    ? `**Contributing.** The archive is a Git repository, [${repoLabel}](${repo}). New entries and changes ` +
+  const contributing = (repo
+    ? `The archive is a Git repository, [${repoLabel}](${repo}). New entries and changes ` +
       `arrive by pull request; the [contribution guide](${repoFile("CONTRIBUTING.md")}) (and ` +
       `[AGENTS.md](${repoFile("AGENTS.md")}), the same procedure written for coding agents) explains every step. `
-    : "**Contributing.** New entries and changes arrive by pull request against the archive's Git repository. ") +
+    : "New entries and changes arrive by pull request against the archive's Git repository. ") +
     `The site rebuilds itself from \`main\` within minutes; the [build status](${siteUrl}/_status) shows which ` +
-    "version is live and, for a commit that was not published, why.\n");
+    "version is live and, for a commit that was not published, why.\n";
+  // With a bold label for the start page; without, for a page that has its own heading (About).
+  fs.writeFileSync(path.join(gen, "contributing.md"), "**Contributing.** " + contributing);
+  fs.writeFileSync(path.join(gen, "contributing-body.md"), contributing);
 
   // Landing page catalog (included from docs/index.md, so rel = "").
   const cat = ["## Entries", ""];
@@ -705,7 +719,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     const who = people(m, p).map((c) => `**${esc(c.name)}**`).join(", ");
     const dates = p ? (p.first.commit === p.last.commit ? `Published ${day(p.first.date)}`
       : `First published ${day(p.first.date)} · last changed ${day(p.last.date)}`) : "";
-    const L = ["---", `title: ${JSON.stringify(titleOf(m))}`, "---", "",
+    const L = ["---", `title: ${JSON.stringify(titleOf(m))}`, "---", "", ...withdrawnNotice(m),
       ":::::{div}", ":class: lemmata-header", "",
       "```{anywidget} ../../_generated/provenance/ident.mjs",
       JSON.stringify({ ident: `lemmata:${ident}`, url: `${siteUrl}/abs/${ident}` }), "```", "",
@@ -757,10 +771,14 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       file: `${CATEGORY_DIR}/${c.id}/index.md`,
       children: primary.get(c.id).map(entryToc),
     })),
-    // The maintained changelog, a hand-written page (docs/changelog.md), last in the sidebar.
+    // Hand-written site pages, after the entries: what "checked" means, the changelog, and
+    // the About page (who runs the site, who supports it), last in the sidebar.
     ...(fs.existsSync(path.join(DOCS, "checked.md")) ? [{ file: "checked.md" }] : []),
     ...(fs.existsSync(path.join(DOCS, "changelog.md")) ? [{ file: "changelog.md" }] : []),
-    // Landing pages: part of the site, not of the sidebar.
+    ...(fs.existsSync(path.join(DOCS, "about.md")) ? [{ file: "about.md" }] : []),
+    // Withdrawn entries and the landing pages: part of the site, not of the sidebar. A page
+    // missing from the toc is not built at all, and /html/<ident> must keep working.
+    ...manifests.filter((m) => m.notes?.withdrawn).flatMap((m) => m.pages.map((p) => ({ file: `${m.dir}/${p}`, hidden: true }))),
     ...absPages.map((f) => ({ file: f, hidden: true }))];
   if (process.env.LEMMATA_THEME) cfg.site.template = process.env.LEMMATA_THEME;
   fs.writeFileSync(path.join(DOCS, "myst.runtime.yml"),
@@ -854,7 +872,9 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
       category: m.category, category_title: catTitle.get(m.category) ?? m.category, tags: m.tags,
       contributors: people(m, p).map((c) => c.name),
       first_published: p?.first.date ?? null, last_changed: p?.last.date ?? null,
-      status: fz ? (allOk ? "frozen" : "failed") : allOk ? "checked" : "failed",
+      // "withdrawn" says how the entry is listed; its formal results keep their own status.
+      status: m.notes?.withdrawn ? "withdrawn" : fz ? (allOk ? "frozen" : "failed") : allOk ? "checked" : "failed",
+      withdrawn: m.notes?.withdrawn ?? null,
       last_checked: fz ? { lean_version: fz.lean_version ?? null, checked_at: fz.checked_at ?? null, commit: fz.commit ?? null } : null,
       exports, arxiv: m.arxiv, license: m.license, license_url: LICENSES[m.license].url, ai_use: m.notes?.ai_use ?? null, acknowledgements: m.notes?.acknowledgements ?? null,
       bibtex: bibtex(m, titleOf(m), p, { siteUrl, commit, checked: !fz && allOk, ident }),
@@ -879,9 +899,12 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
     `declarations, axioms, licence and BibTeX: ${siteUrl}/lemmata.json. Entries are licensed CC BY 4.0 unless the ` +
     "entry says otherwise (CC BY-SA 4.0 or CC0 1.0).", ""];
   for (const c of categories) {
-    const list = entries.filter((e) => e.category === c.id);
+    const list = entries.filter((e) => e.category === c.id && e.status !== "withdrawn");
     if (list.length) md.push(`## ${c.title}`, "", ...list.map(line), "");
   }
+  // Withdrawn entries stay reachable under their identifiers, so they are still indexed.
+  const gone = entries.filter((e) => e.status === "withdrawn");
+  if (gone.length) md.push("## Withdrawn", "", ...gone.map((e) => `- [${e.title}](${e.url})${e.identifier ? ` (${e.identifier})` : ""}: withdrawn`), "");
   // How to contribute, for agents reading this file. The repository address is the build's
   // SOURCE_WEB_URL (the cluster's one CONTENT_WEB setting), never written in here, so a
   // moved repository is reflected on the next build.
@@ -896,14 +919,14 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
       `- [CONTRIBUTING.md](${file("CONTRIBUTING.md")}): the same for people`,
       `- [Repository](${repo})`, "");
   }
-  md.push("## Optional", "", `- [What "kernel-checked" means](${siteUrl}/checked/)`, `- [Changelog](${siteUrl}/changelog/)`,
+  md.push("## Optional", "", `- [What "kernel-checked" means](${siteUrl}/checked/)`, `- [Changelog](${siteUrl}/changelog/)`, `- [About](${siteUrl}/about/)`,
     `- [Build status](${siteUrl}/_status)`, "");
   fs.writeFileSync(path.join(outDir, "llms.txt"), md.join("\n"));
 
   const xmlEsc = (u) => u.replace(/&/g, "&amp;").replace(/</g, "&lt;");
   const urls = [`${siteUrl}/`, ...categories.filter((c) => entries.some((e) => e.category === c.id)).map((c) => `${siteUrl}/c/${c.id}/`),
     ...entries.map((e) => e.url), ...entries.filter((e) => e.identifier).map((e) => e.url.replace("/abs/", "/html/")),
-    `${siteUrl}/checked/`, `${siteUrl}/changelog/`];
+    `${siteUrl}/checked/`, `${siteUrl}/changelog/`, `${siteUrl}/about/`];
   fs.writeFileSync(path.join(outDir, "sitemap.xml"), ['<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     ...urls.map((u) => `  <url><loc>${xmlEsc(u)}</loc></url>`), "</urlset>", ""].join("\n"));

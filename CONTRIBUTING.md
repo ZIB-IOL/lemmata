@@ -106,6 +106,8 @@ ai_use: >-                   # optional: how AI tools were used (end of the page
 acknowledgements: >-         # optional: funding, thanks (end of the page); $math$ allowed
   ...
 license: CC-BY-4.0           # optional: CC-BY-4.0 (default), CC-BY-SA-4.0 or CC0-1.0
+withdrawn: >-                # only to withdraw a published entry: the reason
+  ...
 pages: [index.md]            # first page must be index.md; list every page
 exports:
   - name: Lemmata.PrimeInfinitude.exists_infinite_primes
@@ -127,6 +129,10 @@ Rules the tools enforce for these fields:
 - `license` covers the whole entry, prose and Lean. Without it the entry is **CC BY 4.0**;
   the only other choices are `CC-BY-SA-4.0` and `CC0-1.0`. It is shown under the title.
   Only contribute what you may license this way.
+- `withdrawn` (inline text, the reason) withdraws a published entry. Published entries are
+  never deleted: they stay at their identifier with a notice and are still built and
+  checked, since others cite them and other entries may build on their Lean. They are no
+  longer listed. Prefer correcting an entry to withdrawing it.
 
 The URL of an entry is `/<id>/` and does not contain its category, so recategorising an
 entry later never breaks links to it. Category pages live at `/c/<category>/`.

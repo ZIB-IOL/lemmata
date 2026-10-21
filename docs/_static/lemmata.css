@@ -144,3 +144,28 @@
   line-height: inherit;
   opacity: 0.8;
 }
+
+/* About page: supporter logos in a row on a light card, in both themes. MATH+ is a colour
+   logo with a white background, so the card stays light in dark mode too; ZIB and RISE are
+   their blue versions. Each logo is a link; the theme's external-link icon is hidden here. */
+.lemmata-supporters > p {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 2rem 3rem; margin: 1rem 0; padding: 1.5rem 1.25rem;
+  background: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.5rem;
+}
+.lemmata-supporters a .link-icon { display: none; }
+.lemmata-supporters a, .lemmata-supporters a .link-text { display: inline-flex; align-items: center; }
+/* The theme sizes images inside links to the line height; these need their own size. */
+.lemmata-supporters > p > a img { height: 64px !important; width: auto !important; max-width: 100%;
+  max-height: none !important; margin: 0 !important; display: block; }
+/* ZIB's SVG has generous whitespace around the mark; a little taller reads as the same size. */
+.lemmata-supporters > p > a img[src*="zib"] { height: 80px !important; }
+.dark .lemmata-supporters > p { border-color: #30363d; }
+
+/* Withdrawal notice: first thing on a withdrawn entry and on its /abs/ page. */
+.lemmata-withdrawn {
+  margin: 0 0 1.25rem; padding: 0.75rem 1rem; border-radius: 0.375rem;
+  border-left: 4px solid #b45309; background: #fffbeb; color: #78350f;
+}
+.lemmata-withdrawn p { margin: 0 0 0.4rem; } .lemmata-withdrawn p:last-child { margin: 0; font-size: 0.9em; }
+.dark .lemmata-withdrawn { background: #2a1f0a; color: #fcd34d; border-left-color: #d97706; }
