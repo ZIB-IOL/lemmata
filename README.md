@@ -64,3 +64,5 @@ in the deployment repository, so editing `checker/` here cannot loosen what `mai
 
 Pinned: Lean `v4.35.0`, Mathlib `v4.35.0`, mystmd `1.11.0`, book theme
 `23f2df5493e23dfb1d9433c8aa64c87beb4232a3`.
+
+The tensor and spectral foundations in `lean/Lemmata/TensorRank/` build on Jeroen Zuiddam's [tensor-rank formalization](https://github.com/spectra-research/asymptotic-tensor-rank-semicontinuity) and his formalization of Strassen preorders and asymptotic spectra. The interpolation, Fourier separation, polynomial-multiplication, and profile-growth arguments build on [OpenAI's matrix-multiplication formalizations](https://github.com/openai/math).

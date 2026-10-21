@@ -10,6 +10,10 @@ entry shows its own last change and links to the exact commit.
 
 Newest first. Add an item in the same pull request as the change it describes.
 
+## 2026-10-21
+
+- **New entry:** [A Square-Root Bound for Asymptotic Tensor Rank](tensor-rank/index.md).
+
 ## 2026-10-20
 
 - **Identifiers now follow arXiv's format**, `lemmata:YYMM.NNNNN` (e.g. `lemmata:2610.00003`).
