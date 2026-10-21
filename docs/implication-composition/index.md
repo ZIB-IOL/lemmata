@@ -2,6 +2,11 @@
 title: Composition of implications
 ---
 
+:::{note}
+This entry is an example. It demonstrates what an entry can contain, on a deliberately
+simple result; it is not a contribution in its own right.
+:::
+
 ```{include} ../_generated/provenance/implication-composition.md
 ```
 
