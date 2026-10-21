@@ -179,8 +179,8 @@
 
 /* Proofs fold by clicking their header (script in tools/lemmata.mjs). */
 .lemmata-fold { cursor: pointer; user-select: none; }
-.lemmata-fold::after { content: "▾"; margin: 0 1rem 0 0.5rem; align-self: center; opacity: 0.6; transition: transform .15s; }
-.lemmata-folded .lemmata-fold::after { transform: rotate(-90deg); }
+.lemmata-fold::after { content: ""; margin: 0 1rem 0 0.5rem; align-self: center; transform: rotate(90deg); }
+.lemmata-folded .lemmata-fold::after { transform: none; }
 .lemmata-folded > .myst-proof-body { display: none; }
 /* [↓] from a result's heading to its proof, when the proof is not directly below. */
 .lemmata-to-proof { font-weight: normal; font-size: 0.85em; text-decoration: none; opacity: 0.75; }
@@ -191,7 +191,7 @@ details.lemmata-lean { margin: 1.25rem 0; border: 1px solid var(--lemmata-line, 
 details.lemmata-lean > summary { cursor: pointer; padding: 0.6rem 0.9rem; font-weight: 500; list-style: none;
   display: flex; justify-content: space-between; align-items: center; background: var(--myst-color-bg-secondary, #f6f7f9); }
 details.lemmata-lean > summary::-webkit-details-marker { display: none; }
-details.lemmata-lean > summary::after { content: "›"; font-size: 1.2em; opacity: 0.6; transition: transform .15s; }
+details.lemmata-lean > summary::after { content: ""; }
 details.lemmata-lean[open] > summary::after { transform: rotate(90deg); }
 details.lemmata-lean[open] > summary { border-bottom: 1px solid var(--lemmata-line, #e5e7eb); }
 details.lemmata-lean > .myst-code { margin: 0; }
@@ -222,9 +222,8 @@ details.lemmata-lean > .myst-code { margin: 0; }
   background: transparent; box-shadow: none; }
 .lemmata-lean-for details.myst-dropdown > div { padding: 0.2rem 0 0; }
 .lemmata-lean-line { cursor: pointer; position: relative; padding-right: 1.5rem; }
-.lemmata-lean-line::after { content: "›"; position: absolute; right: 0.1rem; top: 50%; margin-top: -0.6em;
-  font-size: 1.2em; line-height: 1.2em; opacity: 0.6; transition: transform .15s; }
-.lemmata-lean-line.lemmata-open::after { transform: rotate(90deg); }
+.lemmata-lean-line::after { content: ""; position: absolute; right: 0.1rem; top: 50%; margin-top: -0.5rem;
+  width: 1rem !important; height: 1rem !important; }
 .lemmata-lean-for:has(> .lemmata-lean-line) details.myst-dropdown > summary { display: none; }
 .lemmata-lean-for .myst-code { margin: 0.4rem 0; }
 .dark .lemmata-lean-for.lemmata-placed { background: #161b22; border-left-color: #30363d; }
@@ -248,3 +247,14 @@ html.dark.lemmata-outline .myst-outline-item.lemmata-current > a { color: #e6edf
 .lemmata-giscus { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--myst-color-border, #e5e7eb); }
 .lemmata-giscus > p { margin: 0 0 0.75rem; font-size: 1.05rem; }
 .dark .lemmata-giscus { border-top-color: #30363d; }
+
+/* One chevron for every collapsible: the theme's own (its dropdowns draw this SVG), as a
+   mask in the text colour, pointing right when closed and down when open. Proof headers,
+   the Lean line and the Lean source bar used text characters (› and ▾) before. */
+:root { --lemmata-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M16.28 11.47a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 0 1-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 0 1 1.06-1.06l7.5 7.5Z' clip-rule='evenodd'/%3E%3C/svg%3E"); }
+.lemmata-fold::after, details.lemmata-lean > summary::after, .lemmata-lean-line::after {
+  width: 1rem; height: 1rem; flex: none; background: currentColor; opacity: 0.75;
+  -webkit-mask: var(--lemmata-chevron) center / contain no-repeat; mask: var(--lemmata-chevron) center / contain no-repeat;
+  transition: transform .15s;
+}
+.lemmata-lean-line.lemmata-open::after { transform: rotate(90deg); }

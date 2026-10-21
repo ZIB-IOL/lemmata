@@ -902,8 +902,9 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       // The page's main action, in the header where it is seen first (it sat below the
       // status and was missed, 2026-10-21). Relative, so it reads as an internal link.
       ":::{div}", ":class: lemmata-view-full", "",
-      `**[View the full entry →](${entryHref(m, "../../")})** · category: [${esc(categories.find((c) => c.id === m.category)?.title ?? m.category)}](../../${CATEGORY_DIR}/${m.category}/index.md)` +
-        (m.arxiv.length ? ` · ${m.arxiv.map((a) => `[arXiv:${a}](https://arxiv.org/abs/${a})`).join(", ")}` : ""), ":::", "",
+      `Category: [${esc(categories.find((c) => c.id === m.category)?.title ?? m.category)}](../../${CATEGORY_DIR}/${m.category}/index.md)` +
+        (m.arxiv.length ? ` · ${m.arxiv.map((a) => `[arXiv:${a}](https://arxiv.org/abs/${a})`).join(", ")}` : "") +
+        ` · **[View the full entry →](${entryHref(m, "../../")})**`, ":::", "",
       ...(SHOW_CITE_BOX ? ["::::{dropdown} Cite as", "", "```bibtex", bib, "```", "::::", ""] : []),
       ":::::", "",
       // Not "## Abstract": MyST lifts a section of that name above everything else on the
