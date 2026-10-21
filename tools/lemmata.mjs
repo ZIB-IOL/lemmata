@@ -275,15 +275,30 @@ function loadManifests(categories = loadCategories()) {
           if (!t || /[{}\\@<>]/.test(t)) { fail(`${at}: ${JSON.stringify(c)} is not a plain name`); continue; }
           contributors.push({ name: t });
         } else if (c && typeof c === "object" && !Array.isArray(c)) {
-          for (const k of Object.keys(c)) if (!["first", "last"].includes(k)) fail(`${at}: unknown field ${k} (use first, last)`);
+          // {first, last} or {name}, each with an optional ORCID iD.
+          for (const k of Object.keys(c)) if (!["first", "last", "name", "orcid"].includes(k)) fail(`${at}: unknown field ${k} (use first/last or name, and orcid)`);
+          let orcid = null;
+          if (c.orcid !== undefined) {
+            orcid = String(c.orcid).trim().replace(/^https?:\/\/orcid\.org\//, "");
+            if (!orcidValid(orcid)) { fail(`${at}: orcid ${JSON.stringify(c.orcid)} is not a valid ORCID iD (0000-0000-0000-000X, checksum)`); orcid = null; }
+          }
+          if (c.name !== undefined) {
+            if (c.first !== undefined || c.last !== undefined) { fail(`${at}: give either name or first/last`); continue; }
+            const t = String(c.name).trim().replace(/\s+/g, " ");
+            if (!t || /[{}\\@<>]/.test(t)) { fail(`${at}: ${JSON.stringify(c.name)} is not a plain name`); continue; }
+            contributors.push({ name: t, orcid });
+            continue;
+          }
           const first = String(c.first ?? "").trim(), last = String(c.last ?? "").trim();
           if (!last) { fail(`${at}: last is required`); continue; }
           if (/[{}\\@<>]/.test(first + last)) { fail(`${at}: names must be plain text`); continue; }
-          contributors.push({ name: first ? `${first} ${last}` : last, first, last });
-        } else fail(`${at}: must be a name or {first, last}`);
+          contributors.push({ name: first ? `${first} ${last}` : last, first, last, orcid });
+        } else fail(`${at}: must be a name, {name, orcid} or {first, last, orcid}`);
       }
       const seen = new Set();
       for (const c of contributors) { if (seen.has(c.name)) fail(`${where}/contribution.yml: contributor ${c.name} listed twice`); seen.add(c.name); }
+      const ids = contributors.filter((c) => c.orcid).map((c) => c.orcid);
+      if (new Set(ids).size !== ids.length) fail(`${where}/contribution.yml: an ORCID iD is listed twice`);
     }
     const notes = {};
     for (const k of Object.keys(NOTE_KEYS)) if (m[k] !== undefined) notes[k] = checkNote(m[k], `${where}/contribution.yml: ${k}`);
@@ -480,8 +495,18 @@ const withdrawnNotice = (m) => m.notes?.withdrawn
   : [];
 const licenseLine = (m) => `License: [${LICENSES[m.license].name}](${LICENSES[m.license].url})`;
 const people = (m, p) => m.contributors.length ? m.contributors : (p?.contributors ?? []);
-const authorSlug = (name) => name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
-  .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "unknown";
+// ORCID iD: four groups of four, the last character a digit or X, which is the ISO 7064
+// MOD 11-2 check digit of the other fifteen (so a mistyped iD is caught).
+function orcidValid(id) {
+  if (!/^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/.test(id)) return false;
+  const d = id.replace(/-/g, ""); let t = 0;
+  for (let i = 0; i < 15; i++) t = (t + Number(d[i])) * 2;
+  const r = (12 - (t % 11)) % 11;
+  return d[15] === (r === 10 ? "X" : String(r));
+}
+// An author's name in a header: linked to their author page when they have an ORCID iD,
+// plain otherwise (a name alone does not identify a person). `up` is the path to docs/.
+const authorName = (c, up) => c.orcid ? `[**${esc(c.name)}**](${up}${AUTHOR_DIR}/${c.orcid}/index.md)` : `**${esc(c.name)}**`;
 // A {first, last} name is written "{Last}, First": braces keep a multi-part surname whole.
 const bibAuthor = (c) => c.last !== undefined
   ? (c.first ? `{${bibEscape(c.last)}}, ${bibEscape(c.first)}` : `{${bibEscape(c.last)}}`)
@@ -786,7 +811,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     }
     lines.push(":::{div}", ":class: lemmata-provenance", "");
     if (!ident) lines.push("*Identifier assigned on publication.*  ");
-    const who = people(m, p).map((c) => `[**${esc(c.name)}**](../${AUTHOR_DIR}/${authorSlug(c.name)}/index.md)`).join(", ");
+    const who = people(m, p).map((c) => authorName(c, "../")).join(", ");
     if (!p && !m.contributors.length) lines.push("*Not yet committed.*");
     else lines.push(who + (p ? "  " : ""));
     // Versions, arXiv style: "v1 <first> · last <date linked to the commit>".
@@ -865,7 +890,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     // Header in the same style as the entry's, built here rather than included: the copy
     // widget's module path is relative to the page, and this page sits one level deeper
     // (docs/abs/<ident>/index.md) than an entry (docs/<id>/index.md).
-    const who = people(m, p).map((c) => `[**${esc(c.name)}**](../../${AUTHOR_DIR}/${authorSlug(c.name)}/index.md)`).join(", ");
+    const who = people(m, p).map((c) => authorName(c, "../../")).join(", ");
     const last = p && (forge ? `[${day(p.last.date)}](${forge.commit(p.last.commit)})` : day(p.last.date));
     const dates = p ? (p.first.commit === p.last.commit ? `v1 ${day(p.first.date)}` : `v1 ${day(p.first.date)} · last ${last}`) : "";
     const bib = bibtex(m, titleOf(m), p, { siteUrl, commit, checked: statusOf(m) === "checked", ident });
@@ -908,33 +933,40 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     fs.writeFileSync(path.join(dir, "index.md"), lines.join("\n"));
   }
 
-  // One page per author at /a/<slug>/, listing every entry they are credited on (current
-  // ones first, withdrawn ones after), and an index of all authors at /a/. Written into the
-  // build tree only, like the category pages; hidden from the sidebar.
-  const byAuthor = new Map();          // slug -> {name, entries}
+  // One page per author at /a/<ORCID iD>/, listing every entry they are credited on (current
+  // ones first, withdrawn ones after), and an index at /a/. Only contributors with an ORCID
+  // iD get a page: the iD tells people with the same name apart, a name alone does not.
+  // Keyed by the iD, so a page survives a change of spelling; it shows the most frequent
+  // spelling. Written into the build tree only, like the category pages; not in the sidebar.
+  const byAuthor = new Map();          // orcid -> {names: Map(name -> count), entries}
   for (const m of manifests) for (const c of people(m, prov?.entries?.[m.id])) {
-    const k = authorSlug(c.name);
-    if (!byAuthor.has(k)) byAuthor.set(k, { name: c.name, entries: [] });
-    byAuthor.get(k).entries.push(m);
+    if (!c.orcid) continue;
+    if (!byAuthor.has(c.orcid)) byAuthor.set(c.orcid, { names: new Map(), entries: [] });
+    const a = byAuthor.get(c.orcid);
+    a.names.set(c.name, (a.names.get(c.name) ?? 0) + 1);
+    a.entries.push(m);
   }
+  const shown = (a) => [...a.names].sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0]))[0][0];
+  const authors = [...byAuthor].map(([orcid, a]) => ({ orcid, name: shown(a), entries: a.entries }))
+    .sort((x, y) => x.name.localeCompare(y.name));
   const authorPages = [];
-  for (const [slug, a] of [...byAuthor].sort((x, y) => x[1].name.localeCompare(y[1].name))) {
-    const dir = path.join(authorRoot, slug);
+  for (const a of authors) {
+    const dir = path.join(authorRoot, a.orcid);
     fs.mkdirSync(dir, { recursive: true });
     const cur = a.entries.filter((m) => !m.notes?.withdrawn).sort(byTitle), gone = a.entries.filter((m) => m.notes?.withdrawn).sort(byTitle);
     const lines = ["---", "numbering:", "  headings: false", `title: ${JSON.stringify(a.name)}`, "---", "",
+      `ORCID iD: [${a.orcid}](https://orcid.org/${a.orcid})`, "",
       `Entries in the Lemmata Repository credited to ${esc(a.name)}.`, ""];
     if (cur.length) lines.push(...table(cur, "../../"), "");
     if (gone.length) lines.push("## Withdrawn", "", ...table(gone, "../../"), "");
     fs.writeFileSync(path.join(dir, "index.md"), lines.join("\n"));
-    authorPages.push(`${AUTHOR_DIR}/${slug}/index.md`);
+    authorPages.push(`${AUTHOR_DIR}/${a.orcid}/index.md`);
   }
-  if (byAuthor.size) {
-    fs.writeFileSync(path.join(authorRoot, "index.md"), ["---", "numbering:", "  headings: false", "title: Authors", "---", "",
-      ...[...byAuthor].sort((x, y) => x[1].name.localeCompare(y[1].name))
-        .map(([slug, a]) => `- [${esc(a.name)}](${slug}/index.md) (${a.entries.length})`), ""].join("\n"));
-    authorPages.unshift(`${AUTHOR_DIR}/index.md`);
-  }
+  fs.mkdirSync(authorRoot, { recursive: true });
+  fs.writeFileSync(path.join(authorRoot, "index.md"), ["---", "numbering:", "  headings: false", "title: Authors", "---", "",
+    "Contributors who have given an ORCID iD in their entry's `contribution.yml`. Others are named on their entries but have no page here.", "",
+    ...(authors.length ? authors.map((a) => `- [${esc(a.name)}](${a.orcid}/index.md) (${a.entries.length})`) : ["*No contributor has given an ORCID iD yet.*"]), ""].join("\n"));
+  authorPages.unshift(`${AUTHOR_DIR}/index.md`);
 
   // Effective MyST config: the authored one plus the generated TOC. Parsed and re-emitted
   // as YAML, never patched as text. Kept next to myst.yml so relative paths mean the same.
@@ -1064,6 +1096,7 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
       title: titleOf(m),
       category: m.category, category_title: catTitle.get(m.category) ?? m.category, tags: m.tags,
       contributors: people(m, p).map((c) => c.name),
+      contributor_ids: people(m, p).map((c) => ({ name: c.name, orcid: c.orcid ?? null })),
       first_published: p?.first.date ?? null, last_changed: p?.last.date ?? null,
       // "withdrawn" says how the entry is listed; its formal results keep their own status.
       status: m.notes?.withdrawn ? "withdrawn" : fz ? (allOk ? "frozen" : "failed") : allOk ? "checked" : "failed",

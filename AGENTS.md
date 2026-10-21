@@ -243,8 +243,9 @@ arxiv: 2301.01234                     # optional; one id or a list, e.g. [2301.0
 abstract: >-                          # REQUIRED; under the header and on the /abs/ page
   One paragraph stating the result; inline text and $math$ only.
 contributors:                         # optional; replaces the names taken from git
-  - Ada Lovelace                      #   "First Last"
-  - {first: Ludwig, last: van Beethoven}   # surnames with several parts
+  - {name: Ada Lovelace, orcid: 0000-0002-1825-0097}           # one entry per person
+  - {first: Ludwig, last: van Beethoven, orcid: 0000-0001-5109-3700}   # multi-part surname
+  - Grace Hopper                      #   no ORCID: named, but not linked
 ai_use: >-                            # optional; shown at the end of the entry
   Lean proofs drafted with an AI assistant, reviewed and completed by the authors.
 acknowledgements: >-                  # optional; shown at the end of the entry
@@ -269,7 +270,17 @@ wrote the result, someone committed on behalf of others, or an agent did the com
 If present, it replaces the git names in the contributors line and in the BibTeX
 `author` field, in the order given; the dates and commit link still come from git.
 Write `First Last`, or `{first: …, last: …}` when the surname has several parts (it is
-then kept whole in BibTeX: `{van Beethoven}, Ludwig`). Names only — no emails.
+then kept whole in BibTeX: `{van Beethoven}, Ludwig`), or `{name: …}`. Names only — no
+emails.
+
+**Give every person's ORCID iD** (`orcid:` in the object form, one per person, as above;
+`https://orcid.org/` in front is accepted and dropped). The ORCID is what identifies a
+person: a contributor with one gets an author page at `/a/<ORCID iD>/` listing all their
+entries, and their name links to it; a name without one is shown but not linked, because
+two people can share a name. The iD is checked (format and its check digit), so a typo
+fails validation. Ask the human you work for for each person's ORCID iD; never guess or
+look one up and assume it belongs to them. Without the field, the names come from git and
+carry no ORCID.
 
 `license` is the licence of the whole entry, prose and Lean, shown under the title and in
 `lemmata.json`. Leave it out for **CC BY 4.0**, the default; `CC-BY-SA-4.0` and `CC0-1.0`

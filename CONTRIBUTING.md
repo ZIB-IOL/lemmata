@@ -99,8 +99,9 @@ arxiv: 2301.01234            # optional: linked under the title; one id or a lis
 abstract: >-                 # required: one paragraph, under the header and on the /abs/ page
   ...
 contributors:                # optional: credit these people instead of the git authors
-  - Ada Lovelace
-  - {first: Ludwig, last: van Beethoven}   # multi-part surname
+  - {name: Ada Lovelace, orcid: 0000-0002-1825-0097}
+  - {first: Ludwig, last: van Beethoven, orcid: 0000-0001-5109-3700}   # multi-part surname
+  - Grace Hopper             # without an ORCID iD: named, not linked
 ai_use: >-                   # optional: how AI tools were used (end of the page)
   ...
 acknowledgements: >-         # optional: funding, thanks (end of the page); $math$ allowed
@@ -129,7 +130,12 @@ Rules the tools enforce for these fields:
 - `abstract`, `ai_use` and `acknowledgements` are inline text only: words, `*emphasis*`,
   `[links](…)` and math `$…$` / `$$…$$`. No directives, code fences, headings, lists or HTML;
   write a literal dollar as `\$`; at most 2000 characters each. Use a YAML block (`>-`).
-- `contributors` items are `First Last` or `{first: …, last: …}`; names only, no emails.
+- `contributors` items are `First Last`, `{name: …}` or `{first: …, last: …}`, one per
+  person; names only, no emails. Add each person's **ORCID iD** as `orcid:` (please do):
+  with it, the name links to an author page at `/a/<ORCID iD>/` with all of that person's
+  entries; without it, the name is shown unlinked, since a name alone does not identify
+  someone. The iD's format and check digit are validated. Get yours at
+  [orcid.org](https://orcid.org) if you do not have one.
 - `license` covers the whole entry, prose and Lean. Without it the entry is **CC BY 4.0**;
   the only other choices are `CC-BY-SA-4.0` and `CC0-1.0`. It is shown under the title.
   Only contribute what you may license this way.
