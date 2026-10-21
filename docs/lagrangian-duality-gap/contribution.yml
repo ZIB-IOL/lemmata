@@ -12,7 +12,7 @@ exports:
 # The mathematics and the Lean proof are Nico Pelleriti's; a later maintenance commit (the
 # abstract) would otherwise list the maintainer as co-contributor.
 contributors:
-  - Nico Pelleriti
+  - {name: Nico Pelleriti, orcid: 0009-0000-5193-184X}
 abstract: >-
   Lagrangian relaxation and convexification give two lower bounds for a minimization
   problem; Geoffrion's theorem says they agree when the underlying integer set is finite
