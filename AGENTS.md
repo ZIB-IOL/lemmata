@@ -210,6 +210,9 @@ The informal proof.
   fold by clicking their header, the Lean source starts collapsed, the Lean boxes sit under
   their results, and the right-hand contents follow the section being read. A small script
   does this in the browser; `npm run preview` (MyST's live server) does not run it.
+- Every entry ends with **comments** (giscus): one GitHub Discussion per entry in the
+  "Comments" category of the content repository, keyed by the entry's directory. There is
+  nothing to write; do not add comment sections or links to discussions yourself.
 - Your name on the page is the **git author name** of your commits, unless the manifest
   lists `contributors` (step 4). Set it before committing: `git config user.name "Full Name"`.
 - Every `prf:proof` names what it proves and carries `:nonumber:`, exactly as above;

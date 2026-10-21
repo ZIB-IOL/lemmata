@@ -243,3 +243,8 @@ html.dark.lemmata-outline .myst-outline-item.lemmata-current > a { color: #e6edf
 /* /abs/ page: "View the full entry" as the first thing after the metadata. */
 .lemmata-header .lemmata-view-full { margin: 0.6rem 0 0.2rem; }
 .lemmata-header .lemmata-view-full p { margin: 0; }
+
+/* Comments (giscus) at the end of an entry. */
+.lemmata-giscus { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--myst-color-border, #e5e7eb); }
+.lemmata-giscus > p { margin: 0 0 0.75rem; font-size: 1.05rem; }
+.dark .lemmata-giscus { border-top-color: #30363d; }

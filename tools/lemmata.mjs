@@ -44,7 +44,9 @@ const AUTHOR_DIR = "a";
 const SHOW_CITE_BOX = false;
 // Comments under each entry with Giscus (GitHub Discussions). Off until a PUBLIC repository
 // with Discussions and the Giscus app exists: fill in its ids (from giscus.app) to enable.
-const GISCUS = null;   // e.g. { repo: "ZIB-IOL/lemmata-discussions", repoId: "R_...", category: "Comments", categoryId: "DIC_..." }
+// Ids from GitHub (gh api graphql, or giscus.app). "Comments" is an Announcement-format
+// category, so only maintainers and giscus start threads; readers comment in them.
+const GISCUS = { repo: "ZIB-IOL/lemmata", repoId: "R_kgDOVQjOqA", category: "Comments", categoryId: "DIC_kwDOVQjOqM4DJSBM" };
 const CATEGORY_KEYS = new Set(["id", "title", "description"]);
 const RESERVED_LEAN = new Set(["Shared"]);
 const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "arxiv", "contributors",
@@ -765,13 +767,10 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     }
     for (const [k, title] of notes) lines.push(`**${title}.** ${m.notes[k]}`, "");
     lines.push(licenseLine(m), "", ":::", "");
-    // Comments, one discussion per entry (keyed by its directory, stable across renames of
-    // the title). Only when GISCUS is configured.
-    if (GISCUS) lines.push("```{raw} html",
-      `<script src="https://giscus.app/client.js" data-repo="${GISCUS.repo}" data-repo-id="${GISCUS.repoId}" ` +
-      `data-category="${GISCUS.category}" data-category-id="${GISCUS.categoryId}" data-mapping="specific" ` +
-      `data-term="${m.id}" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" ` +
-      `data-theme="preferred_color_scheme" data-lang="en" data-loading="lazy" crossorigin="anonymous" async></script>`, "```", "");
+    // Comments, one discussion per entry, keyed by its directory (stable when the title
+    // changes). Only a placeholder here: the page script loads giscus into it after React
+    // has hydrated (a <script> in the page body would be dropped or mismatch).
+    if (GISCUS) lines.push(":::{div}", `:class: lemmata-giscus lemmata-giscus-${m.id}`, "", "**Comments.**", ":::", "");
     fs.writeFileSync(path.join(gen, "verification", `${m.id}.md`), lines.join("\n"));
   }
 
@@ -1349,7 +1348,22 @@ function idAddress(){
   if(!document.querySelector(".lemmata-lean-for, .lemmata-header")) return;
   try{ history.replaceState(history.state,"",u.pathname+location.search+location.hash); }catch(e){}
 }
-function run(){ try{ canon(); leanNextToResults(); proofs(); proofLinks(); lean(); outline(); }catch(e){} }
+// Comments (giscus): load into the entry's placeholder once; theme follows the site's.
+var GISCUS=${GISCUS ? JSON.stringify(GISCUS) : "null"};
+function comments(){
+  if(!GISCUS) return;
+  var box=document.querySelector(".lemmata-giscus"); if(!box||box.dataset.loaded) return;
+  var term=(box.className.match(/lemmata-giscus-(\\S+)/)||[])[1]; if(!term) return;
+  box.dataset.loaded="1";
+  var dark=document.documentElement.classList.contains("dark");
+  var s=document.createElement("script"); s.src="https://giscus.app/client.js"; s.async=true; s.crossOrigin="anonymous";
+  var a={repo:GISCUS.repo,"repo-id":GISCUS.repoId,category:GISCUS.category,"category-id":GISCUS.categoryId,
+    mapping:"specific",term:term,"reactions-enabled":"1","emit-metadata":"0","input-position":"top",
+    theme:dark?"dark":"light",lang:"en",loading:"lazy"};
+  for(var k in a) s.setAttribute("data-"+k,a[k]);
+  box.append(s);
+}
+function run(){ try{ canon(); leanNextToResults(); proofs(); proofLinks(); lean(); outline(); comments(); }catch(e){} }
 // Only after React has hydrated: changing the DOM before that is a hydration mismatch
 // (React error #418), after which React re-renders and drops the changes. Then re-apply
 // whenever React re-renders.

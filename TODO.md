@@ -5,10 +5,9 @@ site. The repository is public; issues and pull requests are welcome too.
 
 ## Next
 
-- **Comments with Giscus.** The code path exists (`GISCUS` in `tools/lemmata.mjs`, off). It
-  needs a *public* GitHub repository with Discussions enabled (the content repository once
-  public, or a separate `lemmata-discussions`), the Giscus app installed on it, and its
-  repo/category ids filled in.
+- **Disambiguation for git-derived authors.** Entries without `contributors` take names from
+  git and have no ORCID iD. Ask contributors to add `contributors` with their iDs (and add
+  ours to the existing entries).
 
 ## Later
 
@@ -20,8 +19,6 @@ site. The repository is public; issues and pull requests are welcome too.
   only link and has no option to link the title instead. Possible in the page script, but it
   would have to guess where the title ends, which breaks on titles containing a full stop.
 - **Per-reader settings,** e.g. "start with all proofs folded", kept in the browser.
-- **Author identities.** Author pages are keyed by the displayed name, so two people with one
-  name share a page. ORCID iDs in `contributors` would make them unique.
 - **"Edit this page" link** to GitHub's web editor, for small prose fixes by pull request.
 
 ## Future version: community features
@@ -30,7 +27,8 @@ These need accounts, stored state and moderation, which the static site does not
 
 - **Wiki-style editing** with edit summaries and common tags, and a choice between the
   original author's version and the community version.
-- **Discussion page per entry** (reddit/HN-style threads). Giscus covers a first version.
+- **Discussion page per entry** (reddit/HN-style threads). Giscus comments, live since
+  2026-10-21, are a first version.
 - **Inline annotations** on selected text and math, private, shared with a group or public,
   with tags such as "typo" and TeX support, as hypothes.is does. hypothes.is itself can be
   embedded with one script as an experiment.

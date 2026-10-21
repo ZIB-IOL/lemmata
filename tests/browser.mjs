@@ -34,7 +34,9 @@ const check = (cond, msg) => { console.log(`${cond ? "ok  " : "FAIL"} ${msg}`); 
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const errors = [];
-page.on("console", (m) => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+// giscus (comments) runs in its own frame and logs a 404 for a thread or giscus.json that
+// does not exist yet; that is its normal state, not a site error.
+page.on("console", (m) => { if (m.type() === "error" && !/giscus\.app/.test(m.location()?.url ?? "")) errors.push(`console: ${m.text()}`); });
 page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
 page.on("requestfailed", (r) => errors.push(`requestfailed: ${r.url()}`));
 page.on("response", (r) => { if (r.status() >= 400 && r.url().startsWith(origin)) errors.push(`HTTP ${r.status()} ${r.url()}`); });
