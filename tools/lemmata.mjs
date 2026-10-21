@@ -912,7 +912,7 @@ function render({ model, el }) {
   const box = document.createElement("span"); box.className = "lemmata-ident";
   const a = document.createElement("a"); a.href = url; a.className = "lemmata-ident-link";
   const b = document.createElement("strong"); b.textContent = ident; a.append(b);
-  const btn = copyButton(url, "the permanent URL " + url, "");
+  const btn = copyButton(url, "the permanent URL " + url, "URL");
   // "Cite": copies the entry's BibTeX, the same text as in the (hidden) Cite-as box.
   const cite = bib ? copyButton(bib, "the BibTeX entry", "BibTeX") : null;
   const css = document.createElement("style");
