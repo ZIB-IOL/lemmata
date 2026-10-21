@@ -19,6 +19,15 @@ diagrams, interactive widgets — instead of a fixed paper layout. We chose HTML
 almost any information can be represented in it well, more richly than in a static
 document [@shihipar2026html].
 
+The repository is also built to be read by machines, and by language models in
+particular. [`/llms.txt`](https://lemmata.iol.berlin/llms.txt) is a plain-text overview of
+every entry with its identifier and status;
+[`/lemmata.json`](https://lemmata.iol.berlin/lemmata.json) is a machine-readable index with
+every exported Lean declaration, its verification status and axioms, and a BibTeX entry.
+Every entry links the Lean source of each result, and its page can be downloaded as
+Markdown. Coding agents that want to contribute follow AGENTS.md (linked below), the
+contribution procedure written for them.
+
 ```{include} _generated/contributing.md
 ```
 
