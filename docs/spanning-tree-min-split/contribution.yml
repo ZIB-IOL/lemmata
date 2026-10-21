@@ -25,6 +25,8 @@ acknowledgements: >-
   Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
   Strategy. This work has been partially supported by OpenAI's Academic Researchers
   program.
+contributors:
+  - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
 abstract: >-
   A minimum-root decomposition of tree slacks can also accommodate every edge
   nonnegativity row without adding factors. This gives an explicit cubic upper bound on

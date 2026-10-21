@@ -14,6 +14,8 @@ exports:
     kind: theorem
     page: index.md
     label: cor-implication-composition-le
+contributors:
+  - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
 abstract: >-
   If $P \to Q$ and $Q \to R$ then $P \to R$. The archive's worked example: a result small
   enough to read at a glance, used to show numbered results, a diagram, an interactive

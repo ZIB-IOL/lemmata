@@ -2,6 +2,8 @@ schema_version: 1
 id: lp-hardness-in-p
 lean_namespace: Lemmata.LPHardnessInP
 category: optimization
+contributors:
+  - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
 abstract: >-
   We give concrete reductions from shifted matching matrices to approximate
   LP formulations for four polynomial-time solvable problems: metric
