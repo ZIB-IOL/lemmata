@@ -49,6 +49,8 @@ echo "lemmata-check: ok ($(node -e 'const r=require("./out/verification.json");c
 step "5/5 render"
 node tools/lemmata.mjs prepare out/verification.json --commit "$(git rev-parse HEAD 2>/dev/null || echo local)"
 ( cd docs && HOST=127.0.0.1 ../node_modules/.bin/myst build --config myst.runtime.yml --html --strict --ci --keep-host )
+# The cluster adds these in site-index; locally the preview needs them too.
+node tools/lemmata.mjs enhance docs/_build/html
 
 # The same render the way the cluster does it: a copy of the tracked files (no git
 # history), with .lemmata/provenance.json added as the controller would, LEMMATA_BUILD=1,

@@ -17,8 +17,10 @@ project:
     # 2026-10-19: the catalog's links were relative to the included file, not to index.md.
     - rule: link-resolves
       severity: error
+  # Section numbers on entry pages (and in the right-hand contents); the site's own pages
+  # (start page, About, ...) switch them off in their frontmatter.
   numbering:
-    headings: false
+    headings: true
 site:
   template: book-theme
   # Replaces the theme's sidebar footer ("Made with MyST"), so it carries that line too.

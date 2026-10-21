@@ -169,3 +169,33 @@
 }
 .lemmata-withdrawn p { margin: 0 0 0.4rem; } .lemmata-withdrawn p:last-child { margin: 0; font-size: 0.9em; }
 .dark .lemmata-withdrawn { background: #2a1f0a; color: #fcd34d; border-left-color: #d97706; }
+
+/* Abstract under the entry header. */
+.lemmata-header .lemmata-abstract { margin: 0.75rem 0 1rem; }
+.lemmata-header .lemmata-abstract p { margin: 0; }
+
+/* Proofs fold by clicking their header (script in tools/lemmata.mjs). */
+.lemmata-fold { cursor: pointer; user-select: none; }
+.lemmata-fold::after { content: "▾"; margin: 0 1rem 0 0.5rem; align-self: center; opacity: 0.6; transition: transform .15s; }
+.lemmata-folded .lemmata-fold::after { transform: rotate(-90deg); }
+.lemmata-folded > .myst-proof-body { display: none; }
+/* [↓] from a result's heading to its proof, when the proof is not directly below. */
+.lemmata-to-proof { font-weight: normal; font-size: 0.85em; text-decoration: none; opacity: 0.75; }
+.lemmata-to-proof:hover { opacity: 1; text-decoration: underline; }
+
+/* Lean source: collapsed behind a bar; the code block (with its copy button) inside. */
+details.lemmata-lean { margin: 1.25rem 0; border: 1px solid var(--lemmata-line, #e5e7eb); border-radius: 0.375rem; }
+details.lemmata-lean > summary { cursor: pointer; padding: 0.6rem 0.9rem; font-weight: 500; list-style: none;
+  display: flex; justify-content: space-between; align-items: center; background: var(--myst-color-bg-secondary, #f6f7f9); }
+details.lemmata-lean > summary::-webkit-details-marker { display: none; }
+details.lemmata-lean > summary::after { content: "›"; font-size: 1.2em; opacity: 0.6; transition: transform .15s; }
+details.lemmata-lean[open] > summary::after { transform: rotate(90deg); }
+details.lemmata-lean[open] > summary { border-bottom: 1px solid var(--lemmata-line, #e5e7eb); }
+details.lemmata-lean > .myst-code { margin: 0; }
+.dark details.lemmata-lean, .dark details.lemmata-lean[open] > summary { border-color: #30363d; }
+
+/* Sidebar: only the site's own pages. Categories and their entries stay in the toc (MyST
+   numbers theorems and sections only on toc pages that are not hidden) but are not shown:
+   a list of every entry would grow without bound. They are on the start page instead.
+   Category groups are the div children of the toc; site pages are its direct links. */
+.myst-primary-sidebar-toc .myst-toc > div { display: none; }

@@ -28,17 +28,30 @@ const POLICY_ID = "lemmata-verification-v1";
 
 // Directories in docs/ and lean/Lemmata/ that are infrastructure, not contributions.
 const RESERVED_DOCS = new Set(["_static", "_generated", "_build", "_releases", "_status",
-  "index", "healthz", "readyz", "node_modules", "c", "changelog", "abs", "html", "llms", "checked", "about"]);
+  "index", "healthz", "readyz", "node_modules", "c", "a", "changelog", "abs", "html", "llms", "checked", "about"]);
 // The page that explains what "checked" means (docs/checked.md), linked from every
 // verification panel; entries are at docs/<id>/, so the link is one level up.
 const CHECKED_PAGE_LINK = "../checked.md";
 // Category overview pages are generated at docs/c/<category>/index.md (URL /c/<category>/),
 // under a reserved prefix so category ids and entry ids can never collide.
 const CATEGORY_DIR = "c";
+// Author pages at /a/<slug>/: every entry a person is credited on, like arXiv's author
+// search. Keyed by the displayed name (git author name, or the manifest's contributors);
+// names only, never emails. Not an identity: two people with one name share a page.
+const AUTHOR_DIR = "a";
+// The collapsible "Cite as" box with the BibTeX under the header. Replaced by a copy button
+// next to the identifier (2026-10-21); kept so it can be switched back on.
+const SHOW_CITE_BOX = false;
+// Comments under each entry with Giscus (GitHub Discussions). Off until a PUBLIC repository
+// with Discussions and the Giscus app exists: fill in its ids (from giscus.app) to enable.
+const GISCUS = null;   // e.g. { repo: "ZIB-IOL/lemmata-discussions", repoId: "R_...", category: "Comments", categoryId: "DIC_..." }
 const CATEGORY_KEYS = new Set(["id", "title", "description"]);
 const RESERVED_LEAN = new Set(["Shared"]);
 const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "arxiv", "contributors",
-  "ai_use", "acknowledgements", "abstract", "license", "withdrawn", "pages", "exports"]);
+  "ai_use", "acknowledgements", "abstract", "license", "withdrawn", "related", "pages", "exports"]);
+// Optional derived material attached to an entry: slides, videos, a monograph, code, ...
+// Each is {kind, title, url}; shown as a list at the end of the entry.
+const RELATED_KINDS = new Set(["slides", "video", "paper", "book", "notes", "code", "talk", "other"]);
 // Licence of an entry (prose and Lean). Optional; without it the entry is CC BY 4.0. Only
 // these SPDX ids are accepted, so every entry stays reusable and its link is known.
 const LICENSES = {
@@ -275,7 +288,8 @@ function loadManifests(categories = loadCategories()) {
     const notes = {};
     for (const k of Object.keys(NOTE_KEYS)) if (m[k] !== undefined) notes[k] = checkNote(m[k], `${where}/contribution.yml: ${k}`);
     // Optional abstract for the entry's /abs/ page; inline only, like the notes.
-    if (m.abstract !== undefined) notes.abstract = checkNote(m.abstract, `${where}/contribution.yml: abstract`);
+    if (m.abstract === undefined) fail(`${where}/contribution.yml: abstract is required (one paragraph, inline text and $math$)`);
+    else notes.abstract = checkNote(m.abstract, `${where}/contribution.yml: abstract`);
     // Withdrawn: the reason, shown as a notice on the entry and its /abs/ page. A withdrawn
     // entry is never deleted (identifiers are cited, other entries may import its Lean):
     // it is still built and checked, only left out of the sidebar and the listings.
@@ -283,7 +297,21 @@ function loadManifests(categories = loadCategories()) {
     if (m.license !== undefined && !Object.hasOwn(LICENSES, m.license))
       fail(`${where}/contribution.yml: license must be one of ${Object.keys(LICENSES).join(", ")} (default ${DEFAULT_LICENSE})`);
     const license = Object.hasOwn(LICENSES, m.license) ? m.license : DEFAULT_LICENSE;
-    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [], arxiv, contributors, notes, license });
+    const related = [];
+    if (m.related !== undefined) {
+      if (!Array.isArray(m.related)) fail(`${where}/contribution.yml: related must be a list of {kind, title, url}`);
+      for (const [i, r] of (Array.isArray(m.related) ? m.related : []).entries()) {
+        const at = `${where}/contribution.yml: related[${i}]`;
+        if (!r || typeof r !== "object") { fail(`${at}: must be {kind, title, url}`); continue; }
+        for (const k of Object.keys(r)) if (!["kind", "title", "url"].includes(k)) fail(`${at}: unknown field ${k}`);
+        if (!RELATED_KINDS.has(r.kind)) fail(`${at}: kind must be one of ${[...RELATED_KINDS].join(", ")}`);
+        let u = null; try { u = new URL(r.url); } catch {}
+        if (!u || !["https:", "http:"].includes(u.protocol) || /["'<>\s]/.test(r.url)) fail(`${at}: url must be a plain http(s) URL`);
+        const title = typeof r.title === "string" ? checkNote(r.title, `${at}: title`) : (fail(`${at}: title is required`), null);
+        if (title && u) related.push({ kind: r.kind, title, url: r.url });
+      }
+    }
+    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [], arxiv, contributors, notes, license, related });
   }
   // Every Lean contribution directory needs a manifest.
   if (fs.existsSync(path.join(LEAN, LIB))) {
@@ -452,6 +480,8 @@ const withdrawnNotice = (m) => m.notes?.withdrawn
   : [];
 const licenseLine = (m) => `License: [${LICENSES[m.license].name}](${LICENSES[m.license].url})`;
 const people = (m, p) => m.contributors.length ? m.contributors : (p?.contributors ?? []);
+const authorSlug = (name) => name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+  .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "unknown";
 // A {first, last} name is written "{Last}, First": braces keep a multi-part surname whole.
 const bibAuthor = (c) => c.last !== undefined
   ? (c.first ? `{${bibEscape(c.last)}}, ${bibEscape(c.first)}` : `{${bibEscape(c.last)}}`)
@@ -547,7 +577,8 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const gen = path.join(DOCS, "_generated");
   const catRoot = path.join(DOCS, CATEGORY_DIR);
   const absRoot = path.join(DOCS, "abs");
-  for (const d of [gen, catRoot, absRoot]) fs.rmSync(d, { recursive: true, force: true });
+  const authorRoot = path.join(DOCS, AUTHOR_DIR);
+  for (const d of [gen, catRoot, absRoot, authorRoot]) fs.rmSync(d, { recursive: true, force: true });
   fs.mkdirSync(path.join(gen, "verification"), { recursive: true });
   const passed = report?.result === "passed";
   const byName = new Map((report?.exports ?? []).map((e) => [e.name, e]));
@@ -560,8 +591,14 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
 
   // Verification panel per entry, from the verifier's report only.
   for (const m of manifests) {
-    const lines = [":::{card} Formal verification", ""];
-    const fz = frozen[m.id];
+    // Collapsed, with the outcome in the bar: one click opens the per-result list.
+    const fz = frozen[m.id], n = m.exports.length;
+    const okCount = fz ? m.exports.filter((e) => (fz.results ?? []).some((x) => x.name === e.name && x.status === "checked")).length
+      : m.exports.filter((e) => passed && byName.get(e.name)?.status === "checked").length;
+    const summary = !report && !fz ? `○ not verified (local preview)`
+      : okCount === n ? `✅ ${n === 1 ? "the formal result is" : `all ${n} formal results are`} ${fz ? "checked" : "kernel-checked"}`
+      : `✗ ${n - okCount} of ${n} formal results not checked`;
+    const lines = [`::::{dropdown} Formal verification — ${summary}`, ":class: lemmata-verification", ""];
     if (fz) {
       const old = new Map((fz.results ?? []).map((x) => [x.name, x]));
       for (const e of m.exports) {
@@ -574,7 +611,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
         `(commit \`${String(fz.commit).slice(0, 12)}\`)` +
         (report?.lean_version && report.lean_version !== fz.lean_version ? `; not re-checked with the current Lean v${esc(report.lean_version)}.` : ".") +
         " The Lean source shown is unchanged since that check. " +
-        `[What "checked" means](${CHECKED_PAGE_LINK}).`, ":::", "");
+        `[What "checked" means](${CHECKED_PAGE_LINK}).`, "::::", "");
     }
     else for (const e of m.exports) {
       const r = byName.get(e.name);
@@ -593,14 +630,24 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
         "machine-checked; that it matches the prose is checked by review. " +
         `[What "checked" means](${CHECKED_PAGE_LINK}).`
       : "This is a local preview: nothing on this page has been verified.",
-      ":::", "");
-    // AI use statement and acknowledgements close the entry, after the verification panel.
+      "::::", "");
+    // Related material, AI use, acknowledgements and the license close the entry.
     const notes = Object.entries(NOTE_KEYS).filter(([k]) => m.notes?.[k]);
-    if (notes.length) {
-      lines.push(":::{div}", ":class: lemmata-notes", "");
-      for (const [k, title] of notes) lines.push(`**${title}.** ${m.notes[k]}`, "");
-      lines.push(":::", "");
+    lines.push(":::{div}", ":class: lemmata-notes", "");
+    if (m.related.length) {
+      lines.push("**Related material.**", "");
+      for (const r of m.related) lines.push(`- ${r.kind[0].toUpperCase() + r.kind.slice(1)}: [${r.title}](${r.url})`);
+      lines.push("");
     }
+    for (const [k, title] of notes) lines.push(`**${title}.** ${m.notes[k]}`, "");
+    lines.push(licenseLine(m), "", ":::", "");
+    // Comments, one discussion per entry (keyed by its directory, stable across renames of
+    // the title). Only when GISCUS is configured.
+    if (GISCUS) lines.push("```{raw} html",
+      `<script src="https://giscus.app/client.js" data-repo="${GISCUS.repo}" data-repo-id="${GISCUS.repoId}" ` +
+      `data-category="${GISCUS.category}" data-category-id="${GISCUS.categoryId}" data-mapping="specific" ` +
+      `data-term="${m.id}" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" ` +
+      `data-theme="preferred_color_scheme" data-lang="en" data-loading="lazy" crossorigin="anonymous" async></script>`, "```", "");
     fs.writeFileSync(path.join(gen, "verification", `${m.id}.md`), lines.join("\n"));
   }
 
@@ -616,44 +663,42 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   // not taken from the content repo, so contributors cannot change what it does.
   fs.writeFileSync(path.join(gen, "provenance", "ident.mjs"), IDENT_WIDGET);
   const day = (iso) => String(iso ?? "").slice(0, 10);
-  const commitLink = (c) => forge ? `[${c.slice(0, 7)}](${forge.commit(c)})` : `\`${c.slice(0, 7)}\``;
   for (const m of manifests) {
     const p = prov?.entries?.[m.id];
-    // One header block per entry: contributors line + "Cite as", visually set apart from
-    // the mathematics below (styled by docs/_static/lemmata.css, class lemmata-header).
+    // One header block per entry, visually set apart from the mathematics below (styled by
+    // docs/_static/lemmata.css, class lemmata-header): identifier with copy controls, the
+    // authors (linked to their author pages), versions, and the abstract.
     const ident = idents[m.id];
+    const bib = bibtex(m, titleOf(m), p, { siteUrl, commit, checked: statusOf(m) === "checked", ident });
     const lines = [...withdrawnNotice(m), ":::::{div}", ":class: lemmata-header", "", ":::{div}", ":class: lemmata-provenance", ""];
     // The stable identifier and its permanent URL, the address to cite and link to.
     if (ident) {
-      // The identifier as permanent link + "copy" (copies the permanent URL), rendered by a
-      // widget. Without JavaScript the identifier and URL are still in the Cite-as BibTeX.
+      // Identifier as permanent link, "copy URL" and "copy BibTeX", rendered by a widget.
+      // Without JavaScript the identifier is still the page's /abs/ address.
       lines.push(":::",
         // Path relative to the entry page that includes this file (docs/<id>/index.md):
         // MyST resolves widget modules from the including page, not from _generated/.
-        "", "```{anywidget} ../_generated/provenance/ident.mjs", JSON.stringify({ ident: `lemmata:${ident}`, url: `${siteUrl}/abs/${ident}` }), "```",
+        "", "```{anywidget} ../_generated/provenance/ident.mjs",
+        JSON.stringify({ ident: `lemmata:${ident}`, url: `${siteUrl}/abs/${ident}`, bibtex: bib }), "```",
         "", ":::{div}", ":class: lemmata-provenance", "");
     } else lines.push("*Identifier assigned on publication.*  ");
+    const who = people(m, p).map((c) => `[**${esc(c.name)}**](../${AUTHOR_DIR}/${authorSlug(c.name)}/index.md)`).join(", ");
     if (!p && !m.contributors.length) lines.push("*Not yet committed.*");
-    else if (!p) lines.push(`Contributed by ${people(m, p).map((c) => `**${esc(c.name)}**`).join(", ")}`);
-    else {
-      lines.push(`Contributed by ${people(m, p).map((c) => `**${esc(c.name)}**`).join(", ")}  `);
-      lines.push(p.first.commit === p.last.commit
-        ? `Published ${day(p.first.date)} (${commitLink(p.first.commit)})`
-        : day(p.first.date) === day(p.last.date)
-          ? `Published ${day(p.first.date)} · last changed in ${commitLink(p.last.commit)}`
-          : `First published ${day(p.first.date)} · last changed ${day(p.last.date)} (${commitLink(p.last.commit)})`);
+    else lines.push(who + (p ? "  " : ""));
+    // Versions, arXiv style: "v1 <first> · last <date linked to the commit>".
+    if (p) {
+      const last = forge ? `[${day(p.last.date)}](${forge.commit(p.last.commit)})` : day(p.last.date);
+      lines.push(p.first.commit === p.last.commit ? `v1 ${day(p.first.date)}` : `v1 ${day(p.first.date)} · last ${last}`);
     }
     if (m.arxiv.length) {
       if (lines.at(-1) !== "" && !lines.at(-1).endsWith("  ")) lines[lines.length - 1] += "  ";
       lines.push(`Additional material: ${m.arxiv.map((a) => `[arXiv:${a}](https://arxiv.org/abs/${a})`).join(", ")}`);
     }
-    if (lines.at(-1) !== "" && !lines.at(-1).endsWith("  ")) lines[lines.length - 1] += "  ";
-    lines.push(licenseLine(m));
     lines.push(":::", "");
-    // "Cite as": a collapsed dropdown with a bibtex block (MyST adds the copy button).
-    lines.push("::::{dropdown} Cite as", "", "```bibtex",
-      bibtex(m, titleOf(m), p, { siteUrl, commit, checked: statusOf(m) === "checked", ident }), "```", "::::", "",
-      ":::::", "");
+    // "Cite as": the BibTeX in a collapsed box. Hidden since the copy button replaced it.
+    if (SHOW_CITE_BOX) lines.push("::::{dropdown} Cite as", "", "```bibtex", bib, "```", "::::", "");
+    if (m.notes?.abstract) lines.push(":::{div}", ":class: lemmata-abstract", "", `**Abstract.** ${m.notes.abstract}`, ":::", "");
+    lines.push(":::::", "");
     fs.writeFileSync(path.join(gen, "provenance", `${m.id}.md`), lines.join("\n"));
   }
 
@@ -716,21 +761,21 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     // Header in the same style as the entry's, built here rather than included: the copy
     // widget's module path is relative to the page, and this page sits one level deeper
     // (docs/abs/<ident>/index.md) than an entry (docs/<id>/index.md).
-    const who = people(m, p).map((c) => `**${esc(c.name)}**`).join(", ");
-    const dates = p ? (p.first.commit === p.last.commit ? `Published ${day(p.first.date)}`
-      : `First published ${day(p.first.date)} · last changed ${day(p.last.date)}`) : "";
-    const L = ["---", `title: ${JSON.stringify(titleOf(m))}`, "---", "", ...withdrawnNotice(m),
+    const who = people(m, p).map((c) => `[**${esc(c.name)}**](../../${AUTHOR_DIR}/${authorSlug(c.name)}/index.md)`).join(", ");
+    const last = p && (forge ? `[${day(p.last.date)}](${forge.commit(p.last.commit)})` : day(p.last.date));
+    const dates = p ? (p.first.commit === p.last.commit ? `v1 ${day(p.first.date)}` : `v1 ${day(p.first.date)} · last ${last}`) : "";
+    const bib = bibtex(m, titleOf(m), p, { siteUrl, commit, checked: statusOf(m) === "checked", ident });
+    const L = ["---", "numbering:", "  headings: false", `title: ${JSON.stringify(titleOf(m))}`, "---", "", ...withdrawnNotice(m),
       ":::::{div}", ":class: lemmata-header", "",
       "```{anywidget} ../../_generated/provenance/ident.mjs",
-      JSON.stringify({ ident: `lemmata:${ident}`, url: `${siteUrl}/abs/${ident}` }), "```", "",
+      JSON.stringify({ ident: `lemmata:${ident}`, url: `${siteUrl}/abs/${ident}`, bibtex: bib }), "```", "",
       ":::{div}", ":class: lemmata-provenance", "",
-      ...(who ? [`Contributed by ${who}  `] : []), ...(dates ? [`${dates}  `] : []), licenseLine(m), ":::", "",
-      "::::{dropdown} Cite as", "", "```bibtex",
-      bibtex(m, titleOf(m), p, { siteUrl, commit, checked: statusOf(m) === "checked", ident }), "```", "::::", "",
+      ...(who ? [`${who}  `] : []), ...(dates ? [`${dates}  `] : []), licenseLine(m), ":::", "",
+      ...(SHOW_CITE_BOX ? ["::::{dropdown} Cite as", "", "```bibtex", bib, "```", "::::", ""] : []),
       ":::::", "",
       // Not "## Abstract": MyST lifts a section of that name above everything else on the
       // page. A bold label keeps the abstract below the header block, as on arXiv.
-      "**Abstract.** " + (m.notes?.abstract ?? "*No abstract provided.*"), "",
+      "**Abstract.** " + m.notes.abstract, "",
       "## Status", "",
       status === "frozen" ? `**Last checked with Lean v${esc(frozen[m.id].lean_version ?? "?")} on ${String(frozen[m.id].checked_at ?? "").slice(0, 10)}**` +
         `${report?.lean_version && report.lean_version !== frozen[m.id].lean_version ? `; not re-checked with the current Lean v${esc(report.lean_version)}` : ""}. [What "checked" means](../../checked.md).`
@@ -748,13 +793,41 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   for (const c of used) {
     const dir = path.join(catRoot, c.id);
     fs.mkdirSync(dir, { recursive: true });
-    const lines = ["---", `title: ${JSON.stringify(c.title)}`, "---", ""];
+    const lines = ["---", "numbering:", "  headings: false", `title: ${JSON.stringify(c.title)}`, "---", ""];
     if (c.description) lines.push(esc(c.description), "");
     if (primary.get(c.id).length) lines.push(...table(primary.get(c.id), "../../"), "");
     if (tagged.get(c.id).length) {
       lines.push("## Also related", "", ...table(tagged.get(c.id), "../../"), "");
     }
     fs.writeFileSync(path.join(dir, "index.md"), lines.join("\n"));
+  }
+
+  // One page per author at /a/<slug>/, listing every entry they are credited on (current
+  // ones first, withdrawn ones after), and an index of all authors at /a/. Written into the
+  // build tree only, like the category pages; hidden from the sidebar.
+  const byAuthor = new Map();          // slug -> {name, entries}
+  for (const m of manifests) for (const c of people(m, prov?.entries?.[m.id])) {
+    const k = authorSlug(c.name);
+    if (!byAuthor.has(k)) byAuthor.set(k, { name: c.name, entries: [] });
+    byAuthor.get(k).entries.push(m);
+  }
+  const authorPages = [];
+  for (const [slug, a] of [...byAuthor].sort((x, y) => x[1].name.localeCompare(y[1].name))) {
+    const dir = path.join(authorRoot, slug);
+    fs.mkdirSync(dir, { recursive: true });
+    const cur = a.entries.filter((m) => !m.notes?.withdrawn).sort(byTitle), gone = a.entries.filter((m) => m.notes?.withdrawn).sort(byTitle);
+    const lines = ["---", "numbering:", "  headings: false", `title: ${JSON.stringify(a.name)}`, "---", "",
+      `Entries in the Lemmata Repository credited to ${esc(a.name)}.`, ""];
+    if (cur.length) lines.push(...table(cur, "../../"), "");
+    if (gone.length) lines.push("## Withdrawn", "", ...table(gone, "../../"), "");
+    fs.writeFileSync(path.join(dir, "index.md"), lines.join("\n"));
+    authorPages.push(`${AUTHOR_DIR}/${slug}/index.md`);
+  }
+  if (byAuthor.size) {
+    fs.writeFileSync(path.join(authorRoot, "index.md"), ["---", "numbering:", "  headings: false", "title: Authors", "---", "",
+      ...[...byAuthor].sort((x, y) => x[1].name.localeCompare(y[1].name))
+        .map(([slug, a]) => `- [${esc(a.name)}](${slug}/index.md) (${a.entries.length})`), ""].join("\n"));
+    authorPages.unshift(`${AUTHOR_DIR}/index.md`);
   }
 
   // Effective MyST config: the authored one plus the generated TOC. Parsed and re-emitted
@@ -764,6 +837,11 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const cfg = YAML.parse(fs.readFileSync(path.join(DOCS, "myst.yml"), "utf8"));
   if (cfg.extends) fail("docs/myst.yml: `extends` is not allowed");
   if (cfg.project?.plugins) fail("docs/myst.yml: build plugins are not allowed");
+  // The sidebar shows only the site's own pages: a list of every entry and category would
+  // grow without bound (2026-10-21). Entries are reached from the start page's catalog and
+  // the category pages. They stay in the toc as ordinary pages under their category --
+  // MyST does not number theorems or sections on `hidden` pages (measured) -- and the
+  // sidebar hides them with CSS (.lemmata-toc-* in lemmata.css).
   const entryToc = (m) => m.pages.length === 1 ? { file: `${m.dir}/index.md` }
     : { file: `${m.dir}/index.md`, children: m.pages.slice(1).map((p) => ({ file: `${m.dir}/${p}` })) };
   cfg.project.toc = [{ file: "index.md" },
@@ -776,10 +854,11 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     ...(fs.existsSync(path.join(DOCS, "checked.md")) ? [{ file: "checked.md" }] : []),
     ...(fs.existsSync(path.join(DOCS, "changelog.md")) ? [{ file: "changelog.md" }] : []),
     ...(fs.existsSync(path.join(DOCS, "about.md")) ? [{ file: "about.md" }] : []),
-    // Withdrawn entries and the landing pages: part of the site, not of the sidebar. A page
-    // missing from the toc is not built at all, and /html/<ident> must keep working.
+    // Withdrawn entries and the landing pages: built, not listed. (Hidden pages are not
+    // numbered; a withdrawn entry keeps its content but loses theorem numbers, accepted.)
     ...manifests.filter((m) => m.notes?.withdrawn).flatMap((m) => m.pages.map((p) => ({ file: `${m.dir}/${p}`, hidden: true }))),
-    ...absPages.map((f) => ({ file: f, hidden: true }))];
+    ...absPages.map((f) => ({ file: f, hidden: true })),
+    ...authorPages.map((f) => ({ file: f, hidden: true }))];
   if (process.env.LEMMATA_THEME) cfg.site.template = process.env.LEMMATA_THEME;
   fs.writeFileSync(path.join(DOCS, "myst.runtime.yml"),
     "# Generated by tools/lemmata.mjs prepare -- do not edit, not committed.\n" + YAML.stringify(cfg));
@@ -816,26 +895,34 @@ function scaffold(id, lean, category) {
 // MyST theme has no kernel.
 const IDENT_WIDGET = `const COPY = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75"/></svg>';
 const DONE = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>';
+// A copy control: same icon as on code blocks, check mark after copying. Text label optional.
+function copyButton(text, what, label) {
+  const btn = document.createElement("button"); btn.type = "button"; btn.className = "lemmata-ident-copy";
+  const show = (icon) => { btn.innerHTML = icon + (label ? "<span>" + label + "</span>" : ""); };
+  show(COPY); btn.title = "Copy " + what; btn.setAttribute("aria-label", "Copy " + what);
+  btn.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(text); }
+    catch { const t = document.createElement("textarea"); t.value = text; document.body.append(t); t.select(); document.execCommand("copy"); t.remove(); }
+    show(DONE); btn.setAttribute("aria-label", "Copied"); setTimeout(() => { show(COPY); btn.setAttribute("aria-label", "Copy " + what); }, 1500);
+  });
+  return btn;
+}
 function render({ model, el }) {
-  const ident = model.get("ident"), url = model.get("url");
+  const ident = model.get("ident"), url = model.get("url"), bib = model.get("bibtex");
   const box = document.createElement("span"); box.className = "lemmata-ident";
   const a = document.createElement("a"); a.href = url; a.className = "lemmata-ident-link";
   const b = document.createElement("strong"); b.textContent = ident; a.append(b);
-  // Same icon as the copy control on code blocks (the Cite-as BibTeX), check mark after copying.
-  const btn = document.createElement("button"); btn.type = "button"; btn.className = "lemmata-ident-copy";
-  btn.innerHTML = COPY; btn.title = "Copy the permanent URL " + url; btn.setAttribute("aria-label", "Copy the permanent URL");
-  btn.addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(url); }
-    catch { const t = document.createElement("textarea"); t.value = url; document.body.append(t); t.select(); document.execCommand("copy"); t.remove(); }
-    btn.innerHTML = DONE; btn.setAttribute("aria-label", "Copied"); setTimeout(() => { btn.innerHTML = COPY; btn.setAttribute("aria-label", "Copy the permanent URL"); }, 1500);
-  });
+  const btn = copyButton(url, "the permanent URL " + url, "");
+  // "Cite": copies the entry's BibTeX, the same text as in the (hidden) Cite-as box.
+  const cite = bib ? copyButton(bib, "the BibTeX entry", "BibTeX") : null;
   const css = document.createElement("style");
   css.textContent = ".lemmata-ident{display:inline-flex;align-items:center;gap:.3rem;font-size:.875rem}" +
     ".lemmata-ident-link{color:inherit}" +
     ".lemmata-ident-copy{display:inline-flex;align-items:center;padding:0;border:0;background:transparent;cursor:pointer;" +
     "color:var(--myst-color-link-underline,currentColor);opacity:.8}" +
-    ".lemmata-ident-copy:hover{opacity:1;color:var(--myst-color-link-hover,currentColor)}";
-  box.append(a, btn); el.append(css, box);
+    ".lemmata-ident-copy:hover{opacity:1;color:var(--myst-color-link-hover,currentColor)}" +
+    ".lemmata-ident-copy span{margin-left:.2rem;font-size:.8rem}";
+  box.append(a, btn); if (cite) box.append(cite); el.append(css, box);
 }
 export default { render };
 `;
@@ -937,6 +1024,7 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
     ...(process.env.BASE_URL ? [] : ["Disallow: /_releases/"]),
     `Sitemap: ${siteUrl}/sitemap.xml`, ""].join("\n"));
   dedupeTitles(outDir);
+  injectEnhancements(outDir);
 }
 
 // The theme titles every page "<page title> - <site title>". On the start page both are
@@ -948,6 +1036,94 @@ function dedupeTitles(siteDir) {
     const out = html.replace(/(<title>|<meta property="og:title" content=")([^<"]+) - \2(<\/title>|")/g, "$1$2$3");
     if (out !== html) fs.writeFileSync(f, out);
   }
+}
+
+// ------------------------------------------------------------------- page enhancements
+
+// The theme renders pages with React, which replaces the static HTML on load, so edits to
+// the built HTML are discarded (measured 2026-10-21). These are applied in the browser
+// instead, by one small script added to every page after the build. Each step is
+// idempotent and re-run when React re-renders.
+//   - proofs: "Proof (of Theorem 1)" -> "Proof of Theorem 1"; clicking a proof's header
+//     folds it (proofs start open)
+//   - results: a [↓] after the heading of a result whose proof is not directly below it
+//   - Lean code (MyST code blocks under an entry): collapsed behind a bar, copy button kept
+const ENHANCE_SCRIPT = `(function(){
+function proofs(){
+  document.querySelectorAll(".myst-proof.border-myst-proof").forEach(function(box){
+    var title=box.querySelector(".myst-proof-title"), head=box.querySelector(".myst-proof-header"), body=box.querySelector(".myst-proof-body");
+    if(!title||!head||!body) return;
+    if(!title.dataset.lemmata){
+      title.dataset.lemmata="1";
+      // "Proof (of X)" -> "Proof of X": the theme wraps any proof title in "(" and ")" text
+      // nodes. Only text nodes are edited, so the links React rendered stay its own.
+      var texts=[]; title.childNodes.forEach(function(n){ if(n.nodeType===3) texts.push(n); });
+      var open=texts.find(function(n){ return /\\(\\s*$/.test(n.textContent); });
+      var next=open&&open.nextSibling; while(next&&next.nodeType===8) next=next.nextSibling;   // skip React's comment markers
+      if(open && next && /^\\s*of\\b/.test(next.textContent||"")){
+        open.textContent=open.textContent.replace(/\\(\\s*$/,"");
+        var close=texts.reverse().find(function(n){ return /^\\s*\\)\\s*$/.test(n.textContent); });
+        if(close) close.textContent="";
+      }
+    }
+    if(!head.dataset.lemmata){
+      head.dataset.lemmata="1"; head.classList.add("lemmata-fold"); head.setAttribute("role","button"); head.tabIndex=0;
+      head.title="Fold or unfold the proof";
+      var toggle=function(e){ if(e.target.closest("a")) return; box.classList.toggle("lemmata-folded"); };
+      head.addEventListener("click",toggle);
+      head.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(e); } });
+    }
+  });
+}
+function proofLinks(){
+  // For each proof that names results, add [↓] to those results' headings unless the
+  // proof directly follows them.
+  document.querySelectorAll(".myst-proof.border-myst-proof").forEach(function(box, i){
+    if(!box.id) box.id="lemmata-proof-"+(i+1);
+    box.querySelectorAll(".myst-proof-title a[href^='#']").forEach(function(a){
+      var res=document.getElementById(a.getAttribute("href").slice(1));
+      if(!res||res===box) return;
+      var head=res.querySelector(".myst-proof-title"); if(!head||head.querySelector(".lemmata-to-proof[href='#"+box.id+"']")) return;
+      if(res.nextElementSibling===box) return;
+      var down=document.createElement("a"); down.className="lemmata-to-proof"; down.href="#"+box.id; down.textContent="[↓]";
+      down.title="Go to the proof"; head.append(" ",down);
+    });
+  });
+}
+function lean(){
+  // The Lean is a literalinclude of a .lean file, shown with its filename in the block's
+  // header (MyST highlights it as plain text, so there is no language class to match).
+  document.querySelectorAll("article .myst-code").forEach(function(code){
+    if(code.dataset.lemmata) return;
+    var head=code.firstElementChild; if(!head||!/\\.lean\\s*$/.test(head.textContent||"")) return;
+    code.dataset.lemmata="1";
+    var d=document.createElement("details"); d.className="lemmata-lean";
+    var s=document.createElement("summary"); var lines=(code.textContent.match(/\\n/g)||[]).length+1;
+    s.textContent="Lean source: "+head.textContent.trim()+" ("+lines+" lines)"; d.append(s);
+    code.parentNode.insertBefore(d,code); d.append(code);
+  });
+}
+function run(){ try{ proofs(); proofLinks(); lean(); }catch(e){} }
+// Only after React has hydrated: changing the DOM before that is a hydration mismatch
+// (React error #418), after which React re-renders and drops the changes. Then re-apply
+// whenever React re-renders.
+function start(){
+  setTimeout(function(){
+    run();
+    var t=null; new MutationObserver(function(){ clearTimeout(t); t=setTimeout(run,50); }).observe(document.body,{childList:true,subtree:true});
+  },300);
+}
+if(document.readyState==="complete") start(); else window.addEventListener("load",start);
+})();`;
+function injectEnhancements(siteDir) {
+  const tag = `<script data-lemmata-enhance>${ENHANCE_SCRIPT}</script>`;
+  let n = 0;
+  for (const f of walk(siteDir, ".html")) {
+    const html = fs.readFileSync(f, "utf8");
+    if (html.includes("data-lemmata-enhance") || !html.includes("</body>")) continue;
+    fs.writeFileSync(f, html.replace("</body>", tag + "</body>")); n++;
+  }
+  return n;
 }
 
 // ------------------------------------------------------------------------- analytics
@@ -1014,6 +1190,9 @@ switch (cmd) {
     const report = args[0] ? JSON.parse(fs.readFileSync(args[0], "utf8")) : null;
     siteIndex(ms, cats, report, args[1], { commit: flag("--commit"), sourceUrl: flag("--source-url") });
     finish(`wrote llms.txt, lemmata.json, sitemap.xml, robots.txt to ${args[1]}`); break;
+  }
+  case "enhance": {               // after the build: proof titles, folding, Lean collapsing
+    finish(`page enhancements added to ${injectEnhancements(args[0])} page(s)`); break;
   }
   case "analytics": {             // after the build: add the analytics snippet to every page
     const n = injectAnalytics(args[0], process.env.ANALYTICS_SCRIPT ?? "");

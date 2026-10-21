@@ -189,14 +189,19 @@ The informal proof.
 ````
 
 - Keep both `{include}` lines; validation fails without them. The first renders the
-  contributors line under the title, computed by the cluster from git history (everyone
-  who committed to your entry's files, plus first/last commit, names only). The last is
-  the verification panel, from the verifier's report. Neither can be edited: do not add
-  an `authors:` block, and never write "checked", "verified" or a badge yourself.
-- The first include also renders a collapsed **Cite as** box with a BibTeX entry for the
-  page (permanent `/abs/` URL, contributors, year, arXiv if given, and the version
-  commit in `note`).
-  It is generated; there is nothing to write.
+  header under the title: the identifier with "copy URL" and "copy BibTeX", the authors
+  (computed by the cluster from git history, names only, each linked to an author page at
+  `/a/<name>/`), the versions (`v1 <date> · last <date>`, linked to the commit) and the
+  abstract. The last is the verification panel, from the verifier's report, collapsed with
+  its outcome in the bar, followed by related material, notes and the license. Neither can
+  be edited: do not add an `authors:` block, and never write "checked", "verified" or a
+  badge yourself.
+- The BibTeX (permanent `/abs/` URL, authors, year, arXiv if given, the version commit in
+  `note`) is generated; there is nothing to write.
+- On the built site (`tools/check.sh`, and in the cluster) proof titles read "Proof of
+  Theorem 1", a result whose proof is not directly below it gets a `[↓]` link to it, proofs
+  fold by clicking their header, and the Lean source starts collapsed. A small script does
+  this in the browser; `npm run preview` (MyST's live server) does not run it.
 - Your name on the page is the **git author name** of your commits, unless the manifest
   lists `contributors` (step 4). Set it before committing: `git config user.name "Full Name"`.
 - Every `prf:proof` names what it proves and carries `:nonumber:`, exactly as above;
@@ -227,7 +232,7 @@ lean_namespace: Lemmata.<LeanName>
 category: <category>                  # an id from docs/categories.yml
 tags: [<other-category>]              # optional; never the primary category
 arxiv: 2301.01234                     # optional; one id or a list, e.g. [2301.01234v2, math/0601001]
-abstract: >-                          # optional; shown on the entry's /abs/ landing page
+abstract: >-                          # REQUIRED; under the header and on the /abs/ page
   One paragraph stating the result; inline text and $math$ only.
 contributors:                         # optional; replaces the names taken from git
   - Ada Lovelace                      #   "First Last"
@@ -239,6 +244,9 @@ acknowledgements: >-                  # optional; shown at the end of the entry
 license: CC-BY-4.0                    # optional; CC-BY-4.0 (default), CC-BY-SA-4.0 or CC0-1.0
 withdrawn: >-                         # only to withdraw a published entry; the reason
   The bound in the second theorem is wrong; see lemmata:2611.00004 for the correction.
+related:                              # optional; derived material, listed at the end
+  - {kind: slides, title: "Talk at the MATH+ day", url: "https://example.org/slides.pdf"}
+  - {kind: video,  title: "Recording", url: "https://example.org/video"}
 pages:
   - index.md
 exports:                              # at least one theorem
@@ -379,7 +387,7 @@ node tools/lemmata.mjs umbrella --write                 # after adding/removing 
 node tools/lemmata.mjs validate                         # structure only, seconds
 tools/check.sh --no-docs                                # + build, kernel, axioms
 tools/check.sh                                          # everything the cluster does
-npm run preview                                         # live preview at :3000 (unverified)
+npm run preview                                         # live preview at :3000 (unverified, no page script)
 ```
 
 Worked examples to copy from: `docs/implication-composition/` (the reference example:

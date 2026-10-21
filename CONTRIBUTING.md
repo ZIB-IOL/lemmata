@@ -96,7 +96,7 @@ lean_namespace: Lemmata.PrimeInfinitude
 category: number-theory      # where it sits in the sidebar (docs/categories.yml)
 tags: [logic]                # optional: also listed on these categories' pages
 arxiv: 2301.01234            # optional: linked under the title; one id or a list
-abstract: >-                 # optional: one paragraph, shown on the /abs/ landing page
+abstract: >-                 # required: one paragraph, under the header and on the /abs/ page
   ...
 contributors:                # optional: credit these people instead of the git authors
   - Ada Lovelace
@@ -108,6 +108,8 @@ acknowledgements: >-         # optional: funding, thanks (end of the page); $mat
 license: CC-BY-4.0           # optional: CC-BY-4.0 (default), CC-BY-SA-4.0 or CC0-1.0
 withdrawn: >-                # only to withdraw a published entry: the reason
   ...
+related:                     # optional: slides, videos, a monograph, code, ... (end of page)
+  - {kind: slides, title: "...", url: "https://..."}
 pages: [index.md]            # first page must be index.md; list every page
 exports:
   - name: Lemmata.PrimeInfinitude.exists_infinite_primes
@@ -122,6 +124,8 @@ Rules the tools enforce for these fields:
   not repeat the primary category.
 - `arxiv` is the bare identifier (`2301.01234`, `2301.01234v2`, `math/0601001`), without an
   `arXiv:` prefix; the format is checked so a typo cannot become a dead link.
+- `abstract` is required. `related` items are `{kind, title, url}`; `kind` is one of
+  slides, video, paper, book, notes, code, talk, other, and `url` a plain http(s) URL.
 - `abstract`, `ai_use` and `acknowledgements` are inline text only: words, `*emphasis*`,
   `[links](…)` and math `$…$` / `$$…$$`. No directives, code fences, headings, lists or HTML;
   write a literal dollar as `\$`; at most 2000 characters each. Use a YAML block (`>-`).

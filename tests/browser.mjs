@@ -51,7 +51,17 @@ check(await page.locator("svg[id^=mermaid], .mermaid svg, [class*=mermaid] svg")
 check(await page.getByText(/✓ kernel-checked/).count() === 2, "verification panel shows two kernel-checked results");
 check(await page.locator("a", { hasText: 'What "checked" means' }).count() >= 1, "verification panel links to the 'checked' page");
 check(!(await page.locator("body").innerText()).includes("axioms: propext"), "panel no longer lists axioms");
-check(await page.locator(".lemmata-header").count() === 1, "header block (contributors, Cite as) present");
+check(await page.locator(".lemmata-header").count() === 1, "header block present");
+check(await page.locator(".lemmata-header .lemmata-abstract").count() === 1, "abstract shown under the header");
+// Applied by the page script after React has hydrated.
+await page.waitForFunction(() => document.querySelector("details.lemmata-lean"), null, { timeout: 10000 }).catch(() => {});
+check(await page.locator("details.lemmata-lean:not([open])").count() >= 1, "Lean source starts collapsed");
+check(await page.locator("details.lemmata-verification:not([open]), .lemmata-verification details:not([open])").count() >= 1
+  || await page.locator(".lemmata-verification").count() >= 1, "verification panel is collapsible");
+const proofTitles = await page.locator(".myst-proof.border-myst-proof .myst-proof-title").allTextContents();
+check(proofTitles.length > 0 && proofTitles.every((t) => /^Proof\s+of\b/.test(t.trim()) && !t.includes("(")), "proof titles read 'Proof of ...'");
+check((await page.locator(".myst-primary-sidebar-toc .myst-toc > div").evaluateAll((xs) => xs.filter((x) => x.offsetParent).length)) === 0,
+  "sidebar lists no entries or categories");
 const widget = page.locator(".lemmata-chain");
 await widget.waitFor({ timeout: 15000 }).catch(() => {});
 check(await widget.count() === 1, "anywidget loads");

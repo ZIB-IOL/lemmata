@@ -1,4 +1,6 @@
 ---
+numbering:
+  headings: false
 title: Changelog
 ---
 
