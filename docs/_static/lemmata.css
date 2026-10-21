@@ -215,12 +215,17 @@ details.lemmata-lean > .myst-code { margin: 0; }
   background: var(--myst-color-bg-secondary, #f8f9fb); border-radius: 0 0 0.375rem 0.375rem;
 }
 .lemmata-lean-for.lemmata-placed > p { margin: 0.1rem 0; }
-/* The "Statement in Lean" toggle: a small inline control, not a section bar. */
-.lemmata-lean-for details.myst-dropdown { margin: 0.25rem 0 0; box-shadow: none; border: 0; background: transparent; }
+/* The Lean line is the toggle (page script): chevron at its end, no separate
+   "Statement in Lean" bar. Without the script the bar stays as a fallback. */
+.lemmata-lean-for details.myst-dropdown { margin: 0; box-shadow: none; border: 0; background: transparent; }
 .lemmata-lean-for details.myst-dropdown > summary { padding: 0.15rem 0; font-size: 0.85rem; font-weight: 500;
   background: transparent; box-shadow: none; }
-.lemmata-lean-for details.myst-dropdown > summary .myst-dropdown-header-title { font-size: 0.85rem; }
 .lemmata-lean-for details.myst-dropdown > div { padding: 0.2rem 0 0; }
+.lemmata-lean-line { cursor: pointer; position: relative; padding-right: 1.5rem; }
+.lemmata-lean-line::after { content: "›"; position: absolute; right: 0.1rem; top: 50%; margin-top: -0.6em;
+  font-size: 1.2em; line-height: 1.2em; opacity: 0.6; transition: transform .15s; }
+.lemmata-lean-line.lemmata-open::after { transform: rotate(90deg); }
+.lemmata-lean-for:has(> .lemmata-lean-line) details.myst-dropdown > summary { display: none; }
 .lemmata-lean-for .myst-code { margin: 0.4rem 0; }
 .dark .lemmata-lean-for.lemmata-placed { background: #161b22; border-left-color: #30363d; }
 

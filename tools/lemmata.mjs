@@ -1212,6 +1212,16 @@ function leanNextToResults(){
     var res=document.getElementById(m); if(!res||!res.parentNode) return;
     box.classList.add("lemmata-placed");
     res.parentNode.insertBefore(box,res.nextSibling);
+    // The Lean line itself opens the statement: its "Statement in Lean" toggle is hidden
+    // (CSS), and a click on the line (not on its links) toggles that dropdown.
+    var line=box.querySelector(":scope > p"), det=box.querySelector("details");
+    if(line&&det&&!line.dataset.lemmata){
+      line.dataset.lemmata="1"; line.classList.add("lemmata-lean-line"); line.setAttribute("role","button"); line.tabIndex=0;
+      line.title="Show or hide the Lean statement";
+      var flip=function(e){ if(e.target.closest("a")) return; det.open=!det.open; line.classList.toggle("lemmata-open",det.open); };
+      line.addEventListener("click",flip);
+      line.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); flip(e); } });
+    }
   });
 }
 // Right-hand contents: the theme highlights a heading only while it is in a narrow band at
