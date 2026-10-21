@@ -17,9 +17,7 @@ Entries are web pages rather than papers. They are written in MyST Markdown and 
 as HTML with KaTeX, so an entry can use what fits the mathematics — numbered results,
 diagrams, interactive widgets — instead of a fixed paper layout. We chose HTML on purpose:
 almost any information can be represented in it well, more richly than in a static
-document [@shihipar2026html]. [Lax](https://laxarchive.org/about.html) links Lean to
-papers, which it keeps as the primary way of explaining a result; Lemmata is for the
-results that come before, or alongside, a paper.
+document [@shihipar2026html].
 
 ```{include} _generated/contributing.md
 ```
