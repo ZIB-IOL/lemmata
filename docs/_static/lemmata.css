@@ -188,7 +188,7 @@
 
 /* Lean source: collapsed behind a bar; the code block (with its copy button) inside. */
 details.lemmata-lean { margin: 1.25rem 0; border: 1px solid var(--lemmata-line, #e5e7eb); border-radius: 0.375rem; }
-details.lemmata-lean > summary { cursor: pointer; padding: 0.6rem 0.9rem; font-weight: 500; list-style: none;
+details.lemmata-lean > summary { cursor: pointer; padding: 0.6rem 0.9rem; font-size: 1rem; font-weight: 500; line-height: 1.5; list-style: none;
   display: flex; justify-content: space-between; align-items: center; background: var(--myst-color-bg-secondary, #f6f7f9); }
 details.lemmata-lean > summary::-webkit-details-marker { display: none; }
 details.lemmata-lean > summary::after { content: ""; }
@@ -258,3 +258,22 @@ html.dark.lemmata-outline .myst-outline-item.lemmata-current > a { color: #e6edf
   transition: transform .15s;
 }
 .lemmata-lean-line.lemmata-open::after { transform: rotate(90deg); }
+
+/* The "Formal verification" panel (a MyST dropdown) in the same design as the Lean
+   source box: bordered, light, 16px medium text, same padding, and the shared chevron
+   right-aligned and centred (the theme's icon floated higher than ours). */
+details.lemmata-verification { margin: 1.25rem 0; box-shadow: none !important; background: transparent;
+  border: 1px solid var(--lemmata-line, #e5e7eb); border-radius: 0.375rem; }
+details.lemmata-verification > summary.myst-dropdown-header {
+  display: flex; justify-content: space-between; align-items: center; min-height: 0;
+  padding: 0.6rem 0.9rem; font-size: 1rem; font-weight: 500; line-height: 1.5;
+  background: var(--myst-color-bg-secondary, #f9fafb); list-style: none; cursor: pointer; }
+details.lemmata-verification > summary::-webkit-details-marker { display: none; }
+details.lemmata-verification > summary .myst-dropdown-header-icon { display: none; }
+details.lemmata-verification > summary .myst-dropdown-header-title { display: block; font-size: 1rem; }
+details.lemmata-verification > summary::after { content: ""; width: 1rem; height: 1rem; flex: none; margin-left: 0.75rem;
+  background: currentColor; opacity: 0.75; transition: transform .15s;
+  -webkit-mask: var(--lemmata-chevron) center / contain no-repeat; mask: var(--lemmata-chevron) center / contain no-repeat; }
+details.lemmata-verification[open] > summary::after { transform: rotate(90deg); }
+details.lemmata-verification[open] > summary { border-bottom: 1px solid var(--lemmata-line, #e5e7eb); }
+.dark details.lemmata-verification, .dark details.lemmata-verification[open] > summary { border-color: #30363d; }
