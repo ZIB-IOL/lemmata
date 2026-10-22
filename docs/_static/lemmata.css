@@ -60,17 +60,19 @@
    position; without the shift the chevron stays centred when it turns. */
 .lemmata-header details[open] > summary .details-toggle { transform: rotate(90deg); }
 
-/* Tagline under the site name, top left. logo_text is plain text only, so the second
-   line is added here. Hidden on narrow screens, where the header has no room. */
-.myst-home-link > span { display: flex; flex-direction: column; line-height: 1.15; }
-.myst-home-link > span::after {
-  content: "experimental mathematics repository";
-  font-size: 0.72rem;
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  opacity: 0.65;
+/* Compact navigation with the wordmark as the home link's label. */
+.myst-top-nav { min-height: 48px; padding-block: 8px; }
+.myst-top-nav-menu-button { width: 32px; height: 32px; }
+.myst-home-link > span { display: none; }
+.myst-home-link-logo { margin-right: 0; }
+.myst-home-link-logo img { width: auto; height: 32px; }
+.myst-top-nav .myst-search-bar {
+  width: auto; height: 32px; aspect-ratio: auto; gap: 6px; padding: 0 8px;
+  border-color: transparent; background: transparent; font-size: 0.875rem;
 }
-@media (max-width: 640px) { .myst-home-link > span::after { display: none; } }
+.myst-top-nav .myst-search-bar:hover { background: color-mix(in srgb, currentColor 8%, transparent); }
+.myst-top-nav .myst-search-bar > svg { width: 16px; height: 16px; padding: 0; }
+.myst-top-nav .myst-search-shortcut { display: none; }
 
 /* Sidebar footer: "Made with MyST" and the maintainer line, small and centred. */
 /* The theme animates the sidebar footer in on load: transparent and 24px low, sliding
