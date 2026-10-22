@@ -22,10 +22,11 @@ site. The repository is public; issues and pull requests are welcome too.
 
 ## Later
 
-- **Build time grows with the number of entries.** Each push compiles every entry's Lean
-  from scratch (Mathlib itself is cached per revision): about 11-12 minutes for 6 entries
-  (2026-10-22). Revisit at 15-20 entries: more CPU for the build Job, or reuse compiled
-  entries whose sources did not change, keyed so a cached result cannot be forged.
+- **Build time grows with the number of entries.** Compiling is cached since 2026-10-22
+  (only changed entries recompile), but every build kernel-replays all modules: ~5½ min to
+  live for 6 entries. Skipping the replay for unchanged modules is only sound if the key
+  covers the module's bytes, its imports' approvals, and the Mathlib and checker versions.
+  Revisit if the replay starts to dominate.
 
 - **Every notation links to its definition.** Automatic links from notation in the prose to
   the `prf:definition` (and Lean declaration) that introduces it. Needs a notion of which
