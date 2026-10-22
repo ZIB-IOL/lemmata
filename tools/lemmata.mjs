@@ -1211,6 +1211,8 @@ export default { render };
 // have an identifier, so links into the index never depend on directory names.
 function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl }) {
   const siteUrl = (process.env.SITE_URL ?? "https://lemmata.iol.berlin").replace(/\/$/, "");
+  fs.copyFileSync(new URL("./lemmata.png", import.meta.url), path.join(outDir, "lemmata.png"));
+  const imageUrl = `${siteUrl}/lemmata.png`;
   const prov = loadProvenance(manifests, commit), idents = loadIdentifiers(commit);
   const passed = report?.result === "passed";
   const byName = new Map((report?.exports ?? []).map((e) => [e.name, e]));
@@ -1300,18 +1302,59 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
     `Sitemap: ${siteUrl}/sitemap.xml`, ""].join("\n"));
   dedupeTitles(outDir);
   injectEnhancements(outDir);           // before canonical(), which annotates its tag
+  pageMetadata(path.join(outDir, "index.html"), { imageUrl });
   // One preferred address per entry for search engines and link previews: the entry is
   // reachable at /<dir>/ and /html/<ident>, its landing page at /abs/<ident>/.
-  for (const e of entries.filter((x) => x.identifier)) {
-    const ident = e.identifier.slice("lemmata:".length), dir = manifests.find((m) => idents[m.id] === ident)?.dir;
-    if (dir) canonical(path.join(outDir, dir, "index.html"), `${siteUrl}/html/${ident}`);
-    canonical(path.join(outDir, "abs", ident.replace(".", "-"), "index.html"), `${siteUrl}/abs/${ident}`);
+  for (const m of manifests) {
+    const file = path.join(outDir, m.dir, "index.html"), title = titleOf(m), abstract = m.notes.abstract;
+    pageMetadata(file, { title, description: abstract, imageUrl });
+    const ident = idents[m.id];
+    if (!ident) continue;
+    canonical(file, `${siteUrl}/html/${ident}`);
+    const landing = path.join(outDir, "abs", ident.replace(".", "-"), "index.html");
+    pageMetadata(landing, { title, description: abstract, imageUrl });
+    canonical(landing, `${siteUrl}/abs/${ident}`);
   }
+}
+
+// Link previews read the served HTML without JavaScript. Entries use their own title
+// and abstract; the home page keeps the site's title and description.
+function pageMetadata(file, { title, description, imageUrl }) {
+  if (!fs.existsSync(file)) return;
+  const html = fs.readFileSync(file, "utf8");
+  const escape = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fields = [
+    ["property", "og:image", imageUrl],
+    ["property", "og:image:type", "image/png"],
+    ["property", "og:image:width", "512"],
+    ["property", "og:image:height", "512"],
+    ["property", "og:image:alt", "Lemmata"],
+    ["name", "twitter:card", "summary"],
+    ["name", "twitter:image", imageUrl],
+    ["name", "twitter:image:alt", "Lemmata"],
+  ];
+  if (title !== undefined)
+    fields.push(["property", "og:title", title], ["name", "twitter:title", title]);
+  if (description !== undefined) {
+    const text = description.replace(/\s+/g, " ").trim();
+    fields.push(["name", "description", text], ["property", "og:description", text], ["name", "twitter:description", text]);
+  }
+  const out = html.replace(/<head\b[^>]*>[\s\S]*?<\/head>/i, (head) => {
+    if (title !== undefined)
+      head = head.replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${escape(title)}</title>`);
+    for (const [attr, key, value] of fields) {
+      const re = new RegExp(`<meta\\b(?=[^>]*\\b${attr}\\s*=\\s*["']${key}["'])[^>]*>`, "i");
+      const tag = `<meta ${attr}="${key}" content="${escape(value)}"/>`;
+      head = re.test(head) ? head.replace(re, () => tag) : head.replace(/<\/head>/i, () => tag + "</head>");
+    }
+    return head;
+  });
+  if (out !== html) fs.writeFileSync(file, out);
 }
 
 // The theme titles every page "<page title> - <site title>". On the start page both are
 // the site title, so tabs and link previews (Slack, og:title) read "X - X". Collapse that
-// one case to "X"; every other page keeps its suffix.
+// one case to "X"; pageMetadata handles the entry pages separately.
 // <link rel="canonical"> and og:url in a page's <head> (React leaves the head alone).
 function canonical(file, url) {
   if (!fs.existsSync(file)) return;
