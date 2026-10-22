@@ -1,0 +1,49 @@
+schema_version: 1
+id: spanning-tree-symmetric-ef
+lean_namespace: Lemmata.SpanningTreeSymmetricEF
+category: optimization
+contributors:
+  - Sebastian Pokutta
+pages:
+  - index.md
+exports:
+  - name: Lemmata.SpanningTreeSymmetricEF.treePolytope
+    kind: definition
+    page: index.md
+    label: def-spanning-tree-symmetric-ef-polytope
+  - name: Lemmata.SpanningTreeSymmetricEF.hamilton_threshold
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-symmetric-ef-hamilton
+  - name: Lemmata.SpanningTreeSymmetricEF.exact_lp_lower
+    kind: theorem
+    page: index.md
+    label: cor-spanning-tree-symmetric-ef-exact-lp
+  - name: Lemmata.SpanningTreeSymmetricEF.fixed_factor_lp_lower
+    kind: theorem
+    page: index.md
+    label: cor-spanning-tree-symmetric-ef-fixed-factor
+  - name: Lemmata.SpanningTreeSymmetricEF.symmetric_lp_upper
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-symmetric-ef-lp-upper
+  - name: Lemmata.SpanningTreeSymmetricEF.cardinality_slice_factor
+    kind: theorem
+    page: index.md
+    label: cor-spanning-tree-symmetric-ef-cardinality
+  - name: Lemmata.SpanningTreeSymmetricEF.symmetric_raw_sdp
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-symmetric-ef-sdp-raw
+  - name: Lemmata.SpanningTreeSymmetricEF.symmetric_compressed_sdp
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-symmetric-ef-sdp-compressed
+  - name: Lemmata.SpanningTreeSymmetricEF.ordered_sdps
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-symmetric-ef-sdp-ordered
+  - name: Lemmata.SpanningTreeSymmetricEF.nonnegative_outer_psd_lower
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-symmetric-ef-psd-lower
