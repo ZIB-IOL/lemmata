@@ -102,6 +102,9 @@ if (await down.count()) {
   check(new URL(page.url()).hash === `#${target}`, `[↓] sets the address to the proof (${page.url().replace(origin, "")})`);
   const top = await page.evaluate((id) => document.getElementById(id).getBoundingClientRect().top, target);
   check(Math.abs(top) < 200, `[↓] scrolls to the proof (top ${Math.round(top)} px)`);
+  // Back after [↓] once crashed the same way (a pushed entry at /html/<ident>).
+  await page.goBack(); await page.waitForTimeout(1500);
+  check(!(await page.locator("body").innerText()).includes("Application Error"), "Back after [↓] does not crash");
 } else check(false, "[↓] link present on lp-hardness-in-p");
 
 // Direct load of a deep page, not via client-side navigation.

@@ -1420,11 +1420,14 @@ function proofs(){
 // The theme's router takes over clicks on links it did not render and loads the page's
 // data for the address shown -- /html/<ident>, which has none (it is a redirect), so the
 // page crashed ("reading 'frontmatter'"). Scroll ourselves and set the hash without it.
+// replaceState, not pushState: Back to an entry we pushed hands the router the same
+// address and crashed it the same way. The theme's own cross-references add no history
+// entry either, so Back leaves the page in both cases.
 function toProof(e){
   var box=document.getElementById(this.getAttribute("href").slice(1)); if(!box) return;
   e.preventDefault(); e.stopPropagation();
   box.scrollIntoView({block:"start"});
-  try{ history.pushState(history.state,"",location.pathname+location.search+"#"+box.id); }catch(err){}
+  try{ history.replaceState(history.state,"",location.pathname+location.search+"#"+box.id); }catch(err){}
 }
 function proofLinks(){
   // For each proof that names results, add [↓] to those results' headings unless the
