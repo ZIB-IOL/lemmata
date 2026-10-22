@@ -1,0 +1,38 @@
+schema_version: 1
+id: distributional-linear-oracle-lower-bounds
+lean_namespace: Lemmata.DistributionalLowerBounds
+category: optimization
+arxiv: "2610.13590"
+abstract: >-
+  A uniform prior over a permuted family of strongly convex feasible sets gives
+  an expected objective-error lower bound of order $L D^2/(T+1)^2$ after at most $T$
+  exact linear-oracle calls, even for randomized methods with arbitrary query
+  directions. The gap is at least the same threshold with probability at least
+  $3/4$. The dimension grows with
+  the query budget, and every returned output must be feasible on every instance
+  and seed. Fixed-instance and first-return stopping-time consequences are included.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+license: CC-BY-4.0
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+pages:
+  - index.md
+exports:
+  - name: Lemmata.DistributionalLowerBounds.distributional_lower_bounds
+    kind: theorem
+    page: index.md
+    label: thm-distributional-linear-oracle-lower-bounds-main
+  - name: Lemmata.DistributionalLowerBounds.fixed_instance_lower_bounds
+    kind: theorem
+    page: index.md
+    label: cor-distributional-linear-oracle-lower-bounds-fixed
+  - name: Lemmata.DistributionalLowerBounds.stopping_time_lower_bound
+    kind: theorem
+    page: index.md
+    label: cor-distributional-linear-oracle-lower-bounds-stopping

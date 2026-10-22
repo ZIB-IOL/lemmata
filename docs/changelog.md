@@ -10,6 +10,10 @@ entry shows its own last change and links to the exact commit.
 
 Newest first. Add an item in the same pull request as the change it describes.
 
+## 2026-10-22
+
+- **New entry:** [Distributional lower bounds for randomized linear-oracle optimization](distributional-linear-oracle-lower-bounds/index.md).
+
 ## 2026-10-21
 
 - **New entry:** [A Square-Root Bound for Asymptotic Tensor Rank](tensor-rank/index.md).
