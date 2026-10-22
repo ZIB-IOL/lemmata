@@ -88,6 +88,22 @@ await page.waitForURL(/implication-composition/, { timeout: 10000 }).catch(() =>
 check(page.url().includes(`${base}/implication-composition`), `category link navigates inside the release (${page.url().replace(origin, "")})`);
 check(await page.locator("#thm-implication-composition").count() === 1, "target theorem anchor exists");
 
+// [↓] next to a result jumps to its proof. On an entry page the address bar shows
+// /html/<ident> (a redirect with no page data); a click left to the theme's router fetched
+// data for that address and crashed the page ("reading 'frontmatter'", 2026-10-22).
+await page.goto(`${origin}${base}/lp-hardness-in-p/`, { waitUntil: "networkidle" });
+await page.waitForFunction(() => document.querySelector("a.lemmata-to-proof"), null, { timeout: 10000 }).catch(() => {});
+const down = page.locator("a.lemmata-to-proof").first();
+if (await down.count()) {
+  const target = (await down.getAttribute("href")).slice(1);
+  await down.click();
+  await page.waitForTimeout(1500);
+  check(!(await page.locator("body").innerText()).includes("Application Error"), "[↓] does not crash the page");
+  check(new URL(page.url()).hash === `#${target}`, `[↓] sets the address to the proof (${page.url().replace(origin, "")})`);
+  const top = await page.evaluate((id) => document.getElementById(id).getBoundingClientRect().top, target);
+  check(Math.abs(top) < 200, `[↓] scrolls to the proof (top ${Math.round(top)} px)`);
+} else check(false, "[↓] link present on lp-hardness-in-p");
+
 // Direct load of a deep page, not via client-side navigation.
 const resp = await page.goto(`${origin}${base}/implication-composition/`, { waitUntil: "networkidle" });
 check(resp.status() === 200, "deep page loads directly");

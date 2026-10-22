@@ -1417,6 +1417,15 @@ function proofs(){
     }
   });
 }
+// The theme's router takes over clicks on links it did not render and loads the page's
+// data for the address shown -- /html/<ident>, which has none (it is a redirect), so the
+// page crashed ("reading 'frontmatter'"). Scroll ourselves and set the hash without it.
+function toProof(e){
+  var box=document.getElementById(this.getAttribute("href").slice(1)); if(!box) return;
+  e.preventDefault(); e.stopPropagation();
+  box.scrollIntoView({block:"start"});
+  try{ history.pushState(history.state,"",location.pathname+location.search+"#"+box.id); }catch(err){}
+}
 function proofLinks(){
   // For each proof that names results, add [↓] to those results' headings unless the
   // proof directly follows them.
@@ -1428,7 +1437,7 @@ function proofLinks(){
       var head=res.querySelector(".myst-proof-title"); if(!head||head.querySelector(".lemmata-to-proof[href='#"+box.id+"']")) return;
       if(res.nextElementSibling===box) return;
       var down=document.createElement("a"); down.className="lemmata-to-proof"; down.href="#"+box.id; down.textContent="[↓]";
-      down.title="Go to the proof"; head.append(" ",down);
+      down.title="Go to the proof"; down.addEventListener("click",toProof); head.append(" ",down);
     });
   });
 }
