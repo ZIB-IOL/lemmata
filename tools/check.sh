@@ -2,7 +2,8 @@
 # Run the full Lemmata pipeline locally -- the same steps, in the same order, that the
 # cluster runs on every push to main:
 #
-#   1. validate   manifests, docs<->lean pairing, labels, snippet markers, DOIs, umbrella
+#   1. validate   manifests, docs<->lean pairing, labels, snippet markers, DOIs, umbrella,
+#                 plus the adversarial tests (tests/adversarial.mjs)
 #   2. build      lake build of every Lemmata.* module (Mathlib from the cache)
 #   3. kernel     leanchecker re-checks our modules' declarations in the kernel
 #   4. audit      lemmata-check: axiom policy over ALL our declarations + export bindings
@@ -19,6 +20,12 @@ step() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 
 step "1/5 validate"
 node tools/lemmata.mjs validate
+# The tools must refuse hostile input (file-reading directives outside an entry, ids that
+# name built-ins) and show each result's own Lean statement (not a decoy in a comment or
+# another namespace). Quiet unless something fails.
+mkdir -p out
+node tests/adversarial.mjs > out/adversarial.log 2>&1 || { cat out/adversarial.log; echo "adversarial tests FAILED"; exit 1; }
+echo "adversarial tests: ok ($(grep -c '^ok ' out/adversarial.log) cases)"
 
 step "2/5 lake build"
 ( cd lean && lake exe cache get >/dev/null && lake build )

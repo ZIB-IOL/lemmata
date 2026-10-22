@@ -9,6 +9,20 @@ site. The repository is public; issues and pull requests are welcome too.
   git and have no ORCID iD. Ask contributors to add `contributors` with their iDs (and add
   ours to the existing entries).
 
+## Security follow-ups (review of 2026-10-22)
+
+- **Render in a container that sees only the source.** The validator now refuses every
+  file-reading directive outside an entry's own files, in all fence styles (tested). As a
+  second layer, MyST should run in a container with only the source copy and the theme,
+  so a future bypass finds nothing to read. Today render has no token and no secrets, so
+  little could leak, but that should not depend on nobody adding one.
+- **Widgets run contributor JavaScript on our origin.** Decide: accept with review (now),
+  or sandbox widgets in an iframe on a separate origin.
+- **Swallowed errors in the page script**: run each enhancement on its own, log failures.
+- **check.sh and unstaged new entries**: the cluster-style step copies `git ls-files` only.
+- **Test server path check and crawler limits** (tests only, not production).
+- **Split tools/lemmata.mjs** into testable modules, after the tests exist.
+
 ## Later
 
 - **Every notation links to its definition.** Automatic links from notation in the prose to

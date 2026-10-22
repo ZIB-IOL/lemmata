@@ -27,6 +27,10 @@ const ALLOWED_AXIOMS = ["propext", "Classical.choice", "Quot.sound"];
 const POLICY_ID = "lemmata-verification-v1";
 
 // Directories in docs/ and lean/Lemmata/ that are infrastructure, not contributions.
+// Names of Object.prototype properties, lower-cased: valid kebab-case ids that would collide
+// with built-ins in any id-keyed JavaScript object.
+const RESERVED_JS = Object.fromEntries([...Object.getOwnPropertyNames(Object.prototype),
+  ...Object.getOwnPropertyNames(Function.prototype), "prototype"].map((k) => [k.toLowerCase(), true]));
 const RESERVED_DOCS = new Set(["_static", "_generated", "_build", "_releases", "_status",
   "index", "healthz", "readyz", "node_modules", "c", "a", "changelog", "abs", "html", "llms", "checked", "about"]);
 // The page that explains what "checked" means (docs/checked.md), linked from every
@@ -178,6 +182,7 @@ function loadManifests(categories = loadCategories()) {
     if (RESERVED_DOCS.has(dir)) continue;
     const where = `docs/${dir}`;
     if (!ID_RE.test(dir)) { fail(`${where}: directory name is not a lowercase kebab-case id`); continue; }
+    if (dir in Object.prototype || dir.toLowerCase() in RESERVED_JS) { fail(`${where}: "${dir}" is a reserved id (it names a built-in property); choose another`); continue; }
     const mfPath = path.join(DOCS, dir, "contribution.yml");
     if (!fs.existsSync(mfPath)) { fail(`${where}: missing contribution.yml`); continue; }
     let m;
@@ -413,7 +418,67 @@ async function fetchDois(manifests) {
   fs.writeFileSync(BIB, bib);
 }
 
+// Every MyST directive in a page, in both fence styles (```{name} and :::{name}, any fence
+// length, nested), with its argument and :option: lines. Enough of MyST's grammar to see
+// every directive; the Markdown inside is not interpreted. Line numbers are 1-based.
+function myStDirectives(text) {
+  const out = [], lines = text.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(/^\s*(`{3,}|~{3,}|:{3,})\{([^}\s]+)\}\s*(.*?)\s*$/);
+    if (!m) continue;
+    const opts = {};
+    for (let j = i + 1; j < lines.length; j++) {
+      const o = lines[j].match(/^\s*:([\w-]+):\s*(.*?)\s*$/);
+      if (!o) break;
+      opts[o[1]] = o[2];
+    }
+    out.push({ name: m[2].toLowerCase(), arg: m[3], opts, line: i + 1 });
+  }
+  return out;
+}
+
+// Directives that read a file at build time, and where the path is. MyST copies or
+// inlines what they read into the published site, so a path outside the entry's own
+// files would publish whatever the build can read (measured 2026-10-22: a colon-fenced
+// literalinclude of ../../x and an absolute path both ended up on the page). The build
+// Job limits what it can read; this check refuses such paths before that.
+const FILE_DIRECTIVES = {
+  include: ["arg"], literalinclude: ["arg"], figure: ["arg"], image: ["arg"],
+  "csv-table": ["file"], anywidget: ["arg", "css"], download: ["arg"], bibliography: ["arg"],
+  iframe: ["arg"],
+};
+// Directives that may not be used at all in content: raw output and execution.
+const FORBIDDEN_DIRECTIVES = new Set(["raw", "raw:latex", "raw:typst", "code-cell", "eval", "jupyter-execute"]);
+function checkFileDirectives(page, roots) {
+  const text = fs.readFileSync(page, "utf8"), at = path.relative(ROOT, page);
+  for (const d of myStDirectives(text)) {
+    const where = `${at}:${d.line}: {${d.name}}`;
+    if (FORBIDDEN_DIRECTIVES.has(d.name)) { fail(`${where} is not allowed in content`); continue; }
+    const keys = FILE_DIRECTIVES[d.name] ?? [];
+    const refs = keys.map((k) => k === "arg" ? d.arg : d.opts[k]).filter((v) => v);
+    // {include} with :literal: is a literalinclude in disguise; same rule either way.
+    for (const ref of refs) {
+      // Web addresses are fine for figures, iframes and anywidget's front-end module.
+      if (/^https?:\/\//i.test(ref) && ["figure", "image", "iframe", "anywidget"].includes(d.name)) continue;
+      if (/^[a-z][\w+.-]*:/i.test(ref)) { fail(`${where}: ${ref} is not a relative file path`); continue; }
+      const abs = safeRel(path.dirname(page), ref, where);
+      if (!abs) continue;
+      if (!roots.some((r) => abs === r || abs.startsWith(r + path.sep)))
+        fail(`${where}: ${ref} is outside this page's files (${roots.map((r) => path.relative(ROOT, r) + "/").join(", ")})`);
+    }
+  }
+}
+
 function checkSnippets(manifests) {
+  // What each page may read: an entry page its own docs/<id>/ and lean/Lemmata/<Lean>/,
+  // a site page all of docs/; both the shared docs/_static/ and docs/_generated/.
+  const shared = [path.join(DOCS, "_static"), path.join(DOCS, "_generated")];
+  for (const p of ["index.md", "checked.md", "changelog.md", "about.md"].map((x) => path.join(DOCS, x)))
+    if (fs.existsSync(p)) checkFileDirectives(p, [DOCS]);
+  for (const m of manifests) for (const p of m.pages) {
+    const page = path.join(DOCS, m.dir, p);
+    if (fs.existsSync(page)) checkFileDirectives(page, [path.join(DOCS, m.dir), path.join(LEAN, LIB, m.leanDir), ...shared]);
+  }
   const pages = [path.join(DOCS, "index.md"),
     ...manifests.flatMap((m) => m.pages.map((p) => path.join(DOCS, m.dir, p)))];
   const re = /```\{literalinclude\}\s+(\S+)\s*\n((?::[^\n]*\n)*)/g;
@@ -543,33 +608,40 @@ function bibtex(m, title, p, { siteUrl, commit, checked, ident }) {
 // from local git (a working checkout), or null if there is no git at all.
 // Stable identifiers (lemmata:YYYY.NNNNN) are assigned by the cluster and shipped as
 // .lemmata/identifiers.json; a local preview has none ("assigned on publication").
+// Id-keyed tables (identifiers, frozen entries, provenance) as objects without a prototype,
+// so a lookup like frozen[m.id] can never hit Object.prototype: an entry named "constructor"
+// once read as frozen and its exports were left out of the verifier request (review,
+// 2026-10-22). Ids naming such properties are also refused in validate.
+const byId = (o) => Object.assign(Object.create(null), o ?? {});
+
 function loadIdentifiers(commit) {
   const shipped = path.join(ROOT, ".lemmata", "identifiers.json");
-  if (!fs.existsSync(shipped)) return {};
+  if (!fs.existsSync(shipped)) return byId();
   const d = JSON.parse(fs.readFileSync(shipped, "utf8"));
   if (commit && d.source_commit && d.source_commit !== commit) fail(`.lemmata/identifiers.json is for ${d.source_commit}, not ${commit}`);
   for (const [entry, ident] of Object.entries(d.entries ?? {}))
     if (!/^\d{4}\.\d{5}$/.test(ident)) fail(`.lemmata/identifiers.json: bad identifier ${ident} for ${entry}`);
-  return d.entries ?? {};
+  return byId(d.entries);
 }
 
 // Entries an admin froze, with their last successful check (commit, versions, date,
 // results), shipped by the cluster as .lemmata/frozen.json. Empty outside the cluster.
 function loadFrozen() {
   const f = path.join(ROOT, ".lemmata", "frozen.json");
-  return fs.existsSync(f) ? (JSON.parse(fs.readFileSync(f, "utf8")).entries ?? {}) : {};
+  return byId(fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, "utf8")).entries : null);
 }
 
 function loadProvenance(manifests, commit) {
   const shipped = path.join(ROOT, ".lemmata", "provenance.json");
   if (fs.existsSync(shipped)) {
     const p = JSON.parse(fs.readFileSync(shipped, "utf8"));
+    p.entries = byId(p.entries);
     if (commit && p.source_commit !== commit) fail(`.lemmata/provenance.json is for ${p.source_commit}, not ${commit}`);
     return p;
   }
   const git = (...a) => execFileSync("git", ["-C", ROOT, ...a], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
   try { git("rev-parse", "HEAD"); } catch { return null; }
-  const out = { schema_version: 1, source_commit: git("rev-parse", "HEAD").trim(), entries: {} };
+  const out = { schema_version: 1, source_commit: git("rev-parse", "HEAD").trim(), entries: byId() };
   for (const m of manifests) {
     const log = git("log", "--no-merges", "--format=%H%x1f%an%x1f%ae%x1f%aI", "HEAD", "--", `docs/${m.dir}`, `lean/${LIB}/${m.leanDir}`);
     const commits = log.split("\n").filter(Boolean).map((l) => { const [hash, name, email, date] = l.split("\x1f"); return { hash, name, email: email.toLowerCase(), date }; });
@@ -598,49 +670,105 @@ function loadProvenance(manifests, commit) {
 // The source text of a Lean declaration, for showing it next to the result on the page.
 // Read from the trusted source tree (the render step's pristine copy), using the file the
 // verifier reported; the verifier itself loads no environment extensions, so it has no
-// declaration ranges to offer. A theorem or lemma is shown up to its first top-level ":="
-// (the statement, not the proof); a definition in full, since its body is what it means
-// (for a `def X : Prop := ...` the body is the claim itself). Returns { from, to, text }
-// with 1-based lines, or null.
-const DECL_KW = "(?:theorem|lemma|def|abbrev|structure|instance|inductive|class)";
-const DECL_START = new RegExp(`^(?:@\\[[^\\]]*\\]\\s*)*(?:(?:private|protected|noncomputable|nonrec|partial|unsafe|public)\\s+)*(?:${DECL_KW}|end|namespace|section|open|variable|set_option|attribute|example|#)\\b`);
-function leanStatement(file, shortName) {
-  let src; try { src = fs.readFileSync(path.join(ROOT, file), "utf8"); } catch { return null; }
-  const lines = src.split("\n");
-  const esc = shortName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const start = new RegExp(`^\\s*(?:@\\[[^\\]]*\\]\\s*)*(?:(?:private|protected|noncomputable|nonrec|partial|unsafe)\\s+)*(${DECL_KW})\\s+${esc}(?=[\\s:({\\[]|$)`);
-  const i = lines.findIndex((l) => start.test(l));
-  if (i < 0) return null;
-  const isTheorem = /^(theorem|lemma)$/.test(lines[i].match(start)[1]);
-  let end = -1, cut = null;
-  if (isTheorem) {
-    // First ":=" outside brackets.
-    let depth = 0;
-    for (let j = i; j < lines.length && end < 0 && j - i <= 80; j++) {
-      const l = lines[j].replace(/--.*$/, "");
-      for (let k = 0; k < l.length; k++) {
-        const c = l[k];
-        if ("([{⟨".includes(c)) depth++;
-        else if (")]}⟩".includes(c)) depth = Math.max(0, depth - 1);
-        else if (depth === 0 && l.startsWith(":=", k)) { end = j; cut = k; break; }
+// declaration ranges to offer. Found by Lean syntax, not by text (review, 2026-10-22): the
+// file is tokenized so comments (line, nested block), strings and char literals are never
+// mistaken for code, `namespace`/`section`/`end` are tracked so the declaration is matched
+// by its fully qualified name, a theorem is cut at its first top-level ":=" (the
+// statement, not the proof), and a definition runs to the next top-level command (a blank
+// line inside it does not end it). Returns { from, to, declLine, text } with 1-based lines,
+// or null if the declaration is not in the file.
+const DECL_KW = new Set(["theorem", "lemma", "def", "abbrev", "structure", "instance", "inductive", "class", "opaque", "axiom", "example"]);
+const DECL_MOD = new Set(["private", "protected", "noncomputable", "nonrec", "partial", "unsafe", "public"]);
+// Tokens that start a new top-level command, ending a definition's body.
+const COMMAND_KW = new Set([...DECL_KW, "namespace", "section", "end", "open", "variable", "universe", "set_option",
+  "attribute", "export", "mutual", "import", "module", "macro", "macro_rules", "syntax", "notation", "infix", "infixl",
+  "infixr", "prefix", "postfix", "elab", "deriving", "initialize", "noncomputable", "private", "protected", "public",
+  "theorem", "#check", "#eval", "#print", "#reduce", "#guard"]);
+function leanTokens(src) {
+  // [{t: text, k: "word"|"sym"|"str"|"doc", start, line}], comments other than doc comments
+  // dropped. Doc comments (/-- ... -/) are kept as one token so they can be shown.
+  const toks = []; let i = 0, line = 1;
+  const adv = (n) => { for (let k = 0; k < n; k++) if (src[i + k] === "\n") line++; i += n; };
+  while (i < src.length) {
+    const c = src[i], c2 = src.slice(i, i + 2);
+    if (c === "\n" || c === " " || c === "\t" || c === "\r") { adv(1); continue; }
+    if (c2 === "--") { while (i < src.length && src[i] !== "\n") i++; continue; }
+    if (c2 === "/-") {                                  // block comment, nested
+      const doc = src[i + 2] === "-" && src[i + 3] !== "/", s0 = i, l0 = line; let depth = 0;
+      while (i < src.length) {
+        if (src.startsWith("/-", i)) { depth++; adv(2); }
+        else if (src.startsWith("-/", i)) { depth--; adv(2); if (depth === 0) break; }
+        else adv(1);
       }
+      if (doc) toks.push({ t: src.slice(s0, i), k: "doc", start: s0, line: l0 });
+      continue;
     }
-  } else {
-    // The whole definition: until a blank line, a doc comment or the next top-level command.
-    end = i;
-    for (let j = i + 1; j < lines.length && j - i <= 80; j++) {
-      if (!lines[j].trim() || /^\s*\/--/.test(lines[j]) || DECL_START.test(lines[j])) break;
-      end = j;
+    if (c === '"') {                                    // string literal with escapes
+      const s0 = i, l0 = line; adv(1);
+      while (i < src.length && src[i] !== '"') adv(src[i] === "\\" ? 2 : 1);
+      adv(1); toks.push({ t: src.slice(s0, i), k: "str", start: s0, line: l0 }); continue;
     }
+    if (c === "'" && /^'(\\.|[^\\'])'/u.test(src.slice(i, i + 6))) { // char literal 'a', '\n'
+      const m = src.slice(i).match(/^'(\\.|[^\\'])'/u); toks.push({ t: m[0], k: "str", start: i, line }); adv(m[0].length); continue;
+    }
+    if (c === "«") { const j = src.indexOf("»", i); const e = j < 0 ? src.length : j + 1; toks.push({ t: src.slice(i, e), k: "word", start: i, line }); adv(e - i); continue; }
+    const w = src.slice(i).match(/^(#?[\p{L}_][\p{L}\p{N}_'!?.₀-₉ₐ-ₜ]*)/u);
+    if (w) { toks.push({ t: w[1].replace(/\.$/, ""), k: "word", start: i, line }); adv(w[1].replace(/\.$/, "").length || 1); continue; }
+    if (c2 === ":=") { toks.push({ t: ":=", k: "sym", start: i, line }); adv(2); continue; }
+    toks.push({ t: c, k: "sym", start: i, line }); adv(1);
   }
-  if (end < 0) return null;
-  const body = lines.slice(i, end + 1);
-  if (cut !== null) body[body.length - 1] = body[body.length - 1].slice(0, cut).replace(/\s+$/, "");
-  if (!body[body.length - 1].trim()) body.pop();
-  // Keep a doc comment directly above it.
-  let from = i;
-  if (/-\/\s*$/.test(lines[i - 1] ?? "")) { let d = i - 1; while (d >= 0 && !/^\s*\/--/.test(lines[d])) d--; if (d >= 0) from = d; }
-  return { from: from + 1, to: end + 1, declLine: i + 1, text: [...lines.slice(from, i), ...body].join("\n").replace(/\s+$/, "") };
+  return toks;
+}
+function leanStatement(file, fullName) {
+  let src; try { src = fs.readFileSync(path.join(ROOT, file), "utf8"); } catch { return null; }
+  const toks = leanTokens(src), scopes = [];          // [{kind: "namespace"|"section", name}]
+  const prefix = () => scopes.filter((s) => s.kind === "namespace").map((s) => s.name).join(".");
+  let depth = 0;                                       // bracket depth, for top-level ":="
+  for (let i = 0; i < toks.length; i++) {
+    const tk = toks[i];
+    if (tk.k === "sym") { if ("([{⟨".includes(tk.t)) depth++; else if (")]}⟩".includes(tk.t)) depth = Math.max(0, depth - 1); continue; }
+    if (tk.k !== "word" || depth > 0) continue;
+    if (tk.t === "namespace" && toks[i + 1]?.k === "word") { scopes.push({ kind: "namespace", name: toks[i + 1].t }); i++; continue; }
+    if (tk.t === "section") { scopes.push({ kind: "section", name: toks[i + 1]?.k === "word" ? toks[i + 1].t : "" }); continue; }
+    if (tk.t === "end") {                              // closes the innermost matching scope
+      const nm = toks[i + 1]?.k === "word" && toks[i + 1].line === tk.line ? toks[i + 1].t : "";
+      const k = scopes.map((s) => s.name).lastIndexOf(nm); if (k >= 0) scopes.splice(k); else scopes.pop();
+      continue;
+    }
+    if (!DECL_KW.has(tk.t)) continue;
+    // Modifiers and attributes directly before the keyword belong to the declaration.
+    let first = i;
+    while (first > 0 && (DECL_MOD.has(toks[first - 1].t) || toks[first - 1].t === "]")) {
+      if (toks[first - 1].t === "]") { let b = first - 1; while (b > 0 && toks[b].t !== "@") b--; if (toks[b]?.t !== "@") break; first = b; }
+      else first--;
+    }
+    const nameTok = toks[i + 1];
+    if (!nameTok || nameTok.k !== "word") continue;
+    const qualified = nameTok.t.startsWith("_root_.") ? nameTok.t.slice(7) : [prefix(), nameTok.t].filter(Boolean).join(".");
+    if (qualified !== fullName) continue;
+    const isTheorem = tk.t === "theorem" || tk.t === "lemma";
+    // End: a theorem at its first top-level ":="; anything else at the next top-level command.
+    let endTok = null, d = 0;
+    for (let j = i + 2; j < toks.length; j++) {
+      const t = toks[j];
+      if (t.k === "sym") {
+        if ("([{⟨".includes(t.t)) d++; else if (")]}⟩".includes(t.t)) d = Math.max(0, d - 1);
+        else if (isTheorem && d === 0 && t.t === ":=") { endTok = { cut: t.start }; break; }
+        continue;
+      }
+      if (d === 0 && (t.k === "doc" || (t.k === "word" && COMMAND_KW.has(t.t) && j > i + 1 && toks[j - 1].line < t.line))) { endTok = { cut: t.start }; break; }
+    }
+    const declStart = toks[first].start;
+    const cut = endTok ? endTok.cut : src.length;
+    const body = src.slice(declStart, cut).replace(/\s+$/, "");
+    // A doc comment directly before the declaration is shown with it.
+    const prev = toks[first - 1];
+    const docStart = prev?.k === "doc" ? prev.start : declStart;
+    const text = (prev?.k === "doc" ? src.slice(prev.start, declStart) : "") + body;
+    const lineOf = (pos) => src.slice(0, pos).split("\n").length;
+    return { from: lineOf(docStart), to: lineOf(declStart + body.length), declLine: lineOf(declStart), text: text.replace(/\s+$/, "") };
+  }
+  return null;
 }
 
 function forgeLinks(webUrl, forge = process.env.SOURCE_FORGE) {
@@ -683,11 +811,12 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       const at = fz ? fz.commit : commit;
       const ok = fz ? old.get(e.name)?.status === "checked" : passed && r?.status === "checked";
       const badge = !report && !fz ? "○ not verified (preview)" : ok ? (e.kind === "definition" ? "◇ elaborated" : "✅ kernel-checked") : "✗ not checked";
-      const st = file ? leanStatement(file, e.name.split(".").pop()) : null;
+      // By the fully qualified name the verifier checked, in the file it reported.
+      const st = file ? leanStatement(file, e.name) : null;
       // With a report, every checked export must be locatable in its source: otherwise its
       // box would show no statement, and readers could not compare it with the prose.
       if (file && !st && report) fail(`${m.dir}: cannot find the declaration of ${e.name} in ${file} ` +
-        "(write it as `theorem <name>` / `def <name>` at the start of a line)");
+        "(declare it with `theorem`/`def` inside its `namespace`, not generated by a macro)");
       const range = (f, s) => forge && at && f ? `${forge.blob(at, f)}#L${s.from}${s.to > s.from ? `-L${s.to}` : ""}` : null;
       const src = st && range(file, st);
       out.push(`:::::{div}`, `:class: lemmata-lean-for lemmata-for-${e.label}`, "",
@@ -697,10 +826,13 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
         // that Prop's definition as well, from the entry's own Lean files.
         let prop = null;
         const named = r?.type && /^[\w.']+(\.\{[^}]*\})?$/.test(r.type) && r.type.includes(".") ? r.type.replace(/\.\{.*$/, "") : null;
+        // The type names a constant: look for exactly that constant (fully qualified, from
+        // the kernel type) among the entry's own Lean files.
         if (named && e.kind === "theorem") {
-          const dir = path.dirname(file), short = named.split(".").pop();
-          for (const f of [file, ...fs.readdirSync(path.join(ROOT, dir)).filter((x) => x.endsWith(".lean")).map((x) => path.join(dir, x))]) {
-            const ps = leanStatement(f, short); if (ps) { prop = { file: f, ...ps }; break; }
+          const leanRoot = path.join("lean", LIB, m.leanDir);
+          const files = walk(path.join(ROOT, leanRoot), ".lean").map((x) => path.relative(ROOT, x));
+          for (const f of [file, ...files.filter((x) => x !== file)]) {
+            const ps = leanStatement(f, named); if (ps) { prop = { file: f, ...ps }; break; }
           }
         }
         out.push(`::::{dropdown} ${e.kind === "definition" ? "Definition" : "Statement"} in Lean`, "", "```lean", st.text, "```");
