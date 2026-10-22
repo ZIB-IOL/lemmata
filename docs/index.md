@@ -12,7 +12,9 @@ prose you are reading, and once for Lean, in a formal proof that the kernel has 
 Lemmata is a home for **formalized results that are worth sharing before, or without, a
 full paper**: lemmas and constructions that may never become a paper of their own but are
 still useful to others, and results at a stage before a preprint — a way to disseminate
-them early, with the Lean proof as evidence. Entries are short and self-contained, and
+them early, with the Lean proof as evidence. It is equally a place to **archive the
+formalization of results from a paper**, preprint or published, linked to it, so the
+proofs have a permanent, citable home next to the text. Entries are self-contained, and
 each has a stable identifier to cite.
 
 Entries are web pages rather than papers. They are written in MyST Markdown and rendered

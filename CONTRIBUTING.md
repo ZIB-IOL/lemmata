@@ -5,6 +5,12 @@ how to confirm publication.)
 
 An entry is a pair: a page in `docs/<id>/` and a Lean module in `lean/Lemmata/<LeanName>/`.
 
+What fits: results worth sharing before or without a paper, and equally the formalization of
+results **from a paper**, preprint or published. For the latter, link the paper with `arxiv`
+(and a journal version with `related`), state the results as the paper does, and say in the
+prose which of its theorems the entry covers; the entry can be as long as the formalization
+needs.
+
 ## 1. Scaffold
 
 ```bash

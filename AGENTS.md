@@ -305,6 +305,11 @@ text. Both are inline only: text, `*emphasis*`, `[links](...)` and math `$...$` 
 refused, a literal dollar must be written `\$`, and each note is at most 2000 characters.
 Use a YAML block (`>-`) so math and apostrophes need no quoting.
 
+An entry may also archive the formalization of results **from an existing paper** (preprint
+or published); that is welcome, not only new results. Then link the paper with `arxiv` (and
+a journal version with `related`, `kind: paper`), and say in the prose which of the paper's
+results the entry formalizes, by their numbers in the paper.
+
 `arxiv` links additional material (a paper, a longer write-up) under the title as
 `arXiv:<id>` → `https://arxiv.org/abs/<id>`. Give the bare identifier, without an
 `arXiv:` prefix; validation checks the format, so a typo fails instead of becoming a
