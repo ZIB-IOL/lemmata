@@ -1,0 +1,24 @@
+schema_version: 1
+id: tensor-centroid
+lean_namespace: Lemmata.Centroid
+category: multilinear-algebra
+contributors:
+  - {name: Kirill Khoruzhii, orcid: 0000-0003-4689-3812}
+abstract: >-
+  We determine the maximum centroid dimension of concise tensors in $(F^N)^{\otimes3}$ for every $N$ and every field $F$, both in the general and symmetric cases. The formulas recover the known $N^{3/2}$ asymptotic in the general case and give the optimal leading constant $\sqrt2/3$ in the symmetric case. Moreover, the general maximum is attained by a tensor with the minimum possible rational border rank, namely $N$.
+ai_use: The exposition and Lean formalization were developed with OpenAI Codex.
+pages:
+  - index.md
+exports:
+  - name: Lemmata.Centroid.generalCentroidBound
+    kind: theorem
+    page: index.md
+    label: thm-tensor-centroid-general
+  - name: Lemmata.Centroid.symmetricCentroidBound
+    kind: theorem
+    page: index.md
+    label: thm-tensor-centroid-symmetric
+  - name: Lemmata.Centroid.centroidAsymptotics
+    kind: theorem
+    page: index.md
+    label: cor-tensor-centroid-asymptotics
