@@ -185,8 +185,8 @@
 .lemmata-folded .lemmata-fold::after { transform: none; }
 .lemmata-folded > .myst-proof-body { display: none; }
 /* [↓] from a result's heading to its proof, when the proof is not directly below. */
-.lemmata-to-proof { font-weight: normal; font-size: 0.85em; text-decoration: none; opacity: 0.75; }
-.lemmata-to-proof:hover { opacity: 1; text-decoration: underline; }
+.lemmata-jump { font-weight: normal; font-size: 0.85em; text-decoration: none; opacity: 0.75; }
+.lemmata-jump:hover { opacity: 1; text-decoration: underline; }
 
 /* Lean source: collapsed behind a bar; the code block (with its copy button) inside. */
 details.lemmata-lean { margin: 1.25rem 0; border: 1px solid var(--lemmata-line, #e5e7eb); border-radius: 0.375rem; }

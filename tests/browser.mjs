@@ -102,6 +102,15 @@ if (await down.count()) {
   check(new URL(page.url()).hash === `#${target}`, `[↓] sets the address to the proof (${page.url().replace(origin, "")})`);
   const top = await page.evaluate((id) => document.getElementById(id).getBoundingClientRect().top, target);
   check(Math.abs(top) < 200, `[↓] scrolls to the proof (top ${Math.round(top)} px)`);
+  // [↑] in the proof's heading leads back to the statement.
+  const up = page.locator(`#${target} a.lemmata-to-result`).first();
+  check(await up.count() === 1, "[↑] in the proof's heading");
+  if (await up.count()) {
+    const res = (await up.getAttribute("href")).slice(1);
+    await up.click(); await page.waitForTimeout(1000);
+    const t = await page.evaluate((id) => document.getElementById(id).getBoundingClientRect().top, res);
+    check(new URL(page.url()).hash === `#${res}` && Math.abs(t) < 200, `[↑] goes back to the statement (top ${Math.round(t)} px)`);
+  }
   // Back after [↓] once crashed the same way (a pushed entry at /html/<ident>).
   await page.goBack(); await page.waitForTimeout(1500);
   check(!(await page.locator("body").innerText()).includes("Application Error"), "Back after [↓] does not crash");

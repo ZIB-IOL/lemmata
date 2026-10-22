@@ -1423,15 +1423,19 @@ function proofs(){
 // replaceState, not pushState: Back to an entry we pushed hands the router the same
 // address and crashed it the same way. The theme's own cross-references add no history
 // entry either, so Back leaves the page in both cases.
-function toProof(e){
+function jump(e){
   var box=document.getElementById(this.getAttribute("href").slice(1)); if(!box) return;
   e.preventDefault(); e.stopPropagation();
   box.scrollIntoView({block:"start"});
   try{ history.replaceState(history.state,"",location.pathname+location.search+"#"+box.id); }catch(err){}
 }
+function arrow(cls,id,text,title){
+  var a=document.createElement("a"); a.className="lemmata-jump "+cls; a.href="#"+id; a.textContent=text;
+  a.title=title; a.addEventListener("click",jump); return a;
+}
 function proofLinks(){
-  // For each proof that names results, add [↓] to those results' headings unless the
-  // proof directly follows them.
+  // For each proof that names results, add [↓] to those results' headings and [↑] back to
+  // the result in the proof's own heading, unless the proof directly follows the result.
   document.querySelectorAll(".myst-proof.border-myst-proof").forEach(function(box, i){
     if(!box.id) box.id="lemmata-proof-"+(i+1);
     box.querySelectorAll(".myst-proof-title a[href^='#']").forEach(function(a){
@@ -1439,8 +1443,10 @@ function proofLinks(){
       if(!res||res===box) return;
       var head=res.querySelector(".myst-proof-title"); if(!head||head.querySelector(".lemmata-to-proof[href='#"+box.id+"']")) return;
       if(res.nextElementSibling===box) return;
-      var down=document.createElement("a"); down.className="lemmata-to-proof"; down.href="#"+box.id; down.textContent="[↓]";
-      down.title="Go to the proof"; down.addEventListener("click",toProof); head.append(" ",down);
+      head.append(" ",arrow("lemmata-to-proof",box.id,"[↓]","Go to the proof"));
+      var own=box.querySelector(".myst-proof-title");
+      if(own&&!own.querySelector(".lemmata-to-result[href='#"+res.id+"']"))
+        own.append(" ",arrow("lemmata-to-result",res.id,"[↑]","Back to the statement"));
     });
   });
 }
