@@ -59,14 +59,16 @@ node tools/lemmata.mjs prepare out/verification.json --commit "$(git rev-parse H
 # The cluster adds these in site-index; locally the preview needs them too.
 node tools/lemmata.mjs enhance docs/_build/html
 
-# The same render the way the cluster does it: a copy of the tracked files (no git
-# history), with .lemmata/provenance.json added as the controller would, LEMMATA_BUILD=1,
+# The same render the way the cluster does it: a copy of what would be committed -- tracked
+# files plus new ones git does not ignore, so a freshly scaffolded entry is included before
+# `git add` (it was not: the umbrella imported files the copy lacked) -- with no git
+# history, .lemmata/provenance.json added as the controller would, LEMMATA_BUILD=1,
 # and validate before prepare. Catches tool changes that only break inside the build Job
 # (2026-10-19: validate refused the cluster's own .lemmata/ and every build failed).
 step "5b/5 render as in the cluster"
 SIM=$(mktemp -d)
 trap 'rm -rf "$SIM"' EXIT
-git ls-files -z | tar --null -T - -cf - | tar -xf - -C "$SIM"
+git ls-files -z --cached --others --exclude-standard | tar --null -T - -cf - | tar -xf - -C "$SIM"
 mkdir -p "$SIM/.lemmata"
 # `provenance` prints what the controller would ship for HEAD, computed from local git.
 node tools/lemmata.mjs provenance > "$SIM/.lemmata/provenance.json"

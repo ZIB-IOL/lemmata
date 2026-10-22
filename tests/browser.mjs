@@ -15,10 +15,13 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/ja
   ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".woff2": "font/woff2",
   ".png": "image/png", ".ico": "image/x-icon", ".xml": "application/xml", ".txt": "text/plain" };
 const server = http.createServer((req, res) => {
-  const url = decodeURIComponent(new URL(req.url, "http://x").pathname);
+  // A malformed escape (%E0%A4%A) is a bad request, not a crash of the test server.
+  let url;
+  try { url = decodeURIComponent(new URL(req.url, "http://x").pathname); } catch { res.writeHead(400).end(); return; }
   if (!url.startsWith(base + "/")) { res.writeHead(404).end(); return; }
   let p = path.join(root, url.slice(base.length));
-  if (!p.startsWith(root)) { res.writeHead(403).end(); return; }
+  // Inside root itself, not a sibling that shares its prefix (/tmp/site vs /tmp/site-x).
+  if (p !== root && !p.startsWith(root + path.sep)) { res.writeHead(403).end(); return; }
   if (fs.existsSync(p) && fs.statSync(p).isDirectory()) p = path.join(p, "index.html");
   else if (!fs.existsSync(p) && fs.existsSync(p + ".html")) p += ".html";
   if (!fs.existsSync(p)) { res.writeHead(404).end(); return; }
@@ -96,8 +99,10 @@ check(ck.status() === 200 && (await page.locator("h1").first().textContent()).in
 // Follow every same-site link on every page, both as a fresh page load and as the
 // href the browser actually resolved. Counting links is not enough: the catalog's links
 // once rendered as raw "../x/index.md" hrefs that 404'd (2026-10-19).
+const LIMIT = 2000;                       // a runaway guard, reported if reached (was a silent 200)
 const seen = new Set(), queue = [`${origin}${base}/`], broken = [];
-while (queue.length && seen.size < 200) {
+const anchors = new Map();                 // page URL -> Set of #ids linked to it
+while (queue.length && seen.size < LIMIT) {
   const url = queue.shift().split("#")[0];
   if (seen.has(url)) continue;
   seen.add(url);
@@ -110,10 +115,24 @@ while (queue.length && seen.size < 200) {
       if (/\.md$/.test(new URL(href).pathname)) broken.push(`raw .md link: ${href} (on ${url})`);
       continue;
     }
+    // Remember the anchor, checked once its page is loaded (below); fragments used to be
+    // dropped, so a link to a missing #id passed.
+    const [target, frag] = href.split("#");
+    if (frag) { if (!anchors.has(target)) anchors.set(target, new Set()); anchors.get(target).add(decodeURIComponent(frag)); }
     queue.push(href);
   }
 }
-check(broken.length === 0, `all ${seen.size} internal pages and links resolve${broken.length ? ":\n  " + broken.join("\n  ") : ""}`);
+if (queue.length && seen.size >= LIMIT) broken.push(`crawl stopped at ${LIMIT} pages with ${queue.length} links left unchecked`);
+// Every #anchor that some page links to must exist on its target page. MyST renders the
+// page with React, so wait until it has loaded before looking for the ids.
+for (const [target, ids] of anchors) {
+  if (!seen.has(target)) continue;                                 // its own failure is reported above
+  await page.goto(target, { waitUntil: "load" });
+  await page.waitForTimeout(300);
+  const missing = await page.evaluate((list) => list.filter((id) => !document.getElementById(id)), [...ids]);
+  for (const id of missing) broken.push(`missing anchor #${id} on ${target}`);
+}
+check(broken.length === 0, `all ${seen.size} internal pages, links and ${[...anchors.values()].reduce((n, x) => n + x.size, 0)} anchors resolve${broken.length ? ":\n  " + broken.join("\n  ") : ""}`);
 
 check(errors.length === 0, `no console errors or failed requests${errors.length ? ":\n  " + errors.join("\n  ") : ""}`);
 await browser.close(); server.close();

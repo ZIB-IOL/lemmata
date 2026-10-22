@@ -1511,8 +1511,8 @@ document.addEventListener("copy",function(e){
   e.preventDefault();
 },true);
 var ticking=false;
-window.addEventListener("scroll",function(){ if(!ticking){ ticking=true; requestAnimationFrame(function(){ ticking=false; try{ outline(); }catch(e){} }); } },{passive:true});
-window.addEventListener("resize",function(){ try{ outline(); }catch(e){} });
+window.addEventListener("scroll",function(){ if(!ticking){ ticking=true; requestAnimationFrame(function(){ ticking=false; step("contents",outline); }); } },{passive:true});
+window.addEventListener("resize",function(){ step("contents",outline); });
 // The canonical URL is written into the served HTML (what crawlers and link previews read);
 // React re-renders the <head> on load and drops it, so put it back for the live page too.
 var CANON=(document.querySelector("script[data-lemmata-canonical]")||{dataset:{}}).dataset.lemmataCanonical||null;   // see canonical() in lemmata.mjs
@@ -1543,7 +1543,15 @@ function comments(){
   for(var k in a) s.setAttribute("data-"+k,a[k]);
   box.append(s);
 }
-function run(){ try{ canon(); leanNextToResults(); proofs(); proofLinks(); lean(); outline(); comments(); }catch(e){} }
+// Each step on its own: one that fails must not skip the others (they all ran under one
+// try before, so the first error silently dropped the rest; review, 2026-10-22). A failure
+// is reported once per step in the console.
+var reported={};
+function step(name,fn){ try{ fn(); }catch(e){ if(!reported[name]){ reported[name]=1; console.warn("[lemmata] "+name+" failed:",e); } } }
+function run(){
+  step("canonical",canon); step("lean boxes",leanNextToResults); step("proofs",proofs); step("proof links",proofLinks);
+  step("lean source",lean); step("contents",outline); step("comments",comments);
+}
 // Only after React has hydrated: changing the DOM before that is a hydration mismatch
 // (React error #418), after which React re-renders and drops the changes. Then re-apply
 // whenever React re-renders.

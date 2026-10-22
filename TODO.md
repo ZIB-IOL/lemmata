@@ -18,12 +18,14 @@ site. The repository is public; issues and pull requests are welcome too.
   little could leak, but that should not depend on nobody adding one.
 - **Widgets run contributor JavaScript on our origin.** Decide: accept with review (now),
   or sandbox widgets in an iframe on a separate origin.
-- **Swallowed errors in the page script**: run each enhancement on its own, log failures.
-- **check.sh and unstaged new entries**: the cluster-style step copies `git ls-files` only.
-- **Test server path check and crawler limits** (tests only, not production).
 - **Split tools/lemmata.mjs** into testable modules, after the tests exist.
 
 ## Later
+
+- **Build time grows with the number of entries.** Each push compiles every entry's Lean
+  from scratch (Mathlib itself is cached per revision): about 11-12 minutes for 6 entries
+  (2026-10-22). Revisit at 15-20 entries: more CPU for the build Job, or reuse compiled
+  entries whose sources did not change, keyed so a cached result cannot be forged.
 
 - **Every notation links to its definition.** Automatic links from notation in the prose to
   the `prf:definition` (and Lean declaration) that introduces it. Needs a notion of which
