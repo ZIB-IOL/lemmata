@@ -279,3 +279,10 @@ details.lemmata-verification > summary::after { content: ""; width: 1rem; height
 details.lemmata-verification[open] > summary::after { transform: rotate(90deg); }
 details.lemmata-verification[open] > summary { border-bottom: 1px solid var(--lemmata-line, #e5e7eb); }
 .dark details.lemmata-verification, .dark details.lemmata-verification[open] > summary { border-color: #30363d; }
+
+/* Entry lists: the identifier in front of each title, muted, not underlined (inline-block
+   stops the link's underline from running through it), and kept on one line. */
+article table a.link > code { display: inline-block; font-size: 0.85em; background: none; padding: 0;
+  margin-right: 0.5em; color: #6b7280 !important; white-space: nowrap; font-weight: normal; text-decoration: none; }
+html.dark article table a.link > code { color: #9ca3af !important; }
+article table a.link > code::before, article table a.link > code::after { content: none; }

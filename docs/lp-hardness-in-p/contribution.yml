@@ -1,7 +1,8 @@
 schema_version: 1
 id: lp-hardness-in-p
 lean_namespace: Lemmata.LPHardnessInP
-category: optimization
+category: extended-formulations
+tags: [optimization]
 contributors:
   - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
 abstract: >-

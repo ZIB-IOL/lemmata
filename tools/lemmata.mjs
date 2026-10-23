@@ -978,8 +978,11 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   // generated text must be relative to the page MyST renders them on (an included file
   // resolves against the INCLUDING page; `../<id>/index.md` from _generated/ once
   // rendered as a raw href and 404'd).
-  const table = (list, rel) => ["| Entry | Formal results | Status |", "|---|---|---|",
-    ...list.map((m) => `| [${esc(titleOf(m))}](${entryHref(m, rel)}) | ${m.exports.length} | ` +
+  // Each entry's identifier in front of its title, inside the link (a code span, styled by
+  // `table a.link > code` in lemmata.css, whose margin is the gap: a space inside the link
+  // would be underlined); a local preview has none and shows the title.
+  const table = (list, rel) => ["| Entry | Results | Status |", "|---|---|---|",
+    ...list.map((m) => `| [${idents[m.id] ? `\`[lemmata:${idents[m.id]}]\`` : ""}${esc(titleOf(m))}](${entryHref(m, rel)}) | ${m.exports.length} | ` +
       (statusOf(m) === "frozen" ? `checked with v${esc(frozen[m.id].lean_version ?? "?")}` : statusOf(m)) + " |")];
 
   // "Contributing" paragraph of the landing page, with the repository address from the
