@@ -10,6 +10,12 @@ entry shows its own last change and links to the exact commit.
 
 Newest first. Add an item in the same pull request as the change it describes.
 
+## 2026-10-23
+
+- **New entry:** [Symmetric formulations of the spanning-tree polytope](spanning-tree-symmetric-ef/index.md),
+  formalizing conditional Hamilton-path LP lower bounds, sharp LP approximations,
+  exact quadratic-size SDP formulations, and a nonnegative-outer PSD lower bound.
+
 ## 2026-10-22
 
 - **New entry:** [Distributional lower bounds for randomized linear-oracle optimization](distributional-linear-oracle-lower-bounds/index.md).

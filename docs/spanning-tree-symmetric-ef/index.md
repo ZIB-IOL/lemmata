@@ -17,6 +17,14 @@ theorem stated below. That input is explicit in Lean and is not proved in this
 entry. The LP upper formulation, the exact SDP constructions, and the
 nonnegative-outer PSD lower bound do not use it.
 
+**Paper correspondence (arXiv v2).** The finite LP lower bounds come from
+Theorem 5.7; the exact corollary gives the lower-bound part of Theorem 1.1 by the
+Hamilton route. The concrete LP is Proposition 5.4, with sharpness refinements
+stated below. The SDP constructions correspond to Theorem 6.2, Corollary 6.3,
+and Theorem 6.4; the nonnegative-outer bound corresponds to Proposition 6.7.
+Only the finite statements displayed here are exported, not the paper's
+asymptotic extension-complexity claims.
+
 ## Models and conventions
 
 ```{prf:definition} Spanning-tree polytope
@@ -116,7 +124,7 @@ These are signed ordering weights, not probabilities. The figure uses one-based
 labels and positions; Lean uses `Fin n` and the inverse permutation, sending
 labels to positions.
 
-```{figure} ./images/path-certificate.png
+```{figure} ./images/path-certificate.svg
 :name: fig-spanning-tree-symmetric-ef-path
 :alt: Two n=8 examples. On the left, a cycle of positions highlights the three positions occupied by labels 1, 2, and 3. On the right, the corresponding Hamilton path joins consecutive vertex labels. The first ordering has positive weight 1/5760; the second has negative weight -1/11520.
 :width: 100%
@@ -129,7 +137,7 @@ path, so their weights are added. These $n=8$ examples illustrate the
 construction, not the $n\ge13$ lower-bound theorem.
 ```
 
-[Full-size PNG](./images/path-certificate.png) · [PDF](./images/path-certificate.pdf).
+[Open the full-size SVG](./images/path-certificate.svg).
 
 ## A quadratic-size LP at the threshold
 

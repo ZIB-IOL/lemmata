@@ -3,6 +3,16 @@ id: spanning-tree-symmetric-ef
 lean_namespace: Lemmata.SpanningTreeSymmetricEF
 category: optimization
 arxiv: 2606.17017
+abstract: >-
+  Finite Lean formalizations of bounds and concrete formulations for the
+  spanning-tree polytope. The Hamilton-path LP lower bounds, including the
+  exact factor-one and fixed-approximation-factor corollaries, retain an explicit
+  small-index subgroup theorem as an unproved input. Independent results cover
+  a symmetric LP with sharp approximation factor $3/2$, its cardinality slice,
+  exact quadratic-size SDP formulations with coordinate-permutation or orthogonal
+  symmetry, ordered-root SDP constructions, and a sum-of-block-orders lower bound
+  for nonnegative outer PSD formulations. Approximation means maximization with
+  nonnegative objectives; PSD size means the sum of block orders.
 contributors:
   - Sebastian Pokutta
 acknowledgements: >-
