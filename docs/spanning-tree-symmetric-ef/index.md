@@ -8,7 +8,7 @@ title: Symmetric formulations of the spanning-tree polytope
 This entry gives finite theorem statements and Lean formalizations accompanying
 Sebastian Pokutta's **[“(Approximate) Symmetric Extension Complexity of the
 Spanning Tree Polytope”](https://arxiv.org/abs/2606.17017)**.
-See the paper for the informal proofs.
+See the paper for proofs.
 The lower-bound argument used here is the Hamilton-path construction; the exact
 LP lower bound is its factor-one corollary.
 
@@ -240,9 +240,11 @@ quadratic Gram constructions, and direct product-PSD lower bound into supporting
 modules. It does not formalize the small-index input, a minimum-extension-size
 operator, or separate asymptotic/optimality claims.
 
-**Reference.** Sebastian Pokutta, *(Approximate) Symmetric Extension Complexity
-of the Spanning Tree Polytope*, [arXiv:2606.17017](https://arxiv.org/abs/2606.17017),
-2026. Informal proofs and the construction illustration are from that work.
+## References
+
+1. Sebastian Pokutta (2026).
+   *(Approximate) Symmetric Extension Complexity of the Spanning Tree Polytope*.
+   [arXiv:2606.17017](https://arxiv.org/abs/2606.17017).
 
 ```{include} ../_generated/verification/spanning-tree-symmetric-ef.md
 ```
