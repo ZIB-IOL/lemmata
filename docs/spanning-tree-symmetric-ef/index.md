@@ -25,7 +25,7 @@ and Theorem 6.4; the nonnegative-outer bound corresponds to Proposition 6.7.
 Only the finite statements displayed here are exported, not the paper's
 asymptotic extension-complexity claims.
 
-## Models and conventions
+## Models
 
 ```{prf:definition} Spanning-tree polytope
 :label: def-spanning-tree-symmetric-ef-polytope
