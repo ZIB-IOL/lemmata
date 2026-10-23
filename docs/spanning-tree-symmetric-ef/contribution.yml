@@ -1,7 +1,8 @@
 schema_version: 1
 id: spanning-tree-symmetric-ef
 lean_namespace: Lemmata.SpanningTreeSymmetricEF
-category: optimization
+category: extended-formulations
+tags: [optimization]
 arxiv: 2606.17017
 abstract: >-
   Finite Lean formalizations of bounds and concrete formulations for the
