@@ -2,8 +2,17 @@ schema_version: 1
 id: spanning-tree-symmetric-ef
 lean_namespace: Lemmata.SpanningTreeSymmetricEF
 category: optimization
+arxiv: 2606.17017
 contributors:
   - Sebastian Pokutta
+acknowledgements: >-
+  The author would like to thank Kanstantsin Pashkovich and Christoph Hertrich
+  for the recent discussions on extended formulations that prompted the author
+  to revisit the question as well as Gábor Braun for comments on an earlier draft.
+  Research reported in this paper was partially supported by the Berlin Mathematics
+  Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche
+  Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
+  Strategy. This work has been partially supported by OpenAI's Academic Researchers program.
 pages:
   - index.md
 exports:
