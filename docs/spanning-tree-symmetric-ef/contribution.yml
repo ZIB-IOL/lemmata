@@ -1,0 +1,69 @@
+schema_version: 1
+id: spanning-tree-symmetric-ef
+lean_namespace: Lemmata.SpanningTreeSymmetricEF
+category: extended-formulations
+tags: [optimization]
+arxiv: 2606.17017
+abstract: >-
+  Finite Lean formalizations of bounds and concrete formulations for the
+  spanning-tree polytope. The Hamilton-path LP lower bounds, including the
+  exact factor-one and fixed-approximation-factor corollaries, retain an explicit
+  small-index subgroup theorem as an unproved input. Independent results cover
+  a symmetric LP with sharp approximation factor $3/2$, its cardinality slice,
+  exact quadratic-size SDP formulations with coordinate-permutation or orthogonal
+  symmetry, ordered-root SDP constructions, and a sum-of-block-orders lower bound
+  for nonnegative outer PSD formulations. Approximation means maximization with
+  nonnegative objectives; PSD size means the sum of block orders.
+contributors:
+  - Sebastian Pokutta
+acknowledgements: >-
+  The author would like to thank Kanstantsin Pashkovich and Christoph Hertrich
+  for the recent discussions on extended formulations that prompted the author
+  to revisit the question as well as Gábor Braun for comments on an earlier draft.
+  Research reported in this paper was partially supported by the Berlin Mathematics
+  Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche
+  Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
+  Strategy. This work has been partially supported by OpenAI's Academic Researchers program.
+pages:
+  - index.md
+exports:
+  - name: Lemmata.SpanningTreeSymmetricEF.treePolytope
+    kind: definition
+    page: index.md
+    label: def-spanning-tree-symmetric-ef-polytope
+  - name: Lemmata.SpanningTreeSymmetricEF.hamilton_threshold
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-symmetric-ef-hamilton
+  - name: Lemmata.SpanningTreeSymmetricEF.exact_lp_lower
+    kind: theorem
+    page: index.md
+    label: cor-spanning-tree-symmetric-ef-exact-lp
+  - name: Lemmata.SpanningTreeSymmetricEF.fixed_factor_lp_lower
+    kind: theorem
+    page: index.md
+    label: cor-spanning-tree-symmetric-ef-fixed-factor
+  - name: Lemmata.SpanningTreeSymmetricEF.symmetric_lp_upper
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-symmetric-ef-lp-upper
+  - name: Lemmata.SpanningTreeSymmetricEF.cardinality_slice_factor
+    kind: theorem
+    page: index.md
+    label: cor-spanning-tree-symmetric-ef-cardinality
+  - name: Lemmata.SpanningTreeSymmetricEF.symmetric_raw_sdp
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-symmetric-ef-sdp-raw
+  - name: Lemmata.SpanningTreeSymmetricEF.symmetric_compressed_sdp
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-symmetric-ef-sdp-compressed
+  - name: Lemmata.SpanningTreeSymmetricEF.ordered_sdps
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-symmetric-ef-sdp-ordered
+  - name: Lemmata.SpanningTreeSymmetricEF.nonnegative_outer_psd_lower
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-symmetric-ef-psd-lower
