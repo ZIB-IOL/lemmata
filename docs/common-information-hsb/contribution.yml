@@ -1,0 +1,50 @@
+schema_version: 1
+id: common-information-hsb
+lean_namespace: Lemmata.CommonInformationHsb
+category: extended-formulations
+tags: [optimization]
+abstract: >-
+  Common information and the logarithm of the max-entry-normalized hyperplane
+  separation bound are not polynomially comparable on finite nonnegative matrices.
+  Two explicit families have exact values: a half-heavy diagonal has HSB equal
+  to two and unbounded common information, while one large all-ones block with
+  singleton blocks has arbitrarily large logarithmic HSB and arbitrarily small
+  common information. The formalization uses all finite product mixtures and
+  signed witnesses constrained on every rectangle.
+contributors:
+  - Sebastian Pokutta
+pages:
+  - index.md
+exports:
+  - name: Lemmata.CommonInformationHsb.commonInformation
+    kind: definition
+    page: index.md
+    label: def-common-information-hsb-ci
+  - name: Lemmata.CommonInformationHsb.hsb
+    kind: definition
+    page: index.md
+    label: def-common-information-hsb-hsb
+  - name: Lemmata.CommonInformationHsb.commonInformation_rank_bound
+    kind: theorem
+    page: index.md
+    label: prop-common-information-hsb-rank
+  - name: Lemmata.CommonInformationHsb.heavy_diagonal_values
+    kind: theorem
+    page: index.md
+    label: thm-common-information-hsb-diagonal
+  - name: Lemmata.CommonInformationHsb.block_matrix_values
+    kind: theorem
+    page: index.md
+    label: thm-common-information-hsb-blocks
+  - name: Lemmata.CommonInformationHsb.exists_heavyDiagonal_separation
+    kind: theorem
+    page: index.md
+    label: cor-common-information-hsb-fixed
+  - name: Lemmata.CommonInformationHsb.exists_blockMatrix_separation
+    kind: theorem
+    page: index.md
+    label: cor-common-information-hsb-small
+  - name: Lemmata.CommonInformationHsb.no_polynomial_comparison
+    kind: theorem
+    page: index.md
+    label: thm-common-information-hsb-polynomial

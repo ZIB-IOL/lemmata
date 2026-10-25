@@ -10,6 +10,12 @@ entry shows its own last change and links to the exact commit.
 
 Newest first. Add an item in the same pull request as the change it describes.
 
+## 2026-10-25
+
+- **New entry:** [Common information and hyperplane separation are incomparable](common-information-hsb/index.md),
+  with exact separating families, finite conditional-independent seeds, and
+  quantified failure of polynomial comparisons for the raw matrix functionals.
+
 ## 2026-10-23
 
 - **New entry:** [Symmetric formulations of the spanning-tree polytope](spanning-tree-symmetric-ef/index.md),
