@@ -12,7 +12,7 @@ entropy bound for unit Boolean factorizations gives an explicit $4n^2$ ceiling
 for the **common-information lower-bound quantity**, including all edge
 nonnegativity rows.
 
-## Matrices and the ceiling
+## Matrices
 
 Use the [full standard slack matrix](#def-spanning-tree-min-split-matrix) from
 the spanning-tree factorization entry. Its columns are the actual spanning trees
