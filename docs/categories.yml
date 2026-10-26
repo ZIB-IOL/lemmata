@@ -20,6 +20,3 @@
 - id: multilinear-algebra
   title: Multilinear algebra
   description: Tensors, tensor rank and asymptotic complexity.
-- id: coding-theory
-  title: Coding theory
-  description: Error-correcting codes, Boolean functions and covering radii.
