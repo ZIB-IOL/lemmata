@@ -144,5 +144,86 @@ expect("@[extern] after another attribute",
   (d) => { addLean(d, "@[inline, extern \"lean_nat_add\"] def h (n : Nat) : Nat := n"); withUmbrella(d); }, { match: /extern.*not allowed/ });
 expect("native_computation must be true", (d) => append(d, mf, "native_computation: false\n"), { match: /must be true or left out/ });
 
+// Review of 2026-10-26: options of `decide` span lines; `native := false` is no computation;
+// a flagged entry may not define tactics, macros or syntax, nor run code while compiling;
+// every Lean file is a module.
+expect("decide with native options on the next lines needs the flag",
+  (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by\n  decide (config := {\n    native := true })"); withUmbrella(d); }, { match: /without `native_computation: true`/ });
+expect("decide +native on the next line needs the flag",
+  (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by\n  decide\n    +native"); withUmbrella(d); }, { match: /without `native_computation: true`/ });
+expect("positive control: decide with native := false needs no flag",
+  (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by decide (config := { native := false })\ntheorem u : 2 + 2 = 4 := by decide -native"); withUmbrella(d); }, { refused: false });
+expect("positive control: +native then -native is off",
+  (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by decide +native -native"); withUmbrella(d); }, { refused: false });
+expect("bv_check is a computation tactic too",
+  (d) => { addLean(d, "theorem t : True := by bv_check \"x.lrat\""); withUmbrella(d); }, { match: /without `native_computation: true`/ });
+for (const [what, code] of [
+  ["elab", "open Lean Elab Tactic in\nelab (priority := high) \"native_decide\" : tactic => pure ()"],
+  ["macro", "macro \"forge\" : command => `(theorem x : True := trivial)"],
+  ["syntax", "syntax \"mytac\" : tactic"],
+  ["#eval", "#eval 1 + 1"],
+  ["run_cmd", "run_cmd pure ()"],
+  ["initialize", "initialize pure ()"],
+  ["meta", "meta def helper : Nat := 1"],
+])
+  expect(`${what} in an entry with native_computation: true`,
+    (d) => { addLean(d, code); withUmbrella(d); flag(d); }, { match: /not allowed in an entry with `native_computation: true`/ });
+expect("meta import of Mathlib in a flagged entry",
+  (d) => { append(d, lean.replace("Main.lean", "Extra.lean"), "module\n\npublic meta import Mathlib.Logic.Basic\npublic section\nnamespace Lemmata.ImplicationComposition\nend Lemmata.ImplicationComposition\n"); withUmbrella(d); flag(d); },
+  { match: /meta import Mathlib.Logic.Basic.*not allowed/ });
+expect("positive control: meta import of a Lemmata module in a flagged entry",
+  (d) => { append(d, lean.replace("Main.lean", "Extra.lean"), "module\n\npublic meta import Lemmata.ImplicationComposition.Main\npublic section\nnamespace Lemmata.ImplicationComposition\nend Lemmata.ImplicationComposition\n"); withUmbrella(d); flag(d); },
+  { refused: false });
+expect("positive control: notation in a flagged entry",
+  (d) => { addLean(d, "local notation \"two\" => (2 : Nat)\ntheorem t : two = 2 := rfl"); withUmbrella(d); flag(d); }, { refused: false });
+expect("positive control: an unflagged entry may define a macro",
+  (d) => { addLean(d, "macro \"mytriv\" : tactic => `(tactic| trivial)\ntheorem t : True := by mytriv"); withUmbrella(d); }, { refused: false });
+expect("a Lean file without the module header",
+  (d) => { append(d, lean.replace("Main.lean", "Extra.lean"), "import Mathlib.Logic.Basic\nnamespace Lemmata.ImplicationComposition\nend Lemmata.ImplicationComposition\n"); withUmbrella(d); },
+  { match: /first line must be `module`/ });
+
+// Frozen entries keep what their last check recorded, computations included (review,
+// 2026-10-26: a frozen computation-backed result was shown as plainly kernel-checked, its
+// claims dropped and llms.txt without the caveat). A frozen record of the shape
+// controller/worker.mjs writes, and a report in which the entry is absent (it was not built):
+// the panel, the overview and lemmata.json / llms.txt must still say "computation".
+function frozenCase() {
+  const dir = copy();
+  try {
+    const ns = "Lemmata.ImplicationComposition", mod = `${ns}.Main`;
+    const claim = { name: `${mod}.x._native.native_decide.ax_1_1`, declaration: `${ns}.implication_composition`, tactic: "native_decide",
+      contribution: entry, module: mod, source_file: "lean/Lemmata/ImplicationComposition/Main.lean", line: 12, claim: "decide (2 + 2 = 4)" };
+    const m = YAML_load(path.join(dir, mf));
+    const results = m.exports.map((e, i) => ({ name: e.name, kind: e.kind, status: "checked",
+      computation: i === 0 ? "own" : "kernel", computations: i === 0 ? [claim] : [] }));
+    fs.mkdirSync(path.join(dir, ".lemmata"), { recursive: true });
+    fs.writeFileSync(path.join(dir, ".lemmata/frozen.json"), JSON.stringify({ entries: { [entry]: {
+      commit: "a".repeat(40), lean_version: "4.35.0", checked_at: "2026-10-26T12:00:00Z", results } } }));
+    const report = { result: "passed", lean_version: "4.35.0", exports: [], computations: [] };
+    fs.writeFileSync(path.join(dir, "report.json"), JSON.stringify(report));
+    const env = { ...process.env, LEMMATA_ROOT: dir, LEMMATA_BUILD: "1" };
+    const run = (...a) => spawnSync(process.execPath, [TOOL, ...a], { env, encoding: "utf8" });
+    const p = run("prepare", path.join(dir, "report.json"), "--commit", "b".repeat(12));
+    fs.mkdirSync(path.join(dir, "si"));
+    const si = run("site-index", path.join(dir, "report.json"), path.join(dir, "si"), "--commit", "b".repeat(12));
+    const panel = fs.readFileSync(path.join(dir, `docs/_generated/verification/${entry}.md`), "utf8");
+    const cat = fs.readFileSync(path.join(dir, "docs/_generated/catalog.md"), "utf8");
+    const json = JSON.parse(fs.readFileSync(path.join(dir, "si/lemmata.json"), "utf8")).entries.find((e) => e.exports.some((x) => x.name.startsWith(ns)));
+    const llms = fs.readFileSync(path.join(dir, "si/llms.txt"), "utf8");
+    const checks = [
+      ["tools ran", p.status === 0 && si.status === 0],
+      ["panel: the computation-backed result is not called kernel-checked", /⚙ checked by computation\*\* \[\]\(#/.test(panel)],
+      ["panel: the claim is listed", /Computations assumed/.test(panel) && /line 12/.test(panel)],
+      ["overview says mod. computation", new RegExp(`checked with v4\\.35\\.0, mod\\. computation`).test(cat)],
+      ["lemmata.json keeps the claim", json?.exports[0]?.verification === "checked-by-computation" && json.exports[0].computations.length === 1],
+      ["llms.txt keeps the caveat", /last checked with Lean v4\.35\.0 on 2026-10-26, modulo computation/.test(llms)],
+    ];
+    for (const [name, ok] of checks) { console.log(`${ok ? "ok  " : "FAIL"} frozen entry: ${name}`); if (!ok) failed++; }
+    if (p.status !== 0 || si.status !== 0) console.log("     " + (p.stderr + si.stderr).trim().split("\n").slice(0, 3).join("\n     "));
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+}
+const YAML_load = (f) => { const src = fs.readFileSync(f, "utf8"); return { exports: [...src.matchAll(/^\s*- name: (\S+)\n\s*kind: (\w+)/gm)].map((x) => ({ name: x[1], kind: x[2] })) }; };
+frozenCase();
+
 console.log(failed ? `\n${failed} adversarial case(s) FAILED` : "\nall adversarial cases passed");
 process.exit(failed ? 1 : 0);

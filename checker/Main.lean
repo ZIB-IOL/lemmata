@@ -33,8 +33,17 @@ axiom is accepted only if all of these hold:
   lists exactly that position (line and column) as the start of a `native_decide` /
   `decide +native` / `bv_decide` token in the pristine source (the tools tokenize the
   source, comments and strings excluded). Lean records the axiom at the tactic token
-  itself, for every way of calling it; an axiom made any other way -- written by hand, or
-  by a macro, which records its own invocation -- has no such position and is refused.
+  itself, for every way of calling it; an axiom made by hand, or by a macro invoked
+  elsewhere, has no such position and is refused.
+
+What the position does NOT show is which tactic ran there: a tactic of the contributor's
+own, spelled `native_decide`, can record a claim at exactly that position without
+computing anything (reproduced 2026-10-26). The tools therefore refuse, in an entry with
+`native_computation: true`, every way of defining tactics, macros or syntax or of running
+code while compiling (`META_COMMANDS` in tools/lemmata.mjs, plus any `meta` except
+`meta import` of Lemmata's own modules), and require every Lean file to be a `module`, whose
+compile-time code Lean confines to `meta` declarations. The position rule and that source
+rule together are what tie a computation axiom to Lean's own tactic.
 
 The report lists every accepted computation (declaration, claim, file and line) and, per
 export, the computations it relies on. Whether an export relies on its own entry's or on
@@ -98,8 +107,12 @@ partial def axiomsOf (env : Environment) (c : Name)
     for d in extra do
       for a in (← axiomsOf env d cache) do acc := acc.insert a
     pure acc
+  -- Every branch must produce a value, never `return`: a `return` here leaves the cycle
+  -- sentinel `{}` in the cache, and every later lookup of this constant then reports no
+  -- axioms at all. That lost axioms and computations depending on traversal order
+  -- (reported 2026-10-26: 18 of 40 computation-backed results listed none).
   let result ← match env.find? c with
-    | some (.axiomInfo v)  => return (← deps [v.type]).insert c |> fun s => s
+    | some (.axiomInfo v)  => pure ((← deps [v.type]).insert c)
     | some (.defnInfo v)   => deps [v.type, v.value]
     | some (.thmInfo v)    => deps [v.type, v.value]
     | some (.opaqueInfo v) => deps [v.type, v.value]

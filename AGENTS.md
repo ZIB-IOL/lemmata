@@ -120,8 +120,9 @@ end Lemmata.<LeanName>
 
 Rules (each enforced):
 
-- First line `module`, imports as `public import`, body in `public section`. Mathlib at
-  this pin uses the module system; plain `import` produces warnings and missing modules.
+- First line `module` (required), imports as `public import`, body in `public section`.
+  Mathlib at this pin uses the module system; plain `import` produces warnings and missing
+  modules.
 - Module names must exist at the pinned Mathlib. Check with
   `ls lean/.lake/packages/mathlib/Mathlib/...` rather than from memory: for example,
   `Mathlib.Logic.Basic` does **not** exist at this pin.
@@ -152,8 +153,10 @@ kernel-checked ones (see the "checked" page, section Computation):
    in the entry's Lean files fails validation. `lean/Lemmata/Shared/` may not use them.
 3. Call the tactic directly at the goal, where the source shows it (`by native_decide`,
    `constructor <;> native_decide`, …): the verifier accepts a computation only at the
-   position of a computation-tactic call in the source, so a computation produced by a
-   macro of your own is refused.
+   position of a computation-tactic call in the source. An entry with
+   `native_computation: true` may not define tactics, macros or syntax (`elab`, `macro`,
+   `syntax`, …), run code while compiling (`#eval`, `run_cmd`, `initialize`, …), or use
+   `meta` except `meta import` of Lemmata modules; plain `notation` is fine.
 4. `native_decide` about a definition from **another module** needs that module's compiled
    code: import it with `public meta import Lemmata.<Other>.Main` (Lean's error says so).
 5. Keep each claim small and clearly stated. The page lists every claim with its source
