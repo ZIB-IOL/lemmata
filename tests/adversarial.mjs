@@ -113,5 +113,36 @@ statementCase("a missing declaration gives no statement (not some other one)",
   "namespace Lemmata.X\n-- theorem gone : 1 = 2\ntheorem other : True := trivial\nend Lemmata.X\n",
   "Lemmata.X.gone", (st) => st === null);
 
+// Computations (2026-10-26): native_decide and friends only in an entry that declares
+// native_computation: true; hand-written axioms and swapped-in compiled code nowhere.
+const lean = `lean/Lemmata/ImplicationComposition/Main.lean`, mf = `docs/${entry}/contribution.yml`;
+const addLean = (d, text) => append(d, lean.replace("Main.lean", "Extra.lean"), "module\n\npublic section\n\nnamespace Lemmata.ImplicationComposition\n" + text + "\nend Lemmata.ImplicationComposition\n");
+const withUmbrella = (d) => fs.writeFileSync(path.join(d, "lean/Lemmata.lean"),
+  fs.readFileSync(path.join(d, "lean/Lemmata.lean"), "utf8").replace("Lemmata.ImplicationComposition.Main", "Lemmata.ImplicationComposition.Extra\npublic import Lemmata.ImplicationComposition.Main"));
+const flag = (d) => append(d, mf, "native_computation: true\n");
+expect("native_decide without native_computation: true",
+  (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by native_decide"); withUmbrella(d); }, { match: /without `native_computation: true`/ });
+expect("decide +native without native_computation: true",
+  (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by decide +native"); withUmbrella(d); }, { match: /without `native_computation: true`/ });
+expect("bv_decide without native_computation: true",
+  (d) => { addLean(d, "theorem t : True := by bv_decide"); withUmbrella(d); }, { match: /without `native_computation: true`/ });
+expect("positive control: native_decide in an entry with native_computation: true",
+  (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by native_decide"); withUmbrella(d); flag(d); }, { refused: false });
+expect("positive control: native_decide in a comment or string is no computation",
+  (d) => { addLean(d, "-- by native_decide\n/- native_decide -/\ndef s : String := \"native_decide\""); withUmbrella(d); }, { refused: false });
+expect("positive control: plain decide and decide +kernel need no flag",
+  (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by decide\ntheorem u : 2 + 2 = 4 := by decide +kernel"); withUmbrella(d); }, { refused: false });
+expect("native_decide in lean/Lemmata/Shared",
+  (d) => append(d, "lean/Lemmata/Shared/Basic.lean", "\ntheorem lemmata_shared_t : 2 + 2 = 4 := by native_decide\n"), { match: /lean\/Lemmata\/Shared must stay kernel-checked/ });
+expect("a hand-written axiom, even in a flagged entry",
+  (d) => { addLean(d, "axiom fake : (1 : Nat) = 2"); withUmbrella(d); flag(d); }, { match: /an axiom is not allowed/ });
+expect("an axiom named like a computation",
+  (d) => { addLean(d, "axiom t._native.native_decide.ax_1_1 : decide ((1 : Nat) = 2) = true"); withUmbrella(d); flag(d); }, { match: /an axiom is not allowed/ });
+expect("@[implemented_by]",
+  (d) => { addLean(d, "def f (n : Nat) : Nat := n\n@[implemented_by f] def g (n : Nat) : Nat := n + 1"); withUmbrella(d); flag(d); }, { match: /implemented_by.*not allowed/ });
+expect("@[extern] after another attribute",
+  (d) => { addLean(d, "@[inline, extern \"lean_nat_add\"] def h (n : Nat) : Nat := n"); withUmbrella(d); }, { match: /extern.*not allowed/ });
+expect("native_computation must be true", (d) => append(d, mf, "native_computation: false\n"), { match: /must be true or left out/ });
+
 console.log(failed ? `\n${failed} adversarial case(s) FAILED` : "\nall adversarial cases passed");
 process.exit(failed ? 1 : 0);

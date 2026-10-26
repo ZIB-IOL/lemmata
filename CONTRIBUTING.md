@@ -36,8 +36,13 @@ with `_`; the Lean name `Shared` is reserved for helpers used by several entries
 - Import other entries' modules directly (`public import Lemmata.ImplicationComposition.Main`),
   never the umbrella `Lemmata`. Do not copy another entry's definitions; move shared
   material into `lean/Lemmata/Shared/` in its own pull request.
-- No `sorry`, no `native_decide`, no `axiom`. The audit covers every declaration in
-  every file, not just the ones you export — a draft helper fails the whole archive.
+- No `sorry`, no `axiom`, no `@[implemented_by]` or `@[extern]`. The audit covers every
+  declaration in every file, not just the ones you export — a draft helper fails the whole
+  archive.
+- Computations (`native_decide`, `decide +native`, `bv_decide`) only with
+  `native_computation: true` in `contribution.yml`. Their results are not kernel-checked
+  and are marked so on the site; prefer `decide +kernel` where it is fast enough. Details
+  in AGENTS.md, section Computations.
 - Mark the part to show on the page with `-- DOCS_BEGIN_MAIN` / `-- DOCS_END_MAIN`.
   Each marker must occur exactly once.
 
@@ -117,6 +122,7 @@ withdrawn: >-                # only to withdraw a published entry: the reason
   ...
 related:                     # optional: slides, videos, a monograph, code, ... (end of page)
   - {kind: slides, title: "...", url: "https://..."}
+native_computation: true     # only if the Lean uses native_decide (see "checked" page)
 pages: [index.md]            # first page must be index.md; list every page
 exports:
   - name: Lemmata.PrimeInfinitude.exists_infinite_primes

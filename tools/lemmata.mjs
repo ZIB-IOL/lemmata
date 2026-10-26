@@ -24,7 +24,9 @@ const DOCS = path.join(ROOT, "docs");
 const LEAN = path.join(ROOT, "lean");
 const LIB = "Lemmata";
 const ALLOWED_AXIOMS = ["propext", "Classical.choice", "Quot.sound"];
-const POLICY_ID = "lemmata-verification-v1";
+// v2 (2026-10-26): computations (native_decide) accepted for entries that declare
+// native_computation: true, and shown apart from kernel-checked results.
+const POLICY_ID = "lemmata-verification-v2";
 
 // Directories in docs/ and lean/Lemmata/ that are infrastructure, not contributions.
 // Names of Object.prototype properties, lower-cased: valid kebab-case ids that would collide
@@ -54,7 +56,16 @@ const GISCUS = { repo: "ZIB-IOL/lemmata", repoId: "R_kgDOVQjOqA", category: "Com
 const CATEGORY_KEYS = new Set(["id", "title", "description"]);
 const RESERVED_LEAN = new Set(["Shared"]);
 const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "arxiv", "contributors",
-  "ai_use", "acknowledgements", "abstract", "license", "withdrawn", "related", "pages", "exports"]);
+  "ai_use", "acknowledgements", "abstract", "license", "withdrawn", "related", "native_computation", "pages", "exports"]);
+// Computations: `native_computation: true` lets an entry prove facts by having the compiler
+// run them (native_decide, decide +native, bv_decide). The build runs them; nobody
+// re-runs them and Lean's kernel never checks them, so results that rely on one are labelled
+// apart from kernel-checked ones, and every claim is listed on the page. COMPUTATION_TACTICS
+// are the tactics whose calls in the source the verifier matches a computation axiom
+// against (checker/Main.lean); FORBIDDEN_LEAN are ways to assert or swap in unchecked
+// facts or code, refused in every Lean file.
+const COMPUTATION_TACTICS = ["native_decide", "bv_decide"];
+const FORBIDDEN_LEAN = { axiom: "an axiom", implemented_by: "`@[implemented_by]`", extern: "`@[extern]`" };
 // Optional derived material attached to an entry: slides, videos, a monograph, code, ...
 // Each is {kind, title, url}; shown as a list at the end of the entry.
 const RELATED_KINDS = new Set(["slides", "video", "paper", "book", "notes", "code", "talk", "other"]);
@@ -316,6 +327,8 @@ function loadManifests(categories = loadCategories()) {
     // entry is never deleted (identifiers are cited, other entries may import its Lean):
     // it is still built and checked, only left out of the sidebar and the listings.
     if (m.withdrawn !== undefined) notes.withdrawn = checkNote(m.withdrawn, `${where}/contribution.yml: withdrawn`);
+    if (m.native_computation !== undefined && m.native_computation !== true)
+      fail(`${where}/contribution.yml: native_computation must be true or left out`);
     if (m.license !== undefined && !Object.hasOwn(LICENSES, m.license))
       fail(`${where}/contribution.yml: license must be one of ${Object.keys(LICENSES).join(", ")} (default ${DEFAULT_LICENSE})`);
     const license = Object.hasOwn(LICENSES, m.license) ? m.license : DEFAULT_LICENSE;
@@ -333,7 +346,8 @@ function loadManifests(categories = loadCategories()) {
         if (title && u) related.push({ kind: r.kind, title, url: r.url });
       }
     }
-    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [], arxiv, contributors, notes, license, related });
+    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [], arxiv, contributors, notes, license, related,
+      native: m.native_computation === true });
   }
   // Every Lean contribution directory needs a manifest.
   if (fs.existsSync(path.join(LEAN, LIB))) {
@@ -527,6 +541,56 @@ function checkUmbrella(write) {
 
 // ------------------------------------------------------------------------- generation
 
+// Where a Lean file calls a computation tactic, and declarations or attributes it must not
+// contain, from Lean tokens (comments and strings excluded, so a comment saying
+// "native_decide" is no call). `decide +native` and `decide (config := {native := true})`
+// count as calls of `decide`; plain `decide` is kernel-checked and does not. A call is
+// [line, column] of the tactic token, column in codepoints from 0 -- exactly the position
+// Lean records for the axiom the call produces (measured for every form, Lean v4.35).
+function leanScan(file) {
+  const src = fs.readFileSync(path.join(ROOT, file), "utf8");
+  const toks = leanTokens(src);
+  // Column of a character offset, in codepoints (Lean's String.Pos columns), from line start.
+  const col = (start) => [...src.slice(src.lastIndexOf("\n", start - 1) + 1, start)].length;
+  const calls = new Map(), forbidden = [];
+  const call = (t) => calls.set(`${t.line}:${col(t.start)}`, [t.line, col(t.start)]);
+  for (let i = 0; i < toks.length; i++) {
+    const t = toks[i];
+    if (t.k !== "word") continue;
+    if (COMPUTATION_TACTICS.includes(t.t)) call(t);
+    else if (t.t === "decide") {
+      // Options follow on the same line: `+native`, `-kernel +native`, `(config := {native := true})`.
+      for (let j = i + 1; j < toks.length && toks[j].line === t.line; j++) {
+        if (toks[j].k === "word" && toks[j].t === "native" && (toks[j - 1].t === "+" || toks[j + 1]?.t === ":=")) { call(t); break; }
+        if (toks[j].k === "word" && !["kernel", "native", "config", "true", "false", "zetaReduce", "revert"].includes(toks[j].t)) break;
+      }
+    }
+    // `axiom <name>` declares one (the tokenizer keeps names whole, so `Foo.axiom_x` is one
+    // word); the two attributes appear inside `@[...]`, alone or after a comma.
+    if (t.t === "axiom" && toks[i + 1]?.k === "word") forbidden.push({ what: FORBIDDEN_LEAN.axiom, line: t.line });
+    if ((t.t === "implemented_by" || t.t === "extern") && ["[", ","].includes(toks[i - 1]?.t))
+      forbidden.push({ what: FORBIDDEN_LEAN[t.t], line: t.line });
+  }
+  return { calls: [...calls.values()].sort((a, b) => a[0] - b[0] || a[1] - b[1]), forbidden };
+}
+function leanFiles(dir) {
+  const abs = path.join(LEAN, LIB, dir);
+  return fs.existsSync(abs) ? walk(abs, ".lean").map((f) => path.relative(ROOT, f).split(path.sep).join("/")).sort() : [];
+}
+// Every Lean file in the library: no forbidden declaration or attribute anywhere, and no
+// computation outside an entry that declared native_computation (Shared has no manifest).
+function checkLeanSources(manifests) {
+  const byDir = new Map(manifests.map((m) => [m.leanDir, m]));
+  const dirs = fs.existsSync(path.join(LEAN, LIB)) ? listDirs(path.join(LEAN, LIB)) : [];
+  for (const d of dirs) for (const f of leanFiles(d)) {
+    const { calls, forbidden } = leanScan(f);
+    for (const x of forbidden) fail(`${f}:${x.line}: ${x.what} is not allowed (it asserts or replaces something Lean's kernel cannot check)`);
+    const m = byDir.get(d);
+    if (calls.length && !m?.native) fail(`${f}:${calls[0][0]}: computation tactic (native_decide, decide +native, bv_decide) ` +
+      (m ? `in an entry without \`native_computation: true\` in docs/${m.dir}/contribution.yml` : "outside an entry (lean/Lemmata/Shared must stay kernel-checked)"));
+  }
+}
+
 function verifierRequest(manifests) {
   const frozen = loadFrozen();          // not built, so not checked: they keep their last result
   return {
@@ -534,6 +598,12 @@ function verifierRequest(manifests) {
     allowed_axioms: ALLOWED_AXIOMS,
     exports: manifests.filter((m) => !frozen[m.id]).flatMap((m) => m.exports.map((e) =>
       ({ contribution: m.id, name: e.name, kind: e.kind, namespace: m.lean_namespace }))),
+    // Entries that may rely on computations, with the position [line, column] of every
+    // computation-tactic call: the verifier accepts a computation axiom only if the build
+    // recorded it exactly there. Frozen entries too: their modules are not built, but listing them costs
+    // nothing and keeps the request independent of the freeze.
+    native: manifests.filter((m) => m.native).map((m) => ({ contribution: m.id, namespace: m.lean_namespace,
+      calls: leanFiles(m.leanDir).map((f) => ({ file: f, at: leanScan(f).calls })).filter((c) => c.at.length) })),
   };
 }
 
@@ -582,7 +652,7 @@ const authorName = (c, up) => c.orcid ? `[**${esc(c.name)}**](${up}${AUTHOR_DIR}
 const bibAuthor = (c) => c.last !== undefined
   ? (c.first ? `{${bibEscape(c.last)}}, ${bibEscape(c.first)}` : `{${bibEscape(c.last)}}`)
   : bibEscape(bibName(c.name));
-function bibtex(m, title, p, { siteUrl, commit, checked, ident }) {
+function bibtex(m, title, p, { siteUrl, commit, checked, computation = false, ident }) {
   // With an identifier, both the key and the URL are the permanent ones; the directory
   // name is an internal detail that may change.
   const stable = ident ? `${siteUrl}/abs/${ident}` : `${siteUrl}/${m.dir}/`;
@@ -595,7 +665,8 @@ function bibtex(m, title, p, { siteUrl, commit, checked, ident }) {
   ];
   // No snapshot URL: old releases are pruned, so a citation must not depend on one. The
   // permanent /abs/ URL always resolves; the commit names the exact version cited.
-  const note = [commit ? `Version ${commit.slice(0, 12)}` : null, checked ? "formal statements checked in Lean 4" : null]
+  const note = [commit ? `Version ${commit.slice(0, 12)}` : null,
+    checked ? `formal statements checked in Lean 4${computation ? ", modulo computation" : ""}` : null]
     .filter(Boolean).join("; ");
   if (note) fields.push(["note", note]);
   if (m.arxiv.length) fields.push(["eprint", m.arxiv[0]], ["archivePrefix", "arXiv"]);
@@ -779,6 +850,36 @@ function forgeLinks(webUrl, forge = process.env.SOURCE_FORGE) {
   return { blob: (sha, file) => `${base}${sep}/blob/${sha}/${file}`, commit: (sha) => `${base}${sep}/commit/${sha}` };
 }
 
+// Computations a result relies on, from the verifier's report, and the resulting status:
+//   "kernel"    no computation anywhere in its dependencies           (kernel-checked)
+//   "inherited" only computations of other entries                   (kernel-checked, modulo computation)
+//   "own"       a computation of its own entry                        (checked by computation)
+// An entry's own computations are those defined in its namespace. Frozen entries keep the
+// classification recorded with their last check.
+const COMPUTATION_PAGE_LINK = "../checked.md#computation";
+function computationView(manifests, report) {
+  const byNs = manifests.map((m) => [m.lean_namespace + ".", m]).sort((a, b) => b[0].length - a[0].length);
+  const entryOfModule = (mod) => byNs.find(([ns]) => (mod + ".").startsWith(ns))?.[1] ?? null;
+  const claims = new Map((report?.computations ?? []).map((c) => [c.name, c]));
+  // For one export of entry m: { status, own: [claim], other: [{entry, claims}] }.
+  const of = (m, r) => {
+    const uses = (r?.computations ?? []).map((u) => ({ ...claims.get(u.name), name: u.name, entry: entryOfModule(u.module) }));
+    const own = uses.filter((u) => u.entry?.id === m.id), other = uses.filter((u) => u.entry?.id !== m.id);
+    const byEntry = new Map();
+    for (const u of other) { const k = u.entry?.id ?? "?"; if (!byEntry.has(k)) byEntry.set(k, { entry: u.entry, claims: [] }); byEntry.get(k).claims.push(u); }
+    return { status: own.length ? "own" : other.length ? "inherited" : "kernel", own, other: [...byEntry.values()] };
+  };
+  return { of, claims: [...claims.values()], entryOfModule };
+}
+// Wording, kept in one place: the three statuses as badges and as short list values.
+const COMPUTATION_WORDS = {
+  kernel: { badge: "✓ kernel-checked", short: "checked" },
+  inherited: { badge: "◐ kernel-checked, modulo computation", short: "checked mod. computation" },
+  own: { badge: "⚙ checked by computation", short: "checked mod. computation" },
+};
+// The weakest status among an entry's results ("own" < "inherited" < "kernel").
+const weakest = (list) => list.includes("own") ? "own" : list.includes("inherited") ? "inherited" : "kernel";
+
 function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const forge = forgeLinks(sourceUrl);
   const gen = path.join(DOCS, "_generated");
@@ -792,9 +893,22 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const link = (file) => forge && commit ? forge.blob(commit, file) : null;
   // Frozen entries (admin decision, see lemmata-code/frozen.json) were not built: they keep
   // their last successful check, shown with its Lean version and date.
+  const idents = loadIdentifiers(commit);
+  // Where links to an entry point: its identifier URL /html/<ident> once it has one (the
+  // address readers see and share, independent of the directory name), else its
+  // directory page, written relative to the linking page so MyST checks it.
+  const entryHref = (m, rel) => idents[m.id] ? `/html/${idents[m.id]}` : `${rel}${m.dir}/index.md`;
   const frozen = loadFrozen();
+  const comp = computationView(manifests, report);
+  // Per export: kernel / inherited / own (frozen entries: as recorded at their last check).
+  const compOf = (m, e) => {
+    if (frozen[m.id]) { const x = (frozen[m.id].results ?? []).find((y) => y.name === e.name); return { status: x?.computation ?? "kernel", own: [], other: [] }; }
+    return comp.of(m, byName.get(e.name));
+  };
+  const entryComp = (m) => weakest(m.exports.map((e) => compOf(m, e).status));
   const statusOf = (m) => frozen[m.id] ? "frozen" : !report ? "preview"
-    : m.exports.every((e) => passed && byName.get(e.name)?.status === "checked") ? "checked" : "failed";
+    : !m.exports.every((e) => passed && byName.get(e.name)?.status === "checked") ? "failed"
+    : entryComp(m) === "kernel" ? "checked" : "computation";
 
   // One box per bound result: "Lean `Name` · ✅ kernel-checked · source", then the
   // statement (a theorem up to ":=", a definition in full; for a theorem whose type is a
@@ -810,7 +924,10 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       const file = r?.source_file;
       const at = fz ? fz.commit : commit;
       const ok = fz ? old.get(e.name)?.status === "checked" : passed && r?.status === "checked";
-      const badge = !report && !fz ? "○ not verified (preview)" : ok ? (e.kind === "definition" ? "◇ elaborated" : "✅ kernel-checked") : "✗ not checked";
+      const cs = compOf(m, e).status;
+      const badge = !report && !fz ? "○ not verified (preview)" : !ok ? "✗ not checked"
+        : e.kind === "definition" ? (cs === "kernel" ? "◇ elaborated" : `◇ elaborated, ${cs === "own" ? "uses computation" : "modulo computation"}`)
+        : cs === "kernel" ? "✅ kernel-checked" : `[${COMPUTATION_WORDS[cs].badge}](${COMPUTATION_PAGE_LINK})`;
       // By the fully qualified name the verifier checked, in the file it reported.
       const st = file ? leanStatement(file, e.name) : null;
       // With a report, every checked export must be locatable in its source: otherwise its
@@ -852,9 +969,13 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     const fz = frozen[m.id], n = m.exports.length;
     const okCount = fz ? m.exports.filter((e) => (fz.results ?? []).some((x) => x.name === e.name && x.status === "checked")).length
       : m.exports.filter((e) => passed && byName.get(e.name)?.status === "checked").length;
+    // Results relying on computations are counted apart from kernel-checked ones.
+    const compN = m.exports.filter((e) => compOf(m, e).status !== "kernel").length;
     const summary = !report && !fz ? `○ not verified (local preview)`
-      : okCount === n ? `✅ ${n === 1 ? "the formal result is" : `all ${n} formal results are`} ${fz ? "checked" : "kernel-checked"}`
-      : `✗ ${n - okCount} of ${n} formal results not checked`;
+      : okCount !== n ? `✗ ${n - okCount} of ${n} formal results not checked`
+      : compN === 0 ? `✅ ${n === 1 ? "the formal result is" : `all ${n} formal results are`} ${fz ? "checked" : "kernel-checked"}`
+      : compN === n ? `◐ ${n === 1 ? "the formal result relies" : `all ${n} formal results rely`} on computation`
+      : `◐ ${n - compN} of ${n} formal results kernel-checked; ${compN} rel${compN === 1 ? "ies" : "y"} on computation`;
     const lines = [`::::{dropdown} Formal verification — ${summary}`, ":class: lemmata-verification", ""];
     if (fz) {
       const old = new Map((fz.results ?? []).map((x) => [x.name, x]));
@@ -874,17 +995,51 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       const r = byName.get(e.name);
       const ok = passed && r?.status === "checked";
       const lean = report?.lean_version ? ` (Lean v${esc(report.lean_version)})` : "";
+      const c = compOf(m, e);
+      // "modulo 2 computations from lemmata:2611.00001 (Title)", linked to that entry.
+      const fromOthers = c.other.map((o) => `${o.claims.length} computation${o.claims.length === 1 ? "" : "s"} from ` +
+        (o.entry ? `[${idents[o.entry.id] ? `lemmata:${idents[o.entry.id]}` : esc(titleOf(o.entry))}](${entryHref(o.entry, "../")})` : "another entry")).join(", ");
       const badge = !report ? "**○ not verified (preview)**"
-        : ok ? (e.kind === "definition" ? `**◇ elaborated definition${lean}**` : `**✓ kernel-checked${lean}**`)
-        : "**✗ failed**";
+        : !ok ? "**✗ failed**"
+        : e.kind === "definition" ? `**◇ elaborated definition${lean}**`
+        : c.status === "kernel" ? `**✓ kernel-checked${lean}**`
+        : c.status === "own" ? `**⚙ checked by computation${lean}**`
+        : `**◐ kernel-checked${lean}, modulo computation**`;
+      // What it relies on, after the result: "relies on 1 computation of this entry, listed
+      // below, and on 2 computations from lemmata:2611.00001".
+      const ownN = c.own.length;
+      const detail = !ok || c.status === "kernel" ? "" : "; relies on " + [
+        ownN ? `${ownN} computation${ownN === 1 ? "" : "s"} of this entry, listed below` : null,
+        c.other.length ? fromOthers : null].filter(Boolean).join(", and on ");
       const src = r && link(r.source_file);
-      // The axioms a result uses are not listed here: every published result is held to
-      // the same policy (see the "checked" page), and lemmata.json carries them per result.
-      lines.push(`- ${badge} [](#${e.label}) — \`${e.name}\`` + (src ? ` ([source](${src}))` : ""));
+      // The standard axioms a result uses are not listed here: every published result is
+      // held to the same policy (see the "checked" page), and lemmata.json carries them per
+      // result. Computations are listed, below.
+      lines.push(`- ${badge} [](#${e.label}) — \`${e.name}\`` + (src ? ` ([source](${src}))` : "") + detail);
+    }
+    // Every computation this entry's results rely on that the entry itself contributes:
+    // where it is in the source (linked to the line) and what it claims, verbatim as the
+    // kernel stores it (the verifier reads compiled files without notation).
+    const ownClaims = fz ? [] : comp.claims.filter((x) => comp.entryOfModule(x.module)?.id === m.id);
+    if (ownClaims.length && report && passed) {
+      const one = ownClaims.length === 1;
+      lines.push("", `**Computations assumed.** ${one ? "This claim was" : `These ${ownClaims.length} claims were`} ` +
+        `evaluated by compiled code during the build and ${one ? "is" : "are"} **not** checked by Lean's kernel or re-run by the archive. ` +
+        `Running \`tools/check.sh\` re-runs ${one ? "it" : "them"}. [What this means](${COMPUTATION_PAGE_LINK}).`, "");
+      for (const x of ownClaims) {
+        const at = link(x.source_file);
+        // The line that calls the tactic shows the claim as written (the goal it closes);
+        // the kernel's form of the claim, without notation, is kept for auditing.
+        const src = (() => { try { return fs.readFileSync(path.join(ROOT, x.source_file), "utf8").split("\n")[x.line - 1]?.trim() ?? ""; } catch { return ""; } })();
+        lines.push(`- In \`${x.declaration.split(".").slice(-1)[0]}\`, ${x.tactic} at ` +
+          (at ? `[${x.source_file.replace(/^lean\//, "")}, line ${x.line}](${at}#L${x.line})` : `${x.source_file}, line ${x.line}`) + ":", "");
+        if (src) lines.push("  ```lean", `  ${src}`, "  ```", "");
+        lines.push("  :::{dropdown} The claim as the kernel stores it", "  ```text", `  ${String(x.claim).replace(/\n/g, " ")} = true`, "  ```", "  :::", "");
+      }
     }
     if (!fz) lines.push("",
       report ? `Checked${commit ? ` at commit \`${commit.slice(0, 12)}\`` : ""}. The formal statement is ` +
-        "machine-checked; that it matches the prose is checked by review. " +
+        "machine-checked" + (compN ? ", modulo the computations named above" : "") + "; that it matches the prose is checked by review. " +
         `[What "checked" means](${CHECKED_PAGE_LINK}).`
       : "This is a local preview: nothing on this page has been verified.",
       "::::", "");
@@ -916,11 +1071,6 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   // Public address of the site (SITE_URL, set by the build Job; locally the production site).
   const siteUrl = (process.env.SITE_URL ?? "https://lemmata.iol.berlin").replace(/\/$/, "");
   const prov = loadProvenance(manifests, commit);
-  const idents = loadIdentifiers(commit);
-  // Where links to an entry point: its identifier URL /html/<ident> once it has one (the
-  // address readers see and share, independent of the directory name), else its
-  // directory page, written relative to the linking page so MyST checks it.
-  const entryHref = (m, rel) => idents[m.id] ? `/html/${idents[m.id]}` : `${rel}${m.dir}/index.md`;
   fs.mkdirSync(path.join(gen, "provenance"), { recursive: true });
   // The identifier line's "copy" control: a tiny anywidget module written by the tools,
   // not taken from the content repo, so contributors cannot change what it does.
@@ -932,7 +1082,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     // docs/_static/lemmata.css, class lemmata-header): identifier with copy controls, the
     // authors (linked to their author pages), versions, and the abstract.
     const ident = idents[m.id];
-    const bib = bibtex(m, titleOf(m), p, { siteUrl, commit, checked: statusOf(m) === "checked", ident });
+    const bib = bibtex(m, titleOf(m), p, { siteUrl, commit, checked: ["checked", "computation"].includes(statusOf(m)), computation: statusOf(m) === "computation", ident });
     const lines = [...withdrawnNotice(m), ":::::{div}", ":class: lemmata-header", ""];
     // The stable identifier and its permanent URL, the address to cite and link to: its own
     // row above the text lines (an empty block before it once added a stray gap).
@@ -983,7 +1133,8 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   // preview has none and shows the title only.
   const table = (list, rel) => ["| Entry | Results | Status |", "|---|---|---|",
     ...list.map((m) => `| [${esc(titleOf(m))}](${entryHref(m, rel)})${idents[m.id] ? ` \`${idents[m.id]}\`` : ""} | ${m.exports.length} | ` +
-      (statusOf(m) === "frozen" ? `checked with v${esc(frozen[m.id].lean_version ?? "?")}` : statusOf(m)) + " |")];
+      (statusOf(m) === "frozen" ? `checked with v${esc(frozen[m.id].lean_version ?? "?")}` + (entryComp(m) === "kernel" ? "" : ", mod. computation")
+        : statusOf(m) === "computation" ? `[${COMPUTATION_WORDS.own.short}](${rel}checked.md#computation)` : statusOf(m)) + " |")];
 
   // "Contributing" paragraph of the landing page, with the repository address from the
   // build (SOURCE_WEB_URL) rather than written into docs/index.md, so moving the
@@ -1031,7 +1182,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     const who = people(m, p).map((c) => authorName(c, "../../")).join(", ");
     const last = p && (forge ? `[${day(p.last.date)}](${forge.commit(p.last.commit)})` : day(p.last.date));
     const dates = p ? (p.first.commit === p.last.commit ? `v1 ${day(p.first.date)}` : `v1 ${day(p.first.date)} · last ${last}`) : "";
-    const bib = bibtex(m, titleOf(m), p, { siteUrl, commit, checked: statusOf(m) === "checked", ident });
+    const bib = bibtex(m, titleOf(m), p, { siteUrl, commit, checked: ["checked", "computation"].includes(statusOf(m)), computation: statusOf(m) === "computation", ident });
     const L = ["---", "numbering:", "  headings: false", `title: ${JSON.stringify(titleOf(m))}`, "---", "", ...withdrawnNotice(m),
       ":::::{div}", ":class: lemmata-header", "",
       "```{anywidget} ../../_generated/provenance/ident.mjs",
@@ -1051,8 +1202,12 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       "**Abstract.** " + m.notes.abstract, "",
       "## Status", "",
       status === "frozen" ? `**Last checked with Lean v${esc(frozen[m.id].lean_version ?? "?")} on ${String(frozen[m.id].checked_at ?? "").slice(0, 10)}**` +
+        (entryComp(m) === "kernel" ? "" : ", modulo computation") +
         `${report?.lean_version && report.lean_version !== frozen[m.id].lean_version ? `; not re-checked with the current Lean v${esc(report.lean_version)}` : ""}. [What "checked" means](../../checked.md).`
       : status === "checked" ? `All formal results are **kernel-checked**${lean}. [What "checked" means](../../checked.md).`
+      : status === "computation" ? `Formal results checked${lean}, **modulo computation**: some rely on facts evaluated by ` +
+        "compiled code during the build rather than checked by Lean's kernel; the full entry lists them. " +
+        "[What this means](../../checked.md#computation)."
         : status === "preview" ? "Not verified (local preview)." : "**Verification failed.**", ""];
     fs.writeFileSync(path.join(dir, "index.md"), L.join("\n"));
     absPages.push(`abs/${ident.replace(".", "-")}/index.md`);
@@ -1223,15 +1378,23 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
   // Frozen entries are not in this build's report (they were not built); they keep the
   // results of their last check, exactly as the rendered pages show them.
   const frozen = loadFrozen();
+  const comp = computationView(manifests, report);
   const entries = manifests.map((m) => {
     const ident = idents[m.id] ?? null, p = prov?.entries?.[m.id], fz = frozen[m.id];
     const url = ident ? `${siteUrl}/abs/${ident}` : `${siteUrl}/${m.dir}/`;
     const old = new Map((fz?.results ?? []).map((x) => [x.name, x]));
     const exports = m.exports.map((e) => { const r = byName.get(e.name);
       const ok = fz ? old.get(e.name)?.status === "checked" : passed && r?.status === "checked";
+      const c = fz ? { status: old.get(e.name)?.computation ?? "kernel", own: [], other: [] } : comp.of(m, r);
+      // verification: kernel-checked | kernel-checked-modulo-computation | checked-by-computation
       return { name: e.name, kind: e.kind, label: e.label, status: ok ? "checked" : "failed",
+               verification: { kernel: "kernel-checked", inherited: "kernel-checked-modulo-computation", own: "checked-by-computation" }[c.status],
+               computations: [...c.own, ...c.other.flatMap((o) => o.claims)].map((x) => ({ declaration: x.declaration ?? null,
+                 entry: x.entry?.id ?? null, identifier: x.entry && idents[x.entry.id] ? `lemmata:${idents[x.entry.id]}` : null,
+                 tactic: x.tactic ?? null, source_file: x.source_file ?? null, line: x.line ?? null, claim: x.claim ?? null })),
                axioms: r?.axioms ?? [], source_file: r?.source_file ?? null }; });
     const allOk = exports.every((x) => x.status === "checked");
+    const anyComp = exports.some((x) => x.verification !== "kernel-checked");
     return {
       identifier: ident ? `lemmata:${ident}` : null, url, html_url: ident ? `${siteUrl}/html/${ident}` : `${siteUrl}/${m.dir}/`,
       title: titleOf(m),
@@ -1240,27 +1403,32 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
       contributor_ids: people(m, p).map((c) => ({ name: c.name, orcid: c.orcid ?? null })),
       first_published: p?.first.date ?? null, last_changed: p?.last.date ?? null,
       // "withdrawn" says how the entry is listed; its formal results keep their own status.
-      status: m.notes?.withdrawn ? "withdrawn" : fz ? (allOk ? "frozen" : "failed") : allOk ? "checked" : "failed",
+      status: m.notes?.withdrawn ? "withdrawn" : fz ? (allOk ? "frozen" : "failed") : allOk ? (anyComp ? "checked-modulo-computation" : "checked") : "failed",
+      native_computation: m.native,
       withdrawn: m.notes?.withdrawn ?? null,
       last_checked: fz ? { lean_version: fz.lean_version ?? null, checked_at: fz.checked_at ?? null, commit: fz.commit ?? null } : null,
       exports, arxiv: m.arxiv, license: m.license, license_url: LICENSES[m.license].url, ai_use: m.notes?.ai_use ?? null, acknowledgements: m.notes?.acknowledgements ?? null,
-      bibtex: bibtex(m, titleOf(m), p, { siteUrl, commit, checked: !fz && allOk, ident }),
+      bibtex: bibtex(m, titleOf(m), p, { siteUrl, commit, checked: !fz && allOk, computation: anyComp, ident }),
     };
   }).sort((a, b) => (a.identifier ?? "~").localeCompare(b.identifier ?? "~") || a.title.localeCompare(b.title));
 
   fs.writeFileSync(path.join(outDir, "lemmata.json"), JSON.stringify({
     schema_version: 1, site: siteUrl, source_commit: commit ?? null,
     checked_means: `formal statements compile, are accepted by Lean's kernel, and use no axioms beyond ${ALLOWED_AXIOMS.join(", ")}; the correspondence between prose and Lean statement is checked by human review`,
+    computation_means: "a result marked kernel-checked-modulo-computation or checked-by-computation also relies on claims that a Bool expression evaluates to true, evaluated by compiled code during the build (native_decide and similar) and not checked by Lean's kernel or re-run by the archive; each such claim is listed under the result's computations, with its source line",
     entries,
   }, null, 2) + "\n");
 
   const line = (e) => `- [${e.title}](${e.url})${e.identifier ? ` (${e.identifier})` : ""}: ` +
-    (e.status === "frozen" ? `last checked with Lean v${e.last_checked.lean_version ?? "?"} on ${String(e.last_checked.checked_at ?? "").slice(0, 10)}` : e.status) +
+    (e.status === "frozen" ? `last checked with Lean v${e.last_checked.lean_version ?? "?"} on ${String(e.last_checked.checked_at ?? "").slice(0, 10)}`
+      : e.status === "checked-modulo-computation" ? "checked modulo computation (some results rely on compiled computations, not kernel-checked)" : e.status) +
     `${e.contributors.length ? `; ${e.contributors.join(", ")}` : ""}${e.arxiv.length ? `; arXiv:${e.arxiv.join(", arXiv:")}` : ""}`;
   const md = ["# Lemmata Repository", "",
     "> An experimental mathematics repository: each entry is a result written as prose and formalized in Lean 4 on Mathlib. " +
     "\"kernel-checked\" means the formal statements compile and were accepted by Lean's kernel using only the standard " +
-    `axioms (${siteUrl}/checked/). Whether the prose and the Lean statement say the same thing is checked by human review.`, "",
+    `axioms (${siteUrl}/checked/). Whether the prose and the Lean statement say the same thing is checked by human review. ` +
+    "\"checked modulo computation\" means some results also rely on facts evaluated by compiled code during the build " +
+    `(native_decide), which the kernel does not check; ${siteUrl}/lemmata.json lists each such claim.`, "",
     `Each entry has an identifier lemmata:YYMM.NNNNN, a landing page ${siteUrl}/abs/YYMM.NNNNN (abstract, status, BibTeX) ` +
     `and the full entry at ${siteUrl}/html/YYMM.NNNNN. Cite the /abs/ URL. Machine-readable index with exported Lean ` +
     `declarations, axioms, licence and BibTeX: ${siteUrl}/lemmata.json. Entries are licensed CC BY 4.0 unless the ` +
@@ -1631,7 +1799,7 @@ const [cmd, ...args] = process.argv.slice(2);
 const flag = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; };
 switch (cmd) {
   case "validate": {
-    const ms = loadManifests(); checkSnippets(ms); checkDois(ms); checkUmbrella(false);
+    const ms = loadManifests(); checkSnippets(ms); checkDois(ms); checkUmbrella(false); checkLeanSources(ms);
     if (fs.existsSync(path.join(ROOT, ".publication"))) fail(".publication/ must not be committed");
     // .lemmata/ is where the cluster puts data it adds to the source (provenance.json).
     // Locally it must not exist; in a build (LEMMATA_BUILD=1) it is expected, and the

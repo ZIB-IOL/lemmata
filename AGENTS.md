@@ -32,9 +32,10 @@ lean/Lemmata/<LeanName>/Main.lean the formalization (Lean 4 + Mathlib)
   `_`. Never use `Shared` as `<LeanName>` (it is for helpers several entries use).
 
 **Published means checked.** The cluster refuses the whole commit if *any* declaration
-anywhere in `lean/Lemmata/` uses `sorry`, `native_decide`, or an axiom other than
-`propext`, `Classical.choice`, `Quot.sound`. You cannot publish partial work, and you
-cannot override this from the content repository.
+anywhere in `lean/Lemmata/` uses `sorry` or an axiom other than `propext`,
+`Classical.choice`, `Quot.sound`. You cannot publish partial work, and you cannot override
+this from the content repository. The one opt-in exception is computation
+(`native_decide`), for an entry that declares it; see [Computations](#computations).
 
 ## 1. Set up (once)
 
@@ -114,6 +115,33 @@ Rules (each enforced):
 - More files are fine (`lean/Lemmata/<LeanName>/Lemmas.lean`, …). After adding or removing
   any `.lean` file run `node tools/lemmata.mjs umbrella --write`. Every file is compiled and
   audited, including files nothing imports.
+- No `axiom`, no `@[implemented_by]`, no `@[extern]`, anywhere: they assert facts or swap in
+  code the kernel cannot check.
+
+### Computations
+
+`native_decide` (also `decide +native`, `bv_decide`) proves a decidable statement by
+compiling and running it during the build. The kernel never checks the result, so it is
+allowed only as an explicit opt-in, and results that rely on it are labelled apart from
+kernel-checked ones (see the "checked" page, section Computation):
+
+1. **Try `decide +kernel` first.** The kernel evaluates the statement itself and the result
+   stays kernel-checked; it is slower, but fine for moderate case checks. Use
+   `native_decide` only when that is impractical.
+2. Add `native_computation: true` to `contribution.yml`. Without it, any computation tactic
+   in the entry's Lean files fails validation. `lean/Lemmata/Shared/` may not use them.
+3. Call the tactic directly at the goal, where the source shows it (`by native_decide`,
+   `constructor <;> native_decide`, …): the verifier accepts a computation only at the
+   position of a computation-tactic call in the source, so a computation produced by a
+   macro of your own is refused.
+4. `native_decide` about a definition from **another module** needs that module's compiled
+   code: import it with `public meta import Lemmata.<Other>.Main` (Lean's error says so).
+5. Keep each claim small and clearly stated. The page lists every claim with its source
+   line, and reviewers re-run it by running `tools/check.sh`.
+
+Using another entry's results that rely on computations needs no flag: those results are
+marked "kernel-checked, modulo computation" automatically, linking to that entry. Results
+that use only the other entry's kernel-checked parts stay kernel-checked.
 
 ### Separate statements from proofs (recommended)
 
@@ -259,6 +287,7 @@ withdrawn: >-                         # only to withdraw a published entry; the 
 related:                              # optional; derived material, listed at the end
   - {kind: slides, title: "Talk at the MATH+ day", url: "https://example.org/slides.pdf"}
   - {kind: video,  title: "Recording", url: "https://example.org/video"}
+native_computation: true              # only if the Lean uses native_decide; see Computations
 pages:
   - index.md
 exports:                              # at least one theorem
@@ -335,7 +364,7 @@ node tests/browser.mjs docs/_build/html ""    # follows every link; needs: npx p
 | validate | a manifest or category is wrong, a note uses non-inline markup, a label is missing or duplicated, snippet markers are wrong, the umbrella is stale, an `index.md` lacks one of the two `{include}` lines, `.lemmata/` is committed |
 | lake build | any module does not compile |
 | leanchecker | the kernel rejects a declaration |
-| lemmata-check | any declaration uses a disallowed axiom (`sorryAx`, `native_decide`'s auxiliary axioms, custom `axiom`), or an export is missing, misclassified, or outside its namespace |
+| lemmata-check | any declaration uses a disallowed axiom (`sorryAx`, a custom `axiom`, a computation outside an entry with `native_computation: true` or not produced by a computation-tactic call in the source), or an export is missing, misclassified, or outside its namespace |
 | myst build | a reference does not resolve, an identifier is duplicated, a linked file is missing |
 
 Every failure is printed as `FAIL …` with the file and the reason. Fix the cause. Never
