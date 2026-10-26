@@ -57,6 +57,26 @@ lean/.lake/packages`.
 Never run `lake update`. The dependency set in `lean/lake-manifest.json` is pinned, and the
 cluster rejects any commit whose manifest differs from its cache in any package.
 
+### If the repository gets large
+
+Today a full clone is small (1.6 MB, measured 2026-10-26); the large download is Mathlib's
+cache (~7 GB), which every clone needs to build Lean. If the repository itself becomes
+large, clone it **partially**: Git then fetches older versions of files only when they are
+needed, every file of the current version is present, and every local check works as in a
+full clone.
+
+```bash
+git clone --filter=blob:none git@github.com:ZIB-IOL/lemmata.git
+```
+
+A **sparse** checkout (`git clone --filter=blob:none --sparse …`, then
+`git sparse-checkout set docs/<id> lean/Lemmata/<LeanName> …`) goes further and leaves out
+other entries' files. It is fine for reading or for editing prose, but the local check does
+not work in it yet: `lean/Lemmata.lean` imports every entry, and `tools/check.sh` builds and
+checks all of them. The tools say so instead of failing obscurely, and refuse to rewrite the
+umbrella or to scaffold an entry there (rewriting it would drop the missing entries).
+`git sparse-checkout disable` restores the full tree, fetching only what is missing.
+
 ## 2. Create the entry
 
 ```bash

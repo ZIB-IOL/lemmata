@@ -176,6 +176,11 @@ node tools/lemmata.mjs umbrella --write   # if you added or removed Lean files
 tools/check.sh
 ```
 
+If the repository gets large, clone it partially: `git clone --filter=blob:none …` fetches
+older versions of files only when they are needed, and every local check works as in a full
+clone. A sparse checkout, with only some entries, is fine for reading and prose edits, but
+`tools/check.sh` needs every entry (AGENTS.md, "If the repository gets large").
+
 Open a pull request against `main` on [GitHub](https://github.com/ZIB-IOL/lemmata). If
 the change matters to readers (a new entry, a correction), add a line to
 `docs/changelog.md` in the same pull request. Reviewers read the mathematics, compare the prose

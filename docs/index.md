@@ -43,3 +43,6 @@ contribution procedure written for them.
 A **kernel-checked** result is one whose formal statement compiles and was accepted by
 Lean's kernel, using only the standard axioms. That the English statement means the same
 as the Lean statement is checked by human review. [Read the full definition](checked.md).
+
+For what "verified in Lean" does and does not establish, and what a reader should still
+check, we recommend the essay by @spiegel2026trust.

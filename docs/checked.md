@@ -56,9 +56,9 @@ Entry lists show both of the latter as **checked mod. computation**. The entry p
 every computation its results rely on: the line of the Lean source that runs it, the claim as
 written there, and the claim as the kernel stores it. The axiom audit still applies to
 everything else: a computation is accepted only if it has exactly the form Lean's tactic
-produces, comes from an entry that declared it, and was recorded at a line of the source that
-calls `native_decide` (or `decide +native`, `bv_decide`); a hand-written `axiom`,
-`@[implemented_by]` or `@[extern]` is refused everywhere.
+produces, comes from an entry that declared it, and was recorded at the exact place in the
+source where `native_decide` (or `decide +native`, `bv_decide`) is called; a hand-written
+`axiom`, `@[implemented_by]` or `@[extern]` is refused everywhere.
 
 Whoever runs `tools/check.sh` on the repository re-runs every computation on their own
 machine, which is how a reviewer checks them. Where a proof by `decide +kernel` is feasible,
@@ -71,7 +71,23 @@ The badge does **not** say that the English statement means the same as the Lean
 That correspondence is checked by human review. Every entry links to the exact formal source,
 at the exact commit, that it was reviewed against, so a reader can compare the two.
 
+Nor does it say that the proof written in the prose is the one Lean checked. Only the
+statements are bound to the prose; the Lean proof may take another route, for instance with
+stronger intermediate estimates.
+
+It is also independent of Lean's own warnings, which a `set_option` can switch off: the axiom
+audit reads what each compiled proof actually depends on.
+
+It rests on Lean's kernel being correct. Kernel bugs are rare and fixed quickly, but they
+happen: in July 2026 a bug in the handling of nested inductive types let a false proof
+through ([lean4#14576](https://github.com/leanprover/lean4/issues/14576), fixed within an
+hour). Every result here was checked with a Lean release that contains the fix, and the
+badge names the version used.
+
 It also does not say anything about novelty, priority, or the importance of a result.
+
+For a fuller account of what to check before trusting "verified in Lean", and why it is
+never only about certification, see @spiegel2026trust.
 
 ## How the check runs
 

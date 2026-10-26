@@ -531,8 +531,28 @@ function umbrellaText() {
     ...mods.map((m) => `public import ${m}`), ""].join("\n");
 }
 
+// A sparse checkout (git sparse-checkout) has only some entries on disk, so the umbrella,
+// which imports every module of every entry, cannot match the files here -- and rewriting it
+// from them would drop the entries that are not checked out. The local check needs all
+// entries until it has a sparse mode (TODO.md in lemmata-code); this says so instead.
+// Detected from git itself; no git (the cluster's source copy) means a complete tree.
+function sparseCheckout() {
+  try {
+    const out = execFileSync("git", ["-C", ROOT, "config", "--get", "core.sparseCheckout"],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    return out === "true";
+  } catch { return false; }
+}
+const SPARSE_HELP = "this is a sparse checkout, and the local check needs every entry " +
+  "(`git sparse-checkout disable` restores them; see AGENTS.md, \"If the repository gets large\")";
+
 function checkUmbrella(write) {
   const file = path.join(LEAN, `${LIB}.lean`);
+  if (sparseCheckout()) {
+    // Never rewrite it here: the result would import only the entries checked out.
+    if (write) { fail(`lean/${LIB}.lean is not rewritten: ${SPARSE_HELP}`); return; }
+    fail(`lean/${LIB}.lean cannot be checked: ${SPARSE_HELP}`); return;
+  }
   const want = umbrellaText();
   if (write) { fs.writeFileSync(file, want); return; }
   const have = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
@@ -1297,6 +1317,8 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
 }
 
 function scaffold(id, lean, category) {
+  // Refuse before writing anything: the umbrella update at the end would fail anyway.
+  if (sparseCheckout()) { fail(`new: ${SPARSE_HELP}`); return; }
   if (!ID_RE.test(id) || RESERVED_DOCS.has(id)) { fail(`bad id ${id}`); return; }
   if (!LEAN_COMPONENT_RE.test(lean) || RESERVED_LEAN.has(lean)) { fail(`bad Lean name ${lean}`); return; }
   const cats = loadCategories().map((c) => c.id);
