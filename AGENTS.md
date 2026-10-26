@@ -154,6 +154,11 @@ kernel-checked ones (see the "checked" page, section Computation):
    `native_decide` only when that is impractical.
 2. Add `native_computation: true` to `contribution.yml`. Without it, any computation tactic
    in the entry's Lean files fails validation. `lean/Lemmata/Shared/` may not use them.
+   Write `decide`'s options literally (`decide +native`, `(config := { native := true })`):
+   the tools must read from the source whether a call computes natively, so a value they
+   cannot read (`native := !false`, a named config, `{ c with … }`) is refused. Note that a
+   `(config := …)` block resets the options before it, as in Lean: `decide +native
+   (config := {})` is plain `decide`.
 3. Call the tactic directly at the goal, where the source shows it (`by native_decide`,
    `constructor <;> native_decide`, …): the verifier accepts a computation only at the
    position of a computation-tactic call in the source.
@@ -171,6 +176,12 @@ kernel-checked ones (see the "checked" page, section Computation):
    Allowed: plain `notation` (a term abbreviation), `set_option`, and
    `public meta import Lemmata.<Other>.Main` (see step 5). Entries without
    `native_computation` are not restricted this way.
+
+   The same holds for everything the entry **imports**: a tactic defined in an imported
+   module is in scope here too. So an entry with `native_computation: true` may not import,
+   directly or through other modules, any `Lemmata.*` module (an entry's or `Shared`) that
+   defines tactics, macros or syntax. Importing ordinary entries is fine: their results are
+   kernel-checked, whatever tactics produced them.
 5. `native_decide` about a definition from **another module** needs that module's compiled
    code: import it with `public meta import Lemmata.<Other>.Main` (Lean's error says so).
 6. Keep each claim small and clearly stated. The page lists every claim with its source
@@ -398,7 +409,7 @@ node tests/browser.mjs docs/_build/html ""    # follows every link; needs: npx p
 
 | Step | Fails when |
 |---|---|
-| validate | a manifest or category is wrong, a note uses non-inline markup, a label is missing or duplicated, snippet markers are wrong, the umbrella is stale, an `index.md` lacks one of the two `{include}` lines, `.lemmata/` is committed, a Lean file does not start with `module`, a Lean file contains `axiom`, `@[implemented_by]` or `@[extern]`, a computation tactic is used without `native_computation: true` (or in `lean/Lemmata/Shared/`), or an entry with `native_computation: true` defines tactics, macros or syntax or runs code while compiling |
+| validate | a manifest or category is wrong, a note uses non-inline markup, a label is missing or duplicated, snippet markers are wrong, the umbrella is stale, an `index.md` lacks one of the two `{include}` lines, `.lemmata/` is committed, a Lean file does not start with `module`, a Lean file contains `axiom`, `@[implemented_by]` or `@[extern]`, a computation tactic is used without `native_computation: true` (or in `lean/Lemmata/Shared/`), `decide` options do not say literally whether they compute natively, or an entry with `native_computation: true` defines tactics, macros or syntax, runs code while compiling, or imports a module that defines tactics, macros or syntax |
 | lake build | any module does not compile |
 | leanchecker | the kernel rejects a declaration |
 | lemmata-check | any declaration uses a disallowed axiom (`sorryAx`, a custom `axiom`, a computation outside an entry with `native_computation: true` or not produced by a computation-tactic call in the source), or an export is missing, misclassified, or outside its namespace |

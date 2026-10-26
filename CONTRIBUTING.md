@@ -47,7 +47,10 @@ with `_`; the Lean name `Shared` is reserved for helpers used by several entries
   own (`elab`, `macro`, `syntax`, …), run code while compiling (`#eval`, `run_cmd`,
   `initialize`, …), or use `meta`, except `public meta import Lemmata.<Other>.Main`, which
   `native_decide` on another entry's definitions needs. A tactic of its own could fake a
-  computation. Plain `notation` is fine. Details in AGENTS.md, section Computations.
+  computation, and so could one in a module it imports: it also may not import a
+  `Lemmata.*` module that defines tactics, macros or syntax. Plain `notation` is fine, and
+  so is importing ordinary entries. Write `decide`'s options literally
+  (`decide +native`). Details in AGENTS.md, section Computations.
 - Mark the part to show on the page with `-- DOCS_BEGIN_MAIN` / `-- DOCS_END_MAIN`.
   Each marker must occur exactly once.
 

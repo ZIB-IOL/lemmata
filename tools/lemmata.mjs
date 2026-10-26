@@ -576,13 +576,30 @@ function checkUmbrella(write) {
 // count as calls of `decide`; plain `decide` is kernel-checked and does not. A call is
 // [line, column] of the tactic token, column in codepoints from 0 -- exactly the position
 // Lean records for the axiom the call produces (measured for every form, Lean v4.35).
-// Whether the options after a `decide` token (at toks[j]) turn on native evaluation. Lean
-// reads them as one optConfig, across line breaks: items `+native` / `-native`, or a
-// `(config := { native := <bool>, ... })` structure; later settings win. Scanning stops at
-// the first token that cannot belong to the options, so the goal or the next tactic is never
-// read as one. Unknown option names are skipped; `native := <anything but true>` is off.
+// Whether the options after a `decide` token (at toks[j]) turn on native evaluation, as Lean
+// reads them (measured against Lean v4.35 for every form below, 2026-10-26):
+//   - the options are one optConfig, across line breaks, applied left to right;
+//   - `+native` / `-native` and `(native := v)` set the field;
+//   - `(config := { ... })` REPLACES everything set before it with that structure (fields
+//     not named take their defaults), so `+native (config := {})` is not native;
+//   - a value is decided only if it is literally true or false (Bool.true, Bool.false,
+//     parenthesized or not). Anything else -- `!false`, a named config, `{ c with ... }` --
+//     Lean evaluates and we cannot: { unknown: true } is returned, and the caller refuses the
+//     file with "write native := true / false literally". Scanning stops at the first token
+//     that cannot belong to the options, so the goal or the next tactic is never read as one.
 function decideIsNative(toks, j) {
-  let native = false;
+  // A literal Bool value starting at toks[k], possibly in parentheses: [value, next index].
+  const literal = (k) => {
+    let open = 0;
+    while (toks[k]?.t === "(") { open++; k++; }
+    const w = toks[k]?.t, v = w === "true" || w === "Bool.true" ? true : w === "false" || w === "Bool.false" ? false : null;
+    if (v === null) return [null, k];
+    k++;
+    for (; open > 0; open--, k++) if (toks[k]?.t !== ")") return [null, k];
+    return [v, k];
+  };
+  const close = (k, o, c) => { let depth = 0; for (; k < toks.length; k++) { if (toks[k].t === o) depth++; else if (toks[k].t === c && --depth === 0) return k; } return toks.length; };
+  let native = false, unknown = false;
   while (j < toks.length) {
     const t = toks[j];
     if ((t.t === "+" || t.t === "-") && toks[j + 1]?.k === "word" && !toks[j + 1].t.includes(".")) {
@@ -590,32 +607,39 @@ function decideIsNative(toks, j) {
       j += 2; continue;
     }
     if (t.t === "(" && toks[j + 1]?.t === "config" && toks[j + 2]?.t === ":=") {
-      // Up to the matching ")": every `native := v` inside sets the value.
-      let depth = 0, k = j;
-      for (; k < toks.length; k++) {
-        if ("([{⟨".includes(toks[k].t)) depth++;
-        else if (")]}⟩".includes(toks[k].t) && --depth === 0) break;
-        else if (toks[k].t === "native" && toks[k + 1]?.t === ":=") native = toks[k + 2]?.t === "true";
+      const end = close(j, "(", ")");
+      // Only a literal structure `{ f := v, ... }` can be read; it resets every field.
+      if (toks[j + 3]?.t !== "{" || toks[j + 4]?.t === "..") { unknown = true; j = end + 1; continue; }
+      const braceEnd = close(j + 3, "{", "}");
+      native = false;
+      for (let k = j + 4; k < braceEnd; k++) {
+        if (toks[k].t === "with") { unknown = true; break; }              // { c with ... }
+        if (toks[k].t === "native" && toks[k + 1]?.t === ":=") {
+          const [v, next] = literal(k + 2);
+          if (v === null || ![",", "}"].includes(toks[next]?.t)) unknown = true; else native = v;
+        }
       }
-      j = k + 1; continue;
+      j = end + 1; continue;
     }
     if (t.t === "(" && toks[j + 1]?.k === "word" && toks[j + 2]?.t === ":=") {
-      // `(native := true)`: a single option in parentheses.
-      if (toks[j + 1].t === "native") native = toks[j + 3]?.t === "true";
-      let depth = 0, k = j;
-      for (; k < toks.length; k++) { if (toks[k].t === "(") depth++; else if (toks[k].t === ")" && --depth === 0) break; }
-      j = k + 1; continue;
+      // `(native := v)`: a single option in parentheses.
+      const end = close(j, "(", ")");
+      if (toks[j + 1].t === "native") {
+        const [v, next] = literal(j + 3);
+        if (v === null || next !== end) unknown = true; else native = v;
+      }
+      j = end + 1; continue;
     }
     break;
   }
-  return native;
+  return unknown ? { unknown: true } : native;
 }
 function leanScan(file) {
   const src = fs.readFileSync(path.join(ROOT, file), "utf8");
   const toks = leanTokens(src);
   // Column of a character offset, in codepoints (Lean's String.Pos columns), from line start.
   const col = (start) => [...src.slice(src.lastIndexOf("\n", start - 1) + 1, start)].length;
-  const calls = new Map(), forbidden = [], meta = [];
+  const calls = new Map(), forbidden = [], meta = [], unclear = [], imports = [];
   // The first token must be `module`: only module files get Lean's checks that code run at
   // compile time is declared `meta` (an ordinary file may define elaborators freely).
   const header = toks[0]?.k === "word" && toks[0].t === "module";
@@ -624,10 +648,16 @@ function leanScan(file) {
     const t = toks[i];
     if (t.k !== "word") continue;
     if (COMPUTATION_TACTICS.includes(t.t)) call(t);
-    else if (t.t === "decide" && decideIsNative(toks, i + 1)) call(t);
+    else if (t.t === "decide") {
+      const n = decideIsNative(toks, i + 1);
+      if (n === true) call(t);
+      else if (n?.unknown) unclear.push({ line: t.line });
+    }
     // A command or keyword that defines syntax or runs code (META_COMMANDS), or `meta`
     // (a meta definition or a `meta import` of something other than Lemmata's own modules,
     // which native_decide on another entry's definitions needs).
+    // Archive modules this file imports (any form: `import`, `public import`, `meta import`).
+    if (t.t === "import" && /^Lemmata(\.|$)/.test(toks[i + 1]?.t ?? "")) imports.push(toks[i + 1].t);
     if (META_COMMANDS.has(t.t)) meta.push({ what: `\`${t.t}\``, line: t.line });
     else if (t.t === "meta" && !(toks[i + 1]?.t === "import" && /^Lemmata(\.|$)/.test(toks[i + 2]?.t ?? "")))
       meta.push({ what: toks[i + 1]?.t === "import" ? `\`meta import ${toks[i + 2]?.t ?? ""}\`` : "`meta`", line: t.line });
@@ -637,7 +667,7 @@ function leanScan(file) {
     if ((t.t === "implemented_by" || t.t === "extern") && ["[", ","].includes(toks[i - 1]?.t))
       forbidden.push({ what: FORBIDDEN_LEAN[t.t], line: t.line });
   }
-  return { calls: [...calls.values()].sort((a, b) => a[0] - b[0] || a[1] - b[1]), forbidden, meta, header };
+  return { calls: [...calls.values()].sort((a, b) => a[0] - b[0] || a[1] - b[1]), forbidden, meta, header, unclear, imports };
 }
 function leanFiles(dir) {
   const abs = path.join(LEAN, LIB, dir);
@@ -648,8 +678,43 @@ function leanFiles(dir) {
 function checkLeanSources(manifests) {
   const byDir = new Map(manifests.map((m) => [m.leanDir, m]));
   const dirs = fs.existsSync(path.join(LEAN, LIB)) ? listDirs(path.join(LEAN, LIB)) : [];
+  // Every archive module: its file, what it imports, and whether it defines tactics, macros
+  // or syntax or runs code while compiling (META_COMMANDS; `meta import` of archive modules
+  // excepted, as everywhere).
+  const modOf = (f) => f.replace(/^lean\//, "").replace(/\.lean$/, "").split("/").join(".");
+  const scans = new Map();
+  for (const d of dirs) for (const f of leanFiles(d)) scans.set(modOf(f), { file: f, dir: d, ...leanScan(f) });
+  // A tactic defined in ANY imported archive module is in scope where the entry calls
+  // native_decide, and could be one spelled `native_decide` (reproduced: a fake defined in
+  // lean/Lemmata/Shared took effect through a plain import). So a flagged entry may not
+  // depend, directly or not, on an archive module that defines any. Importing ordinary
+  // entries is fine: their results are kernel-checked, whatever produced them.
+  const metaVia = new Map();                    // module -> chain to a meta-defining module, or null
+  const via = (mod, seen = new Set()) => {
+    if (metaVia.has(mod)) return metaVia.get(mod);
+    if (seen.has(mod)) return null;
+    seen.add(mod);
+    const x = scans.get(mod);
+    let chain = null;
+    if (x?.meta.length) chain = [mod];
+    else for (const imp of x?.imports ?? []) { const c = via(imp, seen); if (c) { chain = [mod, ...c]; break; } }
+    metaVia.set(mod, chain);
+    return chain;
+  };
+  for (const [mod, x] of scans) {
+    const m = byDir.get(x.dir);
+    if (!m?.native) continue;
+    for (const imp of x.imports) {
+      const c = via(imp);
+      if (c) fail(`${x.file}: imports ${c.join(" -> ")}, which defines tactics, macros or syntax (${scans.get(c.at(-1)).meta[0].what}, ` +
+        `line ${scans.get(c.at(-1)).meta[0].line}); an entry with \`native_computation: true\` may not depend on such a module, ` +
+        "because a tactic in scope could stand in for native_decide (see AGENTS.md, Computations)");
+    }
+  }
   for (const d of dirs) for (const f of leanFiles(d)) {
-    const { calls, forbidden, meta, header } = leanScan(f);
+    const { calls, forbidden, meta, header, unclear } = scans.get(modOf(f));
+    for (const x of unclear) fail(`${f}:${x.line}: \`decide\` options whose native setting cannot be read from the source; ` +
+      "write `+native`, `-native`, `native := true` or `native := false` literally (a named config or an expression is not allowed)");
     if (!header) fail(`${f}: the first line must be \`module\` (Lean's module system; see AGENTS.md, Write the Lean)`);
     for (const x of forbidden) fail(`${f}:${x.line}: ${x.what} is not allowed (it asserts or replaces something Lean's kernel cannot check)`);
     const m = byDir.get(d);

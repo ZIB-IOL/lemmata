@@ -58,8 +58,8 @@ written there, and the claim as the kernel stores it. The axiom audit still appl
 everything else: a computation is accepted only if it has exactly the form Lean's tactic
 produces, comes from an entry that declared it, and was recorded at the exact place in the
 source where `native_decide` (or `decide +native`, `bv_decide`) is called. Such an entry may
-not define tactics, macros or syntax of its own, nor run code while it is compiled, so the
-call is Lean's own tactic. A hand-written `axiom`, `@[implemented_by]` or `@[extern]` is
+not define tactics, macros or syntax, run code while it is compiled, or import a module of
+the archive that defines tactics, macros or syntax, so the call is Lean's own tactic. A hand-written `axiom`, `@[implemented_by]` or `@[extern]` is
 refused everywhere.
 
 Whoever runs `tools/check.sh` on the repository re-runs every computation on their own
