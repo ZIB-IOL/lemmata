@@ -59,7 +59,9 @@ everything else: a computation is accepted only if it has exactly the form Lean'
 produces, comes from an entry that declared it, and was recorded at the exact place in the
 source where `native_decide` (or `decide +native`, `bv_decide`) is called. Such an entry may
 not define tactics, macros or syntax, run code while it is compiled, or import a module of
-the archive that defines tactics, macros or syntax, so the call is Lean's own tactic. A hand-written `axiom`, `@[implemented_by]` or `@[extern]` is
+the archive that defines tactics, macros or syntax, so that, read from the source, each call
+is Lean's own tactic. These rules check the source; they cannot prove what ran when it was
+compiled, which is why such results carry the computation label in the first place. A hand-written `axiom`, `@[implemented_by]` or `@[extern]` is
 refused everywhere.
 
 Whoever runs `tools/check.sh` on the repository re-runs every computation on their own

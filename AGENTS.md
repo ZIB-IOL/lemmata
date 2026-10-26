@@ -135,7 +135,8 @@ Rules (each enforced):
   in this directory's modules.
 - More files are fine (`lean/Lemmata/<LeanName>/Lemmas.lean`, …). After adding or removing
   any `.lean` file run `node tools/lemmata.mjs umbrella --write`. Every file is compiled and
-  audited, including files nothing imports.
+  audited, including files nothing imports. Files go in your entry's directory (or in
+  `lean/Lemmata/Shared/`), never directly in `lean/Lemmata/`.
 - No `sorry`, no `axiom`, no `@[implemented_by]`, no `@[extern]`, anywhere: they leave a
   gap, assert facts, or swap in code the kernel cannot check.
 - No `native_decide` (or `decide +native`, `bv_decide`) unless the entry declares
@@ -156,7 +157,8 @@ kernel-checked ones (see the "checked" page, section Computation):
    in the entry's Lean files fails validation. `lean/Lemmata/Shared/` may not use them.
    Write `decide`'s options literally (`decide +native`, `(config := { native := true })`):
    the tools must read from the source whether a call computes natively, so a value they
-   cannot read (`native := !false`, a named config, `{ c with … }`) is refused. Note that a
+   cannot read (`native := !false`, a named config, `{ c with … }`, the shorthand
+   `{ native }`) is refused. Note that a
    `(config := …)` block resets the options before it, as in Lean: `decide +native
    (config := {})` is plain `decide`.
 3. Call the tactic directly at the goal, where the source shows it (`by native_decide`,

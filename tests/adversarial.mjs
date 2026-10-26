@@ -217,6 +217,27 @@ for (const code of ["decide (native := !false)", "decide (config := myCfg)", "de
   expect(`\`${code}\` is refused: its native setting cannot be read`,
     (d) => { addLean(d, `theorem t : 2 + 2 = 4 := by ${code}`); withUmbrella(d); }, { match: /cannot be read from the source/ });
 
+// Third review (2026-10-26): `import all` names the module after `all`; files directly in
+// lean/Lemmata/ belong to no entry and are refused; a config block other than exactly
+// `{ name := literal, ... }` is refused (shorthand `{ native }` computes natively).
+expect("a flagged entry reaching a tactic-defining module through `import all`",
+  (d) => { addShared(d, "Fake.lean", sharedFake); append(d, lean.replace("Main.lean", "Extra.lean"),
+    "module\n\nimport all Lemmata.Shared.Fake\npublic section\nnamespace Lemmata.ImplicationComposition\ntheorem t : 2 + 2 = 4 := by native_decide\nend Lemmata.ImplicationComposition\n");
+    withUmbrella(d); flag(d); }, { match: /imports Lemmata\.Shared\.Fake, which defines tactics/ });
+expect("`meta import all` of a non-Lemmata module in a flagged entry",
+  (d) => { append(d, lean.replace("Main.lean", "Extra.lean"), "module\n\nmeta import all Lean.Elab.Tactic\npublic section\nnamespace Lemmata.ImplicationComposition\nend Lemmata.ImplicationComposition\n"); withUmbrella(d); flag(d); },
+  { match: /meta import Lean\.Elab\.Tactic.*not allowed/ });
+expect("a Lean file directly in lean/Lemmata/",
+  (d) => { fs.writeFileSync(path.join(d, "lean/Lemmata/Helper.lean"), "module\npublic section\nmacro \"mytriv\" : tactic => `(tactic| trivial)\n");
+    fs.writeFileSync(path.join(d, "lean/Lemmata.lean"), fs.readFileSync(path.join(d, "lean/Lemmata.lean"), "utf8").replace("public import Lemmata.ImplicationComposition.Main", "public import Lemmata.Helper\npublic import Lemmata.ImplicationComposition.Main")); },
+  { match: /lean\/Lemmata\/Helper\.lean: Lean files belong in/ });
+for (const code of ["decide (config := { native })", "decide (config := { kernel := false, native })", "decide (config := ({ native := true }))",
+  "decide (config := { native := true : Lean.Parser.Tactic.DecideConfig })", "decide (config := { native := if true then true else false })"])
+  expect(`\`${code}\` is refused: not a plain literal structure`,
+    (d) => { addLean(d, `theorem t : 2 + 2 = 4 := by ${code}`); withUmbrella(d); }, { match: /cannot be read from the source/ });
+expect("positive control: `(config := { native := true, zetaReduce := false })` is read",
+  (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by decide (config := { native := true, zetaReduce := false })"); withUmbrella(d); }, { match: /without `native_computation: true`/ });
+
 // Frozen entries keep what their last check recorded, computations included (review,
 // 2026-10-26: a frozen computation-backed result was shown as plainly kernel-checked, its
 // claims dropped and llms.txt without the caveat). A frozen record of the shape

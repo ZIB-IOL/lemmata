@@ -608,16 +608,29 @@ function decideIsNative(toks, j) {
     }
     if (t.t === "(" && toks[j + 1]?.t === "config" && toks[j + 2]?.t === ":=") {
       const end = close(j, "(", ")");
-      // Only a literal structure `{ f := v, ... }` can be read; it resets every field.
-      if (toks[j + 3]?.t !== "{" || toks[j + 4]?.t === "..") { unknown = true; j = end + 1; continue; }
-      const braceEnd = close(j + 3, "{", "}");
+      // Only exactly `(config := { name := literal, ... })` can be read: a brace right after
+      // `:=`, the closing brace right before `)`, and each item `name := true|false` (or a
+      // literal of another kind for other fields). Anything else -- field shorthand
+      // `{ native }`, `{ c with ... }`, an ascription, parentheses around the structure,
+      // `if` -- Lean evaluates, and all of these were measured to compute natively, so it
+      // is refused. A readable block resets every field, as in Lean.
+      const braceEnd = toks[j + 3]?.t === "{" ? close(j + 3, "{", "}") : -1;
+      if (braceEnd < 0 || braceEnd + 1 !== end) { unknown = true; j = end + 1; continue; }
       native = false;
-      for (let k = j + 4; k < braceEnd; k++) {
-        if (toks[k].t === "with") { unknown = true; break; }              // { c with ... }
-        if (toks[k].t === "native" && toks[k + 1]?.t === ":=") {
+      let k = j + 4;
+      while (k < braceEnd) {
+        const name = toks[k], eq = toks[k + 1];
+        if (name?.k !== "word" || name.t.includes(".") || eq?.t !== ":=") { unknown = true; break; }
+        if (name.t === "native") {
           const [v, next] = literal(k + 2);
-          if (v === null || ![",", "}"].includes(toks[next]?.t)) unknown = true; else native = v;
+          if (v === null || ![",", "}"].includes(toks[next]?.t) || next > braceEnd) { unknown = true; break; }
+          native = v; k = next;
+        } else {
+          // Another field: its value must be a single token (a literal Bool or number).
+          if (!toks[k + 2] || ![",", "}"].includes(toks[k + 3]?.t)) { unknown = true; break; }
+          k += 3;
         }
+        if (toks[k]?.t === ",") k++;
       }
       j = end + 1; continue;
     }
@@ -657,10 +670,18 @@ function leanScan(file) {
     // (a meta definition or a `meta import` of something other than Lemmata's own modules,
     // which native_decide on another entry's definitions needs).
     // Archive modules this file imports (any form: `import`, `public import`, `meta import`).
-    if (t.t === "import" && /^Lemmata(\.|$)/.test(toks[i + 1]?.t ?? "")) imports.push(toks[i + 1].t);
+    // `import all X` imports X with its private declarations: the module is the word after
+    // `all` (reported in review: `all` was taken as the name, so X was never followed).
+    if (t.t === "import") {
+      const name = toks[i + 1]?.t === "all" ? toks[i + 2]?.t : toks[i + 1]?.t;
+      if (/^Lemmata(\.|$)/.test(name ?? "")) imports.push(name);
+    }
     if (META_COMMANDS.has(t.t)) meta.push({ what: `\`${t.t}\``, line: t.line });
-    else if (t.t === "meta" && !(toks[i + 1]?.t === "import" && /^Lemmata(\.|$)/.test(toks[i + 2]?.t ?? "")))
-      meta.push({ what: toks[i + 1]?.t === "import" ? `\`meta import ${toks[i + 2]?.t ?? ""}\`` : "`meta`", line: t.line });
+    else if (t.t === "meta") {
+      const name = toks[i + 1]?.t === "import" ? (toks[i + 2]?.t === "all" ? toks[i + 3]?.t : toks[i + 2]?.t) : null;
+      if (!(name && /^Lemmata(\.|$)/.test(name)))
+        meta.push({ what: name !== null ? `\`meta import ${name ?? ""}\`` : "`meta`", line: t.line });
+    }
     // `axiom <name>` declares one (the tokenizer keeps names whole, so `Foo.axiom_x` is one
     // word); the two attributes appear inside `@[...]`, alone or after a comma.
     if (t.t === "axiom" && toks[i + 1]?.k === "word") forbidden.push({ what: FORBIDDEN_LEAN.axiom, line: t.line });
@@ -678,6 +699,13 @@ function leanFiles(dir) {
 function checkLeanSources(manifests) {
   const byDir = new Map(manifests.map((m) => [m.leanDir, m]));
   const dirs = fs.existsSync(path.join(LEAN, LIB)) ? listDirs(path.join(LEAN, LIB)) : [];
+  // Every Lean file lives in an entry's directory or in Shared/. A file directly in
+  // lean/Lemmata/ belongs to no entry and was never scanned, although Lake builds it (the
+  // lakefile globs Lemmata.*) and entries can import it (reported in review, 2026-10-26).
+  if (fs.existsSync(path.join(LEAN, LIB)))
+    for (const d of fs.readdirSync(path.join(LEAN, LIB), { withFileTypes: true }))
+      if (!d.isDirectory() && d.name.endsWith(".lean"))
+        fail(`lean/${LIB}/${d.name}: Lean files belong in lean/${LIB}/<LeanName>/ (an entry) or lean/${LIB}/Shared/, not directly in lean/${LIB}/`);
   // Every archive module: its file, what it imports, and whether it defines tactics, macros
   // or syntax or runs code while compiling (META_COMMANDS; `meta import` of archive modules
   // excepted, as everywhere).
