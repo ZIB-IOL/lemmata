@@ -13,6 +13,11 @@ abstract: >-
   signed witnesses constrained on every rectangle.
 contributors:
   - Sebastian Pokutta
+acknowledgements: >-
+  Research reported in this paper was partially supported by the Berlin Mathematics
+  Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche
+  Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
+  Strategy.
 pages:
   - index.md
 exports:
