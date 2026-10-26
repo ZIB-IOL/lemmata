@@ -1,0 +1,44 @@
+schema_version: 1
+id: spanning-tree-common-information
+lean_namespace: Lemmata.SpanningTreeCommonInformation
+category: extended-formulations
+tags: [optimization]
+abstract: >-
+  For the full canonical spanning-tree slack matrix of the complete graph on
+  $n\ge3$ vertices, common information is at most $2\log_2 n+2$ bits;
+  consequently its exponentiated nonnegative-rank lower-bound quantity is at
+  most $4n^2$. The same bound holds for the subtour-only matrix. The proof uses
+  a generic entropy bound for unit Boolean factorizations, the published
+  min-split factors, and exact per-tree column masses; no tree-enumeration
+  formula is needed. This limits the common-information method on these
+  matrices, not their extension complexity.
+contributors:
+  - Sebastian Pokutta
+acknowledgements: >-
+  Research reported in this paper was partially supported by the Berlin Mathematics
+  Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche
+  Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
+  Strategy.
+pages:
+  - index.md
+exports:
+  - name: Lemmata.SpanningTreeCommonInformation.full_ci_ceiling
+    kind: theorem
+    page: index.md
+    label: thm-spanning-tree-common-information-full
+  - name: Lemmata.SpanningTreeCommonInformation.subtour_ci_ceiling
+    kind: theorem
+    page: index.md
+    label: cor-spanning-tree-common-information-subtour
+  - name: Lemmata.SpanningTreeCommonInformation.flat_factor_bound
+    kind: theorem
+    page: index.md
+    label: prop-spanning-tree-common-information-flat
+  - name: Lemmata.SpanningTreeCommonInformation.full_flat_factorization
+    kind: theorem
+    page: index.md
+    label: prop-spanning-tree-common-information-boolean
+  - name: Lemmata.SpanningTreeCommonInformation.column_masses
+    kind: theorem
+    page: index.md
+    label: prop-spanning-tree-common-information-masses
