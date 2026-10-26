@@ -31,7 +31,8 @@ with `_`; the Lean name `Shared` is reserved for helpers used by several entries
 
 ## 2. Write the Lean
 
-- Start files with `module` and use `public import` (Mathlib uses the module system).
+- Every Lean file starts with `module` (required) and uses `public import` (Mathlib uses
+  the module system).
 - Everything lives in `namespace Lemmata.<LeanName>`.
 - Import other entries' modules directly (`public import Lemmata.ImplicationComposition.Main`),
   never the umbrella `Lemmata`. Do not copy another entry's definitions; move shared
@@ -41,8 +42,12 @@ with `_`; the Lean name `Shared` is reserved for helpers used by several entries
   archive.
 - Computations (`native_decide`, `decide +native`, `bv_decide`) only with
   `native_computation: true` in `contribution.yml`. Their results are not kernel-checked
-  and are marked so on the site; prefer `decide +kernel` where it is fast enough. Details
-  in AGENTS.md, section Computations.
+  and are marked so on the site; prefer `decide +kernel` where it is fast enough.
+- An entry with `native_computation: true` may not define tactics, macros or syntax of its
+  own (`elab`, `macro`, `syntax`, …), run code while compiling (`#eval`, `run_cmd`,
+  `initialize`, …), or use `meta`, except `public meta import Lemmata.<Other>.Main`, which
+  `native_decide` on another entry's definitions needs. A tactic of its own could fake a
+  computation. Plain `notation` is fine. Details in AGENTS.md, section Computations.
 - Mark the part to show on the page with `-- DOCS_BEGIN_MAIN` / `-- DOCS_END_MAIN`.
   Each marker must occur exactly once.
 

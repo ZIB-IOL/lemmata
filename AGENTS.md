@@ -136,8 +136,11 @@ Rules (each enforced):
 - More files are fine (`lean/Lemmata/<LeanName>/Lemmas.lean`, …). After adding or removing
   any `.lean` file run `node tools/lemmata.mjs umbrella --write`. Every file is compiled and
   audited, including files nothing imports.
-- No `axiom`, no `@[implemented_by]`, no `@[extern]`, anywhere: they assert facts or swap in
-  code the kernel cannot check.
+- No `sorry`, no `axiom`, no `@[implemented_by]`, no `@[extern]`, anywhere: they leave a
+  gap, assert facts, or swap in code the kernel cannot check.
+- No `native_decide` (or `decide +native`, `bv_decide`) unless the entry declares
+  `native_computation: true`; an entry that does may not define tactics, macros or syntax
+  or run code while compiling. See [Computations](#computations).
 
 ### Computations
 
@@ -153,13 +156,24 @@ kernel-checked ones (see the "checked" page, section Computation):
    in the entry's Lean files fails validation. `lean/Lemmata/Shared/` may not use them.
 3. Call the tactic directly at the goal, where the source shows it (`by native_decide`,
    `constructor <;> native_decide`, …): the verifier accepts a computation only at the
-   position of a computation-tactic call in the source. An entry with
-   `native_computation: true` may not define tactics, macros or syntax (`elab`, `macro`,
-   `syntax`, …), run code while compiling (`#eval`, `run_cmd`, `initialize`, …), or use
-   `meta` except `meta import` of Lemmata modules; plain `notation` is fine.
-4. `native_decide` about a definition from **another module** needs that module's compiled
+   position of a computation-tactic call in the source.
+4. **The entry defines no tactics, macros or syntax of its own and runs no code while
+   compiling.** A tactic of its own could be spelled `native_decide` and record a claim
+   exactly as Lean's tactic would, without computing anything; the verifier cannot tell
+   the two apart, so these are refused in an entry with `native_computation: true`:
+
+   | Refused | Examples |
+   |---|---|
+   | defining tactics, macros, syntax | `elab`, `elab_rules`, `macro`, `macro_rules`, `syntax`, `declare_syntax_cat`, `simproc` |
+   | running code while compiling | `#eval`, `run_cmd`, `run_elab`, `run_meta`, `run_tac`, `initialize` |
+   | compile-time code | `meta def …`, `meta import` of anything but a `Lemmata.*` module |
+
+   Allowed: plain `notation` (a term abbreviation), `set_option`, and
+   `public meta import Lemmata.<Other>.Main` (see step 5). Entries without
+   `native_computation` are not restricted this way.
+5. `native_decide` about a definition from **another module** needs that module's compiled
    code: import it with `public meta import Lemmata.<Other>.Main` (Lean's error says so).
-5. Keep each claim small and clearly stated. The page lists every claim with its source
+6. Keep each claim small and clearly stated. The page lists every claim with its source
    line, and reviewers re-run it by running `tools/check.sh`.
 
 Using another entry's results that rely on computations needs no flag: those results are
@@ -384,7 +398,7 @@ node tests/browser.mjs docs/_build/html ""    # follows every link; needs: npx p
 
 | Step | Fails when |
 |---|---|
-| validate | a manifest or category is wrong, a note uses non-inline markup, a label is missing or duplicated, snippet markers are wrong, the umbrella is stale, an `index.md` lacks one of the two `{include}` lines, `.lemmata/` is committed |
+| validate | a manifest or category is wrong, a note uses non-inline markup, a label is missing or duplicated, snippet markers are wrong, the umbrella is stale, an `index.md` lacks one of the two `{include}` lines, `.lemmata/` is committed, a Lean file does not start with `module`, a Lean file contains `axiom`, `@[implemented_by]` or `@[extern]`, a computation tactic is used without `native_computation: true` (or in `lean/Lemmata/Shared/`), or an entry with `native_computation: true` defines tactics, macros or syntax or runs code while compiling |
 | lake build | any module does not compile |
 | leanchecker | the kernel rejects a declaration |
 | lemmata-check | any declaration uses a disallowed axiom (`sorryAx`, a custom `axiom`, a computation outside an entry with `native_computation: true` or not produced by a computation-tactic call in the source), or an export is missing, misclassified, or outside its namespace |
