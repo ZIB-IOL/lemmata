@@ -10,6 +10,10 @@ entry shows its own last change and links to the exact commit.
 
 Newest first. Add an item in the same pull request as the change it describes.
 
+## 2026-10-27
+
+- **New entry:** [MinRank Lower Bounds for the Cocubic Reed–Muller Covering Radius](cocubic-covering/index.md), reducing cocubic coset-weight lower bounds to affine MinRank and giving bounds of $32$, $32$, and $34$ in $9$, $10$, and $11$ variables.
+
 ## 2026-10-25
 
 - **New entry:** [A quadratic ceiling for common-information bounds on spanning-tree slack matrices](spanning-tree-common-information/index.md),
