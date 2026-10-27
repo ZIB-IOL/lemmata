@@ -58,22 +58,14 @@ const RESERVED_LEAN = new Set(["Shared"]);
 const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "arxiv", "contributors",
   "ai_use", "acknowledgements", "abstract", "license", "withdrawn", "related", "native_computation", "pages", "exports"]);
 // Computations: `native_computation: true` lets an entry prove facts by having the compiler
-// run them (native_decide, decide +native, bv_decide). The build runs them; nobody
-// re-runs them and Lean's kernel never checks them, so results that rely on one are labelled
-// apart from kernel-checked ones, and every claim is listed on the page. COMPUTATION_TACTICS
-// are the tactics whose calls in the source the verifier matches a computation axiom
-// against (checker/Main.lean); FORBIDDEN_LEAN are ways to assert or swap in unchecked
-// facts or code, refused in every Lean file.
+// run them (native_decide, decide +native, bv_decide). The build runs them; nobody re-runs
+// them and Lean's kernel never checks them, so results that rely on one are labelled apart
+// from kernel-checked ones, and every claim is listed on the page. Which axioms count as
+// computations is decided by the verifier (checker/Main.lean) from the compiled files; the
+// source scan here only gives an early, readable error when an entry without the flag uses
+// one of these tactics. FORBIDDEN_LEAN are ways to assert or swap in unchecked facts or code,
+// refused in every Lean file.
 const COMPUTATION_TACTICS = ["native_decide", "bv_decide", "bv_decide?", "bv_check"];
-// Ways a file can define a tactic, a macro or new syntax, or run code while it is compiled.
-// Refused in an entry with native_computation: true: one could define its own tactic spelled
-// `native_decide` that records a claim exactly as Lean's would, without computing anything
-// (reproduced 2026-10-26), and the verifier, which only sees the compiled result, cannot
-// tell the two apart. No entry defined any of these when the rule was added; plain
-// `notation` (a term abbreviation) stays allowed.
-const META_COMMANDS = new Set(["elab", "elab_rules", "macro", "macro_rules", "syntax", "declare_syntax_cat",
-  "initialize", "builtin_initialize", "run_cmd", "run_elab", "run_meta", "run_tac", "#eval", "#exit", "simproc",
-  "dsimproc", "simproc_decl", "dsimproc_decl", "register_option", "register_simp_attr", "declare_simp_like_tactic"]);
 const FORBIDDEN_LEAN = { axiom: "an axiom", implemented_by: "`@[implemented_by]`", extern: "`@[extern]`" };
 // Optional derived material attached to an entry: slides, videos, a monograph, code, ...
 // Each is {kind, title, url}; shown as a list at the end of the entry.
@@ -570,185 +562,52 @@ function checkUmbrella(write) {
 
 // ------------------------------------------------------------------------- generation
 
-// Where a Lean file calls a computation tactic, and declarations or attributes it must not
-// contain, from Lean tokens (comments and strings excluded, so a comment saying
-// "native_decide" is no call). `decide +native` and `decide (config := {native := true})`
-// count as calls of `decide`; plain `decide` is kernel-checked and does not. A call is
-// [line, column] of the tactic token, column in codepoints from 0 -- exactly the position
-// Lean records for the axiom the call produces (measured for every form, Lean v4.35).
-// Whether the options after a `decide` token (at toks[j]) turn on native evaluation, as Lean
-// reads them (measured against Lean v4.35 for every form below, 2026-10-26):
-//   - the options are one optConfig, across line breaks, applied left to right;
-//   - `+native` / `-native` and `(native := v)` set the field;
-//   - `(config := { ... })` REPLACES everything set before it with that structure (fields
-//     not named take their defaults), so `+native (config := {})` is not native;
-//   - a value is decided only if it is literally true or false (Bool.true, Bool.false,
-//     parenthesized or not). Anything else -- `!false`, a named config, `{ c with ... }` --
-//     Lean evaluates and we cannot: { unknown: true } is returned, and the caller refuses the
-//     file with "write native := true / false literally". Scanning stops at the first token
-//     that cannot belong to the options, so the goal or the next tactic is never read as one.
-function decideIsNative(toks, j) {
-  // A literal Bool value starting at toks[k], possibly in parentheses: [value, next index].
-  const literal = (k) => {
-    let open = 0;
-    while (toks[k]?.t === "(") { open++; k++; }
-    const w = toks[k]?.t, v = w === "true" || w === "Bool.true" ? true : w === "false" || w === "Bool.false" ? false : null;
-    if (v === null) return [null, k];
-    k++;
-    for (; open > 0; open--, k++) if (toks[k]?.t !== ")") return [null, k];
-    return [v, k];
-  };
-  const close = (k, o, c) => { let depth = 0; for (; k < toks.length; k++) { if (toks[k].t === o) depth++; else if (toks[k].t === c && --depth === 0) return k; } return toks.length; };
-  let native = false, unknown = false;
-  while (j < toks.length) {
-    const t = toks[j];
-    if ((t.t === "+" || t.t === "-") && toks[j + 1]?.k === "word" && !toks[j + 1].t.includes(".")) {
-      if (toks[j + 1].t === "native") native = t.t === "+";
-      j += 2; continue;
-    }
-    if (t.t === "(" && toks[j + 1]?.t === "config" && toks[j + 2]?.t === ":=") {
-      const end = close(j, "(", ")");
-      // Only exactly `(config := { name := literal, ... })` can be read: a brace right after
-      // `:=`, the closing brace right before `)`, and each item `name := true|false` (or a
-      // literal of another kind for other fields). Anything else -- field shorthand
-      // `{ native }`, `{ c with ... }`, an ascription, parentheses around the structure,
-      // `if` -- Lean evaluates, and all of these were measured to compute natively, so it
-      // is refused. A readable block resets every field, as in Lean.
-      const braceEnd = toks[j + 3]?.t === "{" ? close(j + 3, "{", "}") : -1;
-      if (braceEnd < 0 || braceEnd + 1 !== end) { unknown = true; j = end + 1; continue; }
-      native = false;
-      let k = j + 4;
-      while (k < braceEnd) {
-        const name = toks[k], eq = toks[k + 1];
-        if (name?.k !== "word" || name.t.includes(".") || eq?.t !== ":=") { unknown = true; break; }
-        if (name.t === "native") {
-          const [v, next] = literal(k + 2);
-          if (v === null || ![",", "}"].includes(toks[next]?.t) || next > braceEnd) { unknown = true; break; }
-          native = v; k = next;
-        } else {
-          // Another field: its value must be a single token (a literal Bool or number).
-          if (!toks[k + 2] || ![",", "}"].includes(toks[k + 3]?.t)) { unknown = true; break; }
-          k += 3;
-        }
-        if (toks[k]?.t === ",") k++;
-      }
-      j = end + 1; continue;
-    }
-    if (t.t === "(" && toks[j + 1]?.k === "word" && toks[j + 2]?.t === ":=") {
-      // `(native := v)`: a single option in parentheses.
-      const end = close(j, "(", ")");
-      if (toks[j + 1].t === "native") {
-        const [v, next] = literal(j + 3);
-        if (v === null || next !== end) unknown = true; else native = v;
-      }
-      j = end + 1; continue;
-    }
-    break;
-  }
-  return unknown ? { unknown: true } : native;
-}
+// What a Lean file contains, from Lean tokens (comments and strings excluded): the `module`
+// header, forbidden declarations and attributes, and the lines that use a computation tactic
+// -- for an early error in an entry without native_computation. That last part is a hint,
+// not a check: the verifier decides from the compiled files what is a computation.
 function leanScan(file) {
-  const src = fs.readFileSync(path.join(ROOT, file), "utf8");
-  const toks = leanTokens(src);
-  // Column of a character offset, in codepoints (Lean's String.Pos columns), from line start.
-  const col = (start) => [...src.slice(src.lastIndexOf("\n", start - 1) + 1, start)].length;
-  const calls = new Map(), forbidden = [], meta = [], unclear = [], imports = [];
-  // The first token must be `module`: only module files get Lean's checks that code run at
-  // compile time is declared `meta` (an ordinary file may define elaborators freely).
+  const toks = leanTokens(fs.readFileSync(path.join(ROOT, file), "utf8"));
+  const calls = [], forbidden = [];
   const header = toks[0]?.k === "word" && toks[0].t === "module";
-  const call = (t) => calls.set(`${t.line}:${col(t.start)}`, [t.line, col(t.start)]);
   for (let i = 0; i < toks.length; i++) {
     const t = toks[i];
     if (t.k !== "word") continue;
-    if (COMPUTATION_TACTICS.includes(t.t)) call(t);
-    else if (t.t === "decide") {
-      const n = decideIsNative(toks, i + 1);
-      if (n === true) call(t);
-      else if (n?.unknown) unclear.push({ line: t.line });
-    }
-    // A command or keyword that defines syntax or runs code (META_COMMANDS), or `meta`
-    // (a meta definition or a `meta import` of something other than Lemmata's own modules,
-    // which native_decide on another entry's definitions needs).
-    // Archive modules this file imports (any form: `import`, `public import`, `meta import`).
-    // `import all X` imports X with its private declarations: the module is the word after
-    // `all` (reported in review: `all` was taken as the name, so X was never followed).
-    if (t.t === "import") {
-      const name = toks[i + 1]?.t === "all" ? toks[i + 2]?.t : toks[i + 1]?.t;
-      if (/^Lemmata(\.|$)/.test(name ?? "")) imports.push(name);
-    }
-    if (META_COMMANDS.has(t.t)) meta.push({ what: `\`${t.t}\``, line: t.line });
-    else if (t.t === "meta") {
-      const name = toks[i + 1]?.t === "import" ? (toks[i + 2]?.t === "all" ? toks[i + 3]?.t : toks[i + 2]?.t) : null;
-      if (!(name && /^Lemmata(\.|$)/.test(name)))
-        meta.push({ what: name !== null ? `\`meta import ${name ?? ""}\`` : "`meta`", line: t.line });
-    }
+    // `native_decide`, `bv_decide`, …, and `decide` with `native` among its options
+    // (`decide +native`, `(config := { native := true })`; the next few tokens).
+    if (COMPUTATION_TACTICS.includes(t.t) ||
+        (t.t === "decide" && toks.slice(i + 1, i + 12).some((x) => x.k === "word" && x.t === "native"))) calls.push(t.line);
     // `axiom <name>` declares one (the tokenizer keeps names whole, so `Foo.axiom_x` is one
     // word); the two attributes appear inside `@[...]`, alone or after a comma.
     if (t.t === "axiom" && toks[i + 1]?.k === "word") forbidden.push({ what: FORBIDDEN_LEAN.axiom, line: t.line });
     if ((t.t === "implemented_by" || t.t === "extern") && ["[", ","].includes(toks[i - 1]?.t))
       forbidden.push({ what: FORBIDDEN_LEAN[t.t], line: t.line });
   }
-  return { calls: [...calls.values()].sort((a, b) => a[0] - b[0] || a[1] - b[1]), forbidden, meta, header, unclear, imports };
+  return { calls, forbidden, header };
 }
 function leanFiles(dir) {
   const abs = path.join(LEAN, LIB, dir);
   return fs.existsSync(abs) ? walk(abs, ".lean").map((f) => path.relative(ROOT, f).split(path.sep).join("/")).sort() : [];
 }
-// Every Lean file in the library: no forbidden declaration or attribute anywhere, and no
-// computation outside an entry that declared native_computation (Shared has no manifest).
+// Every Lean file in the library: a `module`, in an entry's directory or Shared/, with no
+// forbidden declaration or attribute, and no computation tactic outside an entry that
+// declared native_computation (Shared has no manifest). The verifier enforces the last point
+// on the compiled files as well; this gives the error early, with a file and line.
 function checkLeanSources(manifests) {
   const byDir = new Map(manifests.map((m) => [m.leanDir, m]));
   const dirs = fs.existsSync(path.join(LEAN, LIB)) ? listDirs(path.join(LEAN, LIB)) : [];
-  // Every Lean file lives in an entry's directory or in Shared/. A file directly in
-  // lean/Lemmata/ belongs to no entry and was never scanned, although Lake builds it (the
-  // lakefile globs Lemmata.*) and entries can import it (reported in review, 2026-10-26).
+  // A file directly in lean/Lemmata/ belongs to no entry, but Lake builds it (the lakefile
+  // globs Lemmata.*) and entries can import it.
   if (fs.existsSync(path.join(LEAN, LIB)))
     for (const d of fs.readdirSync(path.join(LEAN, LIB), { withFileTypes: true }))
       if (!d.isDirectory() && d.name.endsWith(".lean"))
         fail(`lean/${LIB}/${d.name}: Lean files belong in lean/${LIB}/<LeanName>/ (an entry) or lean/${LIB}/Shared/, not directly in lean/${LIB}/`);
-  // Every archive module: its file, what it imports, and whether it defines tactics, macros
-  // or syntax or runs code while compiling (META_COMMANDS; `meta import` of archive modules
-  // excepted, as everywhere).
-  const modOf = (f) => f.replace(/^lean\//, "").replace(/\.lean$/, "").split("/").join(".");
-  const scans = new Map();
-  for (const d of dirs) for (const f of leanFiles(d)) scans.set(modOf(f), { file: f, dir: d, ...leanScan(f) });
-  // A tactic defined in ANY imported archive module is in scope where the entry calls
-  // native_decide, and could be one spelled `native_decide` (reproduced: a fake defined in
-  // lean/Lemmata/Shared took effect through a plain import). So a flagged entry may not
-  // depend, directly or not, on an archive module that defines any. Importing ordinary
-  // entries is fine: their results are kernel-checked, whatever produced them.
-  const metaVia = new Map();                    // module -> chain to a meta-defining module, or null
-  const via = (mod, seen = new Set()) => {
-    if (metaVia.has(mod)) return metaVia.get(mod);
-    if (seen.has(mod)) return null;
-    seen.add(mod);
-    const x = scans.get(mod);
-    let chain = null;
-    if (x?.meta.length) chain = [mod];
-    else for (const imp of x?.imports ?? []) { const c = via(imp, seen); if (c) { chain = [mod, ...c]; break; } }
-    metaVia.set(mod, chain);
-    return chain;
-  };
-  for (const [mod, x] of scans) {
-    const m = byDir.get(x.dir);
-    if (!m?.native) continue;
-    for (const imp of x.imports) {
-      const c = via(imp);
-      if (c) fail(`${x.file}: imports ${c.join(" -> ")}, which defines tactics, macros or syntax (${scans.get(c.at(-1)).meta[0].what}, ` +
-        `line ${scans.get(c.at(-1)).meta[0].line}); an entry with \`native_computation: true\` may not depend on such a module, ` +
-        "because a tactic in scope could stand in for native_decide (see AGENTS.md, Computations)");
-    }
-  }
   for (const d of dirs) for (const f of leanFiles(d)) {
-    const { calls, forbidden, meta, header, unclear } = scans.get(modOf(f));
-    for (const x of unclear) fail(`${f}:${x.line}: \`decide\` options whose native setting cannot be read from the source; ` +
-      "write `+native`, `-native`, `native := true` or `native := false` literally (a named config or an expression is not allowed)");
+    const { calls, forbidden, header } = leanScan(f);
     if (!header) fail(`${f}: the first line must be \`module\` (Lean's module system; see AGENTS.md, Write the Lean)`);
     for (const x of forbidden) fail(`${f}:${x.line}: ${x.what} is not allowed (it asserts or replaces something Lean's kernel cannot check)`);
     const m = byDir.get(d);
-    if (m?.native) for (const x of meta) fail(`${f}:${x.line}: ${x.what} is not allowed in an entry with \`native_computation: true\` ` +
-      "(a tactic, macro or code of its own could fake a computation; see AGENTS.md, Computations)");
-    if (calls.length && !m?.native) fail(`${f}:${calls[0][0]}: computation tactic (native_decide, decide +native, bv_decide) ` +
+    if (calls.length && !m?.native) fail(`${f}:${calls[0]}: computation tactic (native_decide, decide +native, bv_decide) ` +
       (m ? `in an entry without \`native_computation: true\` in docs/${m.dir}/contribution.yml` : "outside an entry (lean/Lemmata/Shared must stay kernel-checked)"));
   }
 }
@@ -760,12 +619,9 @@ function verifierRequest(manifests) {
     allowed_axioms: ALLOWED_AXIOMS,
     exports: manifests.filter((m) => !frozen[m.id]).flatMap((m) => m.exports.map((e) =>
       ({ contribution: m.id, name: e.name, kind: e.kind, namespace: m.lean_namespace }))),
-    // Entries that may rely on computations, with the position [line, column] of every
-    // computation-tactic call: the verifier accepts a computation axiom only if the build
-    // recorded it exactly there. Frozen entries too: their modules are not built, but listing them costs
-    // nothing and keeps the request independent of the freeze.
-    native: manifests.filter((m) => m.native).map((m) => ({ contribution: m.id, namespace: m.lean_namespace,
-      calls: leanFiles(m.leanDir).map((f) => ({ file: f, at: leanScan(f).calls })).filter((c) => c.at.length) })),
+    // Entries that may rely on computations: the verifier accepts a computation axiom only
+    // in their modules.
+    native: manifests.filter((m) => m.native).map((m) => ({ contribution: m.id, namespace: m.lean_namespace })),
   };
 }
 

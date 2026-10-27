@@ -144,99 +144,26 @@ expect("@[extern] after another attribute",
   (d) => { addLean(d, "@[inline, extern \"lean_nat_add\"] def h (n : Nat) : Nat := n"); withUmbrella(d); }, { match: /extern.*not allowed/ });
 expect("native_computation must be true", (d) => append(d, mf, "native_computation: false\n"), { match: /must be true or left out/ });
 
-// Review of 2026-10-26: options of `decide` span lines; `native := false` is no computation;
-// a flagged entry may not define tactics, macros or syntax, nor run code while compiling;
-// every Lean file is a module.
+// Computation rules after the simplification of 2026-10-27: only the flag is checked from
+// the source (the verifier decides what is a computation, from the compiled files). A flagged
+// entry may use metaprogramming and `meta import` of Mathlib -- native_decide on Mathlib's
+// definitions needs it. Every Lean file is a module; none sits directly in lean/Lemmata/.
 expect("decide with native options on the next lines needs the flag",
   (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by\n  decide (config := {\n    native := true })"); withUmbrella(d); }, { match: /without `native_computation: true`/ });
-expect("decide +native on the next line needs the flag",
-  (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by\n  decide\n    +native"); withUmbrella(d); }, { match: /without `native_computation: true`/ });
-expect("positive control: decide with native := false needs no flag",
-  (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by decide (config := { native := false })\ntheorem u : 2 + 2 = 4 := by decide -native"); withUmbrella(d); }, { refused: false });
-expect("positive control: +native then -native is off",
-  (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by decide +native -native"); withUmbrella(d); }, { refused: false });
 expect("bv_check is a computation tactic too",
   (d) => { addLean(d, "theorem t : True := by bv_check \"x.lrat\""); withUmbrella(d); }, { match: /without `native_computation: true`/ });
-for (const [what, code] of [
-  ["elab", "open Lean Elab Tactic in\nelab (priority := high) \"native_decide\" : tactic => pure ()"],
-  ["macro", "macro \"forge\" : command => `(theorem x : True := trivial)"],
-  ["syntax", "syntax \"mytac\" : tactic"],
-  ["#eval", "#eval 1 + 1"],
-  ["run_cmd", "run_cmd pure ()"],
-  ["initialize", "initialize pure ()"],
-  ["meta", "meta def helper : Nat := 1"],
-])
-  expect(`${what} in an entry with native_computation: true`,
-    (d) => { addLean(d, code); withUmbrella(d); flag(d); }, { match: /not allowed in an entry with `native_computation: true`/ });
-expect("meta import of Mathlib in a flagged entry",
-  (d) => { append(d, lean.replace("Main.lean", "Extra.lean"), "module\n\npublic meta import Mathlib.Logic.Basic\npublic section\nnamespace Lemmata.ImplicationComposition\nend Lemmata.ImplicationComposition\n"); withUmbrella(d); flag(d); },
-  { match: /meta import Mathlib.Logic.Basic.*not allowed/ });
-expect("positive control: meta import of a Lemmata module in a flagged entry",
-  (d) => { append(d, lean.replace("Main.lean", "Extra.lean"), "module\n\npublic meta import Lemmata.ImplicationComposition.Main\npublic section\nnamespace Lemmata.ImplicationComposition\nend Lemmata.ImplicationComposition\n"); withUmbrella(d); flag(d); },
+expect("positive control: a flagged entry may meta import Mathlib (native_decide on Mathlib definitions)",
+  (d) => { append(d, lean.replace("Main.lean", "Extra.lean"), "module\n\npublic meta import Mathlib.Data.Nat.Prime.Defs\npublic section\nnamespace Lemmata.ImplicationComposition\ntheorem p : Nat.Prime 97 := by native_decide\nend Lemmata.ImplicationComposition\n"); withUmbrella(d); flag(d); },
   { refused: false });
-expect("positive control: notation in a flagged entry",
-  (d) => { addLean(d, "local notation \"two\" => (2 : Nat)\ntheorem t : two = 2 := rfl"); withUmbrella(d); flag(d); }, { refused: false });
-expect("positive control: an unflagged entry may define a macro",
-  (d) => { addLean(d, "macro \"mytriv\" : tactic => `(tactic| trivial)\ntheorem t : True := by mytriv"); withUmbrella(d); }, { refused: false });
+expect("positive control: a flagged entry may define a macro",
+  (d) => { addLean(d, "macro \"mytriv\" : tactic => `(tactic| trivial)\ntheorem t : True := by mytriv\ntheorem u : 2 + 2 = 4 := by native_decide"); withUmbrella(d); flag(d); }, { refused: false });
 expect("a Lean file without the module header",
   (d) => { append(d, lean.replace("Main.lean", "Extra.lean"), "import Mathlib.Logic.Basic\nnamespace Lemmata.ImplicationComposition\nend Lemmata.ImplicationComposition\n"); withUmbrella(d); },
   { match: /first line must be `module`/ });
-
-// Second review (2026-10-26). A tactic defined in an imported archive module is in scope in
-// the importing file, so a flagged entry may not depend on a module that defines tactics,
-// macros or syntax -- directly or through other modules. Ordinary (kernel-checked)
-// imports stay allowed.
-const sharedFake = "module\n\npublic meta import Lean.Elab.Tactic\npublic section\nnamespace Lemmata.Shared\n" +
-  "open Lean Elab Tactic in\nelab (priority := high) \"native_decide\" : tactic => pure ()\nend Lemmata.Shared\n";
-const importIn = (d, imp) => append(d, lean.replace("Main.lean", "Extra.lean"),
-  `module\n\npublic import ${imp}\npublic section\nnamespace Lemmata.ImplicationComposition\ntheorem t : 2 + 2 = 4 := by native_decide\nend Lemmata.ImplicationComposition\n`);
-const addShared = (d, file, text) => { fs.writeFileSync(path.join(d, "lean/Lemmata/Shared", file), text);
-  fs.writeFileSync(path.join(d, "lean/Lemmata.lean"), fs.readFileSync(path.join(d, "lean/Lemmata.lean"), "utf8").replace("public import Lemmata.Shared.Basic",
-    `public import Lemmata.Shared.Basic\npublic import Lemmata.Shared.${file.replace(".lean", "")}`)); };
-expect("a flagged entry importing a module that defines a tactic (the reviewer's case)",
-  (d) => { addShared(d, "Fake.lean", sharedFake); importIn(d, "Lemmata.Shared.Fake"); withUmbrella(d); flag(d); }, { match: /imports Lemmata\.Shared\.Fake, which defines tactics/ });
-expect("the same, two imports away",
-  (d) => { addShared(d, "Fake.lean", sharedFake); addShared(d, "Mid.lean", "module\n\npublic import Lemmata.Shared.Fake\npublic section\n");
-    importIn(d, "Lemmata.Shared.Mid"); withUmbrella(d); flag(d); }, { match: /imports Lemmata\.Shared\.Mid -> Lemmata\.Shared\.Fake, which defines tactics/ });
-expect("positive control: a flagged entry importing an ordinary entry",
-  (d) => { importIn(d, "Lemmata.Shared.Basic"); withUmbrella(d); flag(d); }, { refused: false });
-expect("positive control: an unflagged entry may import a tactic-defining module",
-  (d) => { addShared(d, "Fake.lean", sharedFake); append(d, lean.replace("Main.lean", "Extra.lean"),
-    "module\n\npublic import Lemmata.Shared.Fake\npublic section\nnamespace Lemmata.ImplicationComposition\nend Lemmata.ImplicationComposition\n"); withUmbrella(d); }, { refused: false });
-// decide options, each checked against Lean v4.35: (config := ...) replaces earlier settings;
-// a value that is not a literal Bool is refused rather than guessed.
-for (const [code, native] of [
-  ["decide (config := { native := (true) })", true], ["decide (config := { native := Bool.true })", true],
-  ["decide (native := ((Bool.true)))", true], ["decide +native (config := {})", false],
-  ["decide (config := { native := true }) (config := {})", false], ["decide +native (config := { kernel := false })", false],
-  ["decide (config := { kernel := false }) +native", true], ["decide (native := false) +native", true],
-])
-  expect(`\`${code}\` ${native ? "computes natively (needs the flag)" : "does not compute natively"}`,
-    (d) => { addLean(d, `theorem t : 2 + 2 = 4 := by ${code}`); withUmbrella(d); }, native ? { match: /without `native_computation: true`/ } : { refused: false });
-for (const code of ["decide (native := !false)", "decide (config := myCfg)", "decide (config := { myCfg with kernel := false })"])
-  expect(`\`${code}\` is refused: its native setting cannot be read`,
-    (d) => { addLean(d, `theorem t : 2 + 2 = 4 := by ${code}`); withUmbrella(d); }, { match: /cannot be read from the source/ });
-
-// Third review (2026-10-26): `import all` names the module after `all`; files directly in
-// lean/Lemmata/ belong to no entry and are refused; a config block other than exactly
-// `{ name := literal, ... }` is refused (shorthand `{ native }` computes natively).
-expect("a flagged entry reaching a tactic-defining module through `import all`",
-  (d) => { addShared(d, "Fake.lean", sharedFake); append(d, lean.replace("Main.lean", "Extra.lean"),
-    "module\n\nimport all Lemmata.Shared.Fake\npublic section\nnamespace Lemmata.ImplicationComposition\ntheorem t : 2 + 2 = 4 := by native_decide\nend Lemmata.ImplicationComposition\n");
-    withUmbrella(d); flag(d); }, { match: /imports Lemmata\.Shared\.Fake, which defines tactics/ });
-expect("`meta import all` of a non-Lemmata module in a flagged entry",
-  (d) => { append(d, lean.replace("Main.lean", "Extra.lean"), "module\n\nmeta import all Lean.Elab.Tactic\npublic section\nnamespace Lemmata.ImplicationComposition\nend Lemmata.ImplicationComposition\n"); withUmbrella(d); flag(d); },
-  { match: /meta import Lean\.Elab\.Tactic.*not allowed/ });
 expect("a Lean file directly in lean/Lemmata/",
-  (d) => { fs.writeFileSync(path.join(d, "lean/Lemmata/Helper.lean"), "module\npublic section\nmacro \"mytriv\" : tactic => `(tactic| trivial)\n");
+  (d) => { fs.writeFileSync(path.join(d, "lean/Lemmata/Helper.lean"), "module\npublic section\ntheorem helperT : True := trivial\n");
     fs.writeFileSync(path.join(d, "lean/Lemmata.lean"), fs.readFileSync(path.join(d, "lean/Lemmata.lean"), "utf8").replace("public import Lemmata.ImplicationComposition.Main", "public import Lemmata.Helper\npublic import Lemmata.ImplicationComposition.Main")); },
   { match: /lean\/Lemmata\/Helper\.lean: Lean files belong in/ });
-for (const code of ["decide (config := { native })", "decide (config := { kernel := false, native })", "decide (config := ({ native := true }))",
-  "decide (config := { native := true : Lean.Parser.Tactic.DecideConfig })", "decide (config := { native := if true then true else false })"])
-  expect(`\`${code}\` is refused: not a plain literal structure`,
-    (d) => { addLean(d, `theorem t : 2 + 2 = 4 := by ${code}`); withUmbrella(d); }, { match: /cannot be read from the source/ });
-expect("positive control: `(config := { native := true, zetaReduce := false })` is read",
-  (d) => { addLean(d, "theorem t : 2 + 2 = 4 := by decide (config := { native := true, zetaReduce := false })"); withUmbrella(d); }, { match: /without `native_computation: true`/ });
 
 // Frozen entries keep what their last check recorded, computations included (review,
 // 2026-10-26: a frozen computation-backed result was shown as plainly kernel-checked, its

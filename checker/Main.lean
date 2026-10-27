@@ -20,34 +20,22 @@ written either way so a failed build can show why.
 
 `native_decide` (also `decide +native`, `bv_decide`) has the compiler run a Boolean
 expression during the build and, if it evaluates to `true`, adds an axiom `e = true`
-named `<declaration>._native.<tactic>.ax_<n>_<m>`. The kernel never checks that claim. An
-entry may rely on such computations only if its manifest opts in, and then a computation
-axiom is accepted only if all of these hold:
+named `<declaration>._native.<tactic>.ax_<n>_<m>`. The kernel never checks that claim, and
+nobody re-runs it. An entry may rely on such computations only if its manifest opts in, and
+then a computation axiom is accepted only if:
 
 - it is named as Lean's tactics name them, with no universe parameters, and states exactly
-  `decide p = true` or `b = true` for a closed `Bool` (any other statement is a plain
-  custom axiom and refused);
+  `b = true` for a closed `Bool` (any other statement is a plain custom axiom and refused);
 - it is defined in a module of an entry that declared `native_computation: true` (never in
-  `Lemmata.Shared`, which has no manifest);
-- the build recorded the position of the tactic call that produced it, and the request
-  lists exactly that position (line and column) as the start of a `native_decide` /
-  `decide +native` / `bv_decide` token in the pristine source (the tools tokenize the
-  source, comments and strings excluded). Lean records the axiom at the tactic token
-  itself, for every way of calling it; an axiom made by hand, or by a macro invoked
-  elsewhere, has no such position and is refused.
+  `Lemmata.Shared`, which has no manifest).
 
-What the position does NOT show is which tactic ran there: a tactic of the contributor's
-own, spelled `native_decide`, can record a claim at exactly that position without
-computing anything (reproduced 2026-10-26). The tools therefore refuse, in an entry with
-`native_computation: true`, every way of defining tactics, macros or syntax or of running
-code while compiling (`META_COMMANDS` in tools/lemmata.mjs, plus any `meta` except
-`meta import` of Lemmata's own modules), and require every Lean file to be a `module`, whose
-compile-time code Lean confines to `meta` declarations. The position rule and that source
-rule together are what tie a computation axiom to Lean's own tactic.
-
-The report lists every accepted computation (declaration, claim, file and line) and, per
-export, the computations it relies on. Whether an export relies on its own entry's or on
-another entry's computations is decided by the tools from the defining module.
+That is deliberately all. Whether a claim really came from Lean's tactic is not checked:
+a contributor could produce one by other means, and the build that compiles the source is
+untrusted anyway (an earlier version matched source positions and restricted metaprogramming,
+and kept being bypassed; removed 2026-10-27). What protects readers is the label: a result
+that depends on any computation is never shown as kernel-checked, every claim is listed with
+its statement and source line, and the opt-in is a reviewed decision. The report lists every
+accepted computation and, per export, the computations it relies on.
 
 What it does NOT do: kernel re-checking of proofs. That is `leanchecker`'s job and runs as
 a separate step against the same oleans.
@@ -59,12 +47,10 @@ structure ExportReq where
   kind : String
   «namespace» : Name
 
-/-- An entry that declared `native_computation: true`: its namespace and, per source file,
-the positions at which the pristine source calls a computation tactic. -/
+/-- An entry that declared `native_computation: true`. -/
 structure NativeReq where
   contribution : String
   «namespace» : Name
-  calls : Array (String × Array (Nat × Nat))   -- source_file ("lean/Lemmata/X/Y.lean"), [line, column]
 
 structure Request where
   root : Name
@@ -84,11 +70,7 @@ def parseRequest (j : Json) : Except String Request := do
   -- Optional, so an older request (no computations anywhere) still parses.
   let nativeJs := (j.getObjValAs? (Array Json) "native").toOption.getD #[]
   let native ← nativeJs.mapM fun n => do
-    let calls ← (← jArr n "calls").mapM fun c => do
-      let positions ← (← c.getObjValAs? (Array (Array Nat)) "at").mapM fun p =>
-        match p with | #[l, k] => pure (l, k) | _ => throw "call position must be [line, column]"
-      pure (← jStr c "file", positions)
-    pure { contribution := ← jStr n "contribution", «namespace» := (← jStr n "namespace").toName, calls }
+    pure { contribution := ← jStr n "contribution", «namespace» := (← jStr n "namespace").toName }
   pure { root, allowedAxioms := allowed, exports, native }
 
 /-! ## Axiom collection, independent of stored axiom tables -/
@@ -188,21 +170,14 @@ def main (args : List String) : IO UInt32 := do
     let .axiomInfo v := ci | continue
     let some (decl, tac) := nativeAxiomParts c | continue
     let file := modulePath m
-    let pos? := (declRangeExt.find? (level := .server) env c).map (·.range.pos)
-    let line? := pos?.map (·.line)
+    -- Where the build recorded it, for the page's link to the source line (not a check).
+    let line? := (declRangeExt.find? (level := .server) env c).map (·.range.pos.line)
     let entry? := req.native.find? (·.«namespace».isPrefixOf m)
     let mut why : Array String := #[]
     unless v.levelParams.isEmpty do why := why.push "has universe parameters"
     unless isComputationClaim v.type do why := why.push "does not state `<Bool expression> = true`"
     if entry?.isNone then
       why := why.push s!"is in {m}, which belongs to no entry with `native_computation: true`"
-    match pos?, entry? with
-    | none, _ => why := why.push "has no recorded source position"
-    | some p, some e =>
-      let positions := (e.calls.find? (·.1 == file)).map (·.2) |>.getD #[]
-      unless positions.contains (p.line, p.column) do
-        why := why.push s!"was not produced by a computation tactic: it is recorded at {file}:{p.line}:{p.column}, where the source calls none"
-    | _, none => pure ()
     if why.isEmpty then
       computations := computations.insert c
       computationModule := computationModule.insert c m
