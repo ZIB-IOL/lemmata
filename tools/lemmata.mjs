@@ -414,18 +414,73 @@ function checkDois(manifests) {
   const have = bibDois();
   for (const [d, at] of linkedDois(manifests))
     if (!have.has(d)) fail(`${at}: DOI ${d} is not in docs/references.bib (the cluster renders offline); run: node tools/lemmata.mjs doi`);
+  checkCitations(manifests);
+}
+// Citations, one style everywhere (2026-10-28): an entry cites papers with @key / [@key]
+// from docs/references.bib, and MyST lists them under "References" at the end of the page.
+// So in an entry's pages: no link to a paper (doi.org, arxiv.org, as a link or a link
+// definition) and no hand-written References section; every @key used must be in the bib.
+// Other links (code, data, a project page) are fine.
+const PAPER_LINK_RE = /\]\(\s*(https?:\/\/(?:dx\.|www\.)?(?:doi\.org|arxiv\.org)\/[^)\s]+)|^\s*\[[^\]]+\]:\s*(https?:\/\/(?:dx\.|www\.)?(?:doi\.org|arxiv\.org)\/\S+)/gim;
+function checkCitations(manifests) {
+  const bib = fs.existsSync(BIB) ? fs.readFileSync(BIB, "utf8") : "";
+  // An at-sign outside an entry start (in a % comment, say) makes MyST's parser read an
+  // entry there and then fail on the whole file, so that no citation on the site resolves
+  // (found 2026-10-28: "expected lbrace, got label at line 1").
+  bib.split("\n").forEach((line, i) => {
+    if (line.includes("@") && !/^\s*@\w+\s*\{/.test(line) && !/^\s*[a-z]+\s*=/i.test(line))
+      fail(`docs/references.bib:${i + 1}: an at-sign outside an entry start breaks the whole file for MyST; remove it`);
+  });
+  const keys = new Set([...bib.matchAll(/^@\w+\s*\{\s*([^,\s]+)\s*,/gm)].map((m) => m[1]));
+  const sitePages = ["index.md", "checked.md", "changelog.md", "about.md"].map((p) => ({ f: path.join(DOCS, p), entry: false }));
+  const entryPages = manifests.flatMap((m) => m.pages.map((p) => ({ f: path.join(DOCS, m.dir, p), entry: true })));
+  for (const { f, entry } of [...sitePages, ...entryPages]) {
+    if (!fs.existsSync(f)) continue;
+    const rel = path.relative(ROOT, f);
+    // Outside code and math: `@` in Lean snippets or $...$ is not a citation.
+    let inFence = false;
+    fs.readFileSync(f, "utf8").split("\n").forEach((line, i) => {
+      if (/^\s*(```|~~~|:::)/.test(line)) { inFence = !inFence && /^\s*(```|~~~)/.test(line) ? true : /^\s*(```|~~~)/.test(line) ? false : inFence; return; }
+      if (inFence) return;
+      const text = line.replace(/`[^`]*`/g, "").replace(/\$\$?[^$]*\$\$?/g, "");
+      for (const m of text.matchAll(/(?<![\w@.\/-])\[?-?@([A-Za-z][\w:-]*[\w])/g))
+        if (!keys.has(m[1])) fail(`${rel}:${i + 1}: citation @${m[1]} is not in docs/references.bib (add the entry; \`node tools/lemmata.mjs doi\` fetches it for a DOI)`);
+      if (!entry) return;
+      for (const m of text.matchAll(PAPER_LINK_RE))
+        fail(`${rel}:${i + 1}: cite papers with @key from docs/references.bib, not a link (${m[1] ?? m[2]}); see AGENTS.md, "Cite"`);
+      if (/^#{1,6}\s+(references|bibliography|literature)\s*$/i.test(line))
+        fail(`${rel}:${i + 1}: no hand-written references section; cite with @key and MyST lists the references at the end of the page`);
+    });
+  }
 }
 // `doi`: append a BibTeX entry from doi.org for every linked DOI that references.bib lacks.
-async function fetchDois(manifests) {
-  const have = bibDois(), missing = [...linkedDois(manifests).keys()].filter((d) => !have.has(d));
-  if (!missing.length) { console.log("references.bib already has every linked DOI"); return; }
+// `doi <DOI>…` adds those DOIs (an arXiv paper's is 10.48550/arXiv.<id>); without arguments,
+// every DOI linked from the site pages that references.bib lacks. Each entry gets the house
+// key: first author's surname, year, first significant title word (braun2014matching).
+async function fetchDois(manifests, given = []) {
+  const have = bibDois();
+  const missing = (given.length ? given.map(doiNorm) : [...linkedDois(manifests).keys()]).filter((d) => !have.has(d));
+  if (!missing.length) { console.log(given.length ? "references.bib already has these DOIs" : "references.bib already has every linked DOI"); return; }
   let bib = fs.existsSync(BIB) ? fs.readFileSync(BIB, "utf8") : "";
   for (const d of missing) {
     const r = await fetch(`https://doi.org/${d}`, { headers: { accept: "application/x-bibtex; charset=utf-8" } });
     const text = (await r.text()).trim();
     if (!r.ok || !text.startsWith("@")) { fail(`DOI ${d}: doi.org answered ${r.status}; check the DOI, or add its entry to docs/references.bib by hand`); continue; }
-    // doi.org's own keys (Padberg_1982) can collide; make them unique and readable.
-    let key = text.match(/^@\w+\{([^,]+),/)?.[1] ?? "ref", k = key, n = 1;
+    // The house key, from the entry itself; made unique if it collides.
+    // A field's value with balanced braces: doi.org returns one-line records, so "to the end
+    // of the line" would run into the next field.
+    const field = (f) => {
+      const m = new RegExp(`(?:^|[\\s,{])${f}\\s*=\\s*([{"])`, "i").exec(text); if (!m) return "";
+      let i = m.index + m[0].length, depth = 1, out = "";
+      if (m[1] === '"') { const j = text.indexOf('"', i); return j < 0 ? "" : text.slice(i, j); }
+      for (; i < text.length && depth; i++) { const c = text[i]; if (c === "{") depth++; else if (c === "}" && --depth === 0) break; out += c; }
+      return out;
+    };
+    const plain = (x) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\\[a-z]+\s*|[{}\\'"`^~]/gi, "").toLowerCase();
+    const surname = plain((field("author").split(/\s+and\s+/i)[0] ?? "").split(",")[0].trim().split(/\s+/).pop() ?? "ref").replace(/[^a-z]/g, "");
+    const STOP = new Set(["a", "an", "the", "on", "of", "and", "for", "in", "to", "with", "is", "are"]);
+    const word = plain(field("title")).split(/[^a-z0-9]+/).find((w) => w && !STOP.has(w)) ?? "";
+    let key = `${surname || "ref"}${field("year").replace(/\D/g, "")}${word}`, k = key, n = 1;
     while (new RegExp(`\\{${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")},`).test(bib)) k = `${key}_${++n}`;
     bib = bib.replace(/\s*$/, "\n\n") + text.replace(/^(@\w+\{)[^,]+,/, `$1${k},`).replace(/\s+\n/g, "\n") + "\n";
     console.log(`added ${d} as ${k}`);
@@ -951,22 +1006,34 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       if (comp.entryOfModule(u.module ?? "")?.id === m.id && !seen.has(u.name)) seen.set(u.name, u);
     return [...seen.values()];
   };
-  // "Computations assumed": every claim with the line that runs it (linked) and the claim as
-  // the kernel stores it. The line comes from the source shown, so for a frozen entry it is
-  // the file at the frozen commit (unchanged since, which freezing requires).
-  const claimList = (m, claims, linkFor) => {
+  // "Computations assumed": every claim with the line that runs it, grouped by source file,
+  // one collapsed block per file. The line comes from the source shown, so for a frozen entry
+  // it is the file at the frozen commit (unchanged since, which freezing requires). The claims
+  // as the kernel stores them are left out: they can be very long (one real entry had 128
+  // claims totalling 860 kB, which made its page 3.6 MB) and are in lemmata.json, linked.
+  const claimList = (m, claims, linkFor, usedNames = null) => {
     if (!claims.length) return [];
     const one = claims.length === 1;
+    // Computations in helpers that no displayed result uses are listed too, but said so.
+    const unused = usedNames ? claims.filter((x) => !usedNames.has(x.name)).length : 0;
+    const byFile = new Map();
+    for (const x of claims) { const f = x.source_file ?? "?"; if (!byFile.has(f)) byFile.set(f, []); byFile.get(f).push(x); }
     const out = ["", `**Computations assumed.** ${one ? "This claim was" : `These ${claims.length} claims were`} ` +
       `evaluated by compiled code during the build and ${one ? "is" : "are"} **not** checked by Lean's kernel or re-run by the archive. ` +
-      `Running \`tools/check.sh\` re-runs ${one ? "it" : "them"}. [What this means](${COMPUTATION_PAGE_LINK}).`, ""];
-    for (const x of claims) {
-      const at = x.source_file ? linkFor(x.source_file) : null;
-      const line = (() => { try { return fs.readFileSync(path.join(ROOT, x.source_file), "utf8").split("\n")[x.line - 1]?.trim() ?? ""; } catch { return ""; } })();
-      out.push(`- In \`${String(x.declaration ?? x.name).split(".").slice(-1)[0]}\`, ${x.tactic ?? "computation"} at ` +
-        (at ? `[${x.source_file.replace(/^lean\//, "")}, line ${x.line}](${at}#L${x.line})` : `${x.source_file}, line ${x.line}`) + ":", "");
-      if (line) out.push("  ```lean", `  ${line}`, "  ```", "");
-      if (x.claim) out.push("  :::{dropdown} The claim as the kernel stores it", "  ```text", `  ${String(x.claim).replace(/\n/g, " ")} = true`, "  ```", "  :::", "");
+      `Running \`tools/check.sh\` re-runs ${one ? "it" : "them"}. [What this means](${COMPUTATION_PAGE_LINK}). ` +
+      (unused ? `${claims.length - unused} of them are used by the results above; the other ${unused} sit in helper declarations no displayed result depends on. ` : "") +
+      `Each claim as the kernel stores it is in [\`lemmata.json\`](${(process.env.SITE_URL ?? "https://lemmata.iol.berlin").replace(/\/$/, "")}/lemmata.json).`, ""];
+    // Inside the panel (a 4-colon dropdown), so each file's block uses 3 colons.
+    for (const [file, xs] of [...byFile].sort((a, b) => a[0].localeCompare(b[0]))) {
+      const at = file !== "?" ? linkFor(file) : null;
+      out.push(`:::{dropdown} ${file.replace(/^lean\//, "")} — ${xs.length} claim${xs.length === 1 ? "" : "s"}`, "");
+      const src = (() => { try { return fs.readFileSync(path.join(ROOT, file), "utf8").split("\n"); } catch { return []; } })();
+      for (const x of xs.sort((a, b) => (a.line ?? 0) - (b.line ?? 0))) {
+        const line = src[(x.line ?? 0) - 1]?.trim() ?? "";
+        out.push(`- \`${String(x.declaration ?? x.name).split(".").slice(-1)[0]}\`, ${x.tactic ?? "computation"}, ` +
+          (at ? `[line ${x.line}](${at}#L${x.line})` : `line ${x.line}`) + (line ? `: \`${line.replace(/`/g, "'")}\`` : ""));
+      }
+      out.push("", ":::", "");
     }
     return out;
   };
@@ -1080,7 +1147,10 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     // Every computation this entry's results rely on that the entry itself contributes:
     // where it is in the source (linked to the line) and what it claims, verbatim as the
     // kernel stores it (the verifier reads compiled files without notation).
-    if (!fz && report && passed) lines.push(...claimList(m, comp.claims.filter((x) => comp.entryOfModule(x.module)?.id === m.id), link));
+    if (!fz && report && passed) {
+      const used = new Set(m.exports.flatMap((e) => (byName.get(e.name)?.computations ?? []).map((u) => u.name)));
+      lines.push(...claimList(m, comp.claims.filter((x) => comp.entryOfModule(x.module)?.id === m.id), link, used));
+    }
     if (!fz) lines.push("",
       report ? `Checked${commit ? ` at commit \`${commit.slice(0, 12)}\`` : ""}. The formal statement is ` +
         "machine-checked" + (compN ? ", modulo the computations named above" : "") + "; that it matches the prose is checked by review. " +
@@ -1868,7 +1938,7 @@ switch (cmd) {
     finish("prepared docs/_generated and docs/myst.runtime.yml"); break;
   }
   case "new": scaffold(args[0], args[1], args[2]); finish(); break;
-  case "doi": { const ms = loadManifests(); finish(); await fetchDois(ms); finish(); break; }
+  case "doi": { const ms = loadManifests(); finish(); await fetchDois(ms, args); finish(); break; }
   case "site-index": {            // after myst build: llms.txt, lemmata.json, sitemap, robots
     const cats = loadCategories(); const ms = loadManifests(cats); finish();
     const report = args[0] ? JSON.parse(fs.readFileSync(args[0], "utf8")) : null;

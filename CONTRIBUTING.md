@@ -88,10 +88,11 @@ small entries may keep everything in `Main.lean` — but new entries should foll
   the next line, so it reads "Proof (of Theorem 1)" instead of a bare "Proof 1".
   Validation enforces this.
 - Refer to other entries' results by label: `[](#thm-implication-composition)`.
-- A `https://doi.org/…` link needs a BibTeX entry in `docs/references.bib`: the cluster
-  renders without internet, so MyST cannot look the DOI up there. Run
-  `node tools/lemmata.mjs doi` to fetch missing entries from doi.org and commit the file.
-  Validation refuses a linked DOI that is missing.
+- Cite papers with `@key` (narrative, "Rothvoss (2013)") or `[@key]` (parenthetical) from
+  `docs/references.bib`; the page lists them under "References" at the end. Don't link to
+  papers (`doi.org`, `arxiv.org`) and don't write a references section: validation refuses
+  both. Add new works to `references.bib` (key: first author, year, first title word); the
+  cluster renders without internet, so every cited work must be there. Details in AGENTS.md.
 - Keep both generated includes the scaffold writes: `../_generated/provenance/<id>.md`
   under the title (who contributed, from git — your name is your git author name) and
   `../_generated/verification/<id>.md` at the end (what was checked). Validation requires

@@ -165,6 +165,16 @@ expect("a Lean file directly in lean/Lemmata/",
     fs.writeFileSync(path.join(d, "lean/Lemmata.lean"), fs.readFileSync(path.join(d, "lean/Lemmata.lean"), "utf8").replace("public import Lemmata.ImplicationComposition.Main", "public import Lemmata.Helper\npublic import Lemmata.ImplicationComposition.Main")); },
   { match: /lean\/Lemmata\/Helper\.lean: Lean files belong in/ });
 
+// Citations (2026-10-28): papers are cited with @key from references.bib; links to papers
+// and hand-written reference sections are refused in entries; unknown keys everywhere.
+expect("an inline arXiv link in an entry", (d) => append(d, page, "\nSee [Rothvoss](https://arxiv.org/abs/1311.2369).\n"), { match: /cite papers with @key/ });
+expect("a DOI link definition in an entry", (d) => append(d, page, "\nSee [the paper][x].\n\n[x]: https://doi.org/10.1287/moor.7.1.67\n"), { match: /cite papers with @key/ });
+expect("a hand-written References section", (d) => append(d, page, "\n## References\n\n1. Someone (2020).\n"), { match: /no hand-written references section/ });
+expect("an unknown citation key", (d) => append(d, page, "\nAs shown by @nobody2099nothing.\n"), { match: /citation @nobody2099nothing is not in docs\/references\.bib/ });
+expect("positive control: known keys, narrative and parenthetical", (d) => append(d, page, "\nAs in @padberg1982odd and [@wyner1975common; @rothvoss2013matching].\n"), { refused: false });
+expect("positive control: links to code and @ in code, math and an email are fine",
+  (d) => append(d, page, "\nCode: [repo](https://github.com/x/y). Lean `@Foo.bar`, math $a@b$, mail x@example.org.\n\n```lean\n#check @Nat.add\n```\n"), { refused: false });
+
 // Frozen entries keep what their last check recorded, computations included (review,
 // 2026-10-26: a frozen computation-backed result was shown as plainly kernel-checked, its
 // claims dropped and llms.txt without the caveat). A frozen record of the shape

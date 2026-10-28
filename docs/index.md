@@ -21,7 +21,7 @@ Entries are web pages rather than papers. They are written in MyST Markdown and 
 as HTML with KaTeX, so an entry can use what fits the mathematics — numbered results,
 diagrams, interactive widgets — instead of a fixed paper layout. We chose HTML on purpose:
 almost any information can be represented in it well, more richly than in a static
-document [@shihipar2026html].
+document [@shihipar2026using].
 
 The repository is also built to be read by machines, and by language models in
 particular. [`/llms.txt`](https://lemmata.iol.berlin/llms.txt) is a plain-text overview of
@@ -45,4 +45,4 @@ Lean's kernel, using only the standard axioms. That the English statement means 
 as the Lean statement is checked by human review. [Read the full definition](checked.md).
 
 For what "verified in Lean" does and does not establish, and what a reader should still
-check, we recommend the essay by @spiegel2026trust.
+check, we recommend the essay by @spiegel2026verification.

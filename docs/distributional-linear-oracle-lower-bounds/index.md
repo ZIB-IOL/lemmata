@@ -22,7 +22,7 @@ w_k=C\sqrt{2k}\quad(1\le k\le d).
 $$
 
 For a permutation $\pi$ of $\{1,\ldots,d\}$ define the
-[Grimmer–Liu](https://arxiv.org/abs/2602.22608) family
+family of @grimmer2026lower
 
 $$
 S_\pi=\left\{x\in\mathbb R^d:
@@ -147,29 +147,11 @@ probability regime, not an additional formal proof assumption.
 The dimension grows with $T$. Moreover, $\alpha D=2C(2-\sqrt2)$ couples
 curvature and diameter in this family: these are not independently prescribed
 geometric parameters. The statements do not assert an infinite-time obstruction
-in a fixed dimension or a lower bound on practical running time. The Grimmer–Liu
-construction is reused; the contribution covered here is the fixed-prior result
-for unrestricted randomized methods and its consequences.
-
-## References
-
-1. Benjamin Grimmer and Ning Liu (2026).
-   *Lower bounds for linear minimization oracle methods optimizing over strongly convex sets*.
-   [arXiv:2602.22608](https://arxiv.org/abs/2602.22608).
-
-2. Jannis Halbey, Daniel Deza, Max Zimmer, Christophe Roux, Bartolomeo Stellato,
-   and Sebastian Pokutta (2026).
-   *Lower bounds for Frank–Wolfe on strongly convex sets*.
-   [arXiv:2602.04378](https://arxiv.org/abs/2602.04378).
-
-3. Jannis Halbey, Christophe Roux, and Sebastian Pokutta (2026).
-   *Curvature-dependent lower bounds for Frank–Wolfe*.
-   In *Advances in Neural Information Processing Systems (NeurIPS)*, to appear.
-   [arXiv:2605.10595](https://arxiv.org/abs/2605.10595).
-
-4. Sebastian Pokutta (2026).
-   *Lower Bounds for Randomized Linear-Oracle Optimization over Strongly Convex Sets*.
-   [arXiv:2610.13590](https://arxiv.org/abs/2610.13590).
+in a fixed dimension or a lower bound on practical running time. The construction
+of @grimmer2026lower is reused; the contribution covered here is the fixed-prior result
+for unrestricted randomized methods and its consequences, from @pokutta2026lower.
+Related lower bounds for Frank–Wolfe on strongly convex sets are in
+@halbey2026lower and @halbey2026curvature.
 
 ```{include} ../_generated/verification/distributional-linear-oracle-lower-bounds.md
 ```

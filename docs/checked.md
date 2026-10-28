@@ -13,7 +13,7 @@ A result marked **✓ kernel-checked (Lean v…)** satisfies all of the followin
 by machinery rather than by the author:
 
 - **It compiles.** The Lean declaration exists in the archive's library and builds with the
-  pinned Lean and Mathlib versions [@mathlib2020].
+  pinned Lean and Mathlib versions [@mathlib2020lean].
 - **Lean's kernel accepted it.** The kernel re-checks every declaration of the archive from
   the compiled files (`leanchecker`), independently of the elaborator that produced them.
 - **It uses only the standard axioms.** The result depends on no axioms beyond `propext`,
@@ -89,7 +89,7 @@ badge names the version used.
 It also does not say anything about novelty, priority, or the importance of a result.
 
 For a fuller account of what to check before trusting "verified in Lean", and why it is
-never only about certification, see @spiegel2026trust.
+never only about certification, see @spiegel2026verification.
 
 ## How the check runs
 

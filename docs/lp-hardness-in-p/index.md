@@ -35,9 +35,9 @@ of vertices in each bipartition class in the last row.
 
 The first three applications use the exponential nonnegative-rank bound
 for the shifted odd-cut versus perfect-matching matrix proved by
-[Braun and Pokutta](https://arxiv.org/abs/1403.6710). The fourth uses a
+@braun2014matching. The fourth uses a
 different matrix, from
-[Jia, Svensson, and Yuan](https://arxiv.org/abs/2211.09106). Their published
+@jia2022exact. Their published
 exact bound alone does not give the shift needed for a fixed-factor
 approximation. Below we prove the required extension; Lean checks its
 new construction, charging estimate, and finite rank consequence, while
@@ -87,16 +87,16 @@ r_+(Q_{n,r})=2^{\Omega_r(n)}
 $$ (eq-lp-hardness-in-p-matching-source)
 
 In Section 2.2.3 and the proof of Theorem 3.1 of
-[Braun and Pokutta](https://arxiv.org/html/1403.6710), the relevant
+@braun2014matching, the relevant
 submatrix has entries $(q_n-1+\beta)/2$ for fixed $0<\beta<1$.
 Taking $\beta=1-r$ and rescaling gives the stated nonnegative-rank bound.
-[Rothvoss's exact matching bound](https://arxiv.org/abs/1311.2369)
+The exact matching bound of @rothvoss2013matching
 corresponds to $r=1$; it is not by itself a bound for $r<1$.
 
 We use the formulation-complexity factorization theorem in its usual
 affine Farkas form, as in
-[Braun, Pokutta, and Zink](https://arxiv.org/abs/1410.8816) and
-[Braun, Pokutta, and Roy](https://arxiv.org/abs/1512.04932).
+@braun2014affine and
+@braun2015strong.
 For precision, the formalization starts from the certificate data:
 if $P=\{z:s_l(z)\ge0,\ 1\le l\le m\}$ and $\beta_i$ is the claimed
 objective bound, it assumes nonnegative coefficients $y_{il},\kappa_i$
@@ -214,7 +214,7 @@ Since $\lambda>0$, scaling preserves nonnegative rank. Apply
 ```
 
 Applying the bound $r_+(Q_{n,r})=2^{\Omega_r(n)}$ of
-[Braun and Pokutta](https://arxiv.org/abs/1403.6710) with $r=1/(2\alpha)$
+@braun2014matching with $r=1/(2\alpha)$
 gives $m=2^{\Omega_\alpha(n)}$ for every fixed $\alpha>1$, although
 weighted perfect matching is polynomial-time
 solvable. The costs are $1$ and $1+(\alpha-1)n$. Thus their aspect ratio
@@ -313,7 +313,7 @@ nonnegative rank, so apply [](#thm-lp-hardness-in-p-factorization).
 
 The resulting bound is $2^{\Omega_\alpha(n)}$ for fixed $\alpha>1$.
 Polynomial-time solvability is supplied by the odd-cut algorithm of
-[Padberg and Rao](https://doi.org/10.1287/moor.7.1.67).
+@padberg1982odd.
 
 ## Minimum-cost odd-red bipartite perfect matching
 
@@ -401,7 +401,7 @@ host with $2n$ vertices and $2n^2$ colored edges. All costs are positive
 and at most $1+2(\alpha-1)n$. No metric restriction is asserted here.
 The weighted odd-red problem is deterministically polynomial-time
 solvable; see the discussion of weighted parity matching in
-[Jia, Svensson, and Yuan, Section 1](https://arxiv.org/html/2211.09106).
+@jia2022exact, Section 1.
 The condition is an odd red count, rather than an exactly prescribed
 red count.
 
@@ -410,8 +410,8 @@ red count.
 The preceding arguments use simple scaling, restriction, and
 transposition. The accompanying library also proves the more general
 reduction used in
-[Affine reductions for LPs and SDPs](https://arxiv.org/abs/1410.8816)
-and [Strong reductions for extended formulations](https://arxiv.org/abs/1512.04932).
+@braun2014affine
+and @braun2015strong.
 
 ```{prf:theorem} Factorization reduction
 :label: thm-lp-hardness-in-p-reduction
@@ -554,7 +554,7 @@ matching. **The new extension is formalized in Lean, conditional on
 explicit assertions from the earlier partition framework.** These
 assertions include the small- and bad-triple estimates, Equations
 (4.5)–(4.6), and the permutation lemma, Lemma 4.4, of
-[Jia, Svensson, and Yuan, Sections 4.2–4.6](https://arxiv.org/html/2211.09106#S4).
+@jia2022exact, Sections 4.2–4.6.
 Their entropy proofs and the complete outside-partition construction are
 not formalized here. The one-violation construction, its admissibility,
 the new charging estimate, conversion to finite rank bounds, numerical

@@ -16,7 +16,7 @@ We study the cocubic case $r=m-4$, $s=m-3$. A lower bound requires one polynomia
 
 ## Previous lower bounds
 
-[Dougherty, Mauldin, and Tiefenbruck][dmt] proved the lower bound $\rho(\mathrm{RM}(5,9),\mathrm{RM}(6,9))\ge28$ and the constructive bound $\rho(\mathrm{RM}(m-4,m),\mathrm{RM}(m-3,m))\ge2m+10$ for $m\ge8$. We recall the self-orthogonality construction underlying these bounds.
+@dougherty2022covering proved the lower bound $\rho(\mathrm{RM}(5,9),\mathrm{RM}(6,9))\ge28$ and the constructive bound $\rho(\mathrm{RM}(m-4,m),\mathrm{RM}(m-3,m))\ge2m+10$ for $m\ge8$. We recall the self-orthogonality construction underlying these bounds.
 
 Work over $\mathbb F_2$, and fix a Boolean polynomial $f$ in $m\ge4$ variables with $\deg f=m-3$. Write a correction $h\in\mathrm{RM}(m-4,m)$ as $h=p+\ell$, where $p$ is its homogeneous degree-$(m-4)$ part and $\ell$ contains the lower-degree terms. Put $g=f+h$, $S=\{x\in\mathbb F_2^m:g(x)=1\}$ and $n=|S|=\operatorname{wt}(g)$.
 
@@ -62,7 +62,7 @@ Choose $q_1,\ldots,q_t$ such that the functionals $b_p(q_i,\cdot)$ are independe
 
 If the degree-$(m-2)$ parts of $x_1f,\ldots,x_mf$ are linearly independent, then the affine value vectors are linearly independent for every correction and $\dim V_g=m+1$. The theorem then gives $\operatorname{wt}(g)\ge2m+2+\operatorname{rank}b_p$, reducing a coset-weight lower bound to an affine MinRank lower bound.
 
-Under this independence hypothesis, a level-$k$ certificate in the sense of [Dougherty, Mauldin, and Tiefenbruck][dmt] exists if and only if $\operatorname{rank}b_p\ge2k$ for every $p$, when certificate size is unrestricted. Both formulations give the weight lower bound $2m+2k+2$.
+Under this independence hypothesis, a level-$k$ certificate in the sense of @dougherty2022covering exists if and only if $\operatorname{rank}b_p\ge2k$ for every $p$, when certificate size is unrestricted. Both formulations give the weight lower bound $2m+2k+2$.
 
 To reduce the matrix family, choose a subspace $N\subseteq Q_f$ so that the restriction $A_p$ of $b_p$ to $N$ depends on only a small linear projection of $p$. Its possible values can then be enumerated while the other coefficients remain free. For each value, put $A_p$ into symplectic normal form and let $C_p$ be the pairing between $\operatorname{rad}A_p$ and the remaining coordinates.
 
@@ -112,16 +112,12 @@ For $f=f_{11}$ and every $h\in\mathrm{RM}(7,11)$, we have $\operatorname{rank}b_
 
 ::::
 
-The known upper bound $32$ of [Dougherty, Mauldin, and Tiefenbruck][dmt] therefore gives $\rho(\mathrm{RM}(5,9),\mathrm{RM}(6,9))=32$. The upper bound $32$ of [Khoruzhii, Gelß, and Pokutta][rmwd] similarly gives $\rho(\mathrm{RM}(6,10),\mathrm{RM}(7,10))=32$.
+The known upper bound $32$ of @dougherty2022covering therefore gives $\rho(\mathrm{RM}(5,9),\mathrm{RM}(6,9))=32$. The upper bound $32$ of @khoruzhii2026weight similarly gives $\rho(\mathrm{RM}(6,10),\mathrm{RM}(7,10))=32$.
 
-The three consecutive examples also give a uniform construction in higher dimensions. The three-variable extension of [Dougherty, Mauldin, and Tiefenbruck][dmt] replaces $f(x)$ by $f^*(x,y)=y_1y_2y_3f(x)+x_1\cdots x_m$. The rank lower bound for the old quadratic multipliers and the independence of affine multiples are preserved, so each step increases the resulting weight lower bound by $6$. Starting from $m=9,10,11$ therefore gives $\rho(\mathrm{RM}(m-4,m),\mathrm{RM}(m-3,m))\ge2m+12$ for every $m\ge9$, improving their constructive bound $2m+10$.
+The three consecutive examples also give a uniform construction in higher dimensions. The three-variable extension of @dougherty2022covering replaces $f(x)$ by $f^*(x,y)=y_1y_2y_3f(x)+x_1\cdots x_m$. The rank lower bound for the old quadratic multipliers and the independence of affine multiples are preserved, so each step increases the resulting weight lower bound by $6$. Starting from $m=9,10,11$ therefore gives $\rho(\mathrm{RM}(m-4,m),\mathrm{RM}(m-3,m))\ge2m+12$ for every $m\ge9$, improving their constructive bound $2m+10$.
 
-The cubic-form catalog is described by [Khoruzhii, Gelß, and Pokutta][cbcf]; reference implementations of the lower-bound searches and accompanying data are available in the [BCF10 repository][code].
+The cubic-form catalog is described by @khoruzhii2026classification; reference implementations of the lower-bound searches and accompanying data are available in the [BCF10 repository](https://github.com/khoruzhii/bcf10).
 
-[dmt]: https://doi.org/10.1109/TIT.2021.3120754
-[rmwd]: https://doi.org/10.48550/arXiv.2607.02365
-[cbcf]: https://doi.org/10.48550/arXiv.2606.28473
-[code]: https://github.com/khoruzhii/bcf10
 
 ```{literalinclude} ../../lean/Lemmata/CocubicCovering/Main.lean
 :language: lean

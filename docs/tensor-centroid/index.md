@@ -18,7 +18,7 @@ A tensor is **concise** if its slices in each direction are linearly independent
 
 ## Previous bounds
 
-[Kassabov, Landsberg, Souza, and Speegle](https://arxiv.org/abs/2608.27434) proved the upper bound $\dim\operatorname{Cen}(T)\le N^{3/2}$ and constructed tensors approaching it asymptotically. They also gave symmetric examples providing the asymptotic lower bound $(\sqrt2/3)N^{3/2}$. We determine the maximum for every $N$ in both cases and prove that this leading constant is optimal in the symmetric case.
+@kassabov2026disjoint proved the upper bound $\dim\operatorname{Cen}(T)\le N^{3/2}$ and constructed tensors approaching it asymptotically. They also gave symmetric examples providing the asymptotic lower bound $(\sqrt2/3)N^{3/2}$. We determine the maximum for every $N$ in both cases and prove that this leading constant is optimal in the symmetric case.
 
 ## Sharp bounds
 

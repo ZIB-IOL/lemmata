@@ -7,7 +7,7 @@ title: Common information and hyperplane separation are incomparable
 
 Two explicit matrix families separate common information from the logarithm of
 HSB in both directions. This gives a negative answer to the literal polynomial
-comparison in Braun–Jain–Lee–Pokutta, Question 7.2 [3], for the unmodified
+comparison in @braun2017information, Question 7.2, for the unmodified
 functionals on a fixed matrix. No claim about comparisons optimized over
 rescalings, representations, or conditioning is intended.
 
@@ -38,8 +38,8 @@ The infimum ranges over **all finite product mixtures**, not only uniform
 rectangle mixtures. Zero entries and zero-weight components are permitted.
 ```
 
-This is the finite-auxiliary characterization of Wyner common information [1],
-used for matrix lower bounds by Braun–Pokutta [2]. The joint distribution
+This is the finite-auxiliary characterization of Wyner common information [@wyner1975common],
+used for matrix lower bounds by @braun2013common. The joint distribution
 $\Pr[\Pi=z,A=i,B=j]=w_zp_z(i)q_z(j)$ makes $A,B$ conditionally independent given
 $\Pi$, and its displayed cost is $I((A,B);\Pi)$, **not** $H_2(\Pi)$.
 Conversely, any finite joint law with conditional independence yields such a
@@ -229,8 +229,9 @@ realization of these matrices, or novelty/priority assertion is made here.
 
 The formalization covers finite auxiliary alphabets and their exact finite-joint
 interpretation; it does not separately formalize a reduction from arbitrary
-auxiliary probability spaces. The sources [1–3] supply the historical context.
-Question 7.2 in [3] asks the comparison question; it does not prove the
+auxiliary probability spaces. The sources [@wyner1975common; @braun2013common; @braun2017information]
+supply the historical context. Question 7.2 in @braun2017information asks the comparison
+question; it does not prove the
 incomparability established by the displayed families.
 
 ```{literalinclude} ../../lean/Lemmata/CommonInformationHsb/Main.lean
@@ -238,22 +239,6 @@ incomparability established by the displayed families.
 :start-after: -- DOCS_BEGIN_MAIN
 :end-before: -- DOCS_END_MAIN
 ```
-
-## References
-
-1. Aaron D. Wyner (1975).
-   *The common information of two dependent random variables*.
-   IEEE Transactions on Information Theory 21(2), 163–179.
-   [DOI](https://doi.org/10.1109/TIT.1975.1055346).
-2. Gábor Braun and Sebastian Pokutta (2013).
-   *Common information and unique disjointness*.
-   FOCS, 688–697. [DOI](https://doi.org/10.1109/FOCS.2013.79).
-   [Full version, ECCC TR13-056](https://eccc.weizmann.ac.il/report/2013/056/).
-3. Gábor Braun, Rahul Jain, Troy Lee, and Sebastian Pokutta (2017).
-   *Information-theoretic approximations of the nonnegative rank*.
-   Computational Complexity 26(1), 147–197.
-   [DOI](https://doi.org/10.1007/s00037-016-0125-z).
-   [Full version, ECCC TR13-158](https://eccc.weizmann.ac.il/report/2013/158/).
 
 ```{include} ../_generated/verification/common-information-hsb.md
 ```

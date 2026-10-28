@@ -273,14 +273,21 @@ The informal proof.
   numbers proofs on their own, so a page with a theorem, a proposition and one proof
   would say "Proof 1" and leave the reader guessing. A proof of several statements
   lists them all: `of [](#prop-<id>-…) and [](#thm-<id>)`.
-- **DOI links need a BibTeX entry.** MyST turns every `https://doi.org/…` (or `doi:…`)
-  link into a citation and looks it up online while rendering; the cluster renders
-  **without internet**, so the lookup fails there and the entry is not published. After
-  adding a DOI link, run `node tools/lemmata.mjs doi`: it fetches the entry from doi.org
-  into `docs/references.bib`. Commit that file too. `validate` refuses a linked DOI that is
-  not in `references.bib`, and `tools/check.sh` also renders offline to catch anything
-  else that would need the network. Tidy the fetched entry if you like (doi.org's titles
-  can contain HTML such as `<i>b</i>`; write `$b$`); keep its `doi` field.
+- **Cite papers with `@key`**, from `docs/references.bib`: `@rothvoss2013matching proved`
+  renders as "Rothvoss (2013) proved", `[@wyner1975common]` as "(Wyner, 1975)",
+  `[@a; @b]` cites several. MyST lists every work a page cites under "References" at the
+  end of the page, in one style for the whole site. **Do not link to papers**
+  (`doi.org`, `arxiv.org`) and do not write a References section: `validate` refuses both
+  in an entry, and an unknown `@key` anywhere. Links to code, data or a project page are
+  fine. A work cited only in passing still needs its `@key`; the page lists only what
+  it cites.
+- **Adding a work to `references.bib`.** For a paper with a DOI, run
+  `node tools/lemmata.mjs doi <DOI>` -- arXiv papers have one too, `10.48550/arXiv.<id>`.
+  It fetches the entry from doi.org and gives it the house key (first author, year, first
+  title word: `braun2014matching`), which you then cite. The cluster renders
+  **without internet**, so every cited work must be in the file; `tools/check.sh` renders
+  offline to catch anything that would need the network. Tidy a fetched entry (titles can
+  contain HTML such as `<i>b</i>`; write `$b$`) and keep its `doi`.
 - Never paste Lean into Markdown by hand; always `literalinclude`.
 - Refer to results by label: `[](#thm-implication-composition)`. Labels from other entries work.
 - Other environments: `prf:lemma`, `prf:definition`, `prf:corollary`, `prf:proposition`.

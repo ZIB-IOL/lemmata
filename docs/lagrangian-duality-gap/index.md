@@ -14,8 +14,7 @@ When do these approaches give the same bound?
 
 Geoffrion's theorem gives equality when $X$ is finite or is the set of integer
 points of a rational polyhedron. Beyond those assumptions, taking the closure
-of the convex hull need not restore equality. The paper
-[Geoffrion's theorem beyond finiteness and rationality](https://arxiv.org/html/2510.10966v1)
+of the convex hull need not restore equality. The paper of @dey2025geoffrion
 studies this question. Its Theorem 1.4 establishes equality for a single relaxed
 linear inequality with rational data, provided the objective has a finite
 infimum over $X$.

@@ -21,13 +21,13 @@ Here $T^{\otimes m}\in V_1^{\otimes m}\otimes\cdots\otimes V_k^{\otimes m}$: fac
 
 ## Previous bounds
 
-For $k\ge4$, [Brand et al.](https://arxiv.org/abs/2602.11975) proved that every $T\in(\mathbb C^n)^{\otimes k}$ satisfies $\widetilde R(T)\le n^{0.772318(k-1)}$. Their general bound in terms of the matrix multiplication exponent $\omega$ is
+For $k\ge4$, @brand2026beyond proved that every $T\in(\mathbb C^n)^{\otimes k}$ satisfies $\widetilde R(T)\le n^{0.772318(k-1)}$. Their general bound in terms of the matrix multiplication exponent $\omega$ is
 
 $$
 \widetilde R(T)\le n^{(k-1)\omega/3}.
 $$
 
-Combining this with the $\omega\le9/4$ bound in [OpenAI's preprint](https://github.com/openai/math/blob/main/preprints/Matrix-Multiplication-Nine-Fourths-October-2-2026/paper.pdf) gives $\widetilde R(T)\le n^{3(k-1)/4}$.
+Combining this with the $\omega\le9/4$ bound of @openai2026upper gives $\widetilde R(T)\le n^{3(k-1)/4}$.
 
 ## The square-root bound
 
@@ -71,7 +71,7 @@ $$
 \tau(K_k)=\frac{\log\widetilde R(G_k(d))}{\binom{k}{2}\log d}.
 $$
 
-This quantity is independent of $d$. For $k=3$, the tensor is the matrix multiplication tensor and $\tau(K_3)=\omega/3\ge2/3$. [Christandl, Vrana, and Zuiddam](https://arxiv.org/abs/1609.07476) asked whether $\tau(K_k)<2/3$ is possible for some $k\ge5$ (Question 1.3.1). The case $K_5$ is the first for which the cut lower bound permits such an improvement.
+This quantity is independent of $d$. For $k=3$, the tensor is the matrix multiplication tensor and $\tau(K_3)=\omega/3\ge2/3$. @christandl2019asymptotic asked whether $\tau(K_k)<2/3$ is possible for some $k\ge5$ (Question 1.3.1). The case $K_5$ is the first for which the cut lower bound permits such an improvement.
 
 For complete-graph tensors, our method gives
 

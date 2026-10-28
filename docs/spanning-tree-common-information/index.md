@@ -7,7 +7,7 @@ title: A quadratic ceiling for common-information bounds on spanning-tree slack 
 
 Common information cannot supply a superquadratic nonnegative-rank lower bound
 when evaluated on the canonical spanning-tree slack matrices below. The
-analogous limitation for HSB was already established by Brugger [1]. Here an
+analogous limitation for HSB was already established by @brugger2021limitations. Here an
 entropy bound for unit Boolean factorizations gives an explicit $4n^2$ ceiling
 for the **common-information lower-bound quantity**, including all edge
 nonnegativity rows.
@@ -215,7 +215,7 @@ by $4n^2$ limits the size of the lower bound supplied by this evaluation. It doe
 **not** bound nonnegative rank or extension complexity above by $4n^2$, and does
 not assert tightness of the common-information ceiling.
 
-Brugger [1] already proved $\operatorname{HSB}(S_G)=O(|E(G)|)$ for his canonical
+@brugger2021limitations already proved $\operatorname{HSB}(S_G)=O(|E(G)|)$ for his canonical
 spanning-tree slack matrix of every connected graph $G$. In particular this is
 $O(n^2)$ for $K_n$. That published HSB limitation is context, not a new theorem
 claimed here or an additional formalization of the arbitrary-graph result.
@@ -231,14 +231,6 @@ transfer either ceiling to the other; the entropy proof above is separate.
 :start-after: -- DOCS_BEGIN_MAIN
 :end-before: -- DOCS_END_MAIN
 ```
-
-## References
-
-1. Matthias Brugger (2021).
-   *Limitations of the hyperplane separation technique for bounding the extension complexity of polytopes*.
-   Operations Research Letters 49(6), 896–901.
-   [DOI](https://doi.org/10.1016/j.orl.2021.11.006).
-   [arXiv:1911.01541](https://arxiv.org/abs/1911.01541).
 
 ```{include} ../_generated/verification/spanning-tree-common-information.md
 ```
