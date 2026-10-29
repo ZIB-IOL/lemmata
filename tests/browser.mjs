@@ -66,7 +66,7 @@ check(await page.locator("details.lemmata-verification:not([open]), .lemmata-ver
 const proofTitles = await page.locator(".myst-proof.border-myst-proof .myst-proof-title").allTextContents();
 check(proofTitles.length > 0 && proofTitles.every((t) => /^Proof\s+of\b/.test(t.trim()) && !t.includes("(")), "proof titles read 'Proof of ...'");
 check((await page.locator(".myst-primary-sidebar-toc .myst-toc > div").evaluateAll((xs) => xs.filter((x) => x.offsetParent).length)) === 0,
-  "sidebar lists no entries or categories");
+  "sidebar lists no entries or subjects");
 // Lean next to each result: every box placed directly under the result it belongs to.
 const placement = await page.evaluate(() => { const bs = [...document.querySelectorAll(".lemmata-lean-for")];
   return { n: bs.length, ok: bs.filter((b) => b.classList.contains("lemmata-placed") &&
@@ -80,12 +80,12 @@ if (await widget.count()) {
   await widget.locator("input").nth(2).uncheck();
   check((await widget.locator("p").textContent()).includes("cannot reach R"), "widget reacts to input");
 }
-// Cross-page navigation: from a category page to an entry, client-side, staying inside
+// Cross-page navigation: from a subject page to an entry, client-side, staying inside
 // the release, and landing on the entry's theorem anchor.
-await page.goto(`${origin}${base}/c/logic/`, { waitUntil: "networkidle" });
+await page.goto(`${origin}${base}/s/math-lo/`, { waitUntil: "networkidle" });
 await page.locator("table a", { hasText: "Composition of implications" }).first().click();
 await page.waitForURL(/implication-composition/, { timeout: 10000 }).catch(() => {});
-check(page.url().includes(`${base}/implication-composition`), `category link navigates inside the release (${page.url().replace(origin, "")})`);
+check(page.url().includes(`${base}/implication-composition`), `subject link navigates inside the release (${page.url().replace(origin, "")})`);
 check(await page.locator("#thm-implication-composition").count() === 1, "target theorem anchor exists");
 
 // [↓] next to a result jumps to its proof. On an entry page the address bar shows

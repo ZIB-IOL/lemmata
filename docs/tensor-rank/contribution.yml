@@ -1,7 +1,9 @@
 schema_version: 1
 id: tensor-rank
 lean_namespace: Lemmata.TensorRank
-category: multilinear-algebra
+subject: cs.CC
+cross_lists: [math.AG]
+topics: [tensor-rank]
 contributors:
   - {name: Kirill Khoruzhii, orcid: 0000-0003-4689-3812}
 abstract: >-

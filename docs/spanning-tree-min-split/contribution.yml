@@ -1,8 +1,9 @@
 schema_version: 1
 id: spanning-tree-min-split
 lean_namespace: Lemmata.SpanningTreeMinSplit
-category: extended-formulations
-tags: [optimization]
+subject: cs.CC
+cross_lists: [math.CO]
+topics: [extended-formulations, nonnegative-rank]
 pages:
   - index.md
 exports:

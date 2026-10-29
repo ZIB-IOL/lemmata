@@ -1,7 +1,8 @@
 schema_version: 1
 id: lagrangian-duality-gap
 lean_namespace: Lemmata.LagrangianDualityGap
-category: optimization
+subject: math.OC
+topics: [duality]
 pages:
   - index.md
 exports:

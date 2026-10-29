@@ -1,7 +1,9 @@
 schema_version: 1
 id: distributional-linear-oracle-lower-bounds
 lean_namespace: Lemmata.DistributionalLowerBounds
-category: optimization
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
 arxiv: "2610.13590"
 abstract: >-
   A uniform prior over a permuted family of strongly convex feasible sets gives

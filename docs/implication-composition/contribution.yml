@@ -1,8 +1,8 @@
 schema_version: 1
 id: implication-composition
 lean_namespace: Lemmata.ImplicationComposition
-category: logic
-tags: [order]
+subject: math.LO
+topics: [worked-examples]
 pages:
   - index.md
 exports:

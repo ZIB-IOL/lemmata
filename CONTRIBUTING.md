@@ -14,13 +14,14 @@ needs.
 ## 1. Scaffold
 
 ```bash
-node tools/lemmata.mjs new prime-infinitude PrimeInfinitude number-theory
+node tools/lemmata.mjs new prime-infinitude PrimeInfinitude math.NT
 ```
 
-The last argument is the entry's category, one of the ids in `docs/categories.yml`. If
-your entry needs a category that does not exist yet, add it to that file in the same
-pull request (id, title, one-line description); its position in the file is its position
-in the sidebar.
+The last argument is the entry's primary **arXiv subject class** (`math.NT`, `math.OC`,
+`cs.CC`, …; arXiv's list is in `docs/subjects.json`), chosen as for an arXiv submission. In
+`contribution.yml` you can add `cross_lists` (more arXiv classes) and `topics` (keywords from
+`docs/topics.yml`; add a new topic there, with a title and one line of description, in the
+same pull request).
 
 This creates `docs/prime-infinitude/{contribution.yml,index.md}` and
 `lean/Lemmata/PrimeInfinitude/Main.lean`, and adds the module to the umbrella. The id is
@@ -107,8 +108,9 @@ small entries may keep everything in `Main.lean` — but new entries should foll
 schema_version: 1
 id: prime-infinitude
 lean_namespace: Lemmata.PrimeInfinitude
-category: number-theory      # where it sits in the sidebar (docs/categories.yml)
-tags: [logic]                # optional: also listed on these categories' pages
+subject: math.NT             # primary arXiv class: where it is listed (docs/subjects.json)
+cross_lists: [math.CO]       # optional: also listed under these arXiv classes
+topics: [prime-numbers]      # optional: keywords from docs/topics.yml
 arxiv: 2301.01234            # optional: linked under the title; one id or a list
 abstract: >-                 # required: one paragraph, under the header and on the /abs/ page
   ...
@@ -136,8 +138,8 @@ exports:
 
 Rules the tools enforce for these fields:
 
-- `category` must be an id in `docs/categories.yml`; `tags` are further category ids and may
-  not repeat the primary category.
+- `subject` and every `cross_lists` item must be arXiv classes (`docs/subjects.json`), and
+  the cross-lists may not repeat the subject; every topic must be in `docs/topics.yml`.
 - `arxiv` is the bare identifier (`2301.01234`, `2301.01234v2`, `math/0601001`), without an
   `arXiv:` prefix; the format is checked so a typo cannot become a dead link.
 - `abstract` is required. `related` items are `{kind, title, url}`; `kind` is one of
@@ -159,8 +161,9 @@ Rules the tools enforce for these fields:
   checked, since others cite them and other entries may build on their Lean. They are no
   longer listed. Prefer correcting an entry to withdrawing it.
 
-The URL of an entry is `/<id>/` and does not contain its category, so recategorising an
-entry later never breaks links to it. Category pages live at `/c/<category>/`.
+The URL of an entry is `/<id>/` and does not contain its subject, so reclassifying an entry
+later never breaks links to it. Subject pages live at `/s/<class>/` (`/s/math-oc/` for
+math.OC) and topic pages at `/t/<topic>/`.
 
 Each export says "this label on this page is formalized by this declaration". The binding
 is checked; whether the two say the same thing is what your reviewer checks.

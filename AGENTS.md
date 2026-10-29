@@ -81,16 +81,20 @@ umbrella or to scaffold an entry there (rewriting it would drop the missing entr
 
 ```bash
 git checkout -b entry/<id>
-node tools/lemmata.mjs new <id> <LeanName> <category>
+node tools/lemmata.mjs new <id> <LeanName> <subject>
 ```
 
-`<category>` must be an `id` from `docs/categories.yml`. If no category fits, add one to
-that file in the same branch:
+`<subject>` is the entry's primary **arXiv subject class**, e.g. `math.OC`, `cs.CC`,
+`math.CO` -- any class in `docs/subjects.json`, which is arXiv's list as published. Choose
+it as you would for an arXiv submission; for the formalization of a paper, take the paper's
+primary class. Afterwards, in `contribution.yml`, add further classes as `cross_lists`
+(again as on arXiv) and keywords as `topics` from `docs/topics.yml`. If no topic fits, add
+one to that file in the same branch:
 
 ```yaml
-- id: number-theory              # lowercase kebab-case
-  title: Number theory
-  description: One sentence.     # shown on the landing page and the category page
+- id: matching-polytopes         # lowercase kebab-case
+  title: Matching polytopes
+  description: One sentence.     # shown on the topic's page
 ```
 
 The scaffold writes all three files with placeholders and registers the module in
@@ -300,8 +304,9 @@ The informal proof.
 schema_version: 1
 id: <id>                              # = directory name
 lean_namespace: Lemmata.<LeanName>
-category: <category>                  # an id from docs/categories.yml
-tags: [<other-category>]              # optional; never the primary category
+subject: <subject>                    # primary arXiv class, e.g. math.OC (docs/subjects.json)
+cross_lists: [<class>, …]             # optional; further arXiv classes, never the primary one
+topics: [<topic>, …]                  # optional; ids from docs/topics.yml
 arxiv: 2301.01234                     # optional; one id or a list, e.g. [2301.01234v2, math/0601001]
 abstract: >-                          # REQUIRED; under the header and on the /abs/ page
   One paragraph stating the result; inline text and $math$ only.
@@ -355,7 +360,7 @@ the copyright; ask the human you work for when unsure.
 `withdrawn` withdraws a published entry; its text is the reason. **Never delete a published
 entry**: its identifier is cited, and other entries may import its Lean. A withdrawn entry
 stays at its identifier with a notice under the title and keeps being built and checked, but
-leaves the sidebar, the catalog and the category pages (`lemmata.json` gives it status
+leaves the sidebar, the catalog and the subject and topic pages (`lemmata.json` gives it status
 `withdrawn`). Correct mistakes by changing the entry instead, where you can. Withdraw only
 when the human you work for asks you to; see the About page for the policy.
 
@@ -393,7 +398,7 @@ node tests/browser.mjs docs/_build/html ""    # follows every link; needs: npx p
 
 | Step | Fails when |
 |---|---|
-| validate | a manifest or category is wrong, a note uses non-inline markup, a label is missing or duplicated, snippet markers are wrong, the umbrella is stale, an `index.md` lacks one of the two `{include}` lines, `.lemmata/` is committed, a Lean file does not start with `module`, a Lean file contains `axiom`, `@[implemented_by]` or `@[extern]`, a computation tactic is used without `native_computation: true` (or in `lean/Lemmata/Shared/`), or a Lean file sits directly in `lean/Lemmata/` |
+| validate | a manifest, subject or topic is wrong, a note uses non-inline markup, a label is missing or duplicated, snippet markers are wrong, the umbrella is stale, an `index.md` lacks one of the two `{include}` lines, `.lemmata/` is committed, a Lean file does not start with `module`, a Lean file contains `axiom`, `@[implemented_by]` or `@[extern]`, a computation tactic is used without `native_computation: true` (or in `lean/Lemmata/Shared/`), or a Lean file sits directly in `lean/Lemmata/` |
 | lake build | any module does not compile |
 | leanchecker | the kernel rejects a declaration |
 | lemmata-check | any declaration uses a disallowed axiom (`sorryAx`, a custom `axiom`, a computation outside an entry with `native_computation: true`), or an export is missing, misclassified, or outside its namespace |
@@ -470,7 +475,7 @@ system, not in your entry. Report the status output to whoever asked for the wor
 ## Quick reference
 
 ```bash
-node tools/lemmata.mjs new <id> <LeanName> <category>   # scaffold
+node tools/lemmata.mjs new <id> <LeanName> <subject>    # scaffold; subject: an arXiv class
 node tools/lemmata.mjs umbrella --write                 # after adding/removing .lean files
 node tools/lemmata.mjs validate                         # structure only, seconds
 tools/check.sh --no-docs                                # + build, kernel, axioms

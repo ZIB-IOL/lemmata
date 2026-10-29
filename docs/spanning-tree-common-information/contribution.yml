@@ -1,8 +1,9 @@
 schema_version: 1
 id: spanning-tree-common-information
 lean_namespace: Lemmata.SpanningTreeCommonInformation
-category: extended-formulations
-tags: [optimization]
+subject: cs.CC
+cross_lists: [math.CO, cs.IT]
+topics: [extended-formulations, common-information]
 abstract: >-
   For the full canonical spanning-tree slack matrix of the complete graph on
   $n\ge3$ vertices, common information is at most $2\log_2 n+2$ bits;

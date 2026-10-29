@@ -1,0 +1,33 @@
+# Topics: a short, curated list of keywords that cut across arXiv subjects. An entry lists
+# any of these as `topics` in contribution.yml; each topic gets a page at /t/<id>/. Add a
+# topic here, with a title and one line of description, in the pull request that first
+# uses it. `replaces` names old category ids whose /c/<id>/ pages now forward to the topic.
+- id: extended-formulations
+  title: Extended formulations
+  description: Lower bounds on the size of linear and semidefinite formulations, and the ranks behind them.
+  replaces: [extended-formulations]
+- id: nonnegative-rank
+  title: Nonnegative rank
+  description: Nonnegative factorizations of matrices and their ranks.
+- id: common-information
+  title: Common information
+  description: Information-theoretic measures of shared randomness, and the bounds they give.
+- id: tensor-rank
+  title: Tensor rank
+  description: Tensors, tensor rank and asymptotic complexity.
+  replaces: [multilinear-algebra]
+- id: reed-muller-codes
+  title: Reed–Muller codes
+  description: Reed–Muller codes, their weights and covering radii.
+  replaces: [coding-theory]
+- id: duality
+  title: Duality
+  description: Lagrangian and convex duality, and when duality gaps close.
+  replaces: [optimization]
+- id: frank-wolfe
+  title: Frank–Wolfe and linear oracles
+  description: Methods that access a feasible set through linear minimization, and their lower bounds.
+- id: worked-examples
+  title: Worked examples
+  description: Small entries that show what an entry can contain.
+  replaces: [logic, order]

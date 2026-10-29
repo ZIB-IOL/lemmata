@@ -175,6 +175,14 @@ expect("positive control: known keys, narrative and parenthetical", (d) => appen
 expect("positive control: links to code and @ in code, math and an email are fine",
   (d) => append(d, page, "\nCode: [repo](https://github.com/x/y). Lean `@Foo.bar`, math $a@b$, mail x@example.org.\n\n```lean\n#check @Nat.add\n```\n"), { refused: false });
 
+// Classification (2026-10-29): arXiv subjects and curated topics.
+const setField = (d, re, line) => { const f = path.join(d, mf); fs.writeFileSync(f, fs.readFileSync(f, "utf8").replace(re, line)); };
+expect("an unknown arXiv subject", (d) => setField(d, /^subject: .*$/m, "subject: math.XX"), { match: /is not an arXiv subject class/ });
+expect("a cross-list repeating the subject", (d) => setField(d, /^subject: .*$/m, "subject: math.LO\ncross_lists: [math.LO]"), { match: /repeats the primary subject/ });
+expect("an unknown topic", (d) => setField(d, /^topics: .*$/m, "topics: [no-such-topic]"), { match: /not in docs\/topics\.yml/ });
+expect("the old category field", (d) => append(d, mf, "category: logic\n"), { match: /category\/tags were replaced/ });
+expect("positive control: subject with cross-lists and topics", (d) => setField(d, /^subject: .*$/m, "subject: math.LO\ncross_lists: [cs.LO]"), { refused: false });
+
 // Frozen entries keep what their last check recorded, computations included (review,
 // 2026-10-26: a frozen computation-backed result was shown as plainly kernel-checked, its
 // claims dropped and llms.txt without the caveat). A frozen record of the shape

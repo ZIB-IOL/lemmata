@@ -7,7 +7,7 @@
 //   node tools/lemmata.mjs request <out.json>  verifier request built from the manifests
 //   node tools/lemmata.mjs prepare <report.json> [--commit SHA] [--source-url URL]
 //                                              generated pages + docs/myst.runtime.yml
-//   node tools/lemmata.mjs new <id> <LeanName> <category>   scaffold a new contribution
+//   node tools/lemmata.mjs new <id> <LeanName> <subject>    scaffold a new contribution (subject: an arXiv class)
 //
 // Exit status is non-zero on any problem; every problem is printed, not just the first.
 
@@ -34,13 +34,18 @@ const POLICY_ID = "lemmata-verification-v2";
 const RESERVED_JS = Object.fromEntries([...Object.getOwnPropertyNames(Object.prototype),
   ...Object.getOwnPropertyNames(Function.prototype), "prototype"].map((k) => [k.toLowerCase(), true]));
 const RESERVED_DOCS = new Set(["_static", "_generated", "_build", "_releases", "_status",
-  "index", "healthz", "readyz", "node_modules", "c", "a", "changelog", "abs", "html", "llms", "checked", "about"]);
+  "index", "healthz", "readyz", "node_modules", "c", "s", "t", "a", "changelog", "abs", "html", "llms", "checked", "about"]);
 // The page that explains what "checked" means (docs/checked.md), linked from every
 // verification panel; entries are at docs/<id>/, so the link is one level up.
 const CHECKED_PAGE_LINK = "../checked.md";
-// Category overview pages are generated at docs/c/<category>/index.md (URL /c/<category>/),
-// under a reserved prefix so category ids and entry ids can never collide.
-const CATEGORY_DIR = "c";
+// Classification (2026-10-29): every entry has one primary arXiv subject (`subject`), any
+// number of further ones (`cross_lists`), and optional free `topics` from docs/topics.yml.
+// Subject pages are generated at docs/s/<subject>/ and topic pages at docs/t/<topic>/,
+// under reserved prefixes so they never collide with entry ids. MyST turns dots in page
+// paths into hyphens, so math.OC lives at /s/math-oc/; titles keep the arXiv spelling.
+// /c/<id>/ were the pages of the categories this replaced; they remain as redirects.
+const SUBJECT_DIR = "s", TOPIC_DIR = "t", OLD_CATEGORY_DIR = "c";
+const subjectSlug = (id) => id.toLowerCase().replace(/\./g, "-");
 // Author pages at /a/<slug>/: every entry a person is credited on, like arXiv's author
 // search. Keyed by the displayed name (git author name, or the manifest's contributors);
 // names only, never emails. Not an identity: two people with one name share a page.
@@ -53,9 +58,9 @@ const SHOW_CITE_BOX = false;
 // Ids from GitHub (gh api graphql, or giscus.app). "Comments" is an Announcement-format
 // category, so only maintainers and giscus start threads; readers comment in them.
 const GISCUS = { repo: "ZIB-IOL/lemmata", repoId: "R_kgDOVQjOqA", category: "Comments", categoryId: "DIC_kwDOVQjOqM4DJSBM" };
-const CATEGORY_KEYS = new Set(["id", "title", "description"]);
+const TOPIC_KEYS = new Set(["id", "title", "description", "replaces"]);
 const RESERVED_LEAN = new Set(["Shared"]);
-const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "category", "tags", "arxiv", "contributors",
+const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "subject", "cross_lists", "topics", "arxiv", "contributors",
   "ai_use", "acknowledgements", "abstract", "license", "withdrawn", "related", "native_computation", "pages", "exports"]);
 // Computations: `native_computation: true` lets an entry prove facts by having the compiler
 // run them (native_decide, decide +native, bv_decide). The build runs them; nobody re-runs
@@ -155,39 +160,45 @@ function arxivIds(source) {
   return items.map((x) => (YAML.isScalar(x) ? (x.source ?? String(x.value)) : x)).map((v) => typeof v === "string" ? v.trim() : v);
 }
 
-// --------------------------------------------------------------------------- categories
+// --------------------------------------------------------------------------- classification
 
-// docs/categories.yml is the one list of allowed categories, in display order. Entries
-// name one primary `category` (where they sit in the sidebar) and optional `tags`
-// (further categories whose overview pages also list them). An unknown id is an error,
-// so a typo cannot quietly create a new category.
-function loadCategories() {
-  const file = path.join(DOCS, "categories.yml");
-  if (!fs.existsSync(file)) { fail("docs/categories.yml is missing"); return []; }
-  let list;
-  try { list = YAML.parse(fs.readFileSync(file, "utf8"), { uniqueKeys: true }); }
-  catch (e) { fail(`docs/categories.yml: ${e.message}`); return []; }
-  if (!Array.isArray(list) || !list.length) { fail("docs/categories.yml must be a non-empty list"); return []; }
-  const seen = new Set();
-  const out = [];
-  for (const [i, c] of list.entries()) {
-    const at = `docs/categories.yml[${i}]`;
-    if (!c || typeof c !== "object") { fail(`${at}: not a mapping`); continue; }
-    for (const k of Object.keys(c)) if (!CATEGORY_KEYS.has(k)) fail(`${at}: unknown field ${k}`);
-    if (typeof c.id !== "string" || !ID_RE.test(c.id)) { fail(`${at}: id must be lowercase kebab-case`); continue; }
-    if (seen.has(c.id)) fail(`${at}: duplicate id ${c.id}`);
-    if (typeof c.title !== "string" || !c.title.trim()) fail(`${at}: title is required`);
-    if (c.description !== undefined && typeof c.description !== "string") fail(`${at}: description must be text`);
-    seen.add(c.id);
-    out.push({ id: c.id, title: String(c.title ?? c.id), description: c.description ?? "" });
+// docs/subjects.json is arXiv's list of subject classes, kept as fetched (nothing to curate);
+// docs/topics.yml is the short, curated list of topics. An unknown subject or topic is an
+// error, so a typo cannot quietly create a new page. A topic may name the old category ids
+// it `replaces`: their /c/<id>/ pages then redirect to it.
+function loadTaxonomy() {
+  const sf = path.join(DOCS, "subjects.json");
+  let subjects = {};
+  if (!fs.existsSync(sf)) fail("docs/subjects.json is missing");
+  else try { subjects = JSON.parse(fs.readFileSync(sf, "utf8")).subjects ?? {}; } catch (e) { fail(`docs/subjects.json: ${e.message}`); }
+  const tf = path.join(DOCS, "topics.yml");
+  const topics = [];
+  if (fs.existsSync(tf)) {
+    let list;
+    try { list = YAML.parse(fs.readFileSync(tf, "utf8"), { uniqueKeys: true }) ?? []; } catch (e) { fail(`docs/topics.yml: ${e.message}`); list = []; }
+    if (!Array.isArray(list)) { fail("docs/topics.yml must be a list"); list = []; }
+    const seen = new Set();
+    for (const [i, t] of list.entries()) {
+      const at = `docs/topics.yml[${i}]`;
+      if (!t || typeof t !== "object") { fail(`${at}: not a mapping`); continue; }
+      for (const k of Object.keys(t)) if (!TOPIC_KEYS.has(k)) fail(`${at}: unknown field ${k}`);
+      if (typeof t.id !== "string" || !ID_RE.test(t.id)) { fail(`${at}: id must be lowercase kebab-case`); continue; }
+      if (seen.has(t.id)) fail(`${at}: duplicate id ${t.id}`);
+      if (typeof t.title !== "string" || !t.title.trim()) fail(`${at}: title is required`);
+      if (t.description !== undefined && typeof t.description !== "string") fail(`${at}: description must be text`);
+      if (t.replaces !== undefined && (!Array.isArray(t.replaces) || t.replaces.some((x) => typeof x !== "string" || !ID_RE.test(x)))) fail(`${at}: replaces must be a list of old category ids`);
+      seen.add(t.id);
+      topics.push({ id: t.id, title: String(t.title ?? t.id), description: t.description ?? "", replaces: t.replaces ?? [] });
+    }
   }
-  return out;
+  return { subjects, topics };
 }
+const subjectTitle = (tax, id) => `${id} — ${tax.subjects[id] ?? id}`;
 
 // ---------------------------------------------------------------------------- manifests
 
-function loadManifests(categories = loadCategories()) {
-  const catIds = new Set(categories.map((c) => c.id));
+function loadManifests(tax = loadTaxonomy()) {
+  const topicIds = new Set(tax.topics.map((t) => t.id));
   const manifests = [];
   const seen = { ids: new Map(), ns: new Map(), labels: new Map(), lower: new Map() };
   for (const dir of listDirs(DOCS)) {
@@ -204,13 +215,18 @@ function loadManifests(categories = loadCategories()) {
     for (const k of Object.keys(m)) if (!MANIFEST_KEYS.has(k)) fail(`${where}/contribution.yml: unknown field ${k}`);
     if (m.schema_version !== 1) fail(`${where}/contribution.yml: schema_version must be 1`);
     if (m.id !== dir) fail(`${where}/contribution.yml: id ${JSON.stringify(m.id)} does not match directory`);
-    if (!catIds.has(m.category))
-      fail(`${where}/contribution.yml: category ${JSON.stringify(m.category)} is not in docs/categories.yml (${[...catIds].join(", ")})`);
-    if (m.tags !== undefined && !Array.isArray(m.tags)) fail(`${where}/contribution.yml: tags must be a list`);
-    for (const t of Array.isArray(m.tags) ? m.tags : []) {
-      if (!catIds.has(t)) fail(`${where}/contribution.yml: tag ${JSON.stringify(t)} is not in docs/categories.yml`);
-      if (t === m.category) fail(`${where}/contribution.yml: tag ${t} repeats the primary category`);
+    if (m.category !== undefined || m.tags !== undefined)
+      fail(`${where}/contribution.yml: category/tags were replaced by subject (an arXiv class, e.g. math.OC), cross_lists and topics; see AGENTS.md`);
+    if (!Object.hasOwn(tax.subjects, m.subject ?? ""))
+      fail(`${where}/contribution.yml: subject ${JSON.stringify(m.subject)} is not an arXiv subject class (docs/subjects.json), e.g. math.OC, cs.CC`);
+    if (m.cross_lists !== undefined && !Array.isArray(m.cross_lists)) fail(`${where}/contribution.yml: cross_lists must be a list`);
+    for (const c of Array.isArray(m.cross_lists) ? m.cross_lists : []) {
+      if (!Object.hasOwn(tax.subjects, c)) fail(`${where}/contribution.yml: cross_list ${JSON.stringify(c)} is not an arXiv subject class`);
+      if (c === m.subject) fail(`${where}/contribution.yml: cross_list ${c} repeats the primary subject`);
     }
+    if (m.topics !== undefined && !Array.isArray(m.topics)) fail(`${where}/contribution.yml: topics must be a list`);
+    for (const t of Array.isArray(m.topics) ? m.topics : [])
+      if (!topicIds.has(t)) fail(`${where}/contribution.yml: topic ${JSON.stringify(t)} is not in docs/topics.yml (add it there, with a title and a one-line description)`);
 
     const ns = String(m.lean_namespace ?? "");
     const comps = ns.split(".");
@@ -347,7 +363,8 @@ function loadManifests(categories = loadCategories()) {
         if (title && u) related.push({ kind: r.kind, title, url: r.url });
       }
     }
-    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, tags: Array.isArray(m.tags) ? m.tags : [], arxiv, contributors, notes, license, related,
+    manifests.push({ ...m, dir, leanDir: comps[1], exports, pages, crossLists: Array.isArray(m.cross_lists) ? m.cross_lists : [],
+      topics: Array.isArray(m.topics) ? m.topics : [], arxiv, contributors, notes, license, related,
       native: m.native_computation === true });
   }
   // Every Lean contribution directory needs a manifest.
@@ -963,13 +980,13 @@ const COMPUTATION_WORDS = {
 // The weakest status among an entry's results ("own" < "inherited" < "kernel").
 const weakest = (list) => list.includes("own") ? "own" : list.includes("inherited") ? "inherited" : "kernel";
 
-function prepare(manifests, categories, report, { commit, sourceUrl }) {
+function prepare(manifests, tax, report, { commit, sourceUrl }) {
   const forge = forgeLinks(sourceUrl);
   const gen = path.join(DOCS, "_generated");
-  const catRoot = path.join(DOCS, CATEGORY_DIR);
+  const subjRoot = path.join(DOCS, SUBJECT_DIR), topicRoot = path.join(DOCS, TOPIC_DIR), oldCatRoot = path.join(DOCS, OLD_CATEGORY_DIR);
   const absRoot = path.join(DOCS, "abs");
   const authorRoot = path.join(DOCS, AUTHOR_DIR);
-  for (const d of [gen, catRoot, absRoot, authorRoot]) fs.rmSync(d, { recursive: true, force: true });
+  for (const d of [gen, subjRoot, topicRoot, oldCatRoot, absRoot, authorRoot]) fs.rmSync(d, { recursive: true, force: true });
   fs.mkdirSync(path.join(gen, "verification"), { recursive: true });
   const passed = report?.result === "passed";
   const byName = new Map((report?.exports ?? []).map((e) => [e.name, e]));
@@ -1230,14 +1247,26 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     fs.writeFileSync(path.join(gen, "provenance", `${m.id}.md`), lines.join("\n"));
   }
 
-  // Entries per category: primary members (sidebar + catalog) and tagged members (also
-  // listed on the category page), each sorted by title.
+  // Entries per subject (primary members: catalog and sidebar; cross-listed members: also
+  // listed on the subject's page) and per topic, each sorted by title. Only subjects and
+  // topics with entries get a page. Withdrawn entries are not listed (they keep their pages
+  // and identifiers). Subjects with the most entries first (by primary entries, then
+  // cross-listed ones), ties in arXiv's order -- for a small archive, alphabetical order put
+  // a one-entry class above the one most entries share.
   const byTitle = (a, b) => titleOf(a).localeCompare(titleOf(b));
-  // Withdrawn entries are not listed (they keep their pages and identifiers).
   const current = manifests.filter((m) => !m.notes?.withdrawn);
-  const primary = new Map(categories.map((c) => [c.id, current.filter((m) => m.category === c.id).sort(byTitle)]));
-  const tagged = new Map(categories.map((c) => [c.id, current.filter((m) => m.tags.includes(c.id)).sort(byTitle)]));
-  const used = categories.filter((c) => primary.get(c.id).length || tagged.get(c.id).length);
+  const subjectOrder = Object.keys(tax.subjects);
+  const nPrimary = (id) => current.filter((m) => m.subject === id).length, nCross = (id) => current.filter((m) => m.crossLists.includes(id)).length;
+  const usedSubjects = subjectOrder.filter((id) => nPrimary(id) || nCross(id))
+    .sort((a, b) => nPrimary(b) - nPrimary(a) || nCross(b) - nCross(a) || subjectOrder.indexOf(a) - subjectOrder.indexOf(b));
+  const primary = new Map(usedSubjects.map((id) => [id, current.filter((m) => m.subject === id).sort(byTitle)]));
+  const crossListed = new Map(usedSubjects.map((id) => [id, current.filter((m) => m.crossLists.includes(id)).sort(byTitle)]));
+  const usedTopics = tax.topics.filter((t) => current.some((m) => m.topics.includes(t.id)));
+  const subjectHref = (id, rel) => `${rel}${SUBJECT_DIR}/${subjectSlug(id)}/index.md`;
+  const topicHref = (id, rel) => `${rel}${TOPIC_DIR}/${id}/index.md`;
+  // "math.OC · cs.LG · topics: duality" under an entry's title, linked.
+  const classLine = (m, rel) => [m.subject, ...m.crossLists].map((id) => `[${id}](${subjectHref(id, rel)})`).join(" · ") +
+    (m.topics.length ? " · " + m.topics.map((t) => `[${esc(tax.topics.find((x) => x.id === t)?.title ?? t)}](${topicHref(t, rel)})`).join(", ") : "");
   // `rel` is the path prefix from the page that will contain the table to docs/: links in
   // generated text must be relative to the page MyST renders them on (an included file
   // resolves against the INCLUDING page; `../<id>/index.md` from _generated/ once
@@ -1267,14 +1296,16 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   fs.writeFileSync(path.join(gen, "contributing.md"), "**Contributing.** " + contributing);
   fs.writeFileSync(path.join(gen, "contributing-body.md"), contributing);
 
-  // Landing page catalog (included from docs/index.md, so rel = "").
+  // Landing page catalog (included from docs/index.md, so rel = ""): by primary subject, as
+  // arXiv lists, then the topics.
   const cat = ["## Entries", ""];
-  for (const c of used) {
-    if (!primary.get(c.id).length) continue;
-    cat.push(`### [${esc(c.title)}](${CATEGORY_DIR}/${c.id}/index.md)`, "");
-    if (c.description) cat.push(esc(c.description), "");
-    cat.push(...table(primary.get(c.id), ""), "");
+  for (const id of usedSubjects) {
+    if (!primary.get(id).length) continue;
+    cat.push(`### [${esc(subjectTitle(tax, id))}](${subjectHref(id, "")})`, "");
+    cat.push(...table(primary.get(id), ""), "");
   }
+  if (usedTopics.length) cat.push("### Topics", "", usedTopics.map((t) =>
+    `[${esc(t.title)}](${topicHref(t.id, "")}) (${current.filter((m) => m.topics.includes(t.id)).length})`).join(" · "), "");
   fs.writeFileSync(path.join(gen, "catalog.md"), cat.join("\n"));
 
   // One landing page per entry with an identifier, at /abs/<ident>/ (like arXiv's abstract
@@ -1306,7 +1337,7 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
       // The page's main action, in the header where it is seen first (it sat below the
       // status and was missed, 2026-10-21). Relative, so it reads as an internal link.
       ":::{div}", ":class: lemmata-view-full", "",
-      `Category: [${esc(categories.find((c) => c.id === m.category)?.title ?? m.category)}](../../${CATEGORY_DIR}/${m.category}/index.md)` +
+      classLine(m, "../../") +
         (m.arxiv.length ? ` · ${m.arxiv.map((a) => `[arXiv:${a}](https://arxiv.org/abs/${a})`).join(", ")}` : "") +
         ` · **[View the full entry →](${entryHref(m, "../../")})**`, ":::", "",
       ...(SHOW_CITE_BOX ? ["::::{dropdown} Cite as", "", "```bibtex", bib, "```", "::::", ""] : []),
@@ -1327,18 +1358,36 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     absPages.push(`abs/${ident.replace(".", "-")}/index.md`);
   }
 
-  // One overview page per category at /c/<id>/ (a real page, so the URL is stable and
-  // the sidebar group header is clickable). Written into the build tree only.
-  for (const c of used) {
-    const dir = path.join(catRoot, c.id);
+  // One page per subject at /s/<subject>/ (primary entries, then cross-listed ones) and per
+  // topic at /t/<topic>/. Written into the build tree only.
+  const page = (title, body) => ["---", "numbering:", "  headings: false", `title: ${JSON.stringify(title)}`, "---", "", ...body].join("\n");
+  for (const id of usedSubjects) {
+    const dir = path.join(subjRoot, subjectSlug(id));
     fs.mkdirSync(dir, { recursive: true });
-    const lines = ["---", "numbering:", "  headings: false", `title: ${JSON.stringify(c.title)}`, "---", ""];
-    if (c.description) lines.push(esc(c.description), "");
-    if (primary.get(c.id).length) lines.push(...table(primary.get(c.id), "../../"), "");
-    if (tagged.get(c.id).length) {
-      lines.push("## Also related", "", ...table(tagged.get(c.id), "../../"), "");
-    }
-    fs.writeFileSync(path.join(dir, "index.md"), lines.join("\n"));
+    const body = [`Entries whose primary subject is the arXiv class ${id} (${esc(tax.subjects[id])}), then entries cross-listed to it.`, ""];
+    if (primary.get(id).length) body.push(...table(primary.get(id), "../../"), "");
+    if (crossListed.get(id).length) body.push("## Also listed", "", ...table(crossListed.get(id), "../../"), "");
+    fs.writeFileSync(path.join(dir, "index.md"), page(subjectTitle(tax, id), body));
+  }
+  for (const t of usedTopics) {
+    const dir = path.join(topicRoot, t.id);
+    fs.mkdirSync(dir, { recursive: true });
+    const body = t.description ? [esc(t.description), ""] : [];
+    body.push(...table(current.filter((m) => m.topics.includes(t.id)).sort(byTitle), "../../"), "");
+    fs.writeFileSync(path.join(dir, "index.md"), page(`Topic: ${t.title}`, body));
+  }
+  // The old category pages (/c/<id>/) were linked from outside; each now points to the topic
+  // that replaces it (topics.yml `replaces`), or to the start page. A MyST page cannot send
+  // an HTTP redirect, so it says where the content moved, and the page script forwards.
+  const oldPages = [];
+  for (const old of ["logic", "order", "optimization", "extended-formulations", "multilinear-algebra", "coding-theory"]) {
+    const t = tax.topics.find((x) => x.replaces.includes(old));
+    const target = t ? `../../${TOPIC_DIR}/${t.id}/index.md` : "../../index.md";
+    const dir = path.join(oldCatRoot, old);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "index.md"), page("Moved", [":::{div}", `:class: lemmata-moved`, "",
+      `Entries are now classified by arXiv subject and topic. This page moved to [${t ? esc(t.title) : "the list of entries"}](${target}).`, ":::", ""]));
+    oldPages.push(`${OLD_CATEGORY_DIR}/${old}/index.md`);
   }
 
   // One page per author at /a/orcid-<ORCID iD>/ (see authorDir), listing every entry they are credited on (current
@@ -1391,10 +1440,13 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
   const entryToc = (m) => m.pages.length === 1 ? { file: `${m.dir}/index.md` }
     : { file: `${m.dir}/index.md`, children: m.pages.slice(1).map((p) => ({ file: `${m.dir}/${p}` })) };
   cfg.project.toc = [{ file: "index.md" },
-    ...used.filter((c) => primary.get(c.id).length).map((c) => ({
-      file: `${CATEGORY_DIR}/${c.id}/index.md`,
-      children: primary.get(c.id).map(entryToc),
+    ...usedSubjects.filter((id) => primary.get(id).length).map((id) => ({
+      file: `${SUBJECT_DIR}/${subjectSlug(id)}/index.md`,
+      children: primary.get(id).map(entryToc),
     })),
+    // Subjects with only cross-listed entries, and the topics: pages, not sidebar groups.
+    ...usedSubjects.filter((id) => !primary.get(id).length).map((id) => ({ file: `${SUBJECT_DIR}/${subjectSlug(id)}/index.md`, hidden: true })),
+    ...usedTopics.map((t) => ({ file: `${TOPIC_DIR}/${t.id}/index.md`, hidden: true })),
     // Hand-written site pages, after the entries: what "checked" means, the changelog, and
     // the About page (who runs the site, who supports it), last in the sidebar.
     ...(fs.existsSync(path.join(DOCS, "checked.md")) ? [{ file: "checked.md" }] : []),
@@ -1404,25 +1456,26 @@ function prepare(manifests, categories, report, { commit, sourceUrl }) {
     // numbered; a withdrawn entry keeps its content but loses theorem numbers, accepted.)
     ...manifests.filter((m) => m.notes?.withdrawn).flatMap((m) => m.pages.map((p) => ({ file: `${m.dir}/${p}`, hidden: true }))),
     ...absPages.map((f) => ({ file: f, hidden: true })),
-    ...authorPages.map((f) => ({ file: f, hidden: true }))];
+    ...authorPages.map((f) => ({ file: f, hidden: true })),
+    ...oldPages.map((f) => ({ file: f, hidden: true }))];
   if (process.env.LEMMATA_THEME) cfg.site.template = process.env.LEMMATA_THEME;
   fs.writeFileSync(path.join(DOCS, "myst.runtime.yml"),
     "# Generated by tools/lemmata.mjs prepare -- do not edit, not committed.\n" + YAML.stringify(cfg));
 }
 
-function scaffold(id, lean, category) {
+function scaffold(id, lean, subject) {
   // Refuse before writing anything: the umbrella update at the end would fail anyway.
   if (sparseCheckout()) { fail(`new: ${SPARSE_HELP}`); return; }
   if (!ID_RE.test(id) || RESERVED_DOCS.has(id)) { fail(`bad id ${id}`); return; }
   if (!LEAN_COMPONENT_RE.test(lean) || RESERVED_LEAN.has(lean)) { fail(`bad Lean name ${lean}`); return; }
-  const cats = loadCategories().map((c) => c.id);
-  if (!cats.includes(category)) { fail(`category ${JSON.stringify(category)} is not in docs/categories.yml (${cats.join(", ")})`); return; }
+  const tax = loadTaxonomy();
+  if (!Object.hasOwn(tax.subjects, subject ?? "")) { fail(`subject ${JSON.stringify(subject)} is not an arXiv subject class (docs/subjects.json), e.g. math.OC, cs.CC, math.CO`); return; }
   const d = path.join(DOCS, id), l = path.join(LEAN, LIB, lean);
   if (fs.existsSync(d) || fs.existsSync(l)) { fail(`docs/${id} or lean/${LIB}/${lean} already exists`); return; }
   fs.mkdirSync(d, { recursive: true }); fs.mkdirSync(l, { recursive: true });
   const thm = `${LIB}.${lean}.main`;
   fs.writeFileSync(path.join(d, "contribution.yml"), YAML.stringify({ schema_version: 1, id,
-    lean_namespace: `${LIB}.${lean}`, category, pages: ["index.md"],
+    lean_namespace: `${LIB}.${lean}`, subject, pages: ["index.md"],
     exports: [{ name: thm, kind: "theorem", page: "index.md", label: `thm-${id}` }] }));
   // No `authors:` block: who contributed is shown from git, under the title.
   fs.writeFileSync(path.join(d, "index.md"), `---\ntitle: ${id}\n---\n\n` +
@@ -1483,14 +1536,14 @@ export default { render };
 // the public addresses -- MyST's own pointed at its internal build server
 // (http://localhost:3000). Entries are listed by their permanent /abs/ URL when they
 // have an identifier, so links into the index never depend on directory names.
-function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl }) {
+function siteIndex(manifests, tax, report, outDir, { commit, sourceUrl }) {
   const siteUrl = (process.env.SITE_URL ?? "https://lemmata.iol.berlin").replace(/\/$/, "");
   fs.copyFileSync(new URL("./lemmata.png", import.meta.url), path.join(outDir, "lemmata.png"));
   const imageUrl = `${siteUrl}/lemmata.png`;
   const prov = loadProvenance(manifests, commit), idents = loadIdentifiers(commit);
   const passed = report?.result === "passed";
   const byName = new Map((report?.exports ?? []).map((e) => [e.name, e]));
-  const catTitle = new Map(categories.map((c) => [c.id, c.title]));
+  const topicTitle = new Map(tax.topics.map((t) => [t.id, t.title]));
   // Frozen entries are not in this build's report (they were not built); they keep the
   // results of their last check, exactly as the rendered pages show them.
   const frozen = loadFrozen();
@@ -1514,7 +1567,8 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
     return {
       identifier: ident ? `lemmata:${ident}` : null, url, html_url: ident ? `${siteUrl}/html/${ident}` : `${siteUrl}/${m.dir}/`,
       title: titleOf(m),
-      category: m.category, category_title: catTitle.get(m.category) ?? m.category, tags: m.tags,
+      subject: m.subject, subject_name: tax.subjects[m.subject] ?? null, cross_lists: m.crossLists,
+      topics: m.topics.map((t) => ({ id: t, title: topicTitle.get(t) ?? t })),
       contributors: people(m, p).map((c) => c.name),
       contributor_ids: people(m, p).map((c) => ({ name: c.name, orcid: c.orcid ?? null })),
       first_published: p?.first.date ?? null, last_changed: p?.last.date ?? null,
@@ -1550,9 +1604,11 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
     `and the full entry at ${siteUrl}/html/YYMM.NNNNN. Cite the /abs/ URL. Machine-readable index with exported Lean ` +
     `declarations, axioms, licence and BibTeX: ${siteUrl}/lemmata.json. Entries are licensed CC BY 4.0 unless the ` +
     "entry says otherwise (CC BY-SA 4.0 or CC0 1.0).", ""];
-  for (const c of categories) {
-    const list = entries.filter((e) => e.category === c.id && e.status !== "withdrawn");
-    if (list.length) md.push(`## ${c.title}`, "", ...list.map(line), "");
+  // By primary subject, most entries first, as on the start page.
+  const order = Object.keys(tax.subjects), n = (id) => entries.filter((e) => e.subject === id && e.status !== "withdrawn").length;
+  for (const id of order.filter(n).sort((a, b) => n(b) - n(a) || order.indexOf(a) - order.indexOf(b))) {
+    const list = entries.filter((e) => e.subject === id && e.status !== "withdrawn");
+    if (list.length) md.push(`## ${subjectTitle(tax, id)}`, "", ...list.map(line), "");
   }
   // Withdrawn entries stay reachable under their identifiers, so they are still indexed.
   const gone = entries.filter((e) => e.status === "withdrawn");
@@ -1576,7 +1632,10 @@ function siteIndex(manifests, categories, report, outDir, { commit, sourceUrl })
   fs.writeFileSync(path.join(outDir, "llms.txt"), md.join("\n"));
 
   const xmlEsc = (u) => u.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-  const urls = [`${siteUrl}/`, ...categories.filter((c) => entries.some((e) => e.category === c.id)).map((c) => `${siteUrl}/c/${c.id}/`),
+  const usedSubjects = Object.keys(tax.subjects).filter((id) => entries.some((e) => e.subject === id || e.cross_lists.includes(id)));
+  const usedTopics = tax.topics.filter((t) => entries.some((e) => e.topics.some((x) => x.id === t.id)));
+  const urls = [`${siteUrl}/`, ...usedSubjects.map((id) => `${siteUrl}/${SUBJECT_DIR}/${subjectSlug(id)}/`),
+    ...usedTopics.map((t) => `${siteUrl}/${TOPIC_DIR}/${t.id}/`),
     ...entries.map((e) => e.url), ...entries.filter((e) => e.identifier).map((e) => e.url.replace("/abs/", "/html/")),
     `${siteUrl}/checked/`, `${siteUrl}/changelog/`, `${siteUrl}/about/`];
   fs.writeFileSync(path.join(outDir, "sitemap.xml"), ['<?xml version="1.0" encoding="UTF-8"?>',
@@ -1853,10 +1912,15 @@ function comments(){
 // try before, so the first error silently dropped the rest; review, 2026-10-22). A failure
 // is reported once per step in the console.
 var reported={};
+// A moved page (an old /c/<category>/ address) forwards to where its content is now.
+function moved(){
+  var box=document.querySelector(".lemmata-moved a[href]"); if(!box||moved.done) return;
+  moved.done=1; location.replace(box.href);
+}
 function step(name,fn){ try{ fn(); }catch(e){ if(!reported[name]){ reported[name]=1; console.warn("[lemmata] "+name+" failed:",e); } } }
 function run(){
   step("canonical",canon); step("lean boxes",leanNextToResults); step("proofs",proofs); step("proof links",proofLinks);
-  step("lean source",lean); step("contents",outline); step("comments",comments);
+  step("moved",moved); step("lean source",lean); step("contents",outline); step("comments",comments);
 }
 // Only after React has hydrated: changing the DOM before that is a hydration mismatch
 // (React error #418), after which React re-renders and drops the changes. Then re-apply
@@ -1932,17 +1996,17 @@ switch (cmd) {
     fs.writeFileSync(args[0], JSON.stringify(verifierRequest(ms), null, 2) + "\n"); break;
   }
   case "prepare": {
-    const cats = loadCategories(); const ms = loadManifests(cats); finish();
+    const tax = loadTaxonomy(); const ms = loadManifests(tax); finish();
     const report = args[0] && args[0] !== "--preview" ? JSON.parse(fs.readFileSync(args[0], "utf8")) : null;
-    prepare(ms, cats, report, { commit: flag("--commit"), sourceUrl: flag("--source-url") });
+    prepare(ms, tax, report, { commit: flag("--commit"), sourceUrl: flag("--source-url") });
     finish("prepared docs/_generated and docs/myst.runtime.yml"); break;
   }
   case "new": scaffold(args[0], args[1], args[2]); finish(); break;
   case "doi": { const ms = loadManifests(); finish(); await fetchDois(ms, args); finish(); break; }
   case "site-index": {            // after myst build: llms.txt, lemmata.json, sitemap, robots
-    const cats = loadCategories(); const ms = loadManifests(cats); finish();
+    const tax = loadTaxonomy(); const ms = loadManifests(tax); finish();
     const report = args[0] ? JSON.parse(fs.readFileSync(args[0], "utf8")) : null;
-    siteIndex(ms, cats, report, args[1], { commit: flag("--commit"), sourceUrl: flag("--source-url") });
+    siteIndex(ms, tax, report, args[1], { commit: flag("--commit"), sourceUrl: flag("--source-url") });
     finish(`wrote llms.txt, lemmata.json, sitemap.xml, robots.txt to ${args[1]}`); break;
   }
   case "enhance": {               // after the build: proof titles, folding, Lean collapsing
@@ -1957,6 +2021,6 @@ switch (cmd) {
     process.stdout.write(JSON.stringify(loadProvenance(ms, null), null, 2) + "\n"); break;
   }
   default:
-    console.error("usage: lemmata.mjs validate | umbrella [--write] | request <out> | prepare <report.json>|--preview [--commit SHA] [--source-url URL] | new <id> <LeanName> <category>");
+    console.error("usage: lemmata.mjs validate | umbrella [--write] | request <out> | prepare <report.json>|--preview [--commit SHA] [--source-url URL] | new <id> <LeanName> <subject>");
     process.exit(2);
 }
