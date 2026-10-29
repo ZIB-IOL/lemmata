@@ -9,6 +9,8 @@ node_modules/
 /out/
 .DS_Store
 docs/c/
+docs/s/
+docs/t/
 docs/abs/
 .lemmata/
 docs/a/
