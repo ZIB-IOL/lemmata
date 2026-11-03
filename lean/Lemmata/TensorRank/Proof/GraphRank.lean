@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Def.Graph
 public import Lemmata.TensorRank.Proof.Products
 public import Lemmata.TensorRank.Proof.Maps
@@ -13,6 +20,8 @@ open Classical
 
 namespace Lemmata.TensorRank
 
+variable {𝕜 : Type*} [Field 𝕜]
+
 noncomputable def wordIndex (n q : ℕ) : (Fin q → Fin n) ≃ Fin (n ^ q) :=
   Fintype.equivFinOfCardEq (by simp)
 
@@ -24,8 +33,8 @@ noncomputable def graphPowerEquiv {k : ℕ} (n q : ℕ) (i : Fin k) :
   right_inv x := by funext j; simp
 
 theorem completeGraph_power_reindex (k n q : ℕ) :
-    Tensor.reindex (fun i => graphPowerEquiv n q i) (completeGraph k (n ^ q)) =
-      Tensor.power (completeGraph k n) q := by
+    Tensor.reindex (fun i => graphPowerEquiv n q i) (completeGraph (𝕜 := 𝕜) k (n ^ q)) =
+      Tensor.power (completeGraph (𝕜 := 𝕜) k n) q := by
   funext x
   have hm :
       (∀ (i j : Fin k) (h : i ≠ j),
@@ -41,18 +50,18 @@ theorem completeGraph_power_reindex (k n q : ℕ) :
       exact h t i j hij
   change (if ∀ (i j : Fin k) (h : i ≠ j),
     wordIndex n q (fun t => x i t ⟨j, h.symm⟩) =
-      wordIndex n q (fun t => x j t ⟨i, h⟩) then (1 : ℂ) else 0) = _
+      wordIndex n q (fun t => x j t ⟨i, h⟩) then (1 : 𝕜) else 0) = _
   simp only [Tensor.power, completeGraph, Fintype.prod_boole, hm]
   split_ifs <;> simp_all
 
 theorem rank_completeGraph_power (k n q : ℕ) :
-    Tensor.rank (completeGraph k (n ^ q)) = Tensor.rank (Tensor.power (completeGraph k n) q) := by
+    Tensor.rank (completeGraph (𝕜 := 𝕜) k (n ^ q)) = Tensor.rank (Tensor.power (completeGraph (𝕜 := 𝕜) k n) q) := by
   rw [← completeGraph_power_reindex, Tensor.rank_reindex]
 
 theorem completeGraph_padding {k n m : ℕ} (hnm : n ≤ m) :
     Tensor.reindex (fun i (x : GraphCoordinate k n i) j => Fin.castLE hnm (x j))
-      (completeGraph k m) =
-      completeGraph k n := by
+      (completeGraph (𝕜 := 𝕜) k m) =
+      completeGraph (𝕜 := 𝕜) k n := by
   funext x
   have hm : (∀ (i j : Fin k) (h : i ≠ j),
       Fin.castLE hnm (x i ⟨j, h.symm⟩) = Fin.castLE hnm (x j ⟨i, h⟩)) ↔
@@ -60,29 +69,29 @@ theorem completeGraph_padding {k n m : ℕ} (hnm : n ≤ m) :
     simp only [Fin.castLE_inj]
   change (if ∀ (i j : Fin k) (h : i ≠ j),
     Fin.castLE hnm (x i ⟨j, h.symm⟩) = Fin.castLE hnm (x j ⟨i, h⟩)
-    then (1 : ℂ) else 0) = _
+    then (1 : 𝕜) else 0) = _
   simp only [completeGraph, hm]
 
 theorem rank_completeGraph_mono {k n m : ℕ} (hnm : n ≤ m) :
-    Tensor.rank (completeGraph k n) ≤ Tensor.rank (completeGraph k m) := by
+    Tensor.rank (completeGraph (𝕜 := 𝕜) k n) ≤ Tensor.rank (completeGraph (𝕜 := 𝕜) k m) := by
   rw [← completeGraph_padding hnm]
   exact Tensor.rank_reindex_le _ _
 
 theorem asymptoticRank_completeGraph_mono {k n m : ℕ} (hnm : n ≤ m) :
-    Tensor.asymptoticRank (completeGraph k n) ≤ Tensor.asymptoticRank (completeGraph k m) := by
+    Tensor.asymptoticRank (completeGraph (𝕜 := 𝕜) k n) ≤ Tensor.asymptoticRank (completeGraph (𝕜 := 𝕜) k m) := by
   have h := (Tensor.reindex_restricts
     (fun i (x : GraphCoordinate k n i) j => Fin.castLE hnm (x j))
-    (completeGraph k m)).asymptoticRank_le
+    (completeGraph (𝕜 := 𝕜) k m)).asymptoticRank_le
   rwa [completeGraph_padding] at h
 
-theorem completeGraph_ne_zero {k n : ℕ} (hn : 0 < n) : completeGraph k n ≠ 0 := by
+theorem completeGraph_ne_zero {k n : ℕ} (hn : 0 < n) : completeGraph (𝕜 := 𝕜) k n ≠ 0 := by
   intro h
   have he := congrFun h (fun _ _ => ⟨0, hn⟩)
   simp [completeGraph] at he
 
 theorem asymptoticRank_completeGraph_one (k : ℕ) :
-    Tensor.asymptoticRank (completeGraph k 1) = 1 := by
-  have h : completeGraph k 1 = Tensor.pure (fun _ _ => (1 : ℂ)) := by
+    Tensor.asymptoticRank (completeGraph (𝕜 := 𝕜) k 1) = 1 := by
+  have h : completeGraph (𝕜 := 𝕜) k 1 = Tensor.pure (fun _ _ => (1 : 𝕜)) := by
     funext x
     have hm : ∀ (i j : Fin k) (h : i ≠ j),
         x i ⟨j, h.symm⟩ = x j ⟨i, h⟩ := fun _ _ _ => Subsingleton.elim _ _

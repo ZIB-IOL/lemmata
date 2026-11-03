@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Def.Tensor
 public import Mathlib.Algebra.BigOperators.GroupWithZero.Finset
 public import Mathlib.Logic.Equiv.Fin.Basic
@@ -67,10 +74,14 @@ theorem rankLE_card [∀ i, Fintype (V i)] (T : Tensor R I V) :
   rw [h]
   simp
 
-variable [∀ i, Fintype (V i)]
+section FiniteCoordinates
+
+variable [∀ i, Finite (V i)]
 
 noncomputable def rank (T : Tensor R I V) : ℕ :=
-  Nat.find (show ∃ r, RankLE T r from ⟨_, rankLE_card T⟩)
+  Nat.find (show ∃ r, RankLE T r from by
+    letI : ∀ i, Fintype (V i) := fun i => Fintype.ofFinite (V i)
+    exact ⟨_, rankLE_card T⟩)
 
 theorem rankLE_rank (T : Tensor R I V) : RankLE T (rank T) :=
   Nat.find_spec _
@@ -86,7 +97,10 @@ theorem rank_le_iff (T : Tensor R I V) (r : ℕ) : rank T ≤ r ↔ RankLE T r :
 @[simp] theorem rank_eq_zero_iff (T : Tensor R I V) : rank T = 0 ↔ T = 0 := by
   rw [← Nat.le_zero, rank_le_iff, rankLE_zero_iff]
 
-theorem rank_le_card (T : Tensor R I V) : rank T ≤ Fintype.card (∀ i, V i) :=
+end FiniteCoordinates
+
+theorem rank_le_card [∀ i, Fintype (V i)] (T : Tensor R I V) :
+    rank T ≤ Fintype.card (∀ i, V i) :=
   (rank_le_iff _ _).mpr (rankLE_card T)
 
 end Lemmata.TensorRank.Tensor

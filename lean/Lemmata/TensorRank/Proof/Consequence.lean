@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Statement
 
 @[expose] public section
@@ -10,7 +17,9 @@ open scoped BigOperators
 
 namespace Lemmata.TensorRank
 
-theorem cubical_of_squareRoot (h : SquareRootBound) : CubicalSquareRootBound := by
+variable {𝕜 : Type*} [Field 𝕜]
+
+theorem cubical_of_squareRoot (h : SquareRootBound (𝕜 := 𝕜)) : CubicalSquareRootBound (𝕜 := 𝕜) := by
   intro k n hk T
   let : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
   calc

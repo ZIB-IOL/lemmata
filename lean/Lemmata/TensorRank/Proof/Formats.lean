@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Def.Formats
 public import Lemmata.TensorRank.Proof.Flattening
 public import Lemmata.TensorRank.Proof.Consequence
@@ -16,8 +23,10 @@ noncomputable section
 
 namespace Lemmata.TensorRank
 
+variable {𝕜 : Type*} [Field 𝕜]
+
 theorem balancedMatrix_diagonal (r n : ℕ) :
-    balancedMatrix r n (balancedDiagonal r n) = 1 := by
+    balancedMatrix (𝕜 := 𝕜) r n (balancedDiagonal (𝕜 := 𝕜) r n) = 1 := by
   ext a b
   simp [balancedMatrix, balancedDiagonal, Matrix.one_apply]
 
@@ -81,8 +90,8 @@ private theorem nonsingular_minor_lower {F I J : Type*} [Field F] [Fintype I]
   rw [he] at hr
   exact hr
 
-theorem balanced_nonsingular_lower (r n : ℕ) (T : Cubical (r + r) n)
-    (hT : (balancedMatrix r n T).det ≠ 0) :
+theorem balanced_nonsingular_lower (r n : ℕ) (T : Cubical (𝕜 := 𝕜) (r + r) n)
+    (hT : (balancedMatrix (𝕜 := 𝕜) r n T).det ≠ 0) :
     (n : ℝ) ^ r ≤ Tensor.asymptoticRank T := by
   let S : Finset (Fin (r + r)) := Finset.univ.filter (fun j => j.val < r)
   let a (w : Fin r → Fin n) : Tensor.CutRow (fun _ : Fin (r + r) => Fin n) S :=
@@ -91,7 +100,7 @@ theorem balanced_nonsingular_lower (r n : ℕ) (T : Cubical (r + r) n)
     fun j => w ⟨j.val.val - r, by
       have hj := j.val.isLt
       omega⟩
-  have h : (Tensor.flatten T S).submatrix a b = balancedMatrix r n T := by
+  have h : (Tensor.flatten T S).submatrix a b = balancedMatrix (𝕜 := 𝕜) r n T := by
     ext u v
     change T (Tensor.joinCut S (a u) (b v)) = T (Fin.addCases u v)
     congr 1
@@ -105,25 +114,25 @@ theorem balanced_nonsingular_lower (r n : ℕ) (T : Cubical (r + r) n)
   simpa using nonsingular_minor_lower T S a b hi
 
 theorem balancedDiagonal_lower (r n : ℕ) :
-    (n : ℝ) ^ r ≤ Tensor.asymptoticRank (balancedDiagonal r n) := by
+    (n : ℝ) ^ r ≤ Tensor.asymptoticRank (balancedDiagonal (𝕜 := 𝕜) r n) := by
   apply balanced_nonsingular_lower
   rw [balancedMatrix_diagonal, Matrix.det_one]
   exact one_ne_zero
 
-theorem evenCubicalMaximum_of_squareRoot (hs : SquareRootBound) : EvenCubicalMaximum := by
+theorem evenCubicalMaximum_of_squareRoot (hs : SquareRootBound (𝕜 := 𝕜)) : EvenCubicalMaximum (𝕜 := 𝕜) := by
   intro r n hr
-  have hupper (T : Cubical (r + r) n) : Tensor.asymptoticRank T ≤ (n : ℝ) ^ r := by
+  have hupper (T : Cubical (𝕜 := 𝕜) (r + r) n) : Tensor.asymptoticRank T ≤ (n : ℝ) ^ r := by
     have h := cubical_of_squareRoot hs (r + r) n (by omega) T
     rw [← Real.rpow_natCast]
     convert h using 1
     congr 1
     push_cast
     ring
-  refine ⟨⟨balancedDiagonal r n, le_antisymm (hupper _) (balancedDiagonal_lower r n)⟩, ?_⟩
+  refine ⟨⟨balancedDiagonal (𝕜 := 𝕜) r n, le_antisymm (hupper _) (balancedDiagonal_lower r n)⟩, ?_⟩
   rintro x ⟨T, rfl⟩
   exact hupper T
 
-theorem evenCubicalNonsingular_of_squareRoot (hs : SquareRootBound) : EvenCubicalNonsingular := by
+theorem evenCubicalNonsingular_of_squareRoot (hs : SquareRootBound (𝕜 := 𝕜)) : EvenCubicalNonsingular (𝕜 := 𝕜) := by
   intro r n hr T hT
   apply le_antisymm
   · have h := cubical_of_squareRoot hs (r + r) n (by omega) T

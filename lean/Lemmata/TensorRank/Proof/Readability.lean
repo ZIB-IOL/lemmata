@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Def.Readability
 public import Lemmata.TensorRank.Proof.Separation
 
@@ -13,6 +20,9 @@ open Classical
 noncomputable section
 
 namespace Lemmata.TensorRank.Tensor
+
+variable {𝕜 : Type*} [Field 𝕜]
+
 
 variable {R I : Type*} [CommSemiring R] [Fintype I]
 variable {V W U : I → Type*} [∀ i, Fintype (V i)]
@@ -63,6 +73,9 @@ end Lemmata.TensorRank.Tensor
 
 namespace Lemmata.TensorRank.Separation
 
+variable {𝕜 : Type*} [Field 𝕜]
+
+
 universe u
 
 variable {r M : ℕ} {V : Party r → Type u}
@@ -73,15 +86,15 @@ def sharedInput (p : Party r) (y : SharedCoordinate V M p) : V p :=
   | .inr _ => y
 
 def readerMask (left : V (.inl false) → Fin M) (right : V (.inl true) → Fin M)
-    (p : Party r) (y : SharedCoordinate V M p) : ℂ :=
+    (p : Party r) (y : SharedCoordinate V M p) : 𝕜 :=
   match p with
   | .inl false => if left y.2 = y.1 then 1 else 0
   | .inl true => if right y.2 = y.1 then 1 else 0
   | .inr _ => 1
 
 def readerKernel (left : V (.inl false) → Fin M) (right : V (.inl true) → Fin M)
-    (p : Party r) (y : SharedCoordinate V M p) (v : V p) : ℂ :=
-  readerMask left right p y * if v = sharedInput p y then 1 else 0
+    (p : Party r) (y : SharedCoordinate V M p) (v : V p) : 𝕜 :=
+  readerMask (𝕜 := 𝕜) left right p y * if v = sharedInput p y then 1 else 0
 
 private theorem selected_map {R P : Type*} [CommSemiring R] [Fintype P]
     {V W : P → Type*} [∀ p, Fintype (V p)] (T : Tensor R P V)
@@ -96,11 +109,11 @@ private theorem selected_map {R P : Type*} [CommSemiring R] [Fintype P]
 
 theorem readerMap_value [∀ p, Fintype (V p)]
     (left : V (.inl false) → Fin M) (right : V (.inl true) → Fin M)
-    (T : Tensor ℂ (Party r) V) (x : ∀ p, SharedCoordinate V M p) :
-    Tensor.localMap (readerKernel left right) T x =
+    (T : Tensor 𝕜 (Party r) V) (x : ∀ p, SharedCoordinate V M p) :
+    Tensor.localMap (readerKernel (𝕜 := 𝕜) left right) T x =
       ((if left (x (.inl false)).2 = (x (.inl false)).1 then 1 else 0) *
         (if right (x (.inl true)).2 = (x (.inl true)).1 then 1 else 0)) * T (sharedBase x) := by
-  change Tensor.localMap (fun p y v => readerMask left right p y *
+  change Tensor.localMap (fun p y v => readerMask (𝕜 := 𝕜) left right p y *
     if v = sharedInput p y then 1 else 0) T x = _
   rw [selected_map]
   have hb : (fun p => sharedInput p (x p)) = sharedBase x := by
@@ -112,10 +125,10 @@ theorem readerMap_value [∀ p, Fintype (V p)]
   ring
 
 theorem readerMap_sum [∀ p, Fintype (V p)]
-    (Z : Fin M → Tensor ℂ (Party r) V)
+    (Z : Fin M → Tensor 𝕜 (Party r) V)
     {left : V (.inl false) → Fin M} {right : V (.inl true) → Fin M}
     (hleft : Tensor.Reads Z (.inl false) left) (hright : Tensor.Reads Z (.inl true) right) :
-    Tensor.localMap (readerKernel left right) (∑ q, Z q) = sharedSum Z := by
+    Tensor.localMap (readerKernel (𝕜 := 𝕜) left right) (∑ q, Z q) = sharedSum (𝕜 := 𝕜) Z := by
   funext x
   rw [readerMap_value]
   simp only [Finset.sum_apply, Finset.mul_sum]
@@ -154,25 +167,25 @@ theorem readerMap_sum [∀ p, Fintype (V p)]
     exact ite_eq_right hn
 
 theorem sharedSum_restricts_sum [∀ p, Fintype (V p)]
-    (Z : Fin M → Tensor ℂ (Party r) V)
+    (Z : Fin M → Tensor 𝕜 (Party r) V)
     {left : V (.inl false) → Fin M} {right : V (.inl true) → Fin M}
     (hleft : Tensor.Reads Z (.inl false) left) (hright : Tensor.Reads Z (.inl true) right) :
-    Tensor.Restricts (sharedSum Z) (∑ q, Z q) :=
-  ⟨readerKernel left right, (readerMap_sum Z hleft hright).symm⟩
+    Tensor.Restricts (sharedSum (𝕜 := 𝕜) Z) (∑ q, Z q) :=
+  ⟨readerKernel (𝕜 := 𝕜) left right, (readerMap_sum Z hleft hright).symm⟩
 
 theorem separated_degenerates_sum [∀ p, Fintype (V p)] (hM : 0 < M)
-    (Z : Fin M → Tensor ℂ (Party r) V)
+    (Z : Fin M → Tensor 𝕜 (Party r) V)
     {left : V (.inl false) → Fin M} {right : V (.inl true) → Fin M}
     (hleft : Tensor.Reads Z (.inl false) left) (hright : Tensor.Reads Z (.inl true) right) :
-    Tensor.Degenerates (separatedSum Z) (Tensor.copies (period r M) (∑ q, Z q)) :=
+    Tensor.Degenerates (separatedSum (𝕜 := 𝕜) Z) (Tensor.copies (sourceCopies r M) (∑ q, Z q)) :=
   (separated_degenerates hM Z).restricts_right ((sharedSum_restricts_sum Z hleft hright).copies _)
 
 theorem separated_asymptoticRank_sum_le [∀ p, Fintype (V p)] (hM : 0 < M)
-    (Z : Fin M → Tensor ℂ (Party r) V)
+    (Z : Fin M → Tensor 𝕜 (Party r) V)
     {left : V (.inl false) → Fin M} {right : V (.inl true) → Fin M}
     (hleft : Tensor.Reads Z (.inl false) left) (hright : Tensor.Reads Z (.inl true) right) :
-    Tensor.asymptoticRank (separatedSum Z) ≤
-      (period r M : ℝ) * Tensor.asymptoticRank (∑ q, Z q) := by
+    Tensor.asymptoticRank (separatedSum (𝕜 := 𝕜) Z) ≤
+      (sourceCopies r M : ℝ) * Tensor.asymptoticRank (∑ q, Z q) := by
   exact (separated_degenerates_sum hM Z hleft hright).asymptoticRank_le.trans
     (Tensor.asymptoticRank_copies_le _ _)
 

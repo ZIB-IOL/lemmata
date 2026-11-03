@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Proof.Star
 public import Lemmata.TensorRank.Proof.Consequence
 public import Lemmata.TensorRank.Proof.GraphCut
@@ -68,9 +75,11 @@ end Lemmata.TensorRank.Tensor
 
 namespace Lemmata.TensorRank
 
+variable {𝕜 : Type*} [Field 𝕜]
+
 private theorem binary_bound
-    (hg : ∀ k, 2 ≤ k → graphExponent k ≤ (k : ℝ) ^ 2 / 4)
-    {k : ℕ} (hk : 2 ≤ k) (T : Tensor ℂ (Fin k) (fun _ => Fin 2)) :
+    (hg : ∀ k, 2 ≤ k → graphExponent (𝕜 := 𝕜) k ≤ (k : ℝ) ^ 2 / 4)
+    {k : ℕ} (hk : 2 ≤ k) (T : Tensor 𝕜 (Fin k) (fun _ => Fin 2)) :
     Tensor.asymptoticRank T ≤ (2 : ℝ) ^ ((k : ℝ) / 2) := by
   apply (asymptoticRank_le_graphExponent hk (by decide) T).trans
   apply Real.rpow_le_rpow_of_exponent_le (by norm_num : (1 : ℝ) ≤ 2)
@@ -79,13 +88,13 @@ private theorem binary_bound
   nlinarith [hg k hk]
 
 private theorem binary_refinement
-    (hg : ∀ k, 2 ≤ k → graphExponent k ≤ (k : ℝ) ^ 2 / 4)
+    (hg : ∀ k, 2 ≤ k → graphExponent (𝕜 := 𝕜) k ≤ (k : ℝ) ^ 2 / 4)
     {I : Type} [Fintype I] {V : I → Type} [∀ i, Fintype (V i)]
     (b : I → ℕ) (hb : 2 ≤ ∑ i, b i) (e : ∀ i, V i ↪ (Fin (b i) → Fin 2))
-    (T : Tensor ℂ I V) :
+    (T : Tensor 𝕜 I V) :
     Tensor.asymptoticRank T ≤ (2 : ℝ) ^ (((∑ i, b i : ℕ) : ℝ) / 2) := by
   let P := Sigma (fun i => Fin (b i))
-  let U : Tensor ℂ P (fun _ => Fin 2) := fun x => Tensor.pad e T (fun i j => x ⟨i, j⟩)
+  let U : Tensor 𝕜 P (fun _ => Fin 2) := fun x => Tensor.pad e T (fun i j => x ⟨i, j⟩)
   have hpad : Tensor.group U = Tensor.pad e T := rfl
   have hT := (Tensor.reindex_restricts (fun i => e i) (Tensor.pad e T)).asymptoticRank_le
   rw [Tensor.reindex_pad] at hT
@@ -134,7 +143,7 @@ noncomputable def embeddingOfSize {A B : Type*} [Fintype A] [Fintype B]
     ((Fin.castLEEmb h).trans (Fintype.equivFin B).symm.toEmbedding)
 
 theorem squareRoot_of_graphExponentBound
-    (hg : ∀ k, 2 ≤ k → graphExponent k ≤ (k : ℝ) ^ 2 / 4) : SquareRootBound := by
+    (hg : ∀ k, 2 ≤ k → graphExponent (𝕜 := 𝕜) k ≤ (k : ℝ) ^ 2 / 4) : SquareRootBound (𝕜 := 𝕜) := by
   intro I _ _ V _ T
   by_cases hT : T = 0
   · rw [hT, Tensor.asymptoticRank_zero]
@@ -192,7 +201,7 @@ theorem squareRoot_of_graphExponentBound
   exact hlog
 
 theorem completeGraphBounds_of_graphExponentBound
-    (hg : ∀ k, 2 ≤ k → graphExponent k ≤ (k : ℝ) ^ 2 / 4) : CompleteGraphBounds := by
+    (hg : ∀ k, 2 ≤ k → graphExponent (𝕜 := 𝕜) k ≤ (k : ℝ) ^ 2 / 4) : CompleteGraphBounds (𝕜 := 𝕜) := by
   intro k n hk hn
   refine ⟨completeGraph_balanced_lower (by omega), ?_⟩
   by_cases h1 : n = 1
@@ -203,7 +212,7 @@ theorem completeGraphBounds_of_graphExponentBound
     exact Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hn) (hg k hk)
 
 theorem evenCompleteGraphRank_of_graphExponentBound
-    (hg : ∀ k, 2 ≤ k → graphExponent k ≤ (k : ℝ) ^ 2 / 4) : EvenCompleteGraphRank := by
+    (hg : ∀ k, 2 ≤ k → graphExponent (𝕜 := 𝕜) k ≤ (k : ℝ) ^ 2 / 4) : EvenCompleteGraphRank (𝕜 := 𝕜) := by
   intro r n hr hn
   have h := completeGraphBounds_of_graphExponentBound hg (2 * r) n (by omega) hn
   have he : (2 * r) * (2 * r) / 4 = r ^ 2 := by

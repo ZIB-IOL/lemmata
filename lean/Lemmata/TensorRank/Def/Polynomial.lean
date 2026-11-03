@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Def.Tensor
 public import Lemmata.TensorRank.Def.Maps
 public import Mathlib.Algebra.Polynomial.Eval.Defs
@@ -21,12 +28,6 @@ variable [Semiring R]
 
 def coefficient (P : Tensor (Polynomial R) I V) (e : ℕ) : Tensor R I V :=
   fun x => (P x).coeff e
-
-def evaluate (P : Tensor (Polynomial R) I V) (t : R) : Tensor R I V :=
-  fun x => Polynomial.eval t (P x)
-
-def DegreeLE (P : Tensor (Polynomial R) I V) (D : ℕ) : Prop :=
-  ∀ x, (P x).natDegree ≤ D
 
 /-- The first possibly nonzero coefficient is the target tensor. -/
 def Leading (P : Tensor (Polynomial R) I V) (e : ℕ) (T : Tensor R I V) : Prop :=

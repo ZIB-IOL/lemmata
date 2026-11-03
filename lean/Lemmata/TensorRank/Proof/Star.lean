@@ -1,7 +1,15 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Def.Star
-public import Lemmata.TensorRank.Proof.WeightedBound
+public import Lemmata.TensorRank.Proof.WeightedGraph
+public import Lemmata.TensorRank.Proof.GraphExponent
 public import Lemmata.TensorRank.Proof.Maps
 public import Mathlib.Logic.Equiv.Option
 
@@ -14,6 +22,8 @@ open Classical
 
 namespace Lemmata.TensorRank
 
+variable {𝕜 : Type*} [Field 𝕜]
+
 def weightedAssignment {k : ℕ} {d : Edge k → ℕ} (z : ∀ e, Fin (d e))
     (i : Fin k) : WeightedCoordinate d i := fun a => z a.val
 
@@ -25,8 +35,8 @@ theorem weightedAssignment_injective {k : ℕ} {d : Edge k → ℕ} :
   exact congrFun (congrFun h i) ⟨e, hi⟩
 
 theorem weightedComplete_eq_sum {k : ℕ} (d : Edge k → ℕ) :
-    weightedComplete d = ∑ z : ∀ e, Fin (d e),
-      Tensor.pure (fun i x => if x = weightedAssignment z i then (1 : ℂ) else 0) := by
+    weightedComplete (𝕜 := 𝕜) d = ∑ z : ∀ e, Fin (d e),
+      Tensor.pure (fun i x => if x = weightedAssignment z i then (1 : 𝕜) else 0) := by
   funext x
   simp only [Finset.sum_apply, Tensor.pure, Fintype.prod_boole, ← funext_iff]
   by_cases hx : ∀ (e : Edge k) (i j : Fin k) (hi : i ∈ e.val) (hj : j ∈ e.val),
@@ -37,7 +47,7 @@ theorem weightedComplete_eq_sum {k : ℕ} (d : Edge k → ℕ) :
     have hz : x = weightedAssignment z := by
       funext i a
       exact hx a.val i (vertex a.val) a.prop (hv a.val)
-    rw [show weightedComplete d x = 1 from ite_eq_left hx, hz]
+    rw [show weightedComplete (𝕜 := 𝕜) d x = 1 from ite_eq_left hx, hz]
     simp [weightedAssignment_injective.eq_iff]
   · have hn (z : ∀ e, Fin (d e)) : x ≠ weightedAssignment z := by
       intro h
@@ -45,12 +55,12 @@ theorem weightedComplete_eq_sum {k : ℕ} (d : Edge k → ℕ) :
       subst x
       intros
       rfl
-    rw [show weightedComplete d x = 0 from ite_eq_right hx]
+    rw [show weightedComplete (𝕜 := 𝕜) d x = 0 from ite_eq_right hx]
     simp [hn]
 
 theorem localMap_weightedComplete {k : ℕ} {d : Edge k → ℕ} {W : Fin k → Type*}
-    (A : ∀ i, W i → WeightedCoordinate d i → ℂ) :
-    Tensor.localMap A (weightedComplete d) =
+    (A : ∀ i, W i → WeightedCoordinate d i → 𝕜) :
+    Tensor.localMap A (weightedComplete (𝕜 := 𝕜) d) =
       fun x => ∑ z : ∀ e, Fin (d e), ∏ i, A i (x i) (weightedAssignment z i) := by
   rw [weightedComplete_eq_sum, Tensor.localMap_sum]
   simp_rw [Tensor.localMap_pure]
@@ -109,26 +119,26 @@ def starReconstruct {k n : ℕ} (c : Fin k) (a : Fin n) (f : Neighbors c → Fin
   · rfl
 
 noncomputable def starKernel {k n : ℕ} (c : Fin k)
-    (T : Tensor ℂ (Fin k) (fun _ => Fin n)) :
-    ∀ i, Fin n → WeightedCoordinate (starDimensions c n) i → ℂ :=
+    (T : Tensor 𝕜 (Fin k) (fun _ => Fin n)) :
+    ∀ i, Fin n → WeightedCoordinate (starDimensions c n) i → 𝕜 :=
   fun i y a => if hi : i = c then
     T (starReconstruct c y (starCenterCoordinate c n (hi ▸ a)))
   else if starLeafValue c n ⟨i, hi⟩ a = y then 1 else 0
 
 @[simp] theorem starKernel_center {k n : ℕ} (c : Fin k)
-    (T : Tensor ℂ (Fin k) (fun _ => Fin n)) (y : Fin n)
+    (T : Tensor 𝕜 (Fin k) (fun _ => Fin n)) (y : Fin n)
     (a : WeightedCoordinate (starDimensions c n) c) :
     starKernel c T c y a = T (starReconstruct c y (starCenterCoordinate c n a)) := by
   simp [starKernel]
 
 @[simp] theorem starKernel_leaf {k n : ℕ} (c : Fin k)
-    (T : Tensor ℂ (Fin k) (fun _ => Fin n)) (j : Neighbors c) (y : Fin n)
+    (T : Tensor 𝕜 (Fin k) (fun _ => Fin n)) (j : Neighbors c) (y : Fin n)
     (a : WeightedCoordinate (starDimensions c n) j.val) :
     starKernel c T j.val y a = if starLeafValue c n j a = y then 1 else 0 := by
   simp [starKernel, j.prop]
 
-theorem localMap_star {k n : ℕ} (c : Fin k) (T : Tensor ℂ (Fin k) (fun _ => Fin n)) :
-    Tensor.localMap (starKernel c T) (weightedComplete (starDimensions c n)) = T := by
+theorem localMap_star {k n : ℕ} (c : Fin k) (T : Tensor 𝕜 (Fin k) (fun _ => Fin n)) :
+    Tensor.localMap (starKernel c T) (weightedComplete (𝕜 := 𝕜) (starDimensions c n)) = T := by
   funext x
   rw [localMap_weightedComplete]
   let e := (starLabelEquiv c n).trans (starCenterCoordinate c n)
@@ -149,8 +159,8 @@ theorem localMap_star {k n : ℕ} (c : Fin k) (T : Tensor ℂ (Fin k) (fun _ => 
     T (starReconstruct c (x c) f) * if f = (fun j => x j.val) then 1 else 0) (fun _ => rfl)]
   simp
 
-theorem restricts_star {k n : ℕ} (c : Fin k) (T : Tensor ℂ (Fin k) (fun _ => Fin n)) :
-    Tensor.Restricts T (weightedComplete (starDimensions c n)) :=
+theorem restricts_star {k n : ℕ} (c : Fin k) (T : Tensor 𝕜 (Fin k) (fun _ => Fin n)) :
+    Tensor.Restricts T (weightedComplete (𝕜 := 𝕜) (starDimensions c n)) :=
   ⟨starKernel c T, (localMap_star c T).symm⟩
 
 namespace Tensor
@@ -188,13 +198,13 @@ theorem prod_starDimensions {k : ℕ} (n : ℕ) (e : Edge k) :
   simp [starDimensions, e.prop]
 
 theorem restricts_indexed_stars {k n : ℕ}
-    (T : Fin k → Tensor ℂ (Fin k) (fun _ => Fin n)) :
-    Tensor.Restricts (Tensor.indexedProduct T) (weightedComplete (fun _ : Edge k => n ^ 2)) := by
+    (T : Fin k → Tensor 𝕜 (Fin k) (fun _ => Fin n)) :
+    Tensor.Restricts (Tensor.indexedProduct T) (weightedComplete (𝕜 := 𝕜) (fun _ : Edge k => n ^ 2)) := by
   classical
   have h := Tensor.Restricts.indexedProduct (fun c => restricts_star c (T c))
   have hs := Tensor.reindex_restricts
     (fun i => weightedIndexedCoordinate (fun c : Fin k => starDimensions c n) i)
-    (weightedComplete (fun e => ∏ c : Fin k, starDimensions c n e))
+    (weightedComplete (𝕜 := 𝕜) (fun e => ∏ c : Fin k, starDimensions c n e))
   rw [weighted_indexedProduct_reindex] at hs
   have hd : (fun e => ∏ c : Fin k, starDimensions c n e) =
       (fun _ : Edge k => n ^ 2) := funext (prod_starDimensions n)
@@ -202,15 +212,15 @@ theorem restricts_indexed_stars {k n : ℕ}
   exact h.trans hs
 
 theorem asymptoticRank_le_graphExponent {k n : ℕ} (hk : 2 ≤ k) (hn : 1 ≤ n)
-    (T : Tensor ℂ (Fin k) (fun _ => Fin n)) :
-    Tensor.asymptoticRank T ≤ (n : ℝ) ^ (2 * graphExponent k / k) := by
+    (T : Tensor 𝕜 (Fin k) (fun _ => Fin n)) :
+    Tensor.asymptoticRank T ≤ (n : ℝ) ^ (2 * graphExponent (𝕜 := 𝕜) k / k) := by
   have hk0 : 0 < (k : ℝ) := by exact_mod_cast (by omega : 0 < k)
-  have hgraph : Tensor.asymptoticRank (completeGraph k (n ^ 2)) =
-      (n : ℝ) ^ (2 * graphExponent k) := by
+  have hgraph : Tensor.asymptoticRank (completeGraph (𝕜 := 𝕜) k (n ^ 2)) =
+      (n : ℝ) ^ (2 * graphExponent (𝕜 := 𝕜) k) := by
     by_cases h1 : n = 1
     · subst n
       simp only [Nat.cast_one, Real.one_rpow]
-      change Tensor.asymptoticRank (completeGraph k 1) = 1
+      change Tensor.asymptoticRank (completeGraph (𝕜 := 𝕜) k 1) = 1
       exact asymptoticRank_completeGraph_one k
     · have h2 : 2 ≤ n ^ 2 :=
         (show 2 ≤ n by omega).trans (le_self_pow hn (by decide : 2 ≠ 0))
