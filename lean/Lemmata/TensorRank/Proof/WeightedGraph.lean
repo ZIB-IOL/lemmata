@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Def.WeightedGraph
 public import Lemmata.TensorRank.Proof.GraphRank
 public import Lemmata.TensorRank.Proof.Asymptotic
@@ -15,8 +22,7 @@ open Classical
 
 namespace Lemmata.TensorRank
 
-@[simp] theorem card_edge (k : ℕ) : Fintype.card (Edge k) = k.choose 2 := by
-  simp [Edge]
+variable {𝕜 : Type*} [Field 𝕜]
 
 theorem edge_incident_pair {k : ℕ} (i : Fin k) (e : Incident k i) :
     ∃ j : Neighbors i, e.val = edgeBetween i j.val j.prop := by
@@ -49,7 +55,7 @@ noncomputable def constantCoordinate {k n : ℕ} (i : Fin k) :
 
 theorem weighted_constant_reindex (k n : ℕ) :
     Tensor.reindex (fun i => (constantCoordinate (n := n) i).symm)
-      (weightedComplete (fun _ : Edge k => n)) = completeGraph k n := by
+      (weightedComplete (𝕜 := 𝕜) (fun _ : Edge k => n)) = completeGraph (𝕜 := 𝕜) k n := by
   funext x
   have hx (i : Fin k) (e : Incident k i) :
       (constantCoordinate (n := n) i).symm (x i) e =
@@ -101,33 +107,13 @@ theorem weighted_constant_reindex (k n : ℕ) :
         simpa only [hai, haj] using h i j hij
   change (if ∀ (e : Edge k) (i j : Fin k) (hi : i ∈ e.val) (hj : j ∈ e.val),
     (constantCoordinate (n := n) i).symm (x i) ⟨e, hi⟩ =
-      (constantCoordinate (n := n) j).symm (x j) ⟨e, hj⟩ then (1 : ℂ) else 0) = _
+      (constantCoordinate (n := n) j).symm (x j) ⟨e, hj⟩ then (1 : 𝕜) else 0) = _
   simp only [hx, hc, completeGraph]
 
-theorem rank_weighted_constant (k n : ℕ) :
-    Tensor.rank (weightedComplete (fun _ : Edge k => n)) = Tensor.rank (completeGraph k n) := by
-  rw [← weighted_constant_reindex, Tensor.rank_reindex]
-
 theorem asymptoticRank_weighted_constant (k n : ℕ) :
-    Tensor.asymptoticRank (weightedComplete (fun _ : Edge k => n)) =
-      Tensor.asymptoticRank (completeGraph k n) := by
+    Tensor.asymptoticRank (weightedComplete (𝕜 := 𝕜) (fun _ : Edge k => n)) =
+      Tensor.asymptoticRank (completeGraph (𝕜 := 𝕜) k n) := by
   rw [← weighted_constant_reindex, Tensor.asymptoticRank_reindex]
-
-theorem weighted_padding {k : ℕ} {d e : Edge k → ℕ} (hde : ∀ a, d a ≤ e a) :
-    Tensor.reindex (fun i (x : WeightedCoordinate d i) a => Fin.castLE (hde a.val) (x a))
-      (weightedComplete e) = weightedComplete d := by
-  funext x
-  change (if ∀ (a : Edge k) (i j : Fin k) (hi : i ∈ a.val) (hj : j ∈ a.val),
-    Fin.castLE (hde a) (x i ⟨a, hi⟩) = Fin.castLE (hde a) (x j ⟨a, hj⟩)
-    then (1 : ℂ) else 0) = _
-  simp only [Fin.castLE_inj, weightedComplete]
-
-theorem asymptoticRank_weighted_mono {k : ℕ} {d e : Edge k → ℕ} (hde : ∀ a, d a ≤ e a) :
-    Tensor.asymptoticRank (weightedComplete d) ≤ Tensor.asymptoticRank (weightedComplete e) := by
-  have h := (Tensor.reindex_restricts
-    (fun i (x : WeightedCoordinate d i) a => Fin.castLE (hde a.val) (x a))
-    (weightedComplete e)).asymptoticRank_le
-  rwa [weighted_padding] at h
 
 noncomputable def weightedProductCoordinate {k : ℕ} (d e : Edge k → ℕ) (i : Fin k) :
     (WeightedCoordinate d i × WeightedCoordinate e i) ≃ WeightedCoordinate (fun a => d a * e a) i where
@@ -137,123 +123,13 @@ noncomputable def weightedProductCoordinate {k : ℕ} (d e : Edge k → ℕ) (i 
   right_inv x := by funext a; exact finProdFinEquiv.apply_symm_apply (x a)
 
 theorem weighted_product_reindex {k : ℕ} (d e : Edge k → ℕ) :
-    Tensor.reindex (fun i => weightedProductCoordinate d e i) (weightedComplete (fun a => d a * e a)) =
-      Tensor.product (weightedComplete d) (weightedComplete e) := by
+    Tensor.reindex (fun i => weightedProductCoordinate d e i) (weightedComplete (𝕜 := 𝕜) (fun a => d a * e a)) =
+      Tensor.product (weightedComplete (𝕜 := 𝕜) d) (weightedComplete (𝕜 := 𝕜) e) := by
   funext x
   simp only [Tensor.reindex, weightedComplete, weightedProductCoordinate, Equiv.coe_fn_mk,
     Tensor.product, finProdFinEquiv.injective.eq_iff, Prod.mk.injEq, forall_and]
   rw [ite_and]
   split_ifs <;> simp_all only [mul_one, mul_zero]
-
-theorem asymptoticRank_weighted_product_le {k : ℕ} (d e : Edge k → ℕ) :
-    Tensor.asymptoticRank (weightedComplete (fun a => d a * e a)) ≤
-      Tensor.asymptoticRank (weightedComplete d) * Tensor.asymptoticRank (weightedComplete e) := by
-  have h := Tensor.asymptoticRank_reindex (weightedProductCoordinate d e)
-    (weightedComplete (fun a => d a * e a))
-  rw [weighted_product_reindex] at h
-  rw [← h]
-  exact Tensor.asymptoticRank_product_le _ _
-
-noncomputable def weightedWord (n q : ℕ) : (Fin q → Fin n) ≃ Fin (n ^ q) :=
-  Fintype.equivFinOfCardEq (by simp)
-
-noncomputable def weightedPowerCoordinate {k : ℕ} (d : Edge k → ℕ) (q : ℕ) (i : Fin k) :
-    (Fin q → WeightedCoordinate d i) ≃ WeightedCoordinate (fun a => d a ^ q) i where
-  toFun x a := weightedWord (d a.val) q (fun t => x t a)
-  invFun x t a := (weightedWord (d a.val) q).symm (x a) t
-  left_inv x := by funext t a; simp
-  right_inv x := by funext a; simp
-
-theorem weighted_power_reindex {k : ℕ} (d : Edge k → ℕ) (q : ℕ) :
-    Tensor.reindex (fun i => weightedPowerCoordinate d q i) (weightedComplete (fun a => d a ^ q)) =
-      Tensor.power (weightedComplete d) q := by
-  funext x
-  have hc : (∀ (a : Edge k) (i j : Fin k) (hi : i ∈ a.val) (hj : j ∈ a.val),
-      weightedWord (d a) q (fun t => x i t ⟨a, hi⟩) =
-        weightedWord (d a) q (fun t => x j t ⟨a, hj⟩)) ↔
-      ∀ t, ∀ (a : Edge k) (i j : Fin k) (hi : i ∈ a.val) (hj : j ∈ a.val),
-        x i t ⟨a, hi⟩ = x j t ⟨a, hj⟩ := by
-    constructor
-    · intro h t a i j hi hj
-      exact congrFun ((weightedWord (d a) q).injective (h a i j hi hj)) t
-    · intro h a i j hi hj
-      congr 1
-      funext t
-      exact h t a i j hi hj
-  change (if ∀ (a : Edge k) (i j : Fin k) (hi : i ∈ a.val) (hj : j ∈ a.val),
-    weightedWord (d a) q (fun t => x i t ⟨a, hi⟩) = weightedWord (d a) q (fun t => x j t ⟨a, hj⟩)
-    then (1 : ℂ) else 0) = _
-  simp only [Tensor.power, weightedComplete, Fintype.prod_boole, hc]
-  split_ifs <;> rfl
-
-theorem rank_weighted_power {k : ℕ} (d : Edge k → ℕ) (q : ℕ) :
-    Tensor.rank (weightedComplete (fun a => d a ^ q)) =
-      Tensor.rank (Tensor.power (weightedComplete d) q) := by
-  rw [← weighted_power_reindex, Tensor.rank_reindex]
-
-theorem asymptoticRank_weighted_power {k : ℕ} (d : Edge k → ℕ) (q : ℕ) :
-    Tensor.asymptoticRank (weightedComplete (fun a => d a ^ q)) =
-      Tensor.asymptoticRank (weightedComplete d) ^ q := by
-  have h := Tensor.asymptoticRank_reindex (weightedPowerCoordinate d q)
-    (weightedComplete (fun a => d a ^ q))
-  rw [weighted_power_reindex, Tensor.asymptoticRank_power] at h
-  exact h.symm
-
-noncomputable def incidentMap {k : ℕ} (σ : Equiv.Perm (Fin k)) (i : Fin k) :
-    Incident k i ≃ Incident k (σ i) :=
-  (edgeMap σ).subtypeEquiv (fun e => by simp [edgeMap])
-
-noncomputable def weightedRelabelCoordinate {k : ℕ} (d : Edge k → ℕ)
-    (σ : Equiv.Perm (Fin k)) (i : Fin k) :
-    WeightedCoordinate d (σ i) ≃ WeightedCoordinate (fun e => d (edgeMap σ e)) i :=
-  (Equiv.piCongrLeft (fun e : Incident k (σ i) => Fin (d e.val)) (incidentMap σ i)).symm
-
-private theorem weighted_matching_relabel {k : ℕ} (d : Edge k → ℕ)
-    (σ : Equiv.Perm (Fin k)) (x : ∀ i, WeightedCoordinate d (σ i)) :
-    (∀ (e : Edge k) (i j : Fin k) (hi : i ∈ e.val) (hj : j ∈ e.val),
-      x i (incidentMap σ i ⟨e, hi⟩) = x j (incidentMap σ j ⟨e, hj⟩)) ↔
-    ∀ (e : Edge k) (i j : Fin k) (hi : i ∈ e.val) (hj : j ∈ e.val),
-      Equiv.piCongrLeft (WeightedCoordinate d) σ x i ⟨e, hi⟩ =
-        Equiv.piCongrLeft (WeightedCoordinate d) σ x j ⟨e, hj⟩ := by
-  constructor
-  · intro h e i j hi hj
-    obtain ⟨a, rfl⟩ := (edgeMap σ).surjective e
-    obtain ⟨u, rfl⟩ := σ.surjective i
-    obtain ⟨v, rfl⟩ := σ.surjective j
-    have hu : u ∈ a.val := by simpa [edgeMap] using hi
-    have hv : v ∈ a.val := by simpa [edgeMap] using hj
-    simpa only [Equiv.piCongrLeft_apply_apply, incidentMap, Equiv.subtypeEquiv,
-      Equiv.coe_fn_mk] using h a u v hu hv
-  · intro h e i j hi hj
-    have hi' : σ i ∈ (edgeMap σ e).val := by simpa [edgeMap] using hi
-    have hj' : σ j ∈ (edgeMap σ e).val := by simpa [edgeMap] using hj
-    simpa only [Equiv.piCongrLeft_apply_apply, incidentMap, Equiv.subtypeEquiv,
-      Equiv.coe_fn_mk] using
-      h (edgeMap σ e) (σ i) (σ j) hi' hj'
-
-private theorem weightedRelabelCoordinate_apply {k : ℕ} (d : Edge k → ℕ)
-    (σ : Equiv.Perm (Fin k)) (i : Fin k) (x : WeightedCoordinate d (σ i))
-    (a : Incident k i) : weightedRelabelCoordinate d σ i x a = x (incidentMap σ i a) :=
-  Equiv.piCongrLeft_symm_apply _ _ _ _
-
-theorem weighted_relabel_reindex {k : ℕ} (d : Edge k → ℕ) (σ : Equiv.Perm (Fin k)) :
-    Tensor.reindex (fun i => weightedRelabelCoordinate d σ i)
-      (weightedComplete (fun e => d (edgeMap σ e))) = Tensor.relabel σ (weightedComplete d) := by
-  funext x
-  change (if ∀ (e : Edge k) (i j : Fin k) (hi : i ∈ e.val) (hj : j ∈ e.val),
-    (weightedRelabelCoordinate d σ i (x i)) ⟨e, hi⟩ =
-      (weightedRelabelCoordinate d σ j (x j)) ⟨e, hj⟩ then (1 : ℂ) else 0) = _
-  simp only [weightedRelabelCoordinate_apply, Tensor.relabel, weightedComplete]
-  exact if_congr (weighted_matching_relabel d σ x) rfl rfl
-
-theorem asymptoticRank_weighted_relabel {k : ℕ} (d : Edge k → ℕ)
-    (σ : Equiv.Perm (Fin k)) :
-    Tensor.asymptoticRank (weightedComplete (fun e => d (edgeMap σ e))) =
-      Tensor.asymptoticRank (weightedComplete d) := by
-  have h := Tensor.asymptoticRank_reindex (weightedRelabelCoordinate d σ)
-    (weightedComplete (fun e => d (edgeMap σ e)))
-  rw [weighted_relabel_reindex] at h
-  exact h.symm.trans (Tensor.asymptoticRank_relabel σ (weightedComplete d))
 
 noncomputable def weightedTuple {J : Type*} [Fintype J] (d : J → ℕ) :
     (∀ j, Fin (d j)) ≃ Fin (∏ j, d j) :=
@@ -270,8 +146,8 @@ noncomputable def weightedIndexedCoordinate {k : ℕ} {J : Type*} [Fintype J]
 theorem weighted_indexedProduct_reindex {k : ℕ} {J : Type*} [Fintype J]
     (d : J → Edge k → ℕ) :
     Tensor.reindex (fun i => weightedIndexedCoordinate d i)
-      (weightedComplete (fun e => ∏ j, d j e)) =
-      Tensor.indexedProduct (fun j => weightedComplete (d j)) := by
+      (weightedComplete (𝕜 := 𝕜) (fun e => ∏ j, d j e)) =
+      Tensor.indexedProduct (fun j => weightedComplete (𝕜 := 𝕜) (d j)) := by
   funext x
   have hc : (∀ (e : Edge k) (i j : Fin k) (hi : i ∈ e.val) (hj : j ∈ e.val),
       weightedTuple (fun a => d a e) (fun a => x i a ⟨e, hi⟩) =
@@ -287,23 +163,7 @@ theorem weighted_indexedProduct_reindex {k : ℕ} {J : Type*} [Fintype J]
       exact h a e i j hi hj
   change (if ∀ (e : Edge k) (i j : Fin k) (hi : i ∈ e.val) (hj : j ∈ e.val),
     weightedTuple (fun a => d a e) (fun a => x i a ⟨e, hi⟩) =
-      weightedTuple (fun a => d a e) (fun a => x j a ⟨e, hj⟩) then (1 : ℂ) else 0) = _
+      weightedTuple (fun a => d a e) (fun a => x j a ⟨e, hj⟩) then (1 : 𝕜) else 0) = _
   simp only [Tensor.indexedProduct, weightedComplete, Fintype.prod_boole, hc]
-
-theorem asymptoticRank_weighted_indexedProduct_le {k : ℕ} {J : Type*} [Fintype J]
-    (d : J → Edge k → ℕ) :
-    Tensor.asymptoticRank (weightedComplete (fun e => ∏ j, d j e)) ≤
-      ∏ j, Tensor.asymptoticRank (weightedComplete (d j)) := by
-  have h := Tensor.asymptoticRank_reindex (weightedIndexedCoordinate d)
-    (weightedComplete (fun e => ∏ j, d j e))
-  rw [weighted_indexedProduct_reindex] at h
-  rw [← h]
-  exact Tensor.asymptoticRank_indexedProduct_le _
-
-theorem weightedComplete_ne_zero {k : ℕ} {d : Edge k → ℕ} (hd : ∀ e, 0 < d e) :
-    weightedComplete d ≠ 0 := by
-  intro h
-  have hx := congrFun h (fun i e => ⟨0, hd e.val⟩)
-  simp [weightedComplete] at hx
 
 end Lemmata.TensorRank

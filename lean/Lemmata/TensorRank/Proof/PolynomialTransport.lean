@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Proof.PolynomialProduct
 public import Lemmata.TensorRank.Proof.Parties
 public import Mathlib.Logic.Equiv.Option
@@ -14,6 +21,8 @@ open Classical
 noncomputable section
 
 namespace Lemmata.TensorRank.PolynomialProduct
+
+variable {𝕜 : Type*} [Field 𝕜]
 
 variable {J : Type*}
 
@@ -70,7 +79,7 @@ def inputCoordinateEquiv (a : J → ℕ) (j : J) (hj : 0 < a j) (p : Bool ⊕ Ot
 
 theorem selected_relabel_tensor (a : J → ℕ) (j : J) (hj : 0 < a j) :
     Tensor.reindex (fun p => inputCoordinateEquiv a j hj p)
-      (Tensor.relabel (inputPartyEquiv j) (tensor a)) = selected (remaining a j) (a j) := by
+      (Tensor.relabel (inputPartyEquiv j) (tensor (𝕜 := 𝕜) a)) = selected (𝕜 := 𝕜) (remaining a j) (a j) := by
   funext x
   let y : ∀ p, Coordinate a p := Equiv.piCongrLeft (Coordinate a) (inputPartyEquiv j)
     (fun p => inputCoordinateEquiv a j hj p (x p))
@@ -92,21 +101,21 @@ theorem selected_relabel_tensor (a : J → ℕ) (j : J) (hj : 0 < a j) :
       (fun p => inputCoordinateEquiv a j hj p (x p))) (inputPartyEquiv j (.inl true))).val = _
     rw [Equiv.piCongrLeft_apply_apply]
     rfl
-  change (if (∑ i, (y (some i)).val) = (y none).val then (1 : ℂ) else 0) = _
+  change (if (∑ i, (y (some i)).val) = (y none).val then (1 : 𝕜) else 0) = _
   rw [hs, hz]
   rfl
 
 theorem selected_restricts_relabel_tensor (a : J → ℕ) (j : J) (hj : 0 < a j) :
-    Tensor.Restricts (selected (remaining a j) (a j))
-      (Tensor.relabel (inputPartyEquiv j) (tensor a)) := by
+    Tensor.Restricts (selected (𝕜 := 𝕜) (remaining a j) (a j))
+      (Tensor.relabel (inputPartyEquiv j) (tensor (𝕜 := 𝕜) a)) := by
   rw [← selected_relabel_tensor a j hj]
   exact Tensor.reindex_restricts _ _
 
 theorem relabel_tensor_restricts_selected (a : J → ℕ) (j : J) (hj : 0 < a j) :
-    Tensor.Restricts (Tensor.relabel (inputPartyEquiv j) (tensor a))
-      (selected (remaining a j) (a j)) := by
+    Tensor.Restricts (Tensor.relabel (inputPartyEquiv j) (tensor (𝕜 := 𝕜) a))
+      (selected (𝕜 := 𝕜) (remaining a j) (a j)) := by
   have h := Tensor.reindex_restricts (fun p => (inputCoordinateEquiv a j hj p).symm)
-    (selected (remaining a j) (a j))
+    (selected (𝕜 := 𝕜) (remaining a j) (a j))
   convert h using 1
   rw [← selected_relabel_tensor a j hj]
   funext x

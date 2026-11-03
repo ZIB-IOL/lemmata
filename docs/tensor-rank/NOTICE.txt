@@ -1,0 +1,11 @@
+A Square-Root Bound for Asymptotic Tensor Rank
+
+Copyright (c) 2026 Kirill Khoruzhii.
+
+The tensor-rank foundations build on Jeroen Zuiddam's Apache-2.0 formalizations, copyright (c) 2024 and 2026 Jeroen Zuiddam. The polynomial-multiplication, interpolation and sector arguments also adapt OpenAI's Apache-2.0 matrix-multiplication formalization, available at https://github.com/openai/math/tree/main/lean/OAI/LinearAlgebra/MatrixMultiplication.
+
+The adaptation generalizes the coefficient field, uses polynomial Vandermonde maps and coefficient extraction for shared-leg separation, and replaces the spectral proof with paired polynomial packing and a cyclic schedule. The local coordinate model, rank, contextual comparisons, weighted graph resources, star restrictions and dimension refinements are organized into the modules under lean/Lemmata/TensorRank/.
+
+The arbitrary-field adaptation uses the characteristic-independent polynomial separation methods of Houxi Lü and Alimzhan Amanov, Maxim van den Berg and Jeroen Zuiddam. A polynomial form of simultaneous shared-leg separation also appears in Huanyi Zhou's work. The polynomial packing adapts Rafael Pass's construction while keeping the shared tensor factors separate. These mathematical sources are cited in the entry.
+
+The Apache License, Version 2.0, is reproduced in LICENSE.txt. This notice records attribution and modifications and does not alter the license terms.

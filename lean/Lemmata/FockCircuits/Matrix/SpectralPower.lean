@@ -1,6 +1,6 @@
 module
 
-public import Lemmata.TensorRank.Main
+public import Lemmata.TensorRank.Proof.SpectrumDuality
 public import Lemmata.FockCircuits.Matrix.Tensor.Scalar
 
 public section

@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Def.IndexedProduct
 public import Lemmata.TensorRank.Proof.Asymptotic
 public import Mathlib.Analysis.SpecialFunctions.Pow.NNReal
@@ -13,6 +20,21 @@ open Classical
 open scoped Topology BigOperators
 
 namespace Lemmata.TensorRank.Tensor
+
+def splitFunctions {C : Type*} (V W : C → Type*) :
+    (∀ c, V c × W c) ≃ (∀ c, V c) × (∀ c, W c) where
+  toFun f := (fun c => (f c).1, fun c => (f c).2)
+  invFun f c := (f.1 c, f.2 c)
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+theorem product_indexedProduct_reindex {R I C : Type*} [CommSemiring R] [Fintype C]
+    {V W : C → I → Type*} (S : ∀ c, Tensor R I (V c)) (T : ∀ c, Tensor R I (W c)) :
+    reindex (fun i => splitFunctions (fun c => V c i) (fun c => W c i))
+      (Lemmata.TensorRank.Tensor.product (indexedProduct S) (indexedProduct T)) =
+        indexedProduct (fun c => Lemmata.TensorRank.Tensor.product (S c) (T c)) := by
+  funext x
+  exact (Finset.prod_mul_distrib : _).symm
 
 variable {R I J : Type*} [CommSemiring R] [Fintype J]
 variable {V : J → I → Type*}

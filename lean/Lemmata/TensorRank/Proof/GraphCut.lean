@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Def.Graph
 public import Lemmata.TensorRank.Proof.Flattening
 
@@ -10,6 +17,8 @@ set_option autoImplicit false
 open scoped BigOperators
 
 namespace Lemmata.TensorRank
+
+variable {𝕜 : Type*} [Field 𝕜]
 
 abbrev CutLabels {k : ℕ} (S : Finset (Fin k)) (n : ℕ) :=
   ({i : Fin k // i ∈ S} × {i : Fin k // i ∉ S}) → Fin n
@@ -28,7 +37,7 @@ private theorem cutCoordinates_match {k n : ℕ} (S : Finset (Fin k)) (hn : 0 < 
   by_cases hi : i ∈ S <;> by_cases hj : j ∈ S <;> simp [cutCoordinates, hi, hj]
 
 theorem completeGraph_identity_minor {k n : ℕ} (S : Finset (Fin k)) (hn : 0 < n) :
-    (Tensor.flatten (completeGraph k n) S).submatrix
+    (Tensor.flatten (completeGraph (𝕜 := 𝕜) k n) S).submatrix
       (fun z : CutLabels S n => fun i => cutCoordinates S hn z i.val)
       (fun z : CutLabels S n => fun i => cutCoordinates S hn z i.val) = 1 := by
   classical
@@ -50,21 +59,21 @@ theorem completeGraph_identity_minor {k n : ℕ} (S : Finset (Fin k)) (hn : 0 < 
         simp [x, Tensor.joinCut]
       rw [hx]
       exact cutCoordinates_match S hn a i j h
-  change completeGraph k n x = _
+  change completeGraph (𝕜 := 𝕜) k n x = _
   simp only [completeGraph, hm, Matrix.one_apply]
 
 theorem completeGraph_cut_rank_lower {k n : ℕ} (S : Finset (Fin k)) (hn : 0 < n) :
-    n ^ (S.card * (k - S.card)) ≤ Tensor.rank (completeGraph k n) := by
+    n ^ (S.card * (k - S.card)) ≤ Tensor.rank (completeGraph (𝕜 := 𝕜) k n) := by
   classical
-  have h := Tensor.card_le_rank_of_identity (completeGraph k n) S _ _
+  have h := Tensor.card_le_rank_of_identity (completeGraph (𝕜 := 𝕜) k n) S _ _
     (completeGraph_identity_minor S hn)
   simpa [CutLabels, Fintype.card_prod, Fintype.card_subtype_compl,
     Fintype.card_coe] using h
 
 theorem completeGraph_cut_lower {k n : ℕ} (S : Finset (Fin k)) (hn : 0 < n) :
-    (n : ℝ) ^ (S.card * (k - S.card)) ≤ Tensor.asymptoticRank (completeGraph k n) := by
+    (n : ℝ) ^ (S.card * (k - S.card)) ≤ Tensor.asymptoticRank (completeGraph (𝕜 := 𝕜) k n) := by
   classical
-  have h := Tensor.card_le_asymptoticRank_of_identity (completeGraph k n) S _ _
+  have h := Tensor.card_le_asymptoticRank_of_identity (completeGraph (𝕜 := 𝕜) k n) S _ _
     (completeGraph_identity_minor S hn)
   simpa [CutLabels, Fintype.card_prod, Fintype.card_subtype_compl,
     Fintype.card_coe] using h
@@ -87,10 +96,10 @@ private theorem balanced_product (k : ℕ) : (k / 2) * (k - k / 2) = k * k / 4 :
     omega
 
 theorem completeGraph_balanced_lower {k n : ℕ} (hn : 0 < n) :
-    (n : ℝ) ^ ((k * k / 4 : ℕ) : ℝ) ≤ Tensor.asymptoticRank (completeGraph k n) := by
+    (n : ℝ) ^ ((k * k / 4 : ℕ) : ℝ) ≤ Tensor.asymptoticRank (completeGraph (𝕜 := 𝕜) k n) := by
   let S : Finset (Fin k) := Finset.univ.map (Fin.castLEEmb (Nat.div_le_self k 2))
   have hS : S.card = k / 2 := by simp [S]
-  have h := completeGraph_cut_lower S hn
+  have h := completeGraph_cut_lower (𝕜 := 𝕜) S hn
   simpa only [hS, balanced_product, Real.rpow_natCast] using h
 
 end Lemmata.TensorRank

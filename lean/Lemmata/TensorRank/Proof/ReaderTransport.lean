@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Proof.EqualSectors
 public import Lemmata.TensorRank.Proof.Parties
 
@@ -13,6 +20,8 @@ open Classical
 noncomputable section
 
 namespace Lemmata.TensorRank.Tensor
+
+variable {𝕜 : Type*} [Field 𝕜]
 
 universe u v w z
 
@@ -96,6 +105,8 @@ end Lemmata.TensorRank.Tensor
 
 namespace Lemmata.TensorRank.Separation
 
+variable {𝕜 : Type*} [Field 𝕜]
+
 def markedReaders {k : ℕ} (a b : Fin k) (hab : a ≠ b) :
     Bool ≃ {i : Fin k // i = a ∨ i = b} where
   toFun
@@ -124,14 +135,14 @@ theorem readerEquiv_right {k : ℕ} (a b : Fin k) (hab : a ≠ b) :
 theorem fixed_type_bound_readers {k : ℕ} (hk : 2 ≤ k) (a b : Fin k) (hab : a ≠ b)
     {C : Type*} [Fintype C] {N : ℕ} {V U : Fin k → Type*}
     [∀ i, Fintype (V i)] [∀ i, Fintype (U i)]
-    (Z : C → Tensor ℂ (Fin k) V) (H : Tensor ℂ (Fin k) U)
+    (Z : C → Tensor 𝕜 (Fin k) V) (H : Tensor 𝕜 (Fin k) U)
     {left : V a → C} {right : V b → C}
     (hleft : Tensor.Reads Z a left) (hright : Tensor.Reads Z b right)
     {h : C → Fin (N + 1)} (base : Types.Words h) :
     Tensor.asymptoticRank (Tensor.product
-      (Tensor.relabel (readerEquiv a b hab).symm (readerPairing (Fintype.card (Types.Words h))))
+      (Tensor.relabel (readerEquiv a b hab).symm (readerPairing (𝕜 := 𝕜) (Fintype.card (Types.Words h))))
       (Tensor.product (Tensor.wordTensor Z base.val) H)) ≤
-      ((k - 1 : ℕ) : ℝ) * Tensor.asymptoticRank (Tensor.product (Tensor.power (∑ c, Z c) N) H) := by
+      (k : ℝ) * Tensor.asymptoticRank (Tensor.product (Tensor.power (∑ c, Z c) N) H) := by
   let e := readerEquiv a b hab
   have hl : Tensor.Reads (fun c => Tensor.relabel e (Z c)) (.inl false) left :=
     Tensor.Reads.relabel e (.inl false) hleft
@@ -143,7 +154,7 @@ theorem fixed_type_bound_readers {k : ℕ} (hk : 2 ≤ k) (a b : Fin k) (hab : a
     rw [Tensor.relabel_product, Tensor.relabel_power, Tensor.relabel_sum]
   rw [hs] at hb
   rw [Tensor.asymptoticRank_relabel e (Tensor.product (Tensor.power (∑ c, Z c) N) H)] at hb
-  have hdim : k - 2 + 1 = k - 1 := by omega
+  have hdim : k - 2 + 2 = k := by omega
   rw [Tensor.asymptoticRank_relabel_context e (readerPairing (Fintype.card (Types.Words h)))
     (Tensor.product (Tensor.wordTensor Z base.val) H),
     Tensor.relabel_product e (Tensor.wordTensor Z base.val) H,

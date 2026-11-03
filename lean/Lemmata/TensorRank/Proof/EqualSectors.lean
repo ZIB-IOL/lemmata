@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Proof.WordSectors
 
 @[expose] public section
@@ -12,6 +19,8 @@ open Classical
 noncomputable section
 
 namespace Lemmata.TensorRank.Tensor
+
+variable {𝕜 : Type*} [Field 𝕜]
 
 theorem Reads.product_right {R I C : Type*} [CommSemiring R] {V U : I → Type*}
     {Z : C → Tensor R I V} {reader : I} {label : V reader → C}
@@ -34,6 +43,8 @@ end Lemmata.TensorRank.Tensor
 
 namespace Lemmata.TensorRank.Separation
 
+variable {𝕜 : Type*} [Field 𝕜]
+
 universe u v w
 
 abbrev PairCoordinate {r : ℕ} (M : ℕ) : Party r → Type
@@ -43,7 +54,7 @@ abbrev PairCoordinate {r : ℕ} (M : ℕ) : Party r → Type
 instance {r M : ℕ} (p : Party r) : Fintype (PairCoordinate M p) := by
   cases p <;> infer_instance
 
-def readerPairing {r : ℕ} (M : ℕ) : Tensor ℂ (Party r) (PairCoordinate M) :=
+def readerPairing {r : ℕ} (M : ℕ) : Tensor 𝕜 (Party r) (PairCoordinate M) :=
   fun x => if x (.inl false) = x (.inl true) then 1 else 0
 
 variable {r M : ℕ} {V : Party r → Type u} {W : Party r → Type v}
@@ -70,11 +81,11 @@ theorem equalCoordinate_input (e : ∀ _ : Fin M, ∀ p, V p ≃ W p)
     (p : Party r) (x : SeparatedCoordinate V M p) :
     (equalCoordinate e p x).2.2 = e (label p x) p x.2 := by cases p <;> rfl
 
-theorem equal_sectors_reindex (Z : Fin M → Tensor ℂ (Party r) V)
-    (T : Tensor ℂ (Party r) W) (e : ∀ _ : Fin M, ∀ p, V p ≃ W p)
+theorem equal_sectors_reindex (Z : Fin M → Tensor 𝕜 (Party r) V)
+    (T : Tensor 𝕜 (Party r) W) (e : ∀ _ : Fin M, ∀ p, V p ≃ W p)
     (he : ∀ h, Tensor.reindex (fun p => e h p) T = Z h) :
     Tensor.reindex (fun p => equalCoordinate e p)
-      (Tensor.copies M (Tensor.product (readerPairing M) T)) = separatedSum Z := by
+      (Tensor.copies M (Tensor.product (readerPairing (𝕜 := 𝕜) M) T)) = separatedSum (𝕜 := 𝕜) Z := by
   funext x
   simp only [Tensor.reindex, Tensor.copies, Tensor.product, Tensor.diagonal,
     equalCoordinate_label, equalCoordinate_input, readerPairing]
@@ -112,29 +123,34 @@ theorem equal_sectors_reindex (Z : Fin M → Tensor ℂ (Party r) V)
     exact hl h.1
 
 theorem asymptoticRank_separated_eq [∀ p, Fintype (V p)] [∀ p, Fintype (W p)]
-    (hM : 0 < M) (Z : Fin M → Tensor ℂ (Party r) V)
-    (T : Tensor ℂ (Party r) W) (e : ∀ _ : Fin M, ∀ p, V p ≃ W p)
+    (hM : 0 < M) (Z : Fin M → Tensor 𝕜 (Party r) V)
+    (T : Tensor 𝕜 (Party r) W) (e : ∀ _ : Fin M, ∀ p, V p ≃ W p)
     (he : ∀ h, Tensor.reindex (fun p => e h p) T = Z h) :
-    Tensor.asymptoticRank (separatedSum Z) =
-      (M : ℝ) * Tensor.asymptoticRank (Tensor.product (readerPairing M) T) := by
+    Tensor.asymptoticRank (separatedSum (𝕜 := 𝕜) Z) =
+      (M : ℝ) * Tensor.asymptoticRank (Tensor.product (readerPairing (𝕜 := 𝕜) M) T) := by
   rw [← equal_sectors_reindex Z T e he, Tensor.asymptoticRank_reindex]
   exact Tensor.asymptoticRank_copies M hM _ (.inl false) (.inl true) (by simp)
 
 theorem equal_sectors_bound [∀ p, Fintype (V p)] [∀ p, Fintype (W p)]
-    (hM : 0 < M) (Z : Fin M → Tensor ℂ (Party r) V)
+    (hM : 0 < M) (Z : Fin M → Tensor 𝕜 (Party r) V)
     {left : V (.inl false) → Fin M} {right : V (.inl true) → Fin M}
     (hleft : Tensor.Reads Z (.inl false) left) (hright : Tensor.Reads Z (.inl true) right)
-    (T : Tensor ℂ (Party r) W) (e : ∀ _ : Fin M, ∀ p, V p ≃ W p)
+    (T : Tensor 𝕜 (Party r) W) (e : ∀ _ : Fin M, ∀ p, V p ≃ W p)
     (he : ∀ h, Tensor.reindex (fun p => e h p) T = Z h) :
-    Tensor.asymptoticRank (Tensor.product (readerPairing M) T) ≤
-      ((r + 1 : ℕ) : ℝ) * Tensor.asymptoticRank (∑ q, Z q) := by
+    Tensor.asymptoticRank (Tensor.product (readerPairing (𝕜 := 𝕜) M) T) ≤
+      ((r + 2 : ℕ) : ℝ) * Tensor.asymptoticRank (∑ q, Z q) := by
   apply (mul_le_mul_iff_right₀ (show (0 : ℝ) < M by exact_mod_cast hM)).mp
   calc
-    (M : ℝ) * Tensor.asymptoticRank (Tensor.product (readerPairing M) T) =
-        Tensor.asymptoticRank (separatedSum Z) := (asymptoticRank_separated_eq hM Z T e he).symm
-    _ ≤ (period r M : ℝ) * Tensor.asymptoticRank (∑ q, Z q) :=
+    (M : ℝ) * Tensor.asymptoticRank (Tensor.product (readerPairing (𝕜 := 𝕜) M) T) =
+        Tensor.asymptoticRank (separatedSum (𝕜 := 𝕜) Z) := (asymptoticRank_separated_eq hM Z T e he).symm
+    _ ≤ (sourceCopies r M : ℝ) * Tensor.asymptoticRank (∑ q, Z q) :=
       separated_asymptoticRank_sum_le hM Z hleft hright
-    _ = _ := by simp only [period, Nat.cast_mul]; ring
+    _ ≤ _ := by
+      have hp : (sourceCopies r M : ℝ) ≤ ((r + 2) * M : ℕ) := by
+        exact_mod_cast sourceCopies_upper r M
+      have h := mul_le_mul_of_nonneg_right hp (Tensor.asymptoticRank_nonneg (∑ q, Z q))
+      push_cast at h ⊢
+      nlinarith
 
 variable {C : Type*} [Fintype C] {N : ℕ}
 
@@ -150,16 +166,16 @@ theorem typedWordIndex_decode {h : C → Fin (N + 1)} (base : Types.Words h)
     dite_eq_left ((Fintype.equivFin (Types.Words h)).symm q).property]
   exact (Fintype.equivFin (Types.Words h)).apply_symm_apply q
 
-def typedFamily (Z : C → Tensor ℂ (Party r) V) (h : C → Fin (N + 1))
+def typedFamily (Z : C → Tensor 𝕜 (Party r) V) (h : C → Fin (N + 1))
     (q : Fin (Fintype.card (Types.Words h))) :
-    Tensor ℂ (Party r) (fun p => Fin N → V p) :=
+    Tensor 𝕜 (Party r) (fun p => Fin N → V p) :=
   Tensor.wordTensor Z ((Fintype.equivFin (Types.Words h)).symm q).val
 
-theorem typedFamily_sum (Z : C → Tensor ℂ (Party r) V) (h : C → Fin (N + 1)) :
+theorem typedFamily_sum (Z : C → Tensor 𝕜 (Party r) V) (h : C → Fin (N + 1)) :
     (∑ q, typedFamily Z h q) = Tensor.typeSector Z h :=
   Equiv.sum_comp (Fintype.equivFin (Types.Words h)).symm (fun w => Tensor.wordTensor Z w.val)
 
-theorem typedFamily_reads (Z : C → Tensor ℂ (Party r) V)
+theorem typedFamily_reads (Z : C → Tensor 𝕜 (Party r) V)
     {reader : Party r} {label : V reader → C} (hr : Tensor.Reads Z reader label)
     {h : C → Fin (N + 1)} (base : Types.Words h) :
     Tensor.Reads (typedFamily Z h) reader (fun y => typedWordIndex base (fun j => label (y j))) := by
@@ -170,7 +186,7 @@ theorem typedFamily_reads (Z : C → Tensor ℂ (Party r) V)
   rw [hw]
   exact typedWordIndex_decode base q
 
-theorem typedFamily_reindex (Z : C → Tensor ℂ (Party r) V)
+theorem typedFamily_reindex (Z : C → Tensor 𝕜 (Party r) V)
     {h : C → Fin (N + 1)} (base : Types.Words h)
     (q : Fin (Fintype.card (Types.Words h))) :
     Tensor.reindex (fun p => Tensor.wordCoordinate
@@ -178,13 +194,13 @@ theorem typedFamily_reindex (Z : C → Tensor ℂ (Party r) V)
       (Tensor.wordTensor Z base.val) = typedFamily Z h q :=
   Tensor.wordTensor_reindex Z _
 
-theorem fixed_type_bound [∀ p, Fintype (V p)] (Z : C → Tensor ℂ (Party r) V)
+theorem fixed_type_bound [∀ p, Fintype (V p)] (Z : C → Tensor 𝕜 (Party r) V)
     {left : V (.inl false) → C} {right : V (.inl true) → C}
     (hleft : Tensor.Reads Z (.inl false) left) (hright : Tensor.Reads Z (.inl true) right)
     {h : C → Fin (N + 1)} (base : Types.Words h) :
-    Tensor.asymptoticRank (Tensor.product (readerPairing (Fintype.card (Types.Words h)))
+    Tensor.asymptoticRank (Tensor.product (readerPairing (𝕜 := 𝕜) (Fintype.card (Types.Words h)))
       (Tensor.wordTensor Z base.val)) ≤
-      ((r + 1 : ℕ) : ℝ) * Tensor.asymptoticRank (∑ c, Z c) ^ N := by
+      ((r + 2 : ℕ) : ℝ) * Tensor.asymptoticRank (∑ c, Z c) ^ N := by
   have hM : 0 < Fintype.card (Types.Words h) := Fintype.card_pos_iff.mpr ⟨base⟩
   have hb := equal_sectors_bound hM (typedFamily Z h)
     (typedFamily_reads Z hleft base) (typedFamily_reads Z hright base)
@@ -200,13 +216,13 @@ theorem fixed_type_bound [∀ p, Fintype (V p)] (Z : C → Tensor ℂ (Party r) 
 
 theorem fixed_type_bound_context {U : Party r → Type w}
     [∀ p, Fintype (V p)] [∀ p, Fintype (U p)]
-    (Z : C → Tensor ℂ (Party r) V) (H : Tensor ℂ (Party r) U)
+    (Z : C → Tensor 𝕜 (Party r) V) (H : Tensor 𝕜 (Party r) U)
     {left : V (.inl false) → C} {right : V (.inl true) → C}
     (hleft : Tensor.Reads Z (.inl false) left) (hright : Tensor.Reads Z (.inl true) right)
     {h : C → Fin (N + 1)} (base : Types.Words h) :
-    Tensor.asymptoticRank (Tensor.product (readerPairing (Fintype.card (Types.Words h)))
+    Tensor.asymptoticRank (Tensor.product (readerPairing (𝕜 := 𝕜) (Fintype.card (Types.Words h)))
       (Tensor.product (Tensor.wordTensor Z base.val) H)) ≤
-      ((r + 1 : ℕ) : ℝ) *
+      ((r + 2 : ℕ) : ℝ) *
         Tensor.asymptoticRank (Tensor.product (Tensor.power (∑ c, Z c) N) H) := by
   let F := fun q => Tensor.product (typedFamily Z h q) H
   let e (q : Fin (Fintype.card (Types.Words h))) (p : Party r) :

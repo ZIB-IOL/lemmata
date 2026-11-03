@@ -1,5 +1,12 @@
 module
 
+/-
+Copyright (c) 2026 Kirill Khoruzhii. Licensed under Apache-2.0.
+Modified for the arbitrary-field tensor-rank formalization; namespace and imports
+adapted for Lemmata. See docs/tensor-rank/NOTICE.txt for upstream attribution
+and modification notices, and docs/tensor-rank/LICENSE.txt for the license.
+-/
+
 public import Lemmata.TensorRank.Proof.ReaderTransport
 public import Lemmata.TensorRank.Proof.Context
 public import Lemmata.TensorRank.Def.WeightedGraph
@@ -14,6 +21,8 @@ open Classical
 noncomputable section
 
 namespace Lemmata.TensorRank
+
+variable {𝕜 : Type*} [Field 𝕜]
 
 def singleEdgeDimensions {k : ℕ} (edge : Edge k) (M : ℕ) (f : Edge k) : ℕ :=
   if f = edge then M else 1
@@ -113,7 +122,7 @@ def pairingGraphCoordinate {k : ℕ} (a b : Fin k) (hab : a ≠ b) (M : ℕ)
 theorem pairingGraph_reindex {k : ℕ} (a b : Fin k) (hab : a ≠ b) (M : ℕ) :
     Tensor.reindex (fun p => pairingGraphCoordinate a b hab M p)
       (Tensor.relabel (readerEquiv a b hab)
-        (weightedComplete (singleEdgeDimensions (edgeBetween a b hab.symm) M))) = readerPairing M := by
+        (weightedComplete (𝕜 := 𝕜) (singleEdgeDimensions (edgeBetween a b hab.symm) M))) = readerPairing M := by
   funext x
   let edge := edgeBetween a b hab.symm
   let e := readerEquiv a b hab
@@ -128,7 +137,7 @@ theorem pairingGraph_reindex {k : ℕ} (a b : Fin k) (hab : a ≠ b) (M : ℕ) :
     change (y (e (.inl true)) ⟨edge, by change b ∈ edge.val; simp [edge, edgeBetween]⟩).val = _
     rw [hy]
     exact singleEdgeCoordinate_value edge M b _ (x (.inl true))
-  change weightedComplete (singleEdgeDimensions edge M) y = readerPairing M x
+  change weightedComplete (𝕜 := 𝕜) (singleEdgeDimensions edge M) y = readerPairing M x
   change (if ∀ (f : Edge k) (i j : Fin k) (hi : i ∈ f.val) (hj : j ∈ f.val),
       y i ⟨f, hi⟩ = y j ⟨f, hj⟩ then 1 else 0) = _
   simp only [weighted_single_support_iff a b hab M]
@@ -137,13 +146,13 @@ theorem pairingGraph_reindex {k : ℕ} (a b : Fin k) (hab : a ≠ b) (M : ℕ) :
   simp only [readerPairing, Fin.ext_iff]
 
 theorem pairingGraph_context_rank {k : ℕ} (a b : Fin k) (hab : a ≠ b) (M : ℕ)
-    {U : Fin k → Type} [∀ i, Fintype (U i)] (H : Tensor ℂ (Fin k) U) :
+    {U : Fin k → Type} [∀ i, Fintype (U i)] (H : Tensor 𝕜 (Fin k) U) :
     Tensor.asymptoticRank (Tensor.product
       (Tensor.relabel (readerEquiv a b hab).symm (readerPairing M)) H) =
       Tensor.asymptoticRank (Tensor.product
-        (weightedComplete (singleEdgeDimensions (edgeBetween a b hab.symm) M)) H) := by
+        (weightedComplete (𝕜 := 𝕜) (singleEdgeDimensions (edgeBetween a b hab.symm) M)) H) := by
   let e := readerEquiv a b hab
-  let G := weightedComplete (singleEdgeDimensions (edgeBetween a b hab.symm) M)
+  let G := weightedComplete (𝕜 := 𝕜) (singleEdgeDimensions (edgeBetween a b hab.symm) M)
   rw [Tensor.asymptoticRank_relabel_context e (readerPairing M) H,
     ← pairingGraph_reindex a b hab M,
     Tensor.asymptoticRank_product_reindex (Tensor.relabel e G) (Tensor.relabel e H)
@@ -153,13 +162,13 @@ theorem pairingGraph_context_rank {k : ℕ} (a b : Fin k) (hab : a ≠ b) (M : �
 
 theorem pairing_contextLE_weighted {k : ℕ} (a b : Fin k) (hab : a ≠ b) (M : ℕ) :
     Tensor.ContextLE 1 (Tensor.relabel (readerEquiv a b hab).symm (readerPairing M))
-      (weightedComplete (singleEdgeDimensions (edgeBetween a b hab.symm) M)) := by
+      (weightedComplete (𝕜 := 𝕜) (singleEdgeDimensions (edgeBetween a b hab.symm) M)) := by
   intro U _ H
   rw [one_mul]
   exact (pairingGraph_context_rank a b hab M H).le
 
 theorem weighted_contextLE_pairing {k : ℕ} (a b : Fin k) (hab : a ≠ b) (M : ℕ) :
-    Tensor.ContextLE 1 (weightedComplete (singleEdgeDimensions (edgeBetween a b hab.symm) M))
+    Tensor.ContextLE 1 (weightedComplete (𝕜 := 𝕜) (singleEdgeDimensions (edgeBetween a b hab.symm) M))
       (Tensor.relabel (readerEquiv a b hab).symm (readerPairing M)) := by
   intro U _ H
   rw [one_mul]
@@ -167,12 +176,12 @@ theorem weighted_contextLE_pairing {k : ℕ} (a b : Fin k) (hab : a ≠ b) (M : 
 
 theorem fixed_type_contextLE_graph {k : ℕ} (hk : 2 ≤ k) (a b : Fin k) (hab : a ≠ b)
     {C : Type} [Fintype C] {N : ℕ} {V : Fin k → Type} [∀ i, Fintype (V i)]
-    (Z : C → Tensor ℂ (Fin k) V) {left : V a → C} {right : V b → C}
+    (Z : C → Tensor 𝕜 (Fin k) V) {left : V a → C} {right : V b → C}
     (hleft : Tensor.Reads Z a left) (hright : Tensor.Reads Z b right)
     {h : C → Fin (N + 1)} (base : Types.Words h) :
-    Tensor.ContextLE ((k - 1 : ℕ) : ℝ)
+    Tensor.ContextLE (k : ℝ)
       (Tensor.product
-        (weightedComplete (singleEdgeDimensions (edgeBetween a b hab.symm)
+        (weightedComplete (𝕜 := 𝕜) (singleEdgeDimensions (edgeBetween a b hab.symm)
           (Fintype.card (Types.Words h)))) (Tensor.wordTensor Z base.val))
       (Tensor.power (∑ c, Z c) N) := by
   intro U _ H
