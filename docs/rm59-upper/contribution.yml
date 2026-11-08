@@ -1,0 +1,23 @@
+schema_version: 1
+id: rm59-upper
+lean_namespace: Lemmata.RM59
+native_computation: true
+subject: cs.IT
+cross_lists: [math.CO]
+topics: [reed-muller-codes]
+contributors:
+  - {name: Kirill Khoruzhii, orcid: 0000-0003-4689-3812}
+abstract: >-
+  We prove that every Boolean function on nine variables differs from a polynomial of degree at most five at no more than $32$ points. Together with previous lower bounds, this determines the covering radius of RM(5,9) to be $32$.
+ai_use: The Lean formalization was developed with OpenAI Codex.
+pages:
+  - index.md
+exports:
+  - name: Lemmata.RM59.covering_radius_upper_bound
+    kind: theorem
+    page: index.md
+    label: lem-rm59-upper-bound
+  - name: Lemmata.RM59.odd_support_simplex
+    kind: theorem
+    page: index.md
+    label: lem-rm59-upper-simplex
