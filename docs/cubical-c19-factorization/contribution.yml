@@ -19,7 +19,7 @@ ai_use: >-
 license: CC0-1.0
 related:
   - {kind: code, title: "LeanDiracDerivation source repository", url: "https://github.com/gpartin/LeanDiracDerivation"}
-  - {kind: notes, title: "Archived research release", url: "https://doi.org/10.5281/zenodo.24150001"}
+  - {kind: notes, title: "Archived research release (DOI 10.5281/zenodo.24150001)", url: "https://zenodo.org/records/24150001"}
 pages:
   - index.md
 exports:
