@@ -1,0 +1,29 @@
+schema_version: 1
+id: cubical-c19-factorization
+lean_namespace: Lemmata.CubicalC19Factorization
+subject: math.MP
+cross_lists: [cs.LO]
+topics: [lattice-operators]
+abstract: >-
+  Eight complex amplitudes on the corners of a cube carry three signed
+  incidence maps and an even/odd parity grading. At the continuum
+  normalization selected by the C19 stencil's second moment, the resulting
+  first-order cubical symbol squares exactly to the isotropic massive
+  quadratic C19 continuum symbol.
+contributors:
+  - G. D. Partin
+ai_use: >-
+  The Lean proof and archive entry were drafted with OpenAI Codex under a
+  human-directed research roadmap, then reviewed and audited by the
+  contributor using Lean's kernel and the archive checks.
+license: CC0-1.0
+related:
+  - {kind: code, title: "LeanDiracDerivation source repository", url: "https://github.com/gpartin/LeanDiracDerivation"}
+  - {kind: notes, title: "Archived research release", url: "https://doi.org/10.5281/zenodo.24150001"}
+pages:
+  - index.md
+exports:
+  - name: Lemmata.CubicalC19Factorization.cubical_c19_factorization
+    kind: theorem
+    page: index.md
+    label: thm-cubical-c19-factorization

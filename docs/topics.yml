@@ -27,6 +27,9 @@
   title: Duality
   description: Lagrangian and convex duality, and when duality gaps close.
   replaces: [optimization]
+- id: lattice-operators
+  title: Lattice operators
+  description: Discrete operators, lattice symbols and their continuum limits.
 - id: frank-wolfe
   title: Frank–Wolfe and linear oracles
   description: Methods that access a feasible set through linear minimization, and their lower bounds.
