@@ -246,6 +246,8 @@ public import Lemmata.CommonInformationHsb.Main
 public import Lemmata.CommonInformationHsb.Seeds
 public import Lemmata.CommonInformationHsb.Separation
 public import Lemmata.CommonInformationHsb.Units
+public import Lemmata.CubicalC19Factorization.Main
+public import Lemmata.CubicalC19Factorization.Statement
 public import Lemmata.DistributionalLowerBounds.Core.Distributional.ActualCertificate
 public import Lemmata.DistributionalLowerBounds.Core.Distributional.AdaptiveEndToEnd
 public import Lemmata.DistributionalLowerBounds.Core.Distributional.ConcreteController

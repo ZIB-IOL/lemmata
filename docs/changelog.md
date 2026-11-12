@@ -10,6 +10,10 @@ entry shows its own last change and links to the exact commit.
 
 Newest first. Add an item in the same pull request as the change it describes.
 
+## 2026-11-12
+
+- **New entry:** [A cubical first-order factorization of the C19 continuum symbol](cubical-c19-factorization/index.md), proving an exact eight-corner factorization of the isotropic C19 low-momentum symbol.
+
 ## 2026-11-07
 
 - **New entry:** [The Covering Radius of the Reed-Muller Code RM(5,9) Is 32](rm59-upper/index.md), proving $\rho(\mathrm{RM}(5,9))\le32$.
