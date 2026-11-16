@@ -630,7 +630,8 @@ function checkUmbrella(write) {
   const want = umbrellaText();
   if (write) { fs.writeFileSync(file, want); return; }
   const have = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
-  if (have !== want) fail(`lean/${LIB}.lean is out of date: run node tools/lemmata.mjs umbrella --write`);
+  // Git may check out the generated umbrella with CRLF; only the line endings may differ.
+  if (have.replace(/\r\n/g, "\n") !== want) fail(`lean/${LIB}.lean is out of date: run node tools/lemmata.mjs umbrella --write`);
 }
 
 // ------------------------------------------------------------------------- generation

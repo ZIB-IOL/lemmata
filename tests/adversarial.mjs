@@ -7,6 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import YAML from "yaml";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TOOL = path.join(REPO, "tools", "lemmata.mjs");
@@ -25,6 +26,8 @@ function validate(dir) {
   return { ok: r.status === 0, out: (r.stdout + r.stderr).trim() };
 }
 const append = (dir, f, text) => fs.appendFileSync(path.join(dir, f), text);
+const LINE_ENDINGS = [["LF", "\n"], ["CRLF", "\r\n"]];
+const withLineEnding = (text, eol) => text.replace(/\r\n/g, "\n").replace(/\n/g, eol);
 
 let failed = 0;
 function expect(name, change, { refused = true, match } = {}) {
@@ -36,6 +39,21 @@ function expect(name, change, { refused = true, match } = {}) {
     console.log(`${good ? "ok  " : "FAIL"} ${name}`);
     if (!good) { failed++; console.log("     " + r.out.split("\n").slice(0, 3).join("\n     ")); }
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+}
+
+// Git's Windows checkout conversion must not make a correct umbrella look stale,
+// but a missing import must still be refused with either line-ending convention.
+for (const [name, eol] of LINE_ENDINGS) {
+  const writeUmbrella = (d, stale = false) => {
+    const f = path.join(d, "lean/Lemmata.lean");
+    const src = fs.readFileSync(f, "utf8");
+    const text = stale ? src.replace(/^public import Lemmata\.ImplicationComposition\.Main\r?\n/m, "") : src;
+    fs.writeFileSync(f, withLineEnding(text, eol));
+  };
+  expect(`positive control: a correct ${name} umbrella is accepted`,
+    (d) => writeUmbrella(d), { refused: false });
+  expect(`a ${name} umbrella with a missing import is refused`,
+    (d) => writeUmbrella(d, true), { match: /lean\/Lemmata\.lean is out of date/ });
 }
 
 // Finding 2: file-reading directives must stay inside the entry's own files.
@@ -235,13 +253,15 @@ for (const license of ["MIT", "constructor"])
 // claims dropped and llms.txt without the caveat). A frozen record of the shape
 // controller/worker.mjs writes, and a report in which the entry is absent (it was not built):
 // the panel, the overview and lemmata.json / llms.txt must still say "computation".
-function frozenCase() {
+function frozenCase(eolName, eol) {
   const dir = copy();
   try {
     const ns = "Lemmata.ImplicationComposition", mod = `${ns}.Main`;
     const claim = { name: `${mod}.x._native.native_decide.ax_1_1`, declaration: `${ns}.implication_composition`, tactic: "native_decide",
       contribution: entry, module: mod, source_file: "lean/Lemmata/ImplicationComposition/Main.lean", line: 12, claim: "decide (2 + 2 = 4)" };
-    const m = YAML_load(path.join(dir, mf));
+    const manifest = path.join(dir, mf);
+    fs.writeFileSync(manifest, withLineEnding(fs.readFileSync(manifest, "utf8"), eol));
+    const m = YAML.parse(fs.readFileSync(manifest, "utf8"));
     const results = m.exports.map((e, i) => ({ name: e.name, kind: e.kind, status: "checked",
       computation: i === 0 ? "own" : "kernel", computations: i === 0 ? [claim] : [] }));
     fs.mkdirSync(path.join(dir, ".lemmata"), { recursive: true });
@@ -266,12 +286,11 @@ function frozenCase() {
       ["lemmata.json keeps the claim", json?.exports[0]?.verification === "checked-by-computation" && json.exports[0].computations.length === 1],
       ["llms.txt keeps the caveat", /last checked with Lean v4\.35\.0 on 2026-10-26, modulo computation/.test(llms)],
     ];
-    for (const [name, ok] of checks) { console.log(`${ok ? "ok  " : "FAIL"} frozen entry: ${name}`); if (!ok) failed++; }
+    for (const [name, ok] of checks) { console.log(`${ok ? "ok  " : "FAIL"} frozen entry (${eolName} manifest): ${name}`); if (!ok) failed++; }
     if (p.status !== 0 || si.status !== 0) console.log("     " + (p.stderr + si.stderr).trim().split("\n").slice(0, 3).join("\n     "));
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 }
-const YAML_load = (f) => { const src = fs.readFileSync(f, "utf8"); return { exports: [...src.matchAll(/^\s*- name: (\S+)\n\s*kind: (\w+)/gm)].map((x) => ({ name: x[1], kind: x[2] })) }; };
-frozenCase();
+for (const [name, eol] of LINE_ENDINGS) frozenCase(name, eol);
 
 console.log(failed ? `\n${failed} adversarial case(s) FAILED` : "\nall adversarial cases passed");
 process.exit(failed ? 1 : 0);
