@@ -1,0 +1,25 @@
+schema_version: 1
+id: c19-isotropic-symbol
+lean_namespace: Lemmata.C19IsotropicSymbol
+subject: math-ph
+abstract: >-
+  For the positive half of the three-dimensional C19 stencil with face weight
+  two and edge weight one, the quadratic moment is exactly isotropic with
+  coefficient 12. The finite-spacing cosine symbol differs from that
+  quadratic approximation by an explicit fourth-order bound.
+contributors:
+  - G. D. Partin
+ai_use: >-
+  The formalization, proof engineering, tests, and prose were developed with an
+  AI assistant under human direction and review.
+license: CC0-1.0
+related:
+  - {kind: code, title: "LeanKleinGordonDerivation v0.7.0-research", url: "https://github.com/gpartin/LeanKleinGordonDerivation/releases/tag/v0.7.0-research"}
+  - {kind: code, title: "Archived software release", url: "https://zenodo.org/records/24287570"}
+pages:
+  - index.md
+exports:
+  - name: Lemmata.C19IsotropicSymbol.c19IsotropicSymbol
+    kind: theorem
+    page: index.md
+    label: thm-c19-isotropic-symbol
