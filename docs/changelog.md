@@ -14,6 +14,10 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 - **New entry:** [An Explicit Bound on the Relativistic Correction to Schrödinger Kinetic Energy](schrodinger-remainder-bound/index.md), proving the exact kinetic decomposition and a quartic correction bound.
 
+## 2026-11-15
+
+- **New entry:** [A Positive Propagating Gap for a Coupled C19 Phase Branch](c19-coupled-phase-gap/index.md), proving positivity of the declared propagating phase eigenvalue under explicit nonzero-radius and positive-mode assumptions.
+
 ## 2026-11-07
 
 - **New entry:** [The Covering Radius of the Reed-Muller Code RM(5,9) Is 32](rm59-upper/index.md), proving $\rho(\mathrm{RM}(5,9))\le32$.
