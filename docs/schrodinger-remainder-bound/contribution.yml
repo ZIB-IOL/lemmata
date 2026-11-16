@@ -7,7 +7,9 @@ abstract: >-
   energy after removal of the rest energy decomposes exactly into the
   Schrödinger kinetic term and an explicit correction whose magnitude is
   bounded by the fourth power of momentum divided by eight times the cube of
-  the mass.
+  the mass, in units where c=1. The identity and bound hold for every real
+  momentum; the approximation is controlled when the momentum-to-mass ratio
+  is small.
 contributors:
   - G. D. Partin
 ai_use: >-
@@ -16,7 +18,7 @@ ai_use: >-
 license: CC0-1.0
 related:
   - {kind: code, title: "LeanSchrodingerDerivation v0.13.0-research", url: "https://github.com/gpartin/LeanSchrodingerDerivation/releases/tag/v0.13.0-research"}
-  - {kind: code, title: "Archived software release", url: "https://doi.org/10.5281/zenodo.24270168"}
+  - {kind: code, title: "Archived software release", url: "https://zenodo.org/records/24270168"}
 pages:
   - index.md
 exports:

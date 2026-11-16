@@ -9,6 +9,9 @@ This entry isolates a conditional algebraic result from the public
 LeanSchrodingerDerivation artifact. It begins with the positive relativistic
 energy branch; it does not derive that mass shell, an arbitrary-wavefunction
 position-space equation, Born's rule, or a complete quantum theory.
+We use units in which $c=1$. The identity and bound below hold for every real
+momentum; interpreting the quadratic term as a useful approximation requires
+$|p|/m$ to be small.
 
 ```{prf:theorem} Relativistic correction bound
 :label: thm-schrodinger-remainder-bound
