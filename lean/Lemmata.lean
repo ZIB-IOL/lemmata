@@ -607,6 +607,8 @@ public import Lemmata.RM59.Proof.TraceGeometry
 public import Lemmata.RM59.Proof.TraceVertical
 public import Lemmata.RM59.Proof.UpperBound
 public import Lemmata.RM59.Proof.VerticalFrames
+public import Lemmata.SchrodingerRemainderBound.Main
+public import Lemmata.SchrodingerRemainderBound.Statement
 public import Lemmata.Shared.Basic
 public import Lemmata.SpanningTreeCommonInformation.Arithmetic
 public import Lemmata.SpanningTreeCommonInformation.Ceiling

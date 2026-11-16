@@ -10,6 +10,10 @@ entry shows its own last change and links to the exact commit.
 
 Newest first. Add an item in the same pull request as the change it describes.
 
+## 2026-11-16
+
+- **New entry:** [An Explicit Bound on the Relativistic Correction to Schrödinger Kinetic Energy](schrodinger-remainder-bound/index.md), proving the exact kinetic decomposition and a quartic correction bound.
+
 ## 2026-11-07
 
 - **New entry:** [The Covering Radius of the Reed-Muller Code RM(5,9) Is 32](rm59-upper/index.md), proving $\rho(\mathrm{RM}(5,9))\le32$.
