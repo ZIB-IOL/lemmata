@@ -1,0 +1,23 @@
+schema_version: 1
+id: c19-coupled-phase-gap
+lean_namespace: Lemmata.C19CoupledPhaseGap
+subject: math-ph
+abstract: >-
+  For the explicit weighted cubic C19 structure factor, the declared coupled
+  phase eigenvalue is strictly positive whenever both field radii are nonzero
+  and the selected Fourier mode has positive structure factor.
+contributors:
+  - G. D. Partin
+ai_use: >-
+  The formalization, proof engineering, tests, and prose were developed with an
+  AI assistant under human direction and review.
+license: CC0-1.0
+related:
+  - {kind: code, title: "LeanRedShiftDerivation v0.12.0-research", url: "https://github.com/gpartin/LeanRedShiftDerivation/releases/tag/v0.12.0-research"}
+pages:
+  - index.md
+exports:
+  - name: Lemmata.C19CoupledPhaseGap.coupledPhaseGap
+    kind: theorem
+    page: index.md
+    label: thm-c19-coupled-phase-gap
