@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-16
 
+- **New entry:** [Isotropy and Finite-Spacing Error of the C19 Cubic Symbol](c19-isotropic-symbol/index.md), proving an exact isotropic quadratic moment and explicit quartic symbol error bound.
 - **New entry:** [An Explicit Bound on the Relativistic Correction to Schrödinger Kinetic Energy](schrodinger-remainder-bound/index.md), proving the exact kinetic decomposition and a quartic correction bound.
 
 ## 2026-11-07
