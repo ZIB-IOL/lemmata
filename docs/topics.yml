@@ -37,3 +37,6 @@
 - id: bell-inequalities
   title: Bell inequalities
   description: Bell inequalities, local correlation polytopes and their symmetries.
+- id: combinatorial-designs
+  title: Combinatorial designs
+  description: Steiner systems, block designs and their existence spectra.
