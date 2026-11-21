@@ -1,0 +1,17 @@
+schema_version: 1
+id: steiner-six-spectrum
+lean_namespace: Lemmata.SteinerSixSpectrum
+subject: math.CO
+topics: [combinatorial-designs]
+contributors:
+  - {name: Kirill Khoruzhii, orcid: 0000-0003-4689-3812}
+abstract: >-
+  We construct Steiner systems $S(2,6,n)$ for 24 of the 27 previously unresolved orders. Combined with known results, this shows that an $S(2,6,n)$ exists for $n\ge6$ if and only if $n\equiv1,6\pmod{15}$ and $n\notin\{16,21,36,46\}$, except possibly for $n\in\{51,61,81\}$, which remain open.
+ai_use: OpenAI Codex assisted with the Lean formalization and the exposition.
+pages:
+  - index.md
+exports:
+  - name: Lemmata.SteinerSixSpectrum.steinerSix_exists
+    kind: theorem
+    page: index.md
+    label: thm-steiner-six-spectrum

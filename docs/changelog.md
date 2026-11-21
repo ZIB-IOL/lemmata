@@ -10,6 +10,10 @@ entry shows its own last change and links to the exact commit.
 
 Newest first. Add an item in the same pull request as the change it describes.
 
+## 2026-11-21
+
+- **New entry:** [On the Existence Spectrum of Steiner Systems S(2,6,n)](steiner-six-spectrum/index.md), settling 24 previously unresolved orders and leaving only 51, 61, and 81 open.
+
 ## 2026-11-16
 
 - **New entry:** [Isotropy and Finite-Spacing Error of the C19 Cubic Symbol](c19-isotropic-symbol/index.md), proving an exact isotropic quadratic moment and explicit quartic symbol error bound.

@@ -245,6 +245,8 @@ html.dark.lemmata-outline .myst-outline-item.lemmata-current > a { color: #e6edf
 .lemmata-header .lemmata-view-full { margin: 0.6rem 0 0.2rem; }
 .lemmata-header .lemmata-view-full p { margin: 0; }
 
+.s26-file-links a.link .link-icon { display: none !important; }
+
 /* Comments (giscus) at the end of an entry. */
 .lemmata-giscus { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--myst-color-border, #e5e7eb); }
 .lemmata-giscus > p { margin: 0 0 0.75rem; font-size: 1.05rem; }
