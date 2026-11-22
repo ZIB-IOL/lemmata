@@ -1,0 +1,54 @@
+schema_version: 1
+id: fishburn-reeds-classical-bound
+lean_namespace: Lemmata.FishburnReedsClassicalBound
+subject: quant-ph
+cross_lists: [math.OC, math.CO]
+topics: [bell-inequalities]
+contributors:
+  - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
+abstract: >-
+  For the Fishburn–Reeds matrix of order $d(d-1)$ we prove that the exact
+  classical value is $2d(d-1)(2d-3)$. This establishes the conjectured
+  vector-to-classical ratio $(3d-5)/(2d-3)$ in every dimension $d\ge 2$.
+  The proof determines the maximum number of disagreements in an optimal
+  sign strategy. We also evaluate the zero-diagonal family: the standard
+  shift is strictly suboptimal for every $d\ge7$. Two explicit sign
+  strategies and an integer upper certificate determine the global optimal
+  uniform shifts in dimensions seven through ten.
+ai_use: >-
+  The exposition and Lean formalization were developed with OpenAI Codex.
+  Codex also assisted with the mathematical arguments, literature search,
+  certificate generation and verification. The entry distinguishes the scope
+  of the Lean declarations from the mathematical proofs and the independently
+  replayable integer computations.
+acknowledgements: >-
+  Research reported in this paper was partially supported by the Berlin Mathematics
+  Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche
+  Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
+  Strategy. This work has been partially supported by OpenAI's Academic Researchers
+  program.
+license: CC-BY-4.0
+pages:
+  - index.md
+  - shifts.md
+exports:
+  - name: Lemmata.FishburnReedsClassicalBound.allplus_value
+    kind: theorem
+    page: index.md
+    label: prop-fishburn-reeds-classical-bound-all-plus
+  - name: Lemmata.FishburnReedsClassicalBound.root_sign_reduction
+    kind: theorem
+    page: index.md
+    label: lem-fishburn-reeds-classical-bound-midpoint
+  - name: Lemmata.FishburnReedsClassicalBound.Block.positive_block
+    kind: theorem
+    page: index.md
+    label: lem-fishburn-reeds-classical-bound-positive
+  - name: Lemmata.FishburnReedsClassicalBound.Block.zero_block
+    kind: theorem
+    page: index.md
+    label: lem-fishburn-reeds-classical-bound-zero
+  - name: Lemmata.FishburnReedsClassicalBound.shift_comparison
+    kind: theorem
+    page: shifts.md
+    label: lem-fishburn-reeds-classical-bound-comparison
