@@ -9,7 +9,9 @@ abstract: >-
   incidence maps and an even/odd parity grading. At the continuum
   normalization selected by the C19 stencil's second moment, the resulting
   first-order cubical symbol squares exactly to the isotropic massive
-  quadratic C19 continuum symbol.
+  quadratic C19 continuum symbol. A second geometry-derived involution
+  exhaustively splits the eight-corner fiber into disjoint positive and
+  negative sectors, and the same first-order symbol preserves both sectors.
 contributors:
   - G. D. Partin
 ai_use: >-
@@ -19,7 +21,7 @@ ai_use: >-
 license: CC0-1.0
 related:
   - {kind: code, title: "LeanDiracDerivation source repository", url: "https://github.com/gpartin/LeanDiracDerivation"}
-  - {kind: notes, title: "Archived research release (DOI 10.5281/zenodo.24150001)", url: "https://zenodo.org/records/24150001"}
+  - {kind: code, title: "Verified V2 release", url: "https://github.com/gpartin/LeanDiracDerivation/releases/tag/v2.0.0-research"}
 pages:
   - index.md
 exports:
@@ -27,3 +29,7 @@ exports:
     kind: theorem
     page: index.md
     label: thm-cubical-c19-factorization
+  - name: Lemmata.CubicalC19Factorization.cubical_c19_two_flavor_classification
+    kind: theorem
+    page: index.md
+    label: thm-cubical-c19-factorization-two-flavor

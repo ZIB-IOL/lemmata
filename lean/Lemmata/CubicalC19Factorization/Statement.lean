@@ -21,6 +21,7 @@ symbol.
 
 abbrev CubeCorner := Fin 8
 abbrev Cell8 := CubeCorner → ℂ
+abbrev Cell4 := Fin 4 → ℂ
 
 /-- Flip the first parity bit of an eight-corner cube. -/
 def cellFlip0 : CubeCorner → CubeCorner
@@ -80,6 +81,19 @@ def cubeParityBeta (amplitude : Cell8) : Cell8 :=
     else
       -amplitude corner
 
+/-- The geometric flavor involution determined by the two transverse flips. -/
+def cubeFlavor (amplitude : Cell8) : Cell8 := fun corner =>
+  let sign : ℝ := if cellBit2 corner = 0 then 1 else -1
+  (sign : ℂ) * Complex.I * amplitude (cellFlip1 (cellFlip2 corner))
+
+/-- Projection onto the positive flavor eigenspace. -/
+def cubeFlavorPlusProjection (amplitude : Cell8) : Cell8 := fun corner =>
+  (amplitude corner + cubeFlavor amplitude corner) / 2
+
+/-- Projection onto the negative flavor eigenspace. -/
+def cubeFlavorMinusProjection (amplitude : Cell8) : Cell8 := fun corner =>
+  (amplitude corner - cubeFlavor amplitude corner) / 2
+
 /-- The linear combination of the three signed cube-incidence operations. -/
 def cubeIncidenceLinear
     (k0 k1 k2 : ℂ) (amplitude : Cell8) : Cell8 :=
@@ -123,6 +137,34 @@ def C19Factorization : Prop :=
     c19ContinuumDiracSymbol mass momentum
         (c19ContinuumDiracSymbol mass momentum amplitude) =
       c19ContinuumScalarSymbol mass momentum amplitude
+
+/--
+The eight-corner fiber is exhausted by the disjoint positive and negative
+eigenspaces of the geometric flavor involution, and the cubical first-order
+symbol preserves both eigenspaces.
+-/
+def C19TwoFlavorClassification : Prop :=
+  (∀ amplitude,
+    (fun corner => cubeFlavorPlusProjection amplitude corner +
+      cubeFlavorMinusProjection amplitude corner) = amplitude) ∧
+  (∀ amplitude,
+    cubeFlavor (cubeFlavorPlusProjection amplitude) =
+      cubeFlavorPlusProjection amplitude) ∧
+  (∀ amplitude,
+    cubeFlavor (cubeFlavorMinusProjection amplitude) =
+      fun corner => -cubeFlavorMinusProjection amplitude corner) ∧
+  (∀ amplitude,
+    cubeFlavor amplitude = amplitude →
+    cubeFlavor amplitude = (fun corner => -amplitude corner) →
+    amplitude = 0) ∧
+  (∀ mass momentum amplitude,
+    cubeFlavor amplitude = amplitude →
+    cubeFlavor (c19ContinuumDiracSymbol mass momentum amplitude) =
+      c19ContinuumDiracSymbol mass momentum amplitude) ∧
+  (∀ mass momentum amplitude,
+    cubeFlavor amplitude = (fun corner => -amplitude corner) →
+    cubeFlavor (c19ContinuumDiracSymbol mass momentum amplitude) =
+      fun corner => -c19ContinuumDiracSymbol mass momentum amplitude corner)
 
 end
 

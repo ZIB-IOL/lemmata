@@ -47,5 +47,28 @@ crossings are native forces in a lattice action, that the full finite-spacing
 C19 symbol is exactly factorized, or that a localized electron or physical
 spin state has been derived.
 
+```{prf:theorem} Exhaustive two-flavor classification
+:label: thm-cubical-c19-factorization-two-flavor
+
+The eight complex corner amplitudes split uniquely into the positive and
+negative eigenspaces of a second involution made only from cube flips and
+orientation signs. Their intersection contains only the zero amplitude, and
+the cubical C19 first-order symbol preserves each sector.
+```
+
+```{prf:proof} of [](#thm-cubical-c19-factorization-two-flavor)
+:nonumber:
+The positive and negative projections are obtained by adding or subtracting
+the geometric involution and dividing by two. Expanding the eight corners
+shows that the involution squares to the identity, the two projections add
+back to the original amplitude, and simultaneous membership forces every
+corner amplitude to vanish. A second finite corner check proves that the
+involution commutes with the cubical C19 symbol, so both sectors are invariant.
+```
+
+This theorem classifies the complete eight-corner algebraic fiber. It does not
+assert that a measurement selects one sector or that the sectors are two
+independently localized particles.
+
 ```{include} ../_generated/verification/cubical-c19-factorization.md
 ```
