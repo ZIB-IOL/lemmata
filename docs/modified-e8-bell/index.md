@@ -10,7 +10,7 @@ diagonal shift has classical value $6104$. Its vector value is $9240$, so
 it gives the ratio $165/109$. For the fixed root measurements, the largest
 local visibility is $109/165$, attained by shared relabelings of a
 mixture of two sign strategies. The construction and this candidate ratio
-appear in @designolle2024better. The missing classical upper bound is
+appear in @designolle2026better. The missing classical upper bound is
 listed as an open problem in @marton2026exact.
 
 The proof below replaces optimization over $2^{120}$ sign vectors by an
