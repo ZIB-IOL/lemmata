@@ -4,9 +4,16 @@
 # being checked. A content PR therefore cannot weaken the policy it is checked against.
 name = "lemmata-check"
 version = "0.1.0"
-defaultTargets = ["lemmata-check"]
+defaultTargets = ["lemmata-check", "lemmata-replay"]
 
 [[lean_exe]]
 name = "lemmata-check"
 root = "Main"
+supportInterpreter = true
+
+# Kernel replay of an exact module list: one pass over all of them (Replay.lean), or with
+# --per-module leanchecker's replayFromImports for each, without its prefix selection.
+[[lean_exe]]
+name = "lemmata-replay"
+root = "Replay"
 supportInterpreter = true

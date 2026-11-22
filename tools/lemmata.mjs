@@ -4,7 +4,10 @@
 //
 //   node tools/lemmata.mjs validate            structure, manifests, pairing, snippets, umbrella
 //   node tools/lemmata.mjs umbrella [--write]  check (or regenerate) lean/Lemmata.lean
-//   node tools/lemmata.mjs request <out.json>  verifier request built from the manifests
+//   node tools/lemmata.mjs request <out.json> [--scope <scope.json>]
+//                                              verifier request built from the manifests
+//   node tools/lemmata.mjs scope [--entry <id|LeanName>]... [--changed [<base>]] [--files <path>...] [--out <file>]
+//                                              what a partial check covers (tools/check.sh --entry/--changed)
 //   node tools/lemmata.mjs prepare <report.json> [--commit SHA] [--source-url URL]
 //                                              generated pages + docs/myst.runtime.yml
 //   node tools/lemmata.mjs new <id> <LeanName> <subject>    scaffold a new contribution (subject: an arXiv class)
@@ -686,16 +689,117 @@ function checkLeanSources(manifests) {
   }
 }
 
-function verifierRequest(manifests) {
+function verifierRequest(manifests, scope = null) {
   const frozen = loadFrozen();          // not built, so not checked: they keep their last result
+  const covered = (m) => !scope || scope.entries.includes(m.id);
   return {
     root: LIB,
     allowed_axioms: ALLOWED_AXIOMS,
-    exports: manifests.filter((m) => !frozen[m.id]).flatMap((m) => m.exports.map((e) =>
+    exports: manifests.filter((m) => !frozen[m.id] && covered(m)).flatMap((m) => m.exports.map((e) =>
       ({ contribution: m.id, name: e.name, kind: e.kind, namespace: m.lean_namespace }))),
     // Entries that may rely on computations: the verifier accepts a computation axiom only
     // in their modules.
     native: manifests.filter((m) => m.native).map((m) => ({ contribution: m.id, namespace: m.lean_namespace })),
+    // A partial local check: exactly its modules, and the entries it covers, which the report
+    // repeats so that the render shows every other entry as not checked in this run.
+    ...(scope ? { modules: scope.modules, scope: scope.entries } : {}),
+  };
+}
+
+// ------------------------------------------------------------------------- partial checks
+
+// tools/check.sh --entry / --changed check only some entries: the ones asked for, or touched by
+// the changes since a base commit, and every entry that imports one of their modules, directly
+// or not, since a change can break those too. Their own modules are built, kernel-checked and
+// audited. What they import from other entries is built and taken as it is, like Mathlib: it
+// is unchanged, and the cluster checks the whole archive on every commit anyway. A change that
+// can affect every entry (the Lake configuration, the toolchain, the verifier, these tools)
+// means the full check. The verifier keeps every public declaration in its entry's namespace
+// (checker/Main.lean), so entries cannot clash in the umbrella, which only the full build
+// compiles; that makes the partial check equivalent to the full one for the entries it covers.
+
+// The modules a Lean file imports: the `[public] [meta] import [all] M` commands of its header.
+function leanImports(file) {
+  const toks = leanTokens(fs.readFileSync(file, "utf8"));
+  const out = [];
+  let i = toks[0]?.t === "module" ? 1 : 0;
+  if (toks[i]?.t === "prelude") i++;
+  for (;;) {
+    let j = i;
+    while (toks[j]?.k === "word" && (toks[j].t === "public" || toks[j].t === "meta")) j++;
+    if (toks[j]?.k !== "word" || toks[j].t !== "import") break;
+    j++;
+    if (toks[j]?.k === "word" && toks[j].t === "all") j++;
+    if (toks[j]?.k !== "word") break;
+    out.push(toks[j].t.replace(/[«»]/g, ""));
+    i = j + 1;
+  }
+  return out;
+}
+
+// Every module of the library: its directory in lean/Lemmata/ (an entry's LeanName, or Shared)
+// and the modules it imports.
+function libraryModules() {
+  const lib = path.join(LEAN, LIB), mods = new Map();
+  for (const f of fs.existsSync(lib) ? walk(lib, ".lean") : []) {
+    const parts = path.relative(LEAN, f).replace(/\.lean$/, "").split(path.sep);
+    mods.set(parts.join("."), { dir: parts.length > 2 ? parts[1] : null, imports: leanImports(f) });
+  }
+  return mods;
+}
+
+// The files changed since `base` (default: where this branch left origin/main): committed or
+// not, and new files git does not ignore. A rename counts as both paths.
+function changedFiles(base) {
+  const git = (...a) => execFileSync("git", ["-C", ROOT, ...a], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  let from = base;
+  if (!from) {
+    try { from = git("merge-base", "HEAD", "origin/main").trim(); }
+    catch { fail("scope --changed: cannot tell where this branch left origin/main (run `git fetch`, or name a base: --changed <commit>)"); return []; }
+  }
+  try {
+    const lines = [...git("diff", "--name-only", "--no-renames", from).split("\n"),
+      ...git("ls-files", "--others", "--exclude-standard").split("\n")];
+    return [...new Set(lines.map((s) => s.trim()).filter(Boolean))];
+  } catch (e) { fail(`scope --changed: git diff against ${from} failed: ${String(e.stderr ?? e.message).trim()}`); return []; }
+}
+
+// { mode: "full", why } | { mode: "none" } | { mode: "scoped", entries, dirs, modules, asked }
+function scopeOf(manifests, { entries = [], files = [] }) {
+  const dirOf = (m) => m.lean_namespace.split(".")[1];
+  const byId = new Map(manifests.map((m) => [m.id, m]));
+  const byDir = new Map(manifests.map((m) => [dirOf(m), m]));
+  const asked = new Set(), why = [];
+  for (const e of entries.flatMap((x) => String(x).split(",")).map((x) => x.trim()).filter(Boolean)) {
+    const m = byId.get(e) ?? byDir.get(e);
+    if (m) asked.add(dirOf(m));
+    else if (e === "Shared") asked.add("Shared");
+    else fail(`scope: no entry ${JSON.stringify(e)}: give its id (docs/<id>/) or its LeanName (lean/${LIB}/<LeanName>/)`);
+  }
+  for (const f of files) {
+    const p = f.split(/[\\/]/);
+    if (p[0] === "lean" && p[1] === LIB && p.length >= 4) asked.add(p[2]);
+    else if (p[0] === "lean" && p[1] === `${LIB}.lean` && p.length === 2) continue;   // the umbrella: validate checks it
+    else if (p[0] === "lean" || p[0] === "checker" || p[0] === "tools") why.push(f);
+    else if (p[0] === "docs" && p.length >= 3 && byId.has(p[1])) asked.add(dirOf(byId.get(p[1])));
+    // Anything else (prose outside entries, the bibliography, tests, top-level files) has no
+    // Lean result to check; validate and the render cover it.
+  }
+  if (why.length) return { mode: "full", why };
+  const mods = libraryModules();
+  const dirs = new Set(asked);
+  for (let grew = true; grew;) {                // every entry that imports a covered one
+    grew = false;
+    for (const { dir, imports } of mods.values())
+      if (dir && !dirs.has(dir) && imports.some((i) => i.startsWith(`${LIB}.`) && dirs.has(i.split(".")[1]))) { dirs.add(dir); grew = true; }
+  }
+  if (!dirs.size) return { mode: "none", entries: [], dirs: [], modules: [] };
+  return {
+    mode: "scoped",
+    entries: manifests.filter((m) => dirs.has(dirOf(m))).map((m) => m.id).sort(),
+    dirs: [...dirs].sort(),
+    modules: [...mods].filter(([, v]) => v.dir && dirs.has(v.dir)).map(([k]) => k).sort(),
+    asked: [...asked].sort(),
   };
 }
 
@@ -991,6 +1095,9 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
   for (const d of [gen, subjRoot, topicRoot, oldCatRoot, absRoot, authorRoot]) fs.rmSync(d, { recursive: true, force: true });
   fs.mkdirSync(path.join(gen, "verification"), { recursive: true });
   const passed = report?.result === "passed";
+  // A partial local check's report covers only some entries (report.scope); every other entry
+  // was not checked in that run and is shown as a preview.
+  const checkedHere = (m) => !!report && (!Array.isArray(report.scope) || report.scope.includes(m.id));
   const byName = new Map((report?.exports ?? []).map((e) => [e.name, e]));
   const link = (file) => forge && commit ? forge.blob(commit, file) : null;
   // Frozen entries (admin decision, see lemmata-code/frozen.json) were not built: they keep
@@ -1056,7 +1163,7 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
     }
     return out;
   };
-  const statusOf = (m) => frozen[m.id] ? "frozen" : !report ? "preview"
+  const statusOf = (m) => frozen[m.id] ? "frozen" : !checkedHere(m) ? "preview"
     : !m.exports.every((e) => passed && byName.get(e.name)?.status === "checked") ? "failed"
     : entryComp(m) === "kernel" ? "checked" : "computation";
 
@@ -1075,7 +1182,7 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
       const at = fz ? fz.commit : commit;
       const ok = fz ? old.get(e.name)?.status === "checked" : passed && r?.status === "checked";
       const cs = compOf(m, e).status;
-      const badge = !report && !fz ? "○ not verified (preview)" : !ok ? "✗ not checked"
+      const badge = !checkedHere(m) && !fz ? "○ not verified (preview)" : !ok ? "✗ not checked"
         : e.kind === "definition" ? (cs === "kernel" ? "◇ elaborated" : `◇ elaborated, ${cs === "own" ? "uses computation" : "modulo computation"}`)
         : cs === "kernel" ? "✅ kernel-checked" : `[${COMPUTATION_WORDS[cs].badge}](${COMPUTATION_PAGE_LINK})`;
       // By the fully qualified name the verifier checked, in the file it reported.
@@ -1121,7 +1228,7 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
       : m.exports.filter((e) => passed && byName.get(e.name)?.status === "checked").length;
     // Results relying on computations are counted apart from kernel-checked ones.
     const compN = m.exports.filter((e) => compOf(m, e).status !== "kernel").length;
-    const summary = !report && !fz ? `○ not verified (local preview)`
+    const summary = !checkedHere(m) && !fz ? `○ not verified (local preview)`
       : okCount !== n ? `✗ ${n - okCount} of ${n} formal results not checked`
       : compN === 0 ? `✅ ${n === 1 ? "the formal result is" : `all ${n} formal results are`} ${fz ? "checked" : "kernel-checked"}`
       : compN === n ? `◐ ${n === 1 ? "the formal result relies" : `all ${n} formal results rely`} on computation`
@@ -1150,7 +1257,7 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
       const ok = passed && r?.status === "checked";
       const lean = report?.lean_version ? ` (Lean v${esc(report.lean_version)})` : "";
       const c = compOf(m, e);
-      const badge = !report ? "**○ not verified (preview)**"
+      const badge = !checkedHere(m) ? "**○ not verified (preview)**"
         : !ok ? "**✗ failed**"
         : e.kind === "definition" ? `**◇ elaborated definition${lean}**`
         : c.status === "kernel" ? `**✓ kernel-checked${lean}**`
@@ -1171,7 +1278,7 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
       lines.push(...claimList(m, comp.claims.filter((x) => comp.entryOfModule(x.module)?.id === m.id), link, used));
     }
     if (!fz) lines.push("",
-      report ? `Checked${commit ? ` at commit \`${commit.slice(0, 12)}\`` : ""}. The formal statement is ` +
+      checkedHere(m) ? `Checked${commit ? ` at commit \`${commit.slice(0, 12)}\`` : ""}. The formal statement is ` +
         "machine-checked" + (compN ? ", modulo the computations named above" : "") + "; that it matches the prose is checked by review. " +
         `[What "checked" means](${CHECKED_PAGE_LINK}).`
       : "This is a local preview: nothing on this page has been verified.",
@@ -1995,7 +2102,31 @@ switch (cmd) {
   case "umbrella": checkUmbrella(args.includes("--write")); finish(args.includes("--write") ? "umbrella written" : "umbrella up to date"); break;
   case "request": {
     const ms = loadManifests(); finish();
-    fs.writeFileSync(args[0], JSON.stringify(verifierRequest(ms), null, 2) + "\n"); break;
+    const scope = flag("--scope") ? JSON.parse(fs.readFileSync(flag("--scope"), "utf8")) : null;
+    if (scope && scope.mode !== "scoped") fail(`request --scope: ${flag("--scope")} is a ${scope.mode} check, not a partial one`);
+    finish();
+    fs.writeFileSync(args[0], JSON.stringify(verifierRequest(ms, scope), null, 2) + "\n"); break;
+  }
+  case "scope": {
+    const entries = [], files = []; let out = null, changed = false, base = null;
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i];
+      if (a === "--entry" && args[i + 1]) entries.push(args[++i]);
+      else if (a === "--changed") { changed = true; if (args[i + 1] && !args[i + 1].startsWith("--")) base = args[++i]; }
+      else if (a === "--files") { while (args[i + 1] && !args[i + 1].startsWith("--")) files.push(args[++i]); }
+      else if (a === "--out" && args[i + 1]) out = args[++i];
+      else fail(`scope: unexpected argument ${JSON.stringify(a)}`);
+    }
+    if (!entries.length && !changed && !files.length) fail("scope: give --entry <id>, --changed [<base>] or --files <path>...");
+    const ms = loadManifests(); finish();
+    if (changed) files.push(...changedFiles(base));
+    const s = scopeOf(ms, { entries, files }); finish();
+    const text = JSON.stringify(s, null, 2) + "\n";
+    if (out) fs.writeFileSync(out, text); else process.stdout.write(text);
+    console.error(s.mode === "full" ? `scope: everything (${s.why.slice(0, 3).join(", ")}${s.why.length > 3 ? ", ..." : ""} can affect every entry)`
+      : s.mode === "none" ? "scope: no entry is affected"
+      : `scope: ${s.entries.length} entr${s.entries.length === 1 ? "y" : "ies"} (${s.entries.join(", ")}${s.dirs.includes("Shared") ? ", and lean/Lemmata/Shared" : ""}), ${s.modules.length} module${s.modules.length === 1 ? "" : "s"}`);
+    break;
   }
   case "prepare": {
     const tax = loadTaxonomy(); const ms = loadManifests(tax); finish();
@@ -2023,6 +2154,6 @@ switch (cmd) {
     process.stdout.write(JSON.stringify(loadProvenance(ms, null), null, 2) + "\n"); break;
   }
   default:
-    console.error("usage: lemmata.mjs validate | umbrella [--write] | request <out> | prepare <report.json>|--preview [--commit SHA] [--source-url URL] | new <id> <LeanName> <subject>");
+    console.error("usage: lemmata.mjs validate | umbrella [--write] | request <out> [--scope <scope.json>] | scope [--entry <id>]... [--changed [<base>]] [--files <path>...] [--out <file>] | prepare <report.json>|--preview [--commit SHA] [--source-url URL] | new <id> <LeanName> <subject>");
     process.exit(2);
 }

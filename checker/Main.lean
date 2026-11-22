@@ -16,6 +16,22 @@ declaration from the contribution manifests, and which entries declare
 `native_computation: true`. The tool exits 0 only if every check passes; the report is
 written either way so a failed build can show why.
 
+Without `modules` in the request (the cluster), every compiled module under the root found
+on disk is imported and audited. A partial local check (`tools/check.sh --entry` or `--changed`
+in the content repository) names its modules exactly in `modules`: only those are audited,
+what they import from other entries comes along as it is, and the request's `scope` (the
+entries it covers) is copied into the report, so the rendered site can tell which entries
+this run did not check.
+
+## Namespaces
+
+Every public declaration of an entry's modules must lie in the entry's namespace,
+`Lemmata.<LeanName>` (`Lemmata.Shared` for the shared helpers). Private declarations,
+internal ones (`_proof_1`, `match_1`, ...) and the names Lean reserves for what it generates
+on demand (`f.eq_def`, `f.congr_simp`, ...; `isReservedName`) are exempt. So no two entries
+can declare the same name, which would only show when the umbrella imports both; that also
+makes a partial local check, which never builds the umbrella, equivalent to the full one.
+
 ## Computations (`native_computation: true`)
 
 `native_decide` (also `decide +native`, `bv_decide`) has the compiler run a Boolean
@@ -37,8 +53,9 @@ that depends on any computation is never shown as kernel-checked, every claim is
 its statement and source line, and the opt-in is a reviewed decision. The report lists every
 accepted computation and, per export, the computations it relies on.
 
-What it does NOT do: kernel re-checking of proofs. That is `leanchecker`'s job and runs as
-a separate step against the same oleans.
+What it does NOT do: kernel re-checking of proofs. That is `lemmata-replay`'s job
+(Replay.lean: the kernel replay of an exact module list) and runs as a separate step
+against the same oleans.
 -/
 
 structure ExportReq where
@@ -57,6 +74,10 @@ structure Request where
   allowedAxioms : Array Name
   exports : Array ExportReq
   native : Array NativeReq
+  /-- Exactly the modules to import and audit (a partial local check); none: all on disk. -/
+  modules : Option (Array Name) := none
+  /-- The entries a partial local check covers, copied into the report. -/
+  scope : Option (Array String) := none
 
 def jStr (j : Json) (k : String) : Except String String := j.getObjValAs? String k
 def jArr (j : Json) (k : String) : Except String (Array Json) := j.getObjValAs? (Array Json) k
@@ -71,7 +92,10 @@ def parseRequest (j : Json) : Except String Request := do
   let nativeJs := (j.getObjValAs? (Array Json) "native").toOption.getD #[]
   let native ← nativeJs.mapM fun n => do
     pure { contribution := ← jStr n "contribution", «namespace» := (← jStr n "namespace").toName }
-  pure { root, allowedAxioms := allowed, exports, native }
+  -- Optional too: only a partial local check sends them.
+  let modules := (j.getObjValAs? (Array String) "modules").toOption.map (·.map String.toName)
+  let scope := (j.getObjValAs? (Array String) "scope").toOption
+  pure { root, allowedAxioms := allowed, exports, native, modules, scope }
 
 /-! ## Axiom collection, independent of stored axiom tables -/
 
@@ -140,27 +164,54 @@ def isComputationClaim (ty : Expr) : Bool :=
     ty.appArg!.isConstOf ``Bool.true && !ty.appFn!.appArg!.hasLooseBVars &&
     !ty.appFn!.appArg!.hasFVar && !ty.appFn!.appArg!.hasMVar
 
+/-! ## Namespaces -/
+
+/-- The namespace the public declarations of module `m` belong in: `Lemmata.<Entry>` for a
+module `Lemmata.<Entry>.…` (`Lemmata.Shared` for the shared helpers). The umbrella has none. -/
+def entryNamespace? (root m : Name) : Option Name :=
+  let rc := root.components
+  let mc := m.components
+  if rc.length < mc.length && mc.take rc.length == rc then
+    some ((mc.take (rc.length + 1)).foldl (· ++ ·) .anonymous)
+  else none
+
+/-- Declarations exempt from the namespace rule: private ones (unique to their module),
+internal ones (`_proof_1`, `match_1`, ...), and the names Lean reserves for what it generates on
+demand, in any module that needs it (`f.eq_def`, `f.congr_simp`, ...). -/
+def namespaceExempt (env : Environment) (c : Name) : Bool :=
+  isPrivateName c || c.isInternalDetail || isReservedName env c
+
 def main (args : List String) : IO UInt32 := do
   let [reqPath, outPath] := args
     | IO.eprintln "usage: lemmata-check <request.json> <report.json>"; return 2
   let req ← IO.ofExcept <| (Json.parse (← IO.FS.readFile reqPath)) >>= parseRequest
   initSearchPath (← findSysroot)
-  -- Import every compiled module under the root, found on disk -- not just the umbrella.
-  -- A module nothing imports must still be audited.
-  let sp ← searchPathRef.get
-  let mut onDisk : Array Name := #[]
-  for path in (← SearchPath.findAllWithExt sp "olean") do
-    if let some m ← searchModuleNameOfFileName path sp then
-      if req.root.isPrefixOf m && !onDisk.contains m then onDisk := onDisk.push m
-  onDisk := onDisk.qsort Name.lt
-  let env ← importModules (onDisk.map ({ module := · })) {} (loadExts := false)
+  let mut failures : Array String := #[]
+  let mut ownMods : Array Name := #[]
+  if let some listed := req.modules then
+    -- A partial local check names its modules exactly; every one must be compiled.
+    for m in listed do
+      let compiled ← try (← findOLean m).pathExists catch _ => pure false
+      if !req.root.isPrefixOf m then failures := failures.push s!"{m} is not under {req.root}"
+      else if !compiled then failures := failures.push s!"{m} is listed but has no compiled .olean"
+      else if !ownMods.contains m then ownMods := ownMods.push m
+  else
+    -- Import every compiled module under the root, found on disk -- not just the umbrella.
+    -- A module nothing imports must still be audited.
+    let sp ← searchPathRef.get
+    for path in (← SearchPath.findAllWithExt sp "olean") do
+      if let some m ← searchModuleNameOfFileName path sp then
+        if req.root.isPrefixOf m && !ownMods.contains m then ownMods := ownMods.push m
+  ownMods := ownMods.qsort Name.lt
+  let own : NameSet := ownMods.foldl (·.insert ·) {}
+  let env ← importModules (ownMods.map ({ module := · })) {} (loadExts := false)
   let allowed : NameSet := req.allowedAxioms.foldl (·.insert ·) {}
   let cache ← IO.mkRef ({} : NameMap NameSet)
-  let mut failures : Array String := #[]
 
   -- 0. Computation axioms: every axiom defined in the archive whose name has the shape of a
   --    computation claim is examined here; the accepted ones become allowed for the audit
-  --    below, everything else stays a disallowed axiom there.
+  --    below, everything else stays a disallowed axiom there. (All archive modules present,
+  --    also those a partial check only imports: its entries may rely on their computations.)
   let mut computations : NameSet := {}
   let mut computationsJson : Array Json := #[]
   let mut computationModule : NameMap Name := {}
@@ -194,19 +245,25 @@ def main (args : List String) : IO UInt32 := do
 
   -- 1. Every constant defined anywhere in the archive's own modules, not only the exported
   --    ones: an admitted helper must fail the build even if nothing displays it.
-  let ownMods := onDisk
   if ownMods.isEmpty then failures := failures.push s!"no compiled modules under {req.root}"
   let mut audited := 0
   let mut archiveAxioms : NameSet := {}
+  let mut outside : Array (Name × Name × Name) := #[]
   for (c, _) in env.constants.map₁.toList do
     let some m := moduleOf env c | continue
-    unless req.root.isPrefixOf m do continue
+    unless own.contains m do continue
     audited := audited + 1
     for a in (← axiomsOf env c cache) do
       archiveAxioms := archiveAxioms.insert a
       unless allowed.contains a do
         failures := failures.push s!"{c} (in {m}) depends on disallowed axiom {a}"
+    -- and every public declaration lies in its entry's namespace ("Namespaces" above)
+    if let some ns := entryNamespace? req.root m then
+      unless ns.isPrefixOf c || namespaceExempt env c do outside := outside.push (c, m, ns)
   if audited == 0 then failures := failures.push "axiom audit covered zero declarations"
+  for (c, m, ns) in outside.qsort (fun a b => a.1.lt b.1) do
+    failures := failures.push (s!"{c} (in {m}) is declared outside {ns}: put it inside `namespace {ns}` " ++
+      "or make it private, so that no two entries can declare the same name")
 
   -- 2. Declarations bound in the manifests.
   let mut exportsJson : Array Json := #[]
@@ -243,7 +300,7 @@ def main (args : List String) : IO UInt32 := do
       ("status", if problems.isEmpty then "checked" else "failed"),
       ("problems", toJson problems)]
 
-  let report := Json.mkObj [
+  let report := Json.mkObj <| ([
     ("tool", "lemmata-check"), ("lean_version", Lean.versionString),
     ("root", toString req.root),
     ("result", if failures.isEmpty then "passed" else "failed"),
@@ -253,7 +310,9 @@ def main (args : List String) : IO UInt32 := do
     ("archive_axioms", toJson ((sortedNames archiveAxioms).filter (!computations.contains ·) |>.map toString)),
     ("computations", Json.arr computationsJson),
     ("exports", Json.arr exportsJson),
-    ("failures", toJson failures)]
+    ("failures", toJson failures)] : List (String × Json)) ++
+    -- Only in a partial local check: the entries it covered (the others were not checked).
+    (match req.scope with | some s => [("scope", toJson s)] | none => [])
   IO.FS.writeFile outPath (report.pretty ++ "\n")
   for f in failures do IO.eprintln s!"FAIL {f}"
   return if failures.isEmpty then 0 else 1
