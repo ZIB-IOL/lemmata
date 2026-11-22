@@ -54,11 +54,13 @@ On every row exactly one of $s,w$ is nonzero. Polarization gives $a^\top G b=\|u
 ```
 
 The same identity holds at $t$ with $4N,8$ replaced by $tN,2t$. Write $x_0\le\cdots\le x_{d-1}$ for the sorted magnitudes of $u$. Put $r_j=2j-x_j$, $c_t(k)=(2t-6k)_+$, and $h_+=\max(h,0)$. The exact rowwise loss in replacing $6s_v(v\cdot u)-2t|s_v|$ by its largest value over $s_v\in\{0,\pm1\}$ is nonnegative. Denote the sum of these losses by $D$. For $t\ge0$ we have
+
 $$
  a^\top F_t b=N(4d-2-t)
  +\sum_{i<j}\{c_t(x_j-x_i)+c_t(x_j+x_i)\}
  -3\sum_j r_j^2-3\|z\|^2-D.
 $$ (eq-fishburn-reeds-classical-bound-squares)
+
 Indeed, replace $3\|u\|^2$ by $-3\|u\|^2+6\sum_v s_v(v\cdot u)$. Expand $(6|v\cdot u|-2t)_+$ and use $|y+x|+|y-x|=2\max(|x|,|y|)$ for each coordinate pair. Completing the squares against $2j$ gives [](#eq-fishburn-reeds-classical-bound-squares).
 
 Let $D_d=\{y\in\mathbb Z^d:\sum_i y_i\text{ is even}\}$. All roots belong to $D_d$. Since $\alpha-u-z=V^\top(\mathbf1-a)\in2D_d$, the coordinates of $z$ are odd precisely where those of $u$ are odd. The number of odd coordinates is even. If all $x_j$ are even and $\sum_j x_j\not\equiv N\pmod4$, then $z$ is a nonzero even vector and $\|z\|^2\ge4$. This follows because changing signs of even entries preserves their sum modulo four, and $\sum_i\alpha_i=N$.
