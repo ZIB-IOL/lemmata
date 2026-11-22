@@ -19,3 +19,11 @@ name = "Lemmata.RM59.Compute"
 roots = ["Lemmata.RM59.Compute"]
 globs = ["Lemmata.RM59.Compute.*"]
 precompileModules = true
+
+
+# A pure Lean enumerator: precompiled without importing Mathlib proof modules.
+[[lean_lib]]
+name = "Lemmata.ModifiedE8Bell.Compute"
+roots = ["Lemmata.ModifiedE8Bell.Compute"]
+globs = ["Lemmata.ModifiedE8Bell.Compute", "Lemmata.ModifiedE8Bell.Compute.Raw"]
+precompileModules = true
