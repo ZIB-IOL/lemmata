@@ -35,6 +35,14 @@ exports:
     kind: theorem
     page: index.md
     label: thm-fishburn-reeds-classical-bound
+  - name: Lemmata.FishburnReedsClassicalBound.envelope_le
+    kind: theorem
+    page: index.md
+    label: lem-fishburn-reeds-classical-bound-envelope
+  - name: Lemmata.FishburnReedsClassicalBound.two_zeros_disagree
+    kind: theorem
+    page: index.md
+    label: lem-fishburn-reeds-classical-bound-two-zeros
   - name: Lemmata.FishburnReedsClassicalBound.allplus_value
     kind: theorem
     page: index.md

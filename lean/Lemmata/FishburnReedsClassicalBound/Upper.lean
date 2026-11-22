@@ -233,6 +233,58 @@ theorem two_zero_disagree (d : ℕ) (a : Root d → ℤ) (ha : ∀ r, a r = 1 �
 
 /-! ### The upper bound -/
 
+/-- **The envelope bound.** For a vector `p` with even coordinates, the rows `e_i ± e_j`
+(`j < i`) contribute `max 4 (6 |p_i ± p_j| - 4)`. Their sum minus `3 ‖p‖²` is at most
+`2d(d-1)(2d-3)`, plus `4` when exactly two coordinates of `p` vanish. -/
+theorem envelope_le (d : ℕ) (p : Fin d → ℤ) (hp : ∀ k, 2 ∣ p k) :
+    (∑ i : Fin d, ∑ j : Fin i.val,
+        (max 4 (6 * |p i + p (low i j)| - 4) + max 4 (6 * |p i - p (low i j)| - 4))) -
+      3 * ∑ k, p k ^ 2 ≤
+      2 * d * ((d : ℤ) - 1) * (2 * d - 3) +
+        (if (Finset.univ.filter fun k => p k = 0).card = 2 then 4 else 0) := by
+  obtain ⟨z, hz⟩ : ∃ z : Fin d → ℤ, ∀ k, p k = 2 * z k :=
+    ⟨fun k => p k / 2, fun k => (Int.mul_ediv_cancel' (hp k)).symm⟩
+  have hpair : ∀ i : Fin d, ∀ j : Fin i.val,
+      max 4 (6 * |p i + p (low i j)| - 4) + max 4 (6 * |p i - p (low i j)| - 4) =
+        pairW (z i).natAbs (z (low i j)).natAbs := by
+    intro i j
+    rw [← pair_envelope, hz, hz]
+    simp only [one_mul, neg_one_mul, ← sub_eq_add_neg]
+  have hsq : 3 * ∑ k, p k ^ 2 = 12 * sqSum (List.ofFn fun k => (z k).natAbs) := by
+    unfold sqSum
+    rw [List.map_ofFn, List.sum_ofFn, Finset.mul_sum, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    simp only [Function.comp_apply, Int.natCast_natAbs, sq_abs, hz]
+    ring
+  have hcount : (List.ofFn fun k => (z k).natAbs).count 0 =
+      (Finset.univ.filter fun k => p k = 0).card := by
+    rw [count_ofFn]
+    congr 1
+    ext k
+    simp [hz]
+  have h := envW_le _ (List.ofFn fun k => (z k).natAbs) rfl
+  rw [List.length_ofFn, hcount] at h
+  unfold envW bound at h
+  simp_rw [hpair]
+  rw [hsq, pairSum_ofFn pairW_comm d (fun k => (z k).natAbs)]
+  exact h
+
+/-- **Two vanishing coordinates force a disagreement.** If exactly two coordinates of
+`p = Vᵀ a` vanish, some row `v` has `a_v (v · p) ≤ -2`. -/
+theorem two_zeros_disagree (d : ℕ) (a : Root d → ℤ) (ha : ∀ r, a r = 1 ∨ a r = -1)
+    (h2 : (Finset.univ.filter fun k => pZ d a k = 0).card = 2) :
+    ∃ r, a r * yZ d a r ≤ -2 := by
+  rw [Finset.card_eq_two] at h2
+  obtain ⟨k1, k2, hne, hset⟩ := h2
+  have hmem : ∀ k, pZ d a k = 0 ↔ k = k1 ∨ k = k2 := by
+    intro k
+    simpa using Finset.ext_iff.mp hset k
+  rcases lt_or_gt_of_ne hne with hlt | hlt
+  · exact two_zero_disagree d a ha k1 k2 hlt ((hmem k1).2 (Or.inl rfl))
+      ((hmem k2).2 (Or.inr rfl)) fun k hk => (hmem k).1 hk
+  · exact two_zero_disagree d a ha k2 k1 hlt ((hmem k2).2 (Or.inr rfl))
+      ((hmem k1).2 (Or.inl rfl)) fun k hk => ((hmem k).1 hk).symm
+
 /-- The fixed-shift bound in integer form: every sign vector `b` against `F₄ a`. -/
 theorem upperZ (d : ℕ) (a b : Root d → ℤ) (ha : ∀ r, a r = 1 ∨ a r = -1)
     (hb : ∀ r, b r = 1 ∨ b r = -1) :
@@ -260,44 +312,18 @@ theorem upperZ (d : ℕ) (a b : Root d → ℤ) (ha : ∀ r, a r = 1 ∨ a r = -
     refine Finset.sum_congr rfl fun k _ => ?_
     rw [← Finset.mul_sum, sq]
     rfl
-  -- halved coordinates
-  obtain ⟨z, hz⟩ : ∃ z : Fin d → ℤ, ∀ k, pZ d a k = 2 * z k :=
-    ⟨fun k => pZ d a k / 2, fun k => (Int.mul_ediv_cancel' (pZ_even d a ha k)).symm⟩
-  -- the envelope is `envW` of the halved magnitudes
-  have s4 : ∑ r, max 4 (6 * |yZ d a r| - 4) - 3 * ∑ k, pZ d a k ^ 2 =
-      envW (List.ofFn fun k => (z k).natAbs) := by
-    unfold envW sqSum
-    rw [← pairSum_ofFn pairW_comm d, sum_root, List.map_ofFn, List.sum_ofFn]
-    simp only [yZ_pair, hz, ite_true, ite_false, Bool.false_eq_true, pair_envelope]
-    congr 1
-    rw [Finset.mul_sum, Finset.mul_sum]
-    refine Finset.sum_congr rfl fun k _ => ?_
-    simp only [Function.comp_apply, Int.natCast_natAbs, sq_abs]
-    ring
-  -- a disagreeing row in the two-zero case
-  have s5 : (List.ofFn fun k => (z k).natAbs).count 0 = 2 → ∃ r, a r * yZ d a r ≤ -2 := by
-    intro h2
-    rw [count_ofFn, Finset.card_eq_two] at h2
-    obtain ⟨k1, k2, hne, hset⟩ := h2
-    have hmem : ∀ k, pZ d a k = 0 ↔ k = k1 ∨ k = k2 := by
-      intro k
-      have := Finset.ext_iff.mp hset k
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_insert,
-        Finset.mem_singleton, Int.natAbs_eq_zero] at this
-      rw [hz, ← this]
-      omega
-    rcases lt_or_gt_of_ne hne with hlt | hlt
-    · exact two_zero_disagree d a ha k1 k2 hlt ((hmem k1).2 (Or.inl rfl))
-        ((hmem k2).2 (Or.inr rfl)) fun k hk => (hmem k).1 hk
-    · exact two_zero_disagree d a ha k2 k1 hlt ((hmem k2).2 (Or.inr rfl))
-        ((hmem k1).2 (Or.inl rfl)) fun k hk => ((hmem k).1 hk).symm
-  -- assemble
-  have henv := envW_le _ (List.ofFn fun k => (z k).natAbs) rfl
-  rw [List.length_ofFn] at henv
-  have hloss : (if (List.ofFn fun k => (z k).natAbs).count 0 = 2 then (4 : ℤ) else 0) ≤
+  -- the envelope over the rows, pair by pair
+  have s4 : ∑ r, max 4 (6 * |yZ d a r| - 4) =
+      ∑ i : Fin d, ∑ j : Fin i.val, (max 4 (6 * |pZ d a i + pZ d a (low i j)| - 4) +
+        max 4 (6 * |pZ d a i - pZ d a (low i j)| - 4)) := by
+    rw [sum_root]
+    simp only [yZ_pair, ite_true, ite_false, Bool.false_eq_true, one_mul, neg_one_mul,
+      ← sub_eq_add_neg]
+  have henv := envelope_le d (pZ d a) (pZ_even d a ha)
+  have hloss : (if (Finset.univ.filter fun k => pZ d a k = 0).card = 2 then (4 : ℤ) else 0) ≤
       ∑ r, (if a r * yZ d a r ≤ -2 then (4 : ℤ) else 0) := by
     split_ifs with h
-    · obtain ⟨r, hr⟩ := s5 h
+    · obtain ⟨r, hr⟩ := two_zeros_disagree d a ha h
       calc (4 : ℤ) = if a r * yZ d a r ≤ -2 then 4 else 0 := by simp [hr]
         _ ≤ ∑ r, (if a r * yZ d a r ≤ -2 then (4 : ℤ) else 0) :=
           Finset.single_le_sum (f := fun r => if a r * yZ d a r ≤ -2 then (4 : ℤ) else 0)
@@ -305,6 +331,7 @@ theorem upperZ (d : ℕ) (a b : Root d → ℤ) (ha : ∀ r, a r = 1 ∨ a r = -
     · exact Finset.sum_nonneg fun r _ => by split_ifs <;> norm_num
   have hsum2 := Finset.sum_le_sum fun r (_ : r ∈ Finset.univ) => s2 r
   rw [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum, s3] at hsum2
+  unfold bound
   linarith [s1, s4, henv, hloss]
 
 /-- The classical value against Bob's outputs, for any matrix. -/
