@@ -3,6 +3,7 @@ module
 public import Lemmata.FishburnReedsClassicalBound.Statement
 public import Lemmata.FishburnReedsClassicalBound.Blocks
 public import Lemmata.FishburnReedsClassicalBound.Comparison
+public import Lemmata.FishburnReedsClassicalBound.Vector
 public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Algebra.CharP.Defs
 public import Mathlib.Algebra.Order.Archimedean.Real.Basic
@@ -155,7 +156,7 @@ theorem allplus_value (d : ℕ) :
       simp [tri_coord, pow_two]
     _ = _ := by rw [tri_square_sum, tri_card]; ring
 
-/-- Attainment isolates the upper inequality as the outstanding matrix-level bridge. -/
+/-- Attainment by the all-plus strategy and the upper bound give the exact classical value. -/
 theorem exact_of_upper (d : ℕ) (hu : FixedUpper d) : FixedClassicalValue d := by
   refine ⟨⟨(fun _ => 1), (fun _ => 1), ?_, ?_, allplus_value d⟩, ?_⟩
   · intro i
@@ -164,6 +165,12 @@ theorem exact_of_upper (d : ℕ) (hu : FixedUpper d) : FixedClassicalValue d := 
     exact Or.inl rfl
   · rintro _ ⟨a,b,ha,hb,rfl⟩
     exact hu a b ha hb
+
+/-- **The fixed Fishburn–Reeds shift.** In every order `d ≥ 2`, the classical value is
+`2N(2d-3)` and the vector value is `2N(3d-5)` (`N = d(d-1)`), so their ratio is
+`(3d-5)/(2d-3)`. -/
+theorem fixed_shift (d : ℕ) (hd : 2 ≤ d) : FixedShift d :=
+  ⟨exact_of_upper d (fixedUpper d), fixedVectorValue d hd⟩
 -- DOCS_END_MAIN
 
 end

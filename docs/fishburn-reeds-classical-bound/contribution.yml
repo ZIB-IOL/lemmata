@@ -31,6 +31,10 @@ pages:
   - index.md
   - shifts.md
 exports:
+  - name: Lemmata.FishburnReedsClassicalBound.fixed_shift
+    kind: theorem
+    page: index.md
+    label: thm-fishburn-reeds-classical-bound
   - name: Lemmata.FishburnReedsClassicalBound.allplus_value
     kind: theorem
     page: index.md

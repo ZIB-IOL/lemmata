@@ -19,7 +19,6 @@ $$
  C(4)=2N(2d-3),\qquad Q_d(4)=2N(3d-5),\qquad
  \frac{Q_d(4)}{C(4)}=\frac{3d-5}{2d-3}.
 $$
-The largest number of rows on which a maximizing pair of sign vectors disagrees is $3\lfloor d/3\rfloor$.
 ```
 
 ```{prf:proposition} The all-plus classical strategy
@@ -102,6 +101,18 @@ Within this block $0\le x_j\le j$. Appending zero at position $j$ contributes $1
 
 It remains to exclude equality with a block of exactly two zeros. If either internal root $e_i\pm e_j$ is placed in $s$, the row loss $D$ pays eight. If both are in $w$, they contribute $\pm2$ to one of the two zero coordinates of $z$. Each incident root from outside the block placed in $w$ pays at least four in $D$, since its absolute projection on $u$ is at least two. With zero, one, or at least two such outside roots, the combined cost from $D$ and these two coordinates of $3\|z\|^2$ is at least $12$, $7$, or $8$, respectively. This exceeds the exceptional score of four and leaves all odd-coordinate charges available elsewhere. The identity [](#eq-fishburn-reeds-classical-bound-squares) now gives $C(4)\le H$. The all-plus strategy attains equality.
 
+The Lean proof of the classical bound takes a shorter route. Maximizing over $b$ first gives $a^\top F_4b\le\|F_4a\|_1=\sum_v\max(4,6a_v(v\cdot p)-4)-3\|p\|^2$ with $p=V^\top a$. Every coordinate of $p$ is a sum of $2(d-1)$ signs and hence even, so no odd coordinates occur. Replacing $a_v(v\cdot p)$ by $|v\cdot p|$ gives an envelope that depends only on the multiset of the $|p_i|/2$. Removing the group of largest values one group at a time shows that the envelope is at most $H$, with an excess of four when exactly two coordinates of $p$ vanish. In that case some row has $a_v(v\cdot p)\le-2$: otherwise every row through a vanishing and a nonvanishing coordinate cancels in the vanishing coordinate, and the two rows joining the two vanishing coordinates cannot make both coordinates zero. That row loses at least four. The Lean rows are $e_i\pm e_j$ with $j<i$; reversing the coordinates identifies them with the rows above.
+```
+
+```{prf:proposition} Disagreements in optimal strategies
+:label: prop-fishburn-reeds-classical-bound-disagreements
+
+The largest number of rows on which a maximizing pair of sign vectors disagrees is $3\lfloor d/3\rfloor$.
+```
+
+```{prf:proof} of [](#prop-fishburn-reeds-classical-bound-disagreements)
+:nonumber:
+
 At equality all positive blocks are centered singletons or triples, with a possible singleton zero, and $D=0$. Because the threshold $4/3$ is nonintegral, a row is in $w$ exactly when $|v\cdot u|\le1$. A triple contributes its three difference roots and a singleton contributes none, after signing and ordering the coordinates. Conversely, form $\lfloor d/3\rfloor$ disjoint consecutive triples of targets. Keep $s_v=1$ outside the internal difference roots. Put those roots in $w$ with cyclic orientations. Their signed sum is zero, and $u$ replaces each triple of targets by its mean. This loses eight in $\|u\|^2$ per triple and gains three disagreements, attaining $H$ with $3\lfloor d/3\rfloor$ disagreements.
 ```
 
@@ -113,7 +124,7 @@ The [companion page](shifts.md) proves the zero-diagonal formula, determines all
 
 ## Scope of the Lean source
 
-The accompanying declarations treat the all-plus witness, the midpoint reduction, both dimension-independent block bounds, and the scalar comparison of the two formulas. The zero-block export gives the upper inequality with its unique positive exception; strictness for the other nonsingleton words follows from the displayed increments. The all-order matrix upper bound, equality classification, and optimization results have mathematical proofs here. The finite optimization certificates on the companion page also have an independent executable verifier. The manifest binds only the individual statements represented in Lean.
+The Lean source proves [](#thm-fishburn-reeds-classical-bound) in every order $d\ge2$: the exact classical value by the envelope argument after its proof, and the exact vector value by the spectral bound. It also proves the all-plus witness, the midpoint identity, both block bounds and the comparison of the two shift formulas. The zero-block export gives the upper inequality with its unique positive exception; strictness for the other nonsingleton words follows from the displayed increments. [](#prop-fishburn-reeds-classical-bound-disagreements), the interval theorem and the global optima on the companion page, and the asymptotic estimate have mathematical proofs here; the finite optimization certificates also have an independent executable verifier.
 
 ```{literalinclude} ../../lean/Lemmata/FishburnReedsClassicalBound/Main.lean
 :language: lean

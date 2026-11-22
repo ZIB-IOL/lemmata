@@ -300,8 +300,11 @@ public import Lemmata.DistributionalLowerBounds.Main
 public import Lemmata.DistributionalLowerBounds.Statement
 public import Lemmata.FishburnReedsClassicalBound.Blocks
 public import Lemmata.FishburnReedsClassicalBound.Comparison
+public import Lemmata.FishburnReedsClassicalBound.Envelope
 public import Lemmata.FishburnReedsClassicalBound.Main
 public import Lemmata.FishburnReedsClassicalBound.Statement
+public import Lemmata.FishburnReedsClassicalBound.Upper
+public import Lemmata.FishburnReedsClassicalBound.Vector
 public import Lemmata.FockCircuits.Asymptotics
 public import Lemmata.FockCircuits.BasisAction
 public import Lemmata.FockCircuits.Circuit
