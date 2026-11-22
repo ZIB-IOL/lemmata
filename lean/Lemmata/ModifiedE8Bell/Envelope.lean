@@ -7,9 +7,9 @@ namespace Lemmata.ModifiedE8Bell
 open scoped BigOperators
 
 /-- Integer dot product in eight coordinates. -/
-def dot (x y : Vector) : ℤ := ∑ k, x k * y k
+def dot (x y : IntVector) : ℤ := ∑ k, x k * y k
 
-def envelope (q : Vector) : ℤ :=
+def envelope (q : IntVector) : ℤ :=
   (∑ i, max 52 (6 * |dot (root i) q| - 52)) - 3 * dot q q
 
 lemma matrix_row_sum (i : Setting) (b : Signing) :

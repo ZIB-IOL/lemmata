@@ -525,7 +525,6 @@ public import Lemmata.ModifiedE8Bell.Reduction
 public import Lemmata.ModifiedE8Bell.Statement
 public import Lemmata.ModifiedE8Bell.VectorData
 public import Lemmata.ModifiedE8Bell.VectorProof
-public import Lemmata.ModifiedE8Bell.VectorValue
 public import Lemmata.ModifiedE8Bell.Visibility
 public import Lemmata.ModifiedE8Bell.VisibilityCompute
 public import Lemmata.ModifiedE8Bell.VisibilityData

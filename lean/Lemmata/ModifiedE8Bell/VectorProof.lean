@@ -1,6 +1,8 @@
 module
 
-public import Lemmata.ModifiedE8Bell.VectorValue
+public import Lemmata.ModifiedE8Bell.Statement
+public import Mathlib.Analysis.SpecialFunctions.Sqrt
+public import Mathlib.LinearAlgebra.Matrix.PosDef
 public import Lemmata.ModifiedE8Bell.VectorData
 public import Mathlib.Algebra.Order.Star.Real
 public meta import Lemmata.ModifiedE8Bell.Statement

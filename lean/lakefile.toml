@@ -20,10 +20,10 @@ roots = ["Lemmata.RM59.Compute"]
 globs = ["Lemmata.RM59.Compute.*"]
 precompileModules = true
 
-
-# A pure Lean enumerator: precompiled without importing Mathlib proof modules.
+# modified-e8-bell: the pure-Lean chamber enumerator (no Mathlib imports), precompiled
+# for its native computations.
 [[lean_lib]]
 name = "Lemmata.ModifiedE8Bell.Compute"
 roots = ["Lemmata.ModifiedE8Bell.Compute"]
-globs = ["Lemmata.ModifiedE8Bell.Compute", "Lemmata.ModifiedE8Bell.Compute.Raw"]
+globs = ["Lemmata.ModifiedE8Bell.Compute.*"]
 precompileModules = true

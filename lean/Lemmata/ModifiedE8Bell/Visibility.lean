@@ -8,15 +8,6 @@ public section
 namespace Lemmata.ModifiedE8Bell
 open scoped BigOperators
 
-/-- Correlations of the 120 normalized E₈ root directions. -/
-noncomputable def rootCorrelation : Correlation := fun i j =>
-  ((∑ k, root i k * root j k : ℤ) : ℝ) / 8
-
-/-- The endpoint is local, and no larger visibility is local. -/
-def ExactVisibility : Prop :=
-  IsLocal ((109/165 : ℝ) • rootCorrelation) ∧
-  ∀ v : ℝ, IsLocal (v • rootCorrelation) → v ≤ 109/165
-
 lemma tableMatrix_average (rs : Array Relabel) (M : IntegerTable) :
     tableMatrix (averageTable rs M) = averageNumerator rs (tableMatrix M) := by
   funext i j

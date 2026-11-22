@@ -40,7 +40,7 @@ Changing representatives or their order conjugates $U$ by a signed
 permutation and preserves the optimization problems below. The supplied
 replay identifies this matrix with
 [the published U120 matrix](https://github.com/istvanmarton/IBB/blob/6f17e2f073ccbe2de9cd0a7d062c25bff59ba844/Examples/U120.txt)
-by checking every entry of an explicit signed permutation.
+of @marton2026exact by checking every entry of an explicit signed permutation.
 
 ```{prf:theorem} Exact classical value
 :label: thm-modified-e8-bell-classical
@@ -235,16 +235,16 @@ The attaining signs and the finite matrix identities used
 in the vector proof are also included.
 
 The accompanying [chamber replay](replay-chamber.mjs) and
-[published-matrix replay](e8-u120.cjs), with [pinned input](U120.txt), also check the eight simple reflections,
+[published-matrix replay](e8-u120.cjs) also check the eight simple reflections,
 coordinate and parity facts, the attaining signs, and the identification
-with the pinned published matrix.
+with the published matrix.
 
 From a clone of the repository, run the replays with Node.js 24 or later:
 
 ```bash
 node docs/modified-e8-bell/replay-chamber.mjs
 node docs/modified-e8-bell/replay-visibility.mjs
-node docs/modified-e8-bell/e8-u120.cjs docs/modified-e8-bell/U120.txt --wide --full
+node docs/modified-e8-bell/e8-u120.cjs --wide --full
 ```
 
 The visibility replay reads the accompanying Lean source files, so keep
@@ -253,11 +253,16 @@ network access. The full formalization and site checks run with
 `tools/check.sh` after the setup described in the repository's contributing
 instructions.
 
-The published data are pinned to commit
-`6f17e2f073ccbe2de9cd0a7d062c25bff59ba844`. Normalizing the decimal
-entries with one space between entries and a final LF on every row gives
-$31\,160$ bytes and SHA-256
+The published matrix is not redistributed with this entry. The
+published-matrix replay regenerates it from the root definition and the
+published signed row order, and compares it with
+[`Examples/U120.txt`](https://github.com/istvanmarton/IBB/blob/6f17e2f073ccbe2de9cd0a7d062c25bff59ba844/Examples/U120.txt)
+at commit `6f17e2f073ccbe2de9cd0a7d062c25bff59ba844`: normalizing the
+decimal entries with one space between entries and a final LF on every row
+gives $31\,160$ bytes and SHA-256
 `70775ad02f460c1d03f9a7144ce322f2864794311e6e72fbe725a485ef631094`.
+To check a downloaded copy of that file entry by entry, pass its path as
+the first argument of the replay.
 
 ```{literalinclude} ../../lean/Lemmata/ModifiedE8Bell/Main.lean
 :language: lean

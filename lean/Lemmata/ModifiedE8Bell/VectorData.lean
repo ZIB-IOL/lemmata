@@ -24,7 +24,7 @@ theorem complement_square : ∀ i j,
   native_decide
 
 set_option maxHeartbeats 0 in
-theorem root_norm : ∀ i, (∑ k, root i k ^ 2) = 8 := by native_decide
+theorem root_norm : ∀ i, (∑ k, root i k ^ 2) = 8 := by decide +kernel
 
 set_option maxHeartbeats 0 in
 theorem vector_witness_integer :

@@ -1,4 +1,12 @@
 "use strict";
+// Replay for the modified-e8-bell entry (Node.js >= 24, no packages, no network).
+// The published 120x120 matrix, Examples/U120.txt of https://github.com/istvanmarton/IBB
+// at revision 6f17e2f073ccbe2de9cd0a7d062c25bff59ba844, is not redistributed: it is
+// regenerated from the E8 root definition and the published signed row order, and its
+// SHA-256 (decimal entries, one space between entries, LF after every row) is compared
+// with that of the published file.
+// Usage: node e8-u120.cjs [path/to/U120.txt] [--wide] [--full]
+//   A downloaded copy of the published file, if given, is checked instead.
 function check(condition, detail) {
   if (!condition) throw new Error(detail);
 }
@@ -336,24 +344,6 @@ function visibilityCertificate(game) {
           checkedEntries:14400,weights:["8/11","3/11"],visibility:"109/165"};
 }
 
-function fixedRootShiftChecks() {
-  // Each row uses the two contact strategies and the exact scaled classical
-  // upper bound from the companion Fishburn–Reeds certificate.
-  // d, t numerator/denominator, scaled bound, traces, left weight, visibility.
-  const data=[
-    [7,8,1,804,30,12,13,14,67,98],
-    [8,36,5,6600,40,30,23,29,275,406],
-    [9,8,1,1944,54,48,1,10,27,40],
-    [10,84,11,30780,72,50,8,17,57,85]
-  ];
-  return data.map(([d,A,B,C,tLeft,tRight,f,g,p,q])=>{
-    const N=d*(d-1),target=N*(6*B*(d-1)-A);
-    check(C*q===p*target, "D_d Bell visibility");
-    check((f*tLeft+(g-f)*tRight)*q===g*N*p, "D_d mixed trace");
-    return {d,leftWeight:f+"/"+g,visibility:p+"/"+q};
-  });
-}
-
 if (typeof module !== "undefined" && typeof require === "function" && require.main === module) {
   const options=process.argv.slice(2);
   const file=options.find(s=>!s.startsWith("--"));
@@ -362,7 +352,7 @@ if (typeof module !== "undefined" && typeof require === "function" && require.ma
   const digest=require("node:crypto").createHash("sha256").update(normalized,"ascii").digest("hex");
   check(digest===expectedSHA256,"published matrix SHA-256");
   const game=checkInput(matrix);
-  console.log(JSON.stringify({sha256:digest, entries:game.checkedEntries, score:game.objective, a:game.a, b:game.b, short:shortCertificate(), visibility:visibilityCertificate(game), fixedD:fixedRootShiftChecks()},null,2));
+  console.log(JSON.stringify({sha256:digest, entries:game.checkedEntries, score:game.objective, a:game.a, b:game.b, short:shortCertificate(), visibility:visibilityCertificate(game)},null,2));
   if (options.includes("--wide")) console.log("Frame-only radius", JSON.stringify(shortCertificate(900)));
   if (options.includes("--full")) {
     const scan=enumerateDominant();

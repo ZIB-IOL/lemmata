@@ -12,7 +12,7 @@ namespace Lemmata.ModifiedE8Bell
 open scoped BigOperators
 
 /-- Reconstruction from the eight chamber gaps, in order d,s,t,a,b,c,e,f. -/
-def basis : Coordinate → Vector := ![
+def basis : Coordinate → IntVector := ![
   ![0, 1, -1, 0, 0, 0, 0, 0],
   ![0, 1, 1, 0, 0, 0, 0, 0],
   ![0, 1, 1, 2, 0, 0, 0, 0],
@@ -22,22 +22,22 @@ def basis : Coordinate → Vector := ![
   ![0, 1, 1, 2, 2, 2, 2, 2],
   ![2, 5, 7, 10, 8, 6, 4, 2]]
 
-def coordinates (g : Vector) (j : Coordinate) : ℤ := ∑ k, basis j k * g k
+def coordinates (g : IntVector) (j : Coordinate) : ℤ := ∑ k, basis j k * g k
 
-def rootGap (i : Setting) : Vector :=
+def rootGap (i : Setting) : IntVector :=
   ![(root i 7 + root i 0 - root i 1 - root i 2 - root i 3 - root i 4 - root i 5 - root i 6) / 2,
     (root i 0 + root i 1) / 2, (root i 1 - root i 0) / 2,
     (root i 2 - root i 1) / 2, (root i 3 - root i 2) / 2,
     (root i 4 - root i 3) / 2, (root i 5 - root i 4) / 2,
     (root i 6 - root i 5) / 2]
 
-def baseGap : Vector := ![2,29,-17,-1,-1,-1,-1,-1]
+def baseGap : IntVector := ![2,29,-17,-1,-1,-1,-1,-1]
 def gap (a : Signing) (k : Coordinate) : ℤ :=
   baseGap k - ∑ i, if a i then 0 else rootGap i k
 
 def sumRoot (a : Signing) (j : Coordinate) : ℤ := ∑ i, sign (a i) * root i j
 
-def rho : Vector := ![0,1,2,3,4,5,6,23]
+def rho : IntVector := ![0,1,2,3,4,5,6,23]
 def rootHeight (i : Setting) : ℤ := ∑ j, rho j * root i j
 
 def height (a : Signing) : ℤ := ∑ i, sign (a i) * rootHeight i
@@ -82,13 +82,13 @@ set_option maxHeartbeats 0
 
 -- Finite structural checks, independent of the chamber enumeration.
 theorem root_reconstruction : ∀ i j, coordinates (rootGap i) j = root i j := by
-  native_decide
+  decide +kernel
 
 theorem root_gap_total : ∀ k, (∑ i, rootGap i k) = 2 * baseGap k := by
-  native_decide
+  decide +kernel
 
 theorem root_coordinate_bound : (∑ i, |root i 7|) = 92 := by
-  native_decide
+  decide +kernel
 
 theorem reflection_involution : ∀ k i,
     reflectionIndex k (reflectionIndex k i) = i := by

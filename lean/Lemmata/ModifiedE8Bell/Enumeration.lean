@@ -41,14 +41,14 @@ set_option maxRecDepth 100000 in
 theorem all_tuples_pass : (tuples weights 46).all passes = true := by
   native_decide
 
-lemma rawDot_eq (u v : Vector) : rawDot u v = dot u v := by
+lemma rawDot_eq (u v : IntVector) : rawDot u v = dot u v := by
   simp [rawDot, dot, Fin.sum_univ_succ, add_assoc]
 
 set_option maxHeartbeats 0 in
 lemma rootRows_list : rootRows.toList = List.ofFn (fun i : Setting => rootRows[i.val]?.getD #[]) := by
-  native_decide
+  decide +kernel
 
-lemma rawEnvelope_eq (q : Vector) : rawEnvelope q = envelope q := by
+lemma rawEnvelope_eq (q : IntVector) : rawEnvelope q = envelope q := by
   rw [rawEnvelope, rootRows_list, List.map_ofFn, List.sum_ofFn]
   simp only [rawDot_eq, Int.natCast_natAbs, envelope, Function.comp_apply]
   rfl
@@ -63,7 +63,7 @@ lemma cost_ofFn (g : Coordinate → ℕ) :
   simp [weights, cost, List.ofFn_succ, coordinates, basis, Fin.sum_univ_succ]
 
 /-- The finite calculation applies to every nonnegative gap vector within the budget. -/
-theorem chamber_envelope (g : Vector) (hg : ∀ k, 0 ≤ g k)
+theorem chamber_envelope (g : IntVector) (hg : ∀ k, 0 ≤ g k)
     (hb : coordinates g 7 ≤ 46) : envelope (fun j => 2 * coordinates g j) ≤ 24416 := by
   let n : Coordinate → ℕ := fun k => (g k).toNat
   have hn : (fun k => (n k : ℤ)) = g := by funext k; exact Int.toNat_of_nonneg (hg k)

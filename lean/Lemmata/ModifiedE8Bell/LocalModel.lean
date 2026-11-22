@@ -1,22 +1,15 @@
 module
 
-public import Lemmata.ModifiedE8Bell.VectorValue
+public import Lemmata.ModifiedE8Bell.Statement
+public import Mathlib.Algebra.BigOperators.Field
 public import Mathlib.Analysis.Convex.Combination
 
 @[expose] public section
 namespace Lemmata.ModifiedE8Bell
 open scoped BigOperators
 
-abbrev Correlation := Setting → Setting → ℝ
 abbrev IntegerCorrelation := Setting → Setting → ℤ
 abbrev Relabel := Array ℤ
-
-/-- A deterministic bipartite correlation matrix. -/
-def deterministic (a b : Signing) : Correlation := fun i j => (sign (a i) : ℝ) * (sign (b j) : ℝ)
-
-/-- Membership in the full bipartite local correlation polytope. -/
-def IsLocal (M : Correlation) : Prop :=
-  M ∈ convexHull ℝ (Set.range fun ab : Signing × Signing => deterministic ab.1 ab.2)
 
 lemma deterministic_local (a b : Signing) : IsLocal (deterministic a b) :=
   subset_convexHull ℝ _ ⟨(a,b),rfl⟩

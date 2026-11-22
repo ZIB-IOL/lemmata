@@ -4,7 +4,6 @@ lean_namespace: Lemmata.ModifiedE8Bell
 subject: quant-ph
 cross_lists: [math.OC]
 topics: [bell-inequalities]
-native_computation: true
 abstract: >-
   The $120\times120$ modified $E_8$ Bell matrix has classical value exactly
   $6104$. A symmetry reduction and a complete enumeration of $38\,549$
@@ -23,6 +22,7 @@ acknowledgements: >-
   Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
   Strategy. This work has been partially supported by OpenAI's Academic Researchers
   program.
+native_computation: true
 pages:
   - index.md
 exports:
