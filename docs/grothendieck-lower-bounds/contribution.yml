@@ -1,0 +1,56 @@
+schema_version: 1
+id: grothendieck-lower-bounds
+lean_namespace: Lemmata.GrothendieckLowerBounds
+subject: math.OC
+cross_lists: [math.FA, quant-ph]
+topics: [bell-inequalities]
+abstract: >-
+  Explicit rational vector witnesses give the computer-assisted lower bounds
+  $K_G(3)>1.43888070193021$ and $K_G(5),K_G(6)>1.49936483533988$.
+  For order three, a new $81\times321$ integer matrix has independently
+  certified classical maximum $320975296$. For orders five and six, improved
+  vectors use an unchanged published $80\times269$ matrix and its published
+  classical upper bound. An exact dual certificate limits further vector
+  improvement on the latter matrix to less than $1.8\times10^{-13}$ in the ratio.
+  Lean proves a general certificate-reuse lemma and the numerical implications
+  from explicit hypotheses; the concrete computations remain external to Lean.
+contributors:
+  - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
+ai_use: >-
+  The literature search, matrix optimization, certificate implementations,
+  exposition and Lean formalization were developed with OpenAI Codex.
+  The numerical certificates are evaluated by standalone integer C++ and
+  Python programs. Lean proves the general certificate-reuse lemma and
+  numerical implications from explicit hypotheses. The concrete computations
+  remain external to Lean, and the order-five classical upper bound is taken
+  from the cited literature rather than independently recomputed.
+acknowledgements: >-
+  Research reported in this paper was partially supported by the Berlin Mathematics
+  Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche
+  Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
+  Strategy. This work has been partially supported by OpenAI's Academic Researchers
+  program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.GrothendieckLowerBounds.perturbation_bound
+    kind: theorem
+    page: index.md
+    label: lem-grothendieck-lower-bounds-perturbation
+  - name: Lemmata.GrothendieckLowerBounds.reuse_classical_certificate
+    kind: theorem
+    page: index.md
+    label: thm-grothendieck-lower-bounds-reuse
+  - name: Lemmata.GrothendieckLowerBounds.order_three_bound_from_certificate
+    kind: theorem
+    page: index.md
+    label: thm-grothendieck-lower-bounds-order-three
+  - name: Lemmata.GrothendieckLowerBounds.orders_five_six_bound_from_certificate
+    kind: theorem
+    page: index.md
+    label: thm-grothendieck-lower-bounds-orders-five-six
+  - name: Lemmata.GrothendieckLowerBounds.fixed_matrix_ratio_ceiling
+    kind: theorem
+    page: index.md
+    label: thm-grothendieck-lower-bounds-fixed-matrix
