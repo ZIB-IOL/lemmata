@@ -1,0 +1,102 @@
+schema_version: 1
+id: planar-steiner-extension-complexity
+lean_namespace: Lemmata.PlanarSteinerXC
+subject: math.CO
+cross_lists: [cs.CC, cs.DM, math.OC]
+topics: [extended-formulations]
+contributors:
+  - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
+abstract: >-
+  The convex hull of the inclusion-minimal Steiner trees of a simple planar graph has
+  worst-case linear extension complexity $2^{\Theta(\sqrt n)}$, where $n$ is the number of
+  vertices, already for two cofacial terminals; the same holds for the hull of connected
+  supports, the hull of terminal-connecting edge sets and the Steiner tree dominant. The lower
+  bound starts from the correlation polytope of the $h\times h$ grid, encodes vertex covers in a
+  plane cover graph, and makes each cover the shore of a bond of a planar triangulation whose dual
+  edges form a Hamiltonian cycle; a sphere-cut dynamic program gives the matching upper bound. The Lean
+  formalization proves the complete reduction chain on explicit graphs: their planarity, as face
+  systems satisfying Euler's formula, the exact vertex counts $832h(h-1)$ and $104h(h-1)+2$, and
+  the resulting lower bounds $2^{\Omega(\sqrt n)}$ given the exponential lower bound for grid
+  correlation polytopes of Aboulker, Fiorini, Huynh, Macchia and Seif. That external bound and
+  the upper bound remain outside Lean.
+ai_use: >-
+  The mathematical exposition was first developed with OpenAI Codex in the author's notes; the
+  Lean formalization and this entry, with prose and figures adapted from those notes, were
+  developed with Claude (Anthropic) through the pi coding agent. The exponential lower bound for
+  grid correlation polytopes enters the lower bounds as an explicit hypothesis, and the sphere-cut
+  upper bound, the identity $P_{\uparrow}=D\cap[0,1]^E$, the planarity of the pendant graphs, and
+  the results on terminal parameters, facets and special cases are not formalized. No custom
+  axioms are introduced.
+acknowledgements: >-
+  Research reported in this paper was partially supported by the Berlin Mathematics
+  Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche
+  Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
+  Strategy. This work has been partially supported by OpenAI's Academic Researchers
+  program.
+pages:
+  - index.md
+exports:
+  - name: Lemmata.PlanarSteinerXC.twoTerminalLowerBound
+    kind: theorem
+    page: index.md
+    label: thm-planar-steiner-extension-complexity
+  - name: Lemmata.PlanarSteinerXC.steinerLowerBound
+    kind: theorem
+    page: index.md
+    label: thm-planar-steiner-extension-complexity-four
+  - name: Lemmata.PlanarSteinerXC.twoTerminalReduction
+    kind: theorem
+    page: index.md
+    label: thm-planar-steiner-extension-complexity-reduction
+  - name: Lemmata.PlanarSteinerXC.steinerReduction
+    kind: theorem
+    page: index.md
+    label: thm-planar-steiner-extension-complexity-reduction-four
+  - name: Lemmata.PlanarSteinerXC.xc
+    kind: definition
+    page: index.md
+    label: def-planar-steiner-extension-complexity-xc
+  - name: Lemmata.PlanarSteinerXC.IsPlanar
+    kind: definition
+    page: index.md
+    label: def-planar-steiner-extension-complexity-planar
+  - name: Lemmata.PlanarSteinerXC.hp_eq_pmin_inter
+    kind: theorem
+    page: index.md
+    label: lem-planar-steiner-extension-complexity-feldmann
+  - name: Lemmata.PlanarSteinerXC.xc_COR_le_minCoverFace
+    kind: theorem
+    page: index.md
+    label: lem-planar-steiner-extension-complexity-cover
+  - name: Lemmata.PlanarSteinerXC.Grid.grid_cover_planar
+    kind: theorem
+    page: index.md
+    label: lem-planar-steiner-extension-complexity-grid-planar
+  - name: Lemmata.PlanarSteinerXC.PlanarFaces.induce_connected_of_cover
+    kind: theorem
+    page: index.md
+    label: lem-planar-steiner-extension-complexity-radial
+  - name: Lemmata.PlanarSteinerXC.PlanarFaces.radial_isPlanar
+    kind: theorem
+    page: index.md
+    label: lem-planar-steiner-extension-complexity-radial-planar
+  - name: Lemmata.PlanarSteinerXC.PlanarFaces.xc_minCoverFace_le_steiner
+    kind: theorem
+    page: index.md
+    label: prop-planar-steiner-extension-complexity-steiner
+  - name: Lemmata.PlanarSteinerXC.PlanarFaces.readDec_hpFace
+    kind: theorem
+    page: index.md
+    label: thm-planar-steiner-extension-complexity-hp
+  - name: Lemmata.PlanarSteinerXC.FlagSystem.isPlanar
+    kind: theorem
+    page: index.md
+    label: lem-planar-steiner-extension-complexity-flag-planar
+  - name: Lemmata.PlanarSteinerXC.FlagSystem.even_eq_cut
+    kind: theorem
+    page: index.md
+    label: lem-planar-steiner-extension-complexity-duality
+  - name: Lemmata.PlanarSteinerXC.xc_pconn_le_pendant
+    kind: theorem
+    page: index.md
+    label: lem-planar-steiner-extension-complexity-pendant

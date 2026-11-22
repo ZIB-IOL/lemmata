@@ -1,0 +1,22 @@
+% TikZ source of gadget.svg (compile with tectonic; converted with PyMuPDF, text as paths).
+\documentclass[tikz,border=4pt]{standalone}
+\usepackage{lmodern}
+\begin{document}
+\begin{tikzpicture}[x=1.25cm,y=1.25cm,thick,
+ var/.style={circle,draw,fill=white,minimum size=7.5mm,inner sep=1pt},
+ clause/.style={rectangle,draw,fill=black!8,minimum size=5.5mm,inner sep=1pt},
+ reg/.style={text=black!55,font=\small\itshape}]
+\node[var] (u) at (0,0) {$x_u$};
+\node[clause] (a) at (1.65,.74) {$A$};
+\node[var] (v) at (3.3,0) {$x_v$};
+\node[clause] (c) at (2.72,-.84) {$C$};
+\node[var] (z) at (1.65,-1.16) {$z$};
+\node[clause] (b) at (.58,-.84) {$B$};
+\draw (u)--(a)--(v)--(c)--(z)--(b)--(u);
+\draw (a)--(z);
+\node[reg] at (1.0,-.3) {$g_1$};
+\node[reg] at (2.3,-.3) {$g_2$};
+\node[reg] at (1.65,1.45) {left of $uv$};
+\node[reg] at (1.65,-1.85) {right of $uv$};
+\end{tikzpicture}
+\end{document}
