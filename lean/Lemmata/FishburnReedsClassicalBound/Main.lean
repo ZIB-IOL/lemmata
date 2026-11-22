@@ -74,7 +74,9 @@ private theorem diagonal_split (a b : R → ℝ) (ha : Signs a) (hb : Signs b) :
       apply Finset.sum_congr rfl
       intro i _
       rcases ha i with h | h <;> rcases hb i with g | g <;> rw [h, g] <;> norm_num
-    _ = _ := by simp [agreements, Finset.sum_sub_distrib, ← Finset.mul_sum]
+    _ = _ := by
+      rw [Finset.sum_sub_distrib, ← Finset.mul_sum]
+      simp [agreements]
 
 private theorem tri_coord (d : ℕ) (k : Fin d) :
     coord (roots d) (fun _ => 1) k = 2 * (k.val : ℝ) := by
@@ -83,7 +85,8 @@ private theorem tri_coord (d : ℕ) (k : Fin d) :
       (∑ b : Bool, roots d ⟨i, (j,b)⟩ k) =
         2 * (if k = i then (1 : ℝ) else 0) := by
     rw [Fintype.sum_bool]
-    by_cases hi : k = i <;> by_cases hj : k.val = j.val <;> simp [roots, hi, hj] <;> norm_num
+    simp only [roots]
+    split_ifs <;> first | contradiction | norm_num
   calc
     _ = ∑ i : Fin d, ∑ j : Fin i.val, ∑ b : Bool,
         roots d ⟨i, (j,b)⟩ k := by

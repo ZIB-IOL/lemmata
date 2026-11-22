@@ -310,8 +310,8 @@ private theorem posInduction (n : ℕ) :
       have hi3 : (3 : ℤ) ≤ ((b::gs).length : ℤ) := by exact_mod_cast h3
       have hfall := fall_eq (b::gs)
       by_cases hl : 3 + flats (b::gs) ≤ 2*r
-      · have hc : reach 0 (b::gs) ≤ 8*flats (b::gs)+2 := by
-          simpa only [if_pos rfl] using reach_bound 0 (b::gs)
+      · have hc : reach 0 (b::gs) ≤ 8*flats (b::gs)+2 :=
+          (reach_bound 0 (b::gs)).trans_eq (by simp)
         have hp := positive_peel_raw hl hc
         have lt : gs.length < n := by simp only [List.length_cons] at hlen; omega
         have hold := ih gs.length lt gs rfl (r-step b)
