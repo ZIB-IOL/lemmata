@@ -11,9 +11,9 @@ open Classical
 
 noncomputable section
 
-local instance finDecidableEq (n : ℕ) : DecidableEq (Fin n) := Classical.decEq _
-
 namespace Lemmata.Centroid.Tensor.CRT
+
+local instance finDecidableEq (n : ℕ) : DecidableEq (Fin n) := Classical.decEq _
 
 variable {F : Type*} [Field F] {V : Fin 3 → Type*} [∀ i, Fintype (V i)]
 variable (T : Tensor F (Fin 3) V) (hT : Concise T)

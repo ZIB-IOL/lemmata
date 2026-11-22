@@ -34,7 +34,9 @@ with `_`; the Lean name `Shared` is reserved for helpers used by several entries
 
 - Every Lean file starts with `module` (required) and uses `public import` (Mathlib uses
   the module system).
-- Everything lives in `namespace Lemmata.<LeanName>`.
+- Everything lives in `namespace Lemmata.<LeanName>`. The verifier refuses any public
+  declaration outside it, including a helper (or a `local instance`) placed before the
+  `namespace` line: make such helpers `private`, or move them into the namespace.
 - Import other entries' modules directly (`public import Lemmata.ImplicationComposition.Main`),
   never the umbrella `Lemmata`. Do not copy another entry's definitions; move shared
   material into `lean/Lemmata/Shared/` in its own pull request.
@@ -182,13 +184,18 @@ that expose a private email, and `user.name` is the name shown on the page.
 
 ```bash
 node tools/lemmata.mjs umbrella --write   # if you added or removed Lean files
-tools/check.sh
+tools/check.sh --changed                  # your entry, and every entry that imports it
 ```
+
+`--changed` checks what your branch changes since it left `origin/main`, and every entry
+that imports it; it checks everything by itself when you change something every entry
+depends on (the Lake configuration, the toolchain, `checker/`, `tools/`). `tools/check.sh`
+without options checks every entry, as the cluster does, and takes much longer.
 
 If the repository gets large, clone it partially: `git clone --filter=blob:none …` fetches
 older versions of files only when they are needed, and every local check works as in a full
 clone. A sparse checkout, with only some entries, is fine for reading and prose edits, but
-`tools/check.sh` needs every entry (AGENTS.md, "If the repository gets large").
+`tools/check.sh` needs every file (AGENTS.md, "If the repository gets large").
 
 Open a pull request against `main` on [GitHub](https://github.com/ZIB-IOL/lemmata). If
 the change matters to readers (a new entry, a correction), add a line to

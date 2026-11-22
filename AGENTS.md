@@ -10,7 +10,8 @@ both.
 accepts, after which the result is live at `https://lemmata.iol.berlin/<id>/`.
 
 There is no CI and no one to ask. Run the checks yourself (step 5). If `tools/check.sh`
-passes on your machine, the cluster accepts the commit: same checks, same pins.
+(or `tools/check.sh --changed`, which checks only what your branch affects) passes on your
+machine, the cluster accepts the commit: same checks, same pins.
 
 ---
 
@@ -46,7 +47,7 @@ from `lean/lean-toolchain`), Node ≥ 24.
 git clone git@github.com:ZIB-IOL/lemmata.git && cd lemmata
 npm ci
 ( cd lean && lake exe cache get )   # Mathlib's compiled cache, ~7 GB, takes minutes
-tools/check.sh                      # must pass on a clean checkout before you change anything
+tools/check.sh --entry implication-composition   # must pass before you change anything: your setup works
 ```
 
 Working in several clones? Share only the downloaded dependencies, never the whole
@@ -72,8 +73,8 @@ git clone --filter=blob:none git@github.com:ZIB-IOL/lemmata.git
 A **sparse** checkout (`git clone --filter=blob:none --sparse …`, then
 `git sparse-checkout set docs/<id> lean/Lemmata/<LeanName> …`) goes further and leaves out
 other entries' files. It is fine for reading or for editing prose, but the local check does
-not work in it yet: `lean/Lemmata.lean` imports every entry, and `tools/check.sh` builds and
-checks all of them. The tools say so instead of failing obscurely, and refuse to rewrite the
+not work in it yet: `validate` compares `lean/Lemmata.lean`, which imports every entry, with
+the files on disk. The tools say so instead of failing obscurely, and refuse to rewrite the
 umbrella or to scaffold an entry there (rewriting it would drop the missing entries).
 `git sparse-checkout disable` restores the full tree, fetching only what is missing.
 
@@ -130,7 +131,11 @@ Rules (each enforced):
 - Module names must exist at the pinned Mathlib. Check with
   `ls lean/.lake/packages/mathlib/Mathlib/...` rather than from memory: for example,
   `Mathlib.Logic.Basic` does **not** exist at this pin.
-- Everything inside `namespace Lemmata.<LeanName>`.
+- Everything inside `namespace Lemmata.<LeanName>`. The verifier refuses any public
+  declaration outside it, so two entries can never declare the same name. That includes a
+  helper `instance` or lemma placed before the `namespace` line: a `local instance` is still
+  a global declaration, only its attribute is local. Make such helpers `private`, or move
+  them into the namespace.
 - To use another entry, `public import Lemmata.<Other>.Main`. **Never** import the umbrella
   `Lemmata`, and never copy another entry's definitions.
 - `-- DOCS_BEGIN_MAIN` and `-- DOCS_END_MAIN` occur exactly once each, in that order. The
@@ -206,7 +211,7 @@ small entries may keep everything in `Main.lean` — but new entries should foll
 Fast loop while proving:
 
 ```bash
-tools/check.sh --no-docs    # build + kernel check + axiom audit, no site render
+tools/check.sh --changed --no-docs   # build + kernel check + axiom audit of your entry, no site render
 ```
 
 ## 4. Write the prose and bind it
@@ -393,9 +398,16 @@ visibly says what the prose says, without extra hypotheses the prose omits.
 ## 5. Check (mandatory)
 
 ```bash
-tools/check.sh
+tools/check.sh --changed
 node tests/browser.mjs docs/_build/html ""    # follows every link; needs: npx playwright install chromium
 ```
+
+`--changed` checks what your branch changes since it left `origin/main` -- your entry -- and
+every entry that imports it. It builds what they import from other entries, re-checks and
+audits their own modules, and renders the whole site (entries it did not check show as "not
+verified"). When you change something every entry depends on (`lean/lakefile.toml`, the
+toolchain, `checker/`, `tools/`), it checks everything by itself. `tools/check.sh` without
+options checks every entry, as the cluster does; `--entry <id>` checks a given entry.
 
 `tools/check.sh` runs, in order and stopping at the first failure:
 
@@ -403,8 +415,8 @@ node tests/browser.mjs docs/_build/html ""    # follows every link; needs: npx p
 |---|---|
 | validate | a manifest, subject or topic is wrong, a note uses non-inline markup, a label is missing or duplicated, snippet markers are wrong, the umbrella is stale, an `index.md` lacks one of the two `{include}` lines, `.lemmata/` is committed, a Lean file does not start with `module`, a Lean file contains `axiom`, `@[implemented_by]` or `@[extern]`, a computation tactic is used without `native_computation: true` (or in `lean/Lemmata/Shared/`), or a Lean file sits directly in `lean/Lemmata/` |
 | lake build | any module does not compile |
-| leanchecker | the kernel rejects a declaration |
-| lemmata-check | any declaration uses a disallowed axiom (`sorryAx`, a custom `axiom`, a computation outside an entry with `native_computation: true`), or an export is missing, misclassified, or outside its namespace |
+| kernel check (lemmata-replay) | the kernel rejects a declaration |
+| lemmata-check | any declaration uses a disallowed axiom (`sorryAx`, a custom `axiom`, a computation outside an entry with `native_computation: true`), a public declaration lies outside its entry's namespace, or an export is missing, misclassified, or outside its namespace |
 | myst build | a reference does not resolve, an identifier is duplicated, a linked file is missing |
 
 Every failure is printed as `FAIL …` with the file and the reason. Fix the cause. Never
@@ -481,8 +493,9 @@ system, not in your entry. Report the status output to whoever asked for the wor
 node tools/lemmata.mjs new <id> <LeanName> <subject>    # scaffold; subject: an arXiv class
 node tools/lemmata.mjs umbrella --write                 # after adding/removing .lean files
 node tools/lemmata.mjs validate                         # structure only, seconds
-tools/check.sh --no-docs                                # + build, kernel, axioms
-tools/check.sh                                          # everything the cluster does
+tools/check.sh --changed --no-docs                      # + build, kernel, axioms: your entry and those importing it
+tools/check.sh --changed                                # + the site: what your branch needs, before submitting
+tools/check.sh                                          # everything the cluster does, every entry
 npm run preview                                         # live preview at :3000 (unverified, no page script)
 ```
 
