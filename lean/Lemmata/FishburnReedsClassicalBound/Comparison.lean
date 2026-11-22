@@ -1,6 +1,9 @@
 module
 
-public import Mathlib
+public import Mathlib.Algebra.Order.Star.Real
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.NormNum
+public import Mathlib.Tactic.Positivity
 
 public section
 

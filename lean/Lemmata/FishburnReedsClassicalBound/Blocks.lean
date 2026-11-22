@@ -1,6 +1,15 @@
 module
 
-public import Mathlib
+public import Mathlib.Algebra.CharP.Defs
+public import Mathlib.Algebra.Order.Ring.Star
+public import Mathlib.Algebra.Order.Star.Int
+public import Mathlib.Tactic.IntervalCases
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.NormNum
+public import Mathlib.Tactic.Positivity
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.SplitIfs
+public import Mathlib.Tactic.Zify
 
 public section
 

@@ -3,6 +3,13 @@ module
 public import Lemmata.FishburnReedsClassicalBound.Statement
 public import Lemmata.FishburnReedsClassicalBound.Blocks
 public import Lemmata.FishburnReedsClassicalBound.Comparison
+public import Mathlib.Algebra.BigOperators.Fin
+public import Mathlib.Algebra.CharP.Defs
+public import Mathlib.Algebra.Order.Archimedean.Real.Basic
+public import Mathlib.Tactic.LinearCombination
+public import Mathlib.Tactic.NormNum
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.SplitIfs
 
 public section
 
