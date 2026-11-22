@@ -17,13 +17,9 @@ abstract: >-
 contributors:
   - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
 ai_use: >-
-  The literature search, matrix optimization, certificate implementations,
-  exposition and Lean formalization were developed with OpenAI Codex.
-  The numerical certificates are evaluated by standalone integer C++ and
-  Python programs. Lean proves the general certificate-reuse lemma and
-  numerical implications from explicit hypotheses. The concrete computations
-  remain external to Lean, and the order-five classical upper bound is taken
-  from the cited literature rather than independently recomputed.
+  The literature search, matrix optimization, certificate implementations, exposition and
+  Lean formalization were developed with OpenAI Codex. Claude Opus 5.5 (Anthropic) was used
+  for review, consistency edits and independent replays of the certificates.
 acknowledgements: >-
   Research reported in this paper was partially supported by the Berlin Mathematics
   Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche

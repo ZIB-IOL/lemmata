@@ -14,10 +14,9 @@ abstract: >-
 contributors:
   - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
 ai_use: >-
-  The exposition and Lean formalization were developed with OpenAI Codex.
-  Codex also assisted with the mathematical arguments, literature search,
-  certificate generation and verification. The page identifies the precise
-  hypotheses and scope of the formally verified results.
+  The exposition and Lean formalization were developed with OpenAI Codex, which also
+  assisted with the mathematical arguments, literature search, certificate generation and
+  verification. Claude Opus 5.5 (Anthropic) was used for review and consistency edits.
 acknowledgements: >-
   Research reported in this paper was partially supported by the Berlin Mathematics
   Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche

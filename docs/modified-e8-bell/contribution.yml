@@ -14,8 +14,10 @@ abstract: >-
 contributors:
   - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
 ai_use: >-
-  The mathematical argument, integer certificates and Lean formalization
-  were developed with OpenAI's ChatGPT and Codex.
+  The mathematical argument, integer certificates and Lean formalization were developed
+  with OpenAI ChatGPT and Codex. Claude Opus 5.5 (Anthropic) was used for review and
+  consistency edits, including the Lean statement module and the regeneration of the
+  published matrix in the replay.
 acknowledgements: >-
   Research reported in this paper was partially supported by the Berlin Mathematics
   Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche
