@@ -1,0 +1,42 @@
+schema_version: 1
+id: modified-e8-bell
+lean_namespace: Lemmata.ModifiedE8Bell
+subject: quant-ph
+cross_lists: [math.OC]
+topics: [bell-inequalities]
+abstract: >-
+  The $120\times120$ modified $E_8$ Bell matrix has classical value exactly
+  $6104$. A symmetry reduction and a complete enumeration of $38\,549$
+  chamber points prove the upper bound, and explicit signs attain it.
+  Its eight-dimensional vector value is $9240$, giving the ratio $165/109$.
+  An explicit finite mixture proves that the exact local visibility of the
+  fixed root correlations is $109/165$.
+contributors:
+  - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
+ai_use: >-
+  The mathematical argument, integer certificates and Lean formalization were developed
+  with OpenAI ChatGPT and Codex. Claude Opus 5.5 (Anthropic) was used for review and
+  consistency edits, including the Lean statement module and the regeneration of the
+  published matrix in the replay.
+acknowledgements: >-
+  Research reported in this paper was partially supported by the Berlin Mathematics
+  Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche
+  Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
+  Strategy. This work has been partially supported by OpenAI's Academic Researchers
+  program.
+native_computation: true
+pages:
+  - index.md
+exports:
+  - name: Lemmata.ModifiedE8Bell.exact_classical_value
+    kind: theorem
+    page: index.md
+    label: thm-modified-e8-bell-classical
+  - name: Lemmata.ModifiedE8Bell.exact_vector_value
+    kind: theorem
+    page: index.md
+    label: thm-modified-e8-bell-vector
+  - name: Lemmata.ModifiedE8Bell.exact_visibility
+    kind: theorem
+    page: index.md
+    label: thm-modified-e8-bell-visibility

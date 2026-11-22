@@ -1,0 +1,4 @@
+{
+  "passed_oracle_mode_checks": 25,
+  "checks": "exact enumeration sets, batching limits and exported original-row signs, duplicate-row signed-symmetry coverage"
+}

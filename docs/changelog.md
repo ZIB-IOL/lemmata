@@ -10,6 +10,13 @@ entry shows its own last change and links to the exact commit.
 
 Newest first. Add an item in the same pull request as the change it describes.
 
+## 2026-11-22
+
+- **New entry:** [Facet lifting and frequency certificates for symmetric Bell polytopes](symmetric-bell-facet-lifting/index.md), showing that a facet of the three-party, four-setting symmetry projection lifts to a face strictly inside another proper face, and proving the cross-polytope equivalence for two through five settings.
+- **New entry:** [Exact Bell values and local visibility for the E₈ root correlations](modified-e8-bell/index.md), proving the classical value $6104$, the vector value $9240$ and the local visibility $109/165$ of the modified $E_8$ Bell matrix.
+- **New entry:** [Improved lower bounds for finite-order Grothendieck constants](grothendieck-lower-bounds/index.md), proving $K_G(3)>1.43888070193021$ in Lean from the classical value of an explicit matrix, established by an exhaustive search, and improving the vectors for orders five and six.
+- **New entry:** [The exact classical value of the Fishburn–Reeds matrices](fishburn-reeds-classical-bound/index.md), proving the all-order fixed-shift formula and determining the optimal uniform diagonal shifts in dimensions seven through ten.
+
 ## 2026-11-21
 
 - **New entry:** [On the Existence Spectrum of Steiner Systems S(2,6,n)](steiner-six-spectrum/index.md), settling 24 previously unresolved orders and leaving only 51, 61, and 81 open.

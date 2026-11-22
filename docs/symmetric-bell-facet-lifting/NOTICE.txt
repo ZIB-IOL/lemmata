@@ -1,0 +1,32 @@
+Facet lifting and frequency certificates for symmetric Bell polytopes
+Lemmata entry symmetric-bell-facet-lifting
+
+Copyright 2026 Sebastian Pokutta
+
+This entry builds on the Lemmata entry "A three-party Bell polytope that is not
+a cross-polytope" (symmetric-bell-cross-polytope, lemmata:2611.00002) by Haobo Ma
+and Wenlin Zhang, which adapts the Trureturing formalization of The Omega
+Institute. It imports, and does not copy, that entry's signed action, local
+polytope and projection definitions and its nineteen-extreme-point theorem.
+The fixed-space, face and certificate arguments are new in this entry.
+
+Adapted material:
+The proof sumFour in lean/Lemmata/SymmetricBellFacetLifting/Chart.lean adapts
+the finite-sum reindexing in
+https://github.com/ZIB-IOL/lemmata/blob/653d88676a9bcef74db8c5aff23ad37849e1f6e9/lean/Lemmata/SymmetricBellCrossPolytope/Main.lean#L490-L495
+Changes: specialized from seventeen to four settings and generalized from a
+fixed summand to an arbitrary function.
+
+Retained upstream notices:
+Copyright 2026 The Omega Institute
+Upstream project: Trureturing, revision 1e631ab8fffbd5c0de0523af53fc3ecdea3d4a75
+https://github.com/the-omega-institute/trureturing/blob/1e631ab8fffbd5c0de0523af53fc3ecdea3d4a75/D5/S3/Quantum/Entanglement/SymmetricBellPolytopeNotCrossPolytope.lean
+https://github.com/the-omega-institute/trureturing/blob/1e631ab8fffbd5c0de0523af53fc3ecdea3d4a75/D5/S3/Quantum/Entanglement/SymmetricBellPolytopeSupport.lean
+Lemmata adaptation: Copyright (c) 2026 Haobo Ma and Wenlin Zhang.
+Their attribution and modification notice:
+https://github.com/ZIB-IOL/lemmata/blob/653d88676a9bcef74db8c5aff23ad37849e1f6e9/docs/symmetric-bell-cross-polytope/NOTICE.txt
+
+The Apache License, Version 2.0, is reproduced in LICENSE.txt. This entry,
+including its new material, is licensed under that license. This notice
+records provenance and modifications; it does not alter the terms of the
+Apache License, Version 2.0.

@@ -1,0 +1,43 @@
+{
+  "result": "K_G(3) > 1.43888070193021",
+  "classical_exact": 320975296,
+  "matrix_shape": [
+    81,
+    321
+  ],
+  "matrix_sha256": "51739169f4c104a1bc98cdc7bd13ac3f652a551af1835c867c49ac8e66ba0822",
+  "source_repository": "https://github.com/istvanmarton/IBB",
+  "source_revision": "6f17e2f073ccbe2de9cd0a7d062c25bff59ba844",
+  "source_matrix_path": "Examples/M81x321.txt",
+  "source_matrix_sha256": "f1dac97e326ce71020389cf197715fae1ed62a6e2cc16b64ee6268383b0c1303",
+  "construction": "Signed-icosahedral symmetrization, invariant coefficient optimization, rank-three vector optimization, integer rounding preserving signed symmetries. The explicit final matrix is authoritative.",
+  "original_discovery_checkpoint": "symmetry/robust_0.2/integer_74.npz",
+  "fresh_classical_verification": {
+    "command": [
+      "./verify_classical",
+      "matrix.txt",
+      "ordered_matrix.txt",
+      "tail_bounds.txt",
+      "320975296",
+      "2",
+      "21",
+      "--symmetry",
+      "symmetry.txt"
+    ],
+    "started_utc": "2026-11-22T08:16:00.314398+00:00",
+    "status": "completed",
+    "executable_sha256": "ce079070923f8c759393356c76596622c6849c48afd444b72def4394230ff575",
+    "source_sha256": "88f65c41fd512ca703cff7409cf207712e68ab24f31d12a875dd22042f6e58c5",
+    "input_file_sha256_at_start": {
+      "matrix.txt": "51739169f4c104a1bc98cdc7bd13ac3f652a551af1835c867c49ac8e66ba0822",
+      "ordered_matrix.txt": "cff493a1c498d621f59bb38e81ac562f8144996759c456439d2c026833a5cf90",
+      "tail_bounds.txt": "d8d13a641273fe34850ac9fc53eb3615a253ce10663a7d9f3e703bd3725809ba",
+      "symmetry.txt": "ea776a4ababe9c5fd38da728ceb6de417dfe705a13a126a3f5dd5634f7303abd"
+    },
+    "returncode": 0,
+    "elapsed_seconds": 74.1791897879998,
+    "finished_utc": "2026-11-22T08:17:14.493632+00:00"
+  },
+  "formal_scope": "The finite C++/Python computation is external to Lean; no claim of a kernel proof of the full numerical bound.",
+  "verifier_note": "Strict token parsing rejects integer overflow at EOF; search and symmetry algorithms unchanged."
+}

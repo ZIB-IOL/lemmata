@@ -1,0 +1,5 @@
+Exact rational quotient: 1.4993648353398811007432649558444752970296457031922068025438681431
+PASS: all 349 five-dimensional rational vectors satisfy the unit-ball constraints.
+PASS: exact numerator, matrix identity, attaining classical signs, and strict quotient comparison.
+K_G(5) > 1.49936483533988 using the cited classical upper bound C(M) <= 919782264.
+The classical upper bound is an external result; it was not verified by this program.
