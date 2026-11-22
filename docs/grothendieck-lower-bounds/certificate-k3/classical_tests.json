@@ -1,0 +1,5 @@
+{
+  "passed_checks": 120,
+  "cases": 24,
+  "comparison": "exhaustive enumeration; exact and too-low full bounds; too-low tail bounds; row permutation and overflow safety rejection"
+}

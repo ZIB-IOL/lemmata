@@ -485,8 +485,14 @@ public import Lemmata.FockCircuits.StateIdentity
 public import Lemmata.FockCircuits.Symmetric
 public import Lemmata.FockCircuits.SymmetricBound
 public import Lemmata.FockCircuits.Wick
+public import Lemmata.GrothendieckLowerBounds.Data3
+public import Lemmata.GrothendieckLowerBounds.Data5
+public import Lemmata.GrothendieckLowerBounds.Encoding
 public import Lemmata.GrothendieckLowerBounds.Main
+public import Lemmata.GrothendieckLowerBounds.Sphere
 public import Lemmata.GrothendieckLowerBounds.Statement
+public import Lemmata.GrothendieckLowerBounds.Witness3
+public import Lemmata.GrothendieckLowerBounds.Witness5
 public import Lemmata.ImplicationComposition.Main
 public import Lemmata.LPHardnessInP.CostTransfer.Main
 public import Lemmata.LPHardnessInP.CostTransfer.Statement

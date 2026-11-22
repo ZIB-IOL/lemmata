@@ -33,4 +33,20 @@ def NearCoverage {n m : ℕ} (M Y : BellMatrix n m) (T : ℝ)
     (S : Finset (Fin n → ℝ)) : Prop :=
   ∀ a, IsSign a → T < score M a → ∃ s ∈ S, IsSign s ∧ score Y a = score Y s
 
+/-- The value of a Bell matrix on vectors `u i, v j ∈ ℝ^d`: `∑ M_ij ⟨u_i, v_j⟩`. -/
+noncomputable def vectorObj {n m d : ℕ} (M : BellMatrix n m) (u : Fin n → Fin d → ℝ)
+    (v : Fin m → Fin d → ℝ) : ℝ :=
+  ∑ i, ∑ j, M i j * ∑ k, u i k * v j k
+
+/-- Unit vectors in `ℝ^d`, one for each index. -/
+def UnitVectors {n d : ℕ} (u : Fin n → Fin d → ℝ) : Prop := ∀ i, ∑ k, u i k ^ 2 = 1
+
+/-- `K_G(d) > x`: some Bell matrix with a classical upper bound `B > 0` has a value on unit
+vectors in `ℝ^d` above `x B`. Since `K_G(d)` is the supremum of the ratio of the two values,
+this is exactly the statement that `K_G(d) > x`. -/
+def GrothendieckLowerBound (d : ℕ) (x : ℝ) : Prop :=
+  ∃ (n m : ℕ) (M : BellMatrix n m) (B : ℝ), 0 < B ∧ ClassicalUpper M B ∧
+    ∃ (u : Fin n → Fin d → ℝ) (v : Fin m → Fin d → ℝ), UnitVectors u ∧ UnitVectors v ∧
+      x * B < vectorObj M u v
+
 end Lemmata.GrothendieckLowerBounds

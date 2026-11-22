@@ -5,20 +5,18 @@ subject: math.OC
 cross_lists: [math.FA, quant-ph]
 topics: [bell-inequalities]
 abstract: >-
-  Explicit rational vector witnesses give the computer-assisted lower bounds
-  $K_G(3)>1.43888070193021$ and $K_G(5),K_G(6)>1.49936483533988$.
-  For order three, a new $81\times321$ integer matrix has independently
-  certified classical maximum $320975296$. For orders five and six, improved
-  vectors use an unchanged published $80\times269$ matrix and its published
-  classical upper bound. An exact dual certificate limits further vector
-  improvement on the latter matrix to less than $1.8\times10^{-13}$ in the ratio.
-  Lean proves a general certificate-reuse lemma and the numerical implications
-  from explicit hypotheses; the concrete computations remain external to Lean.
+  An explicit $81\times321$ integer matrix with classical value $320975296$ and rational
+  vectors in $\mathbb R^3$ give $K_G(3)>1.43888070193021$. Lean checks the vectors and their
+  value and proves the passage to unit vectors; the classical value of the explicit matrix
+  is the theorem's single hypothesis, established by an exhaustive integer search. New
+  vectors for the $80\times269$ matrix of Márton et al. give $K_G(5),K_G(6)>1.49936483533988$
+  with the classical value computed there.
 contributors:
   - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
 ai_use: >-
   The literature search, matrix optimization, certificate implementations, exposition and
-  Lean formalization were developed with OpenAI Codex. Claude Opus 5.5 (Anthropic) was used
+  Lean formalization were developed with OpenAI Codex. Claude Opus 5.5 (Anthropic)
+  formalized the checks of the vectors and the passage to unit vectors in Lean, and was used
   for review, consistency edits and independent replays of the certificates.
 acknowledgements: >-
   Research reported in this paper was partially supported by the Berlin Mathematics
@@ -26,9 +24,18 @@ acknowledgements: >-
   Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence
   Strategy. This work has been partially supported by OpenAI's Academic Researchers
   program.
+native_computation: true
 pages:
   - index.md
 exports:
+  - name: Lemmata.GrothendieckLowerBounds.order_three
+    kind: theorem
+    page: index.md
+    label: thm-grothendieck-lower-bounds-order-three
+  - name: Lemmata.GrothendieckLowerBounds.order_five_six
+    kind: theorem
+    page: index.md
+    label: rem-grothendieck-lower-bounds-orders-five-six
   - name: Lemmata.GrothendieckLowerBounds.perturbation_bound
     kind: theorem
     page: index.md
@@ -37,15 +44,3 @@ exports:
     kind: theorem
     page: index.md
     label: thm-grothendieck-lower-bounds-reuse
-  - name: Lemmata.GrothendieckLowerBounds.order_three_bound_from_certificate
-    kind: theorem
-    page: index.md
-    label: thm-grothendieck-lower-bounds-order-three
-  - name: Lemmata.GrothendieckLowerBounds.orders_five_six_bound_from_certificate
-    kind: theorem
-    page: index.md
-    label: thm-grothendieck-lower-bounds-orders-five-six
-  - name: Lemmata.GrothendieckLowerBounds.fixed_matrix_ratio_ceiling
-    kind: theorem
-    page: index.md
-    label: thm-grothendieck-lower-bounds-fixed-matrix

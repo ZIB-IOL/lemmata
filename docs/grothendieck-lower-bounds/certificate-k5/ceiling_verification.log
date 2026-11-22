@@ -1,0 +1,3 @@
+Q_infinity(M) upper bound: 1379089182.811064881008241035070722
+Fixed-matrix Q_infinity(M)/C(M) upper bound: 1.49936483534005704746687856885085794609320712015816821621166
+PASS: exact rational PSD residual certificate; this is not a global K_G upper bound.

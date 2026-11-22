@@ -1,0 +1,12 @@
+{
+  "dimension": 5,
+  "matrix": "M80x269",
+  "classical_cited_upper": 919782264,
+  "q_exact_numerator": 1379089182810903048332452323838491520594,
+  "q_exact_denominator": 1000000000000000000000000000000,
+  "q_decimal": "1379089182.810903048332452323838491520594",
+  "ratio_decimal": "1.4993648353398811007432649558444752970296457031922068025438681431",
+  "strict_safe_lower": "1.49936483533988",
+  "matrix_sha256": "ac9545ece717e182693d0b2e704060689040a42dbc42da03434dac2b7c6e3554",
+  "status": "Exact rational vector certificate. Classical upper bound is imported from the cited paper, not rerun here."
+}
