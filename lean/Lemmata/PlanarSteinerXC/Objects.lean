@@ -9,7 +9,7 @@ public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Subgraph
 public import Mathlib.Data.Set.Card
 
 /-!
-# The polytopes of the paper
+# The polytopes and polyhedra
 
 Edge sets of a graph `G` are represented by spanning subgraphs `K ≤ G`; the coordinates of all
 edge polytopes are the edges of `G`.

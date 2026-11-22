@@ -10,10 +10,13 @@ which every vertex has degree `0` or `2`, such that every edge lies on exactly t
 faces are connected through shared edges, `G` is connected, and Euler's formula
 `|V| - |E| + |F| = 2` holds.
 
-This is the combinatorial data of a cellular embedding in the sphere. By MacLane's planarity
-criterion it certifies planarity: the faces span the cycle space (this follows from Euler's
-formula, see `Duality`), and every edge lies on exactly two of them, so dropping one face gives a
-basis of the cycle space in which every edge lies on at most two members.
+The facial cycles of a 2-connected plane graph form such a system. Conversely, a graph with a
+planar face system is planar, by MacLane's criterion (Diestel, *Graph Theory*, Theorem 4.5.1).
+Every face lies in the cycle space over `ZMod 2`. Since every edge lies on exactly two faces and
+the faces are connected through shared edges, the only nonempty set of faces with zero sum is the
+set of all faces, so the faces span a space of dimension `|F| - 1 = |E| - |V| + 1` (Euler), the
+whole cycle space of the connected graph `G`. Dropping one face therefore gives a basis of the
+cycle space in which every edge lies on at most two members.
 -/
 
 @[expose] public section

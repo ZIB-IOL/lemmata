@@ -6,7 +6,7 @@ public import Lemmata.PlanarSteinerXC.GridRegions
 # The cover graph of the grid formula
 
 `gridCNF` is the product formula `z_e = x_u x_v` of the `h × h` grid with the planar cyclic order
-of the literal occurrences, and `Jg` is its cover graph (Lemma 3). We describe the neighbourhoods:
+of the literal occurrences, and `Jg` is its cover graph. We describe the neighbourhoods:
 a true port `(o, 0)` is adjacent to `(o, 1)`, to the false port of the previous occurrence and,
 for a negative literal, to the literal vertex `(o, 2)`; symmetrically for false ports; a literal
 vertex is adjacent to its port and to the other literal vertices of its clause.

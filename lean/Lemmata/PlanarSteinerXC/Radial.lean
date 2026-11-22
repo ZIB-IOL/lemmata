@@ -4,16 +4,15 @@ public import Lemmata.PlanarSteinerXC.FaceSystem
 public import Lemmata.PlanarSteinerXC.CoverGraph
 
 /-!
-# The radial Steiner instance (Lemma 4 and Proposition 5)
+# The radial Steiner instance
 
 Given a plane graph `J` (with a planar face system), the graph `H` has the vertices of `J` as
 optional vertices, one *edge terminal* `q_e` subdividing every edge `e`, and one *face terminal*
 `f_φ` for every face, joined to the vertices on its boundary. `R` is the set of all terminals.
 
-For `S ⊆ V(J)`, `H[R ∪ S]` is connected iff `S` is a vertex cover of `J` (Lemma 4). Minimizing the
+For `S ⊆ V(J)`, `H[R ∪ S]` is connected iff `S` is a vertex cover of `J`. Minimizing the
 number of edges and then maximizing the number of marked edges exposes a face of each of the four
-Steiner polyhedra whose marker coordinates are exactly the minimum-cover face of `J`
-(Proposition 5).
+Steiner polyhedra whose marker coordinates are exactly the minimum-cover face of `J`.
 -/
 
 @[expose] public section
@@ -140,7 +139,7 @@ theorem mem_verts_markFace (hJ : ∀ v : V, ∃ w, J.Adj v w) (v : V) :
     v ∈ S.verts (S.markFace hJ v) :=
   Classical.choose_spec (S.exists_face_of_adj (Classical.choose_spec (hJ v)))
 
-/-! ### Lemma 4: covers give connected induced subgraphs -/
+/-! ### Covers give connected induced subgraphs -/
 
 /-- The terminals together with the optional vertices of `T`. -/
 def withOpt (T : Set V) : Set S.RadV := S.terms ∪ Sum.inl '' T
@@ -151,7 +150,7 @@ theorem inr_mem_withOpt (T : Set V) (t : J.edgeSet ⊕ S.Face) : (.inr t : S.Rad
 theorem inl_mem_withOpt {T : Set V} {v : V} : (.inl v : S.RadV) ∈ S.withOpt T ↔ v ∈ T := by
   simp [withOpt, terms]
 
-/-- **Lemma 4.** If `T` is a vertex cover of `J`, then `H[R ∪ T]` is connected. -/
+/-- **Covers and connectivity.** If `T` is a vertex cover of `J`, then `H[R ∪ T]` is connected. -/
 theorem induce_connected_of_cover [Nonempty V] (hJ : ∀ v : V, ∃ w, J.Adj v w) {T : Set V}
     (hT : J.IsVertexCover T) : (S.radial.induce (S.withOpt T)).Connected := by
   classical
@@ -650,7 +649,7 @@ theorem dom_inter_eq :
     exact ⟨⟨x, hp, 0, le_refl _, by rw [add_zero]⟩, hsum⟩
 
 include hJ in
-/-- **Proposition 5.** Each of the four Steiner polyhedra of the radial instance has a face whose
+/-- **Steiner faces.** Each of the four Steiner polyhedra of the radial instance has a face whose
 marker coordinates form the minimum-cover face of `J`. -/
 theorem xc_minCoverFace_le_steiner :
     xc (minCoverFace J) ≤ xc (Pmin S.radial S.terms) ∧

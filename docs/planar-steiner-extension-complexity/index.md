@@ -15,13 +15,20 @@ sphere-cut dynamic program gives the matching upper bound.
 
 ```{mermaid}
 flowchart LR
-  A["COR(L_h), h x h grid"] -->|"Lemma 3"| B["minimum-cover face of VC(J)"]
-  B -->|"Proposition 5"| C["P_min, P_conn, P_up, D on (H, R)"]
+  A["COR(L_h), h x h grid"] -->|"cover graph"| B["minimum-cover face of VC(J)"]
+  B -->|"Steiner faces"| C["P_min, P_conn, P_up, D on (H, R)"]
   B -->|"face"| D["VC(J)"]
-  D -->|"Theorem 6"| E["HP(G', s, t)"]
+  D -->|"Hamiltonian path face"| E["HP(G', s, t)"]
   E -->|"Feldmann-Rai, Lemma 9"| F["P_min(G', {s, t})"]
-  C -->|"pendant edges"| G["P_conn with two terminals"]
+  C -->|"pendant transfer"| G["P_conn with two terminals"]
 ```
+
+Each arrow says that the extension complexity of its source is at most that of its target, by
+[](#lem-planar-steiner-extension-complexity-cover),
+[](#prop-planar-steiner-extension-complexity-steiner), passing to a face,
+[](#thm-planar-steiner-extension-complexity-hp),
+[](#lem-planar-steiner-extension-complexity-feldmann) and
+[](#lem-planar-steiner-extension-complexity-pendant).
 
 **What Lean checks.** The whole reduction chain above is formalized on explicit graphs: the cover
 graph $J$ of the grid, the radial graph $H$ and the flag graph $\Gamma$ with $G'=\Gamma-st$. That
@@ -79,11 +86,18 @@ $G$ is *planar* if it has a planar face system.
 ```
 
 Mathlib has no notion of planarity, so the formalization uses this one. It records exactly what
-the proofs use. A 2-connected graph embedded in the sphere has such a system, its facial cycles.
-Conversely, if every face is a single cycle and the faces around every vertex are connected
-through shared edges, gluing a disc into every face gives a closed connected surface of Euler
-characteristic $2$, the sphere. Every graph constructed below is shown to be planar in this sense,
-with an explicit face system. Geometrically, its faces are the facial cycles of a plane drawing.
+the proofs use. The facial cycles of a 2-connected plane graph form a planar face system
+[@diestel2017graph, Section 4.2]. The notion is more restrictive than planarity, since a bridge
+lies on no cycle and hence on no face, but it is sound: a graph with a planar face system is
+planar. Indeed, every face lies in the cycle space over $\mathbb Z/2$, because all its degrees are
+even. Since every edge lies on exactly two faces, a set of faces sums to zero exactly when it
+contains, with each face, the other face at each of its edges; since the faces are connected
+through shared edges, only the empty set and the set of all faces do. The faces thus span a space
+of dimension $\#\text{faces}-1=|E|-|V|+1$, by Euler's formula, which is the dimension of the cycle
+space of the connected graph $G$. Dropping one face therefore leaves a basis of the cycle space in
+which every edge lies in at most two members, and $G$ is planar by MacLane's criterion
+[@diestel2017graph, Theorem 4.5.1]. Every graph constructed below is shown to be planar in this
+sense, with an explicit face system.
 
 ```{prf:theorem} Exact extension complexity
 :label: thm-planar-steiner-extension-complexity-main
@@ -306,7 +320,7 @@ $21E+\bigl(h^2+4E+(h-1)^2+1\bigr)=26E+2$, which holds because $E=2h(h-1)$. All f
 distinctions over the sixteen presence patterns of directions are checked by the Lean kernel.
 ```
 
-@avis2014extension previously obtained a superpolynomial lower bound for stable-set polytopes of
+@avis2015extension previously obtained a superpolynomial lower bound for stable-set polytopes of
 cubic planar graphs by a different planarization. [](#lem-planar-steiner-extension-complexity-cover)
 uses the grid-product coordinates to keep the size quadratic in the exponent parameter $h$.
 
@@ -349,9 +363,6 @@ Conversely, the optional vertices in the terminal component of any edge set conn
 vertex cover, because a connected support containing $R$ has to attach $q_{uv}$ through $u$ or $v$.
 Lean proves this direction inside the proof of
 [](#prop-planar-steiner-extension-complexity-steiner).
-
-The paper also shows that $H$ is 2-connected. The formalization does not need this, because it
-works with the face system of $H$ directly.
 
 ```{prf:lemma} The radial graph is planar
 :label: lem-planar-steiner-extension-complexity-radial-planar
@@ -592,7 +603,7 @@ size $n2^{O(\sqrt n)}$.
 
 Augment the simple planar graph to a triangulation on the same vertices and forbid the added
 edges; small graphs can be handled directly. Use a rooted sphere-cut decomposition of its edges,
-of width $w=O(\sqrt n)$ and with $O(n)$ nodes [@dorn2009efficient]. An edge of the decomposition
+of width $w=O(\sqrt n)$ and with $O(n)$ nodes [@dorn2010efficient]. An edge of the decomposition
 separates two edge sets by a simple closed curve that meets the graph only in the boundary
 vertices, which have a cyclic order on the curve. For the partial forest in either disk, record:
 
@@ -708,7 +719,7 @@ label is bit $j$; if bit $j$ belongs to the row's blocks, allow only the pairs a
 consistent labellings are precisely the assignments of the $r$ bits. Summing suitable join
 coordinates of a fixed cell yields every product of two bits, so the face projects onto
 $\operatorname{COR}(K_r)$, and $\operatorname{xc}(\operatorname{COR}(K_r))\ge2^{c r}$ for an absolute
-$c>0$ [@fiorini2015exponential; @kaibel2014short]. The instance has $n=O_b(r2^{4r/b})$ vertices and
+$c>0$ [@fiorini2015exponential; @kaibel2015short]. The instance has $n=O_b(r2^{4r/b})$ vertices and
 $k=4(l-1)r+2r+l+1=O_b(r)$ terminals. Given $d$, fix $b>\max(2,8d/c)$. A bound $n^d2^{o(k)}$ would
 have base-two logarithm at most $4dr/b+O_b(\log r)+o(r)<cr$ for large $r$, a contradiction.
 ```
@@ -724,7 +735,7 @@ $(N-1)M_3$. The journal formulation [@kisfaludibak2020nearly, Lemmas 4.8–4.9] 
 *This section is not formalized.*
 
 **All vertices terminal.** If $T=V$, $P_{\min}$ is the spanning tree polytope, which has an $O(n)$
-planar extended formulation [@validi2018note]. The dual complement of a primal tree using $s$
+planar extended formulation [@validi2019note]. The dual complement of a primal tree using $s$
 vertices is connected and has cycle rank $n-s$, by Euler's formula, so for a spanning tree the rank
 is zero. In Williams' primal–dual formulation, the primal root must be incident with the chosen dual
 root face; Validi and Buchanan give the corrected statement. @goemans1994steiner gives a polyhedral
@@ -756,7 +767,7 @@ are collected in `Statement.lean`; each is a proposition about the objects `COR`
 
 ```{literalinclude} ../../lean/Lemmata/PlanarSteinerXC/Statement.lean
 :language: lean
-:start-after: open SimpleGraph
+:start-after: -- DOCS_BEGIN_STATEMENT
 :end-before: end Lemmata.PlanarSteinerXC
 ```
 

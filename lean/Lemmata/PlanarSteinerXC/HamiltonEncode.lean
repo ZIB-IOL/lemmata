@@ -3,7 +3,7 @@ module
 public import Lemmata.PlanarSteinerXC.HamiltonDecode
 
 /-!
-# Theorem 6, encoding
+# The Hamiltonian path face: encoding
 
 Given a vertex cover `T` of `J`, take a spanning forest `K` of `H[R ∪ T]`. Colour red the
 terminals, the vertices of `T`, and the edges of `H` that lie in `K` or have their optional end
@@ -435,8 +435,8 @@ theorem forced_sum_eq_iff (K : SimpleGraph S.Flag) :
     exact (edgeVec_eq_one_iff _ _ _).mpr (h ε hε)
 
 include hlink in
-/-- **Theorem 6.** The decoding coordinates map the forced-edge face of the Hamiltonian path
-polytope of `G'` onto the vertex cover polytope of `J`. -/
+/-- **A Hamiltonian path face.** The decoding coordinates map the forced-edge face of the
+Hamiltonian path polytope of `G'` onto the vertex cover polytope of `J`. -/
 theorem readDec_hpFace : S.readDec hJ '' S.hpFace hJ = VC J := by
   classical
   unfold hpFace HP VC

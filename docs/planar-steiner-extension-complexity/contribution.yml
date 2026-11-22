@@ -20,12 +20,13 @@ abstract: >-
   correlation polytopes of Aboulker, Fiorini, Huynh, Macchia and Seif. That external bound and
   the upper bound remain outside Lean.
 ai_use: >-
-  The Lean formalization and this entry (prose adapted from the paper, figures) were developed
-  with Claude (Anthropic) through the pi coding agent; the underlying paper's exposition was
-  developed with OpenAI Codex. The exponential lower bound for grid correlation polytopes enters
-  the lower bounds as an explicit hypothesis, and the sphere-cut upper bound, the identity
-  $P_{\uparrow}=D\cap[0,1]^E$, the planarity of the pendant graphs, and the results on terminal
-  parameters, facets and special cases are not formalized. No custom axioms are introduced.
+  The mathematical exposition was first developed with OpenAI Codex in the author's notes; the
+  Lean formalization and this entry, with prose and figures adapted from those notes, were
+  developed with Claude (Anthropic) through the pi coding agent. The exponential lower bound for
+  grid correlation polytopes enters the lower bounds as an explicit hypothesis, and the sphere-cut
+  upper bound, the identity $P_{\uparrow}=D\cap[0,1]^E$, the planarity of the pendant graphs, and
+  the results on terminal parameters, facets and special cases are not formalized. No custom
+  axioms are introduced.
 acknowledgements: >-
   Research reported in this paper was partially supported by the Berlin Mathematics
   Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche

@@ -9,9 +9,9 @@ public import Lemmata.PlanarSteinerXC.FlagFaces
 /-!
 # Assembly at the grid
 
-We instantiate the general results at the planar cover graph `Jg` of the grid formula: Lemma 3
-for the grid, the face system and its link condition, and the vertex counts of the radial graph
-`H` and of the flag graph.
+We instantiate the general results at the planar cover graph `Jg` of the grid formula: the cover
+graph lemma for the grid, the face system and its link condition, and the vertex counts of the
+radial graph `H` and of the flag graph.
 -/
 
 @[expose] public section
@@ -33,8 +33,8 @@ theorem nonempty_JV : Nonempty (JV h) := ⟨(occP hh (p0 hh), 0)⟩
 theorem gridLinks : (gridFaces hh).LinksConnected :=
   (gridFaces hh).linksConnected_of_degree_le_three (degree_le_three hh)
 
-/-- **Lemma 3 for the grid.** The correlation polytope of the grid is a projection of the
-minimum-cover face of the planar cover graph `Jg`. -/
+/-- **The cover graph lemma for the grid.** The correlation polytope of the grid is a projection
+of the minimum-cover face of the planar cover graph `Jg`. -/
 theorem xc_COR_grid_le : xc (COR (grid h)) ≤ xc (minCoverFace (Jg hh)) :=
   xc_COR_le_minCoverFace (nextPerm hh) (var_nextPerm hh) (nextPerm_cyclic hh) (occP hh)
     (var_occP hh) (grid h) oeEquiv oeEquiv_apply

@@ -5,7 +5,7 @@ public import Mathlib.Algebra.Module.Equiv.Basic
 public import Mathlib.Data.Set.Finite.Lemmas
 
 /-!
-# From correlation polytopes to minimum vertex covers (Lemma 3)
+# From correlation polytopes to minimum vertex covers
 
 A CNF formula is presented by its literal occurrences; `next` lists the occurrences of each
 variable in a cyclic order. Its *cover graph* has three vertices per occurrence `o`: a true
@@ -550,8 +550,8 @@ theorem readPorts_vertexVec_indep {a : V ⊕ E → Bool} {ch : E × Fin 3 → E 
       simp [h1, h2]
 
 include hoccV in
-/-- **Lemma 3 (projection).** Reading one true port per variable maps the minimum-cover face of
-the cover graph of the product formula onto the correlation polytope. -/
+/-- **The cover graph lemma (projection).** Reading one true port per variable maps the
+minimum-cover face of the cover graph of the product formula onto the correlation polytope. -/
 theorem readPorts_image_minCoverFace :
     readPorts occV '' minCoverFace (productCNF src tgt next var_next cyclic).coverGraph =
       COROr src tgt := by
@@ -607,9 +607,9 @@ theorem COR_eq_image (L : SimpleGraph V) (eqv : E ≃ L.edgeSet)
   rw [hfun]
 
 include hoccV in
-/-- **Lemma 3.** For every graph `L` with an orientation of its edges, every cyclic order of the
-literal occurrences, and every vertex incident with an edge, the correlation polytope of `L` is
-an affine image of the minimum-cover face of the cover graph of the product formula. -/
+/-- **The cover graph lemma.** For every graph `L` with an orientation of its edges, every cyclic
+order of the literal occurrences, and every vertex incident with an edge, the correlation polytope
+of `L` is an affine image of the minimum-cover face of the cover graph of the product formula. -/
 theorem xc_COR_le_minCoverFace (L : SimpleGraph V) (eqv : E ≃ L.edgeSet)
     (heqv : ∀ e, (eqv e : Sym2 V) = s(src e, tgt e)) :
     xc (COR L) ≤ xc (minCoverFace (productCNF src tgt next var_next cyclic).coverGraph) := by

@@ -263,6 +263,8 @@ theorem restrictInl_image [Fintype R] (h₁ : t₁ ∈ R) (h₂ : t₂ ∈ R) (h
     obtain ⟨t, rfl⟩ := hε
     exact hpend t
 
+/-- **Pendant transfer.** `pendant G R` attaches a new pendant vertex to every terminal. For
+distinct terminals `t₁, t₂ ∈ R`, `xc(P_conn(G, R)) ≤ xc(P_conn(pendant G R, {t₁, t₂}))`. -/
 theorem xc_pconn_le_pendant [Fintype R] (h₁ : t₁ ∈ R) (h₂ : t₂ ∈ R) (h12 : t₁ ≠ t₂) :
     xc (Pconn G R) ≤ xc (Pconn (pendant G R) {.inl t₁, .inl t₂}) := by
   rw [← restrictInl_image h₁ h₂ h12, ← LinearMap.coe_toAffineMap]

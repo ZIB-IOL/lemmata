@@ -3,7 +3,7 @@ module
 public import Lemmata.PlanarSteinerXC.RadialFaces
 
 /-!
-# Theorem 6, setup and decoding
+# The Hamiltonian path face: setup and decoding
 
 `Γ` is the flag graph of the radial graph `H` (the dual `Q*` of its barycentric subdivision).
 The *forced* edges of `Γ` are those dual to the edges `t b_ψ` of `Q` joining a terminal `t` of `H`

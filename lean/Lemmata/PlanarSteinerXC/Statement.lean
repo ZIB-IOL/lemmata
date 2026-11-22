@@ -24,6 +24,7 @@ namespace Lemmata.PlanarSteinerXC
 
 open SimpleGraph
 
+-- DOCS_BEGIN_STATEMENT
 /-- **Two cofacial terminals.** For every `h ≥ 2` there are a planar graph `Γ` on
 `832 h (h - 1)` vertices and an edge `st` of `Γ` such that the correlation polytope of the
 `h × h` grid has extension complexity at most that of the Steiner tree polytope

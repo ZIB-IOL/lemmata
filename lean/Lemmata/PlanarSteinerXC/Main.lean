@@ -8,11 +8,11 @@ public import Lemmata.PlanarSteinerXC.Pendant
 
 The statements are in `Statement.lean`. The reduction chain is
 
-`COR(grid h)` → (Lemma 3) minimum vertex covers of the planar cover graph `J` → (Theorem 6)
-Hamiltonian paths of the planar flag graph minus an edge `st` → (Feldmann–Rai, Lemma 9)
-`P_min(Γ - st, {s, t})`,
+`COR(grid h)` → (cover graph lemma) minimum vertex covers of the planar cover graph `J` →
+(Hamiltonian path face) Hamiltonian paths of the planar flag graph minus an edge `st` →
+(Feldmann–Rai, Lemma 9) `P_min(Γ - st, {s, t})`,
 
-and, for the four polyhedra with many terminals, (Proposition 5) the radial graph `H` of `J`.
+and, for the four polyhedra with many terminals, (Steiner faces) the radial graph `H` of `J`.
 -/
 
 @[expose] public section
