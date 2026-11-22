@@ -78,7 +78,9 @@ if [[ $mode != none ]]; then
   # from a deleted file (or from another clone sharing .lake/build) would otherwise be
   # checked. In the full check also the converse: every source module compiled.
   ( cd lean && { find Lemmata -name '*.lean' | sed 's/\.lean$//'; echo Lemmata; } | LC_ALL=C sort ) > out/source.modules
-  ( cd lean/.lake/build/lib/lean && { find Lemmata -name '*.olean' | sed 's/\.olean$//'; [ -f Lemmata.olean ] && echo Lemmata; } | LC_ALL=C sort ) > out/compiled.modules
+  # (`if`, not `&&`: a partial check does not build the umbrella, and a failing test as the last
+  # command of the group would end the script here, silently, under set -e and pipefail.)
+  ( cd lean/.lake/build/lib/lean && { find Lemmata -name '*.olean' | sed 's/\.olean$//'; if [ -f Lemmata.olean ]; then echo Lemmata; fi; } | LC_ALL=C sort ) > out/compiled.modules
   stale=$(LC_ALL=C comm -13 out/source.modules out/compiled.modules)
   if [[ -n $stale ]] || { [[ $mode == full ]] && ! diff -q out/source.modules out/compiled.modules >/dev/null; }; then
     diff -u out/source.modules out/compiled.modules | sed -n '3,40p' || true
