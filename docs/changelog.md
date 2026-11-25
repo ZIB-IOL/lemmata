@@ -10,6 +10,10 @@ entry shows its own last change and links to the exact commit.
 
 Newest first. Add an item in the same pull request as the change it describes.
 
+## 2026-11-25
+
+- **New entry:** [Frank–Wolfe beyond 1/t under local dual sharpness](frank-wolfe-local-dual-sharpness/index.md): under local dual sharpness of the feasible region and its oracle, Frank–Wolfe converges with primal gap $o(1/t)$ for every smooth convex objective; formalization of arXiv:2604.28006.
+
 ## 2026-11-22
 
 - **New entry:** [Facet lifting and frequency certificates for symmetric Bell polytopes](symmetric-bell-facet-lifting/index.md), showing that a facet of the three-party, four-setting symmetry projection lifts to a face strictly inside another proper face, and proving the cross-polytope equivalence for two through five settings.
