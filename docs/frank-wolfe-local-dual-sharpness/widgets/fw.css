@@ -1,0 +1,13 @@
+.lemmata-fw { border: 1px solid #8884; border-radius: 6px; padding: 0.75rem 1rem; }
+.lemmata-fw .fw-controls { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.6rem; }
+.lemmata-fw .fw-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+.lemmata-fw .fw-label { font-size: 0.85rem; opacity: 0.75; min-width: 4.5rem; }
+.lemmata-fw .fw-btn { font: inherit; font-size: 0.85rem; padding: 0.15rem 0.6rem; border-radius: 4px;
+  border: 1px solid #8886; background: transparent; color: inherit; cursor: pointer; }
+.lemmata-fw .fw-btn[aria-pressed="true"] { background: #8883; border-color: #888c; font-weight: 600; }
+.lemmata-fw .fw-panes { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.lemmata-fw canvas { max-width: 100%; height: auto; border-radius: 4px; }
+.lemmata-fw .fw-geo { width: 300px; aspect-ratio: 1; cursor: crosshair; touch-action: none; }
+.lemmata-fw .fw-chart { width: 370px; aspect-ratio: 370 / 300; }
+.lemmata-fw .fw-stats { margin: 0.5rem 0 0; font-family: ui-monospace, monospace; font-size: 0.85rem; }
+.lemmata-fw .fw-verdict { margin: 0.25rem 0 0; font-size: 0.9rem; }

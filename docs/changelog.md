@@ -10,12 +10,17 @@ entry shows its own last change and links to the exact commit.
 
 Newest first. Add an item in the same pull request as the change it describes.
 
+## 2026-11-25
+
+- **New entry:** [Frank–Wolfe beyond 1/t under local dual sharpness](frank-wolfe-local-dual-sharpness/index.md), proving that Frank–Wolfe with short steps, exact line search or open-loop steps converges with primal gap $o(1/t)$ for every smooth convex objective when the feasible region and its oracle are locally dually sharp around the minimizers.
+
 ## 2026-11-22
 
 - **New entry:** [Facet lifting and frequency certificates for symmetric Bell polytopes](symmetric-bell-facet-lifting/index.md), showing that a facet of the three-party, four-setting symmetry projection lifts to a face strictly inside another proper face, and proving the cross-polytope equivalence for two through five settings.
 - **New entry:** [Exact Bell values and local visibility for the E₈ root correlations](modified-e8-bell/index.md), proving the classical value $6104$, the vector value $9240$ and the local visibility $109/165$ of the modified $E_8$ Bell matrix.
 - **New entry:** [Improved lower bounds for finite-order Grothendieck constants](grothendieck-lower-bounds/index.md), proving $K_G(3)>1.43888070193021$ in Lean from the classical value of an explicit matrix, established by an exhaustive search, and improving the vectors for orders five and six.
 - **New entry:** [The exact classical value of the Fishburn–Reeds matrices](fishburn-reeds-classical-bound/index.md), proving the all-order fixed-shift formula and determining the optimal uniform diagonal shifts in dimensions seven through ten.
+- **New entry:** [Exact LP extension complexity of planar Steiner tree polytopes](planar-steiner-extension-complexity/index.md), showing that the Steiner tree polytopes of planar graphs have worst-case linear extension complexity $2^{\Theta(\sqrt n)}$, already for two cofacial terminals, with the reduction chain behind the lower bound formalized in Lean.
 
 ## 2026-11-21
 

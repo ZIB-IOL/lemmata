@@ -1,0 +1,100 @@
+schema_version: 1
+id: frank-wolfe-local-dual-sharpness
+lean_namespace: Lemmata.FrankWolfeLDS
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "2604.28006"
+abstract: >-
+  Frank–Wolfe converges at the rate $O(1/t)$, and in general no better. If a compact convex
+  feasible region, together with its linear minimization oracle, satisfies local dual sharpness
+  around the minimizer set, then Frank–Wolfe with short steps, exact line search or the
+  open-loop step sizes $2/(t+2)$ converges with primal gap $o(1/t)$ for every smooth convex
+  objective. Uniformly convex regions satisfy the condition everywhere, and regions that are
+  curved only near the minimizers can satisfy it too. With a local Hölder error bound of order
+  $r$ and sharpness exponent $q$, the gap is $O(t^{-rq/(rq-2)})$. The formal statements hold in
+  real Hilbert spaces and for every oracle and every line-search rule.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+  - name: Christoph Spiegel
+    orcid: "0000-0002-6545-202X"
+ai_use: >-
+  Significant parts of the Lean formalization were produced with an auto-formalization
+  extension of [the Agentic Researcher](https://arxiv.org/abs/2603.15914) framework. Its port
+  to the archive's Lean version, the generalized statements and this page were developed with
+  Claude (Anthropic) under the authors' direction and review.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.FrankWolfeLDS.StandingAssumptions
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-local-dual-sharpness-setting
+  - name: Lemmata.FrankWolfeLDS.fwIterates
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-local-dual-sharpness-fw
+  - name: Lemmata.FrankWolfeLDS.standard_rate
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-local-dual-sharpness-standard
+  - name: Lemmata.FrankWolfeLDS.IsUniformlyConvexSet
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-local-dual-sharpness-uc
+  - name: Lemmata.FrankWolfeLDS.uniformly_convex_gap
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-local-dual-sharpness-uc-gap
+  - name: Lemmata.FrankWolfeLDS.LocalDualSharpness
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-local-dual-sharpness-lds
+  - name: Lemmata.FrankWolfeLDS.uniformly_convex_lds
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-local-dual-sharpness-uc-lds
+  - name: Lemmata.FrankWolfeLDS.patch_criterion
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-local-dual-sharpness-patch
+  - name: Lemmata.FrankWolfeLDS.conditional_short_step_line_search
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-local-dual-sharpness-conditional
+  - name: Lemmata.FrankWolfeLDS.zero_gradient_minimizer
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-local-dual-sharpness-zgm
+  - name: Lemmata.FrankWolfeLDS.gradient_bounded_below
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-local-dual-sharpness-lbg
+  - name: Lemmata.FrankWolfeLDS.beyond_one_over_t
+    kind: theorem
+    page: index.md
+    label: cor-frank-wolfe-local-dual-sharpness-beyond
+  - name: Lemmata.FrankWolfeLDS.conditional_open_loop
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-local-dual-sharpness-conditional-ol
+  - name: Lemmata.FrankWolfeLDS.open_loop_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-local-dual-sharpness-open-loop
+  - name: Lemmata.FrankWolfeLDS.LocalHolderErrorBound
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-local-dual-sharpness-heb
+  - name: Lemmata.FrankWolfeLDS.holder_error_bound_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-local-dual-sharpness-heb
