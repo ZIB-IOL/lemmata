@@ -161,10 +161,10 @@ def UniformlyConvexGap : Prop :=
     ∀ g x s : E, x ∈ C → s ∈ C → (∀ y ∈ C, ⟪g, s⟫_ℝ ≤ ⟪g, y⟫_ℝ) →
       α / 2 * ‖g‖ * ‖x - s‖ ^ q ≤ ⟪g, x - s⟫_ℝ
 
-/-- **Proposition A.2** (a uniformly convex patch with residual gap). Let `C` be compact. Suppose
-that near `M` the region `C` lies in an `(α, q)`-uniformly convex set `K`, and that for every direction the
-selected atom either supports `K` or leaves a gap of at least `β ‖g‖`. Then the oracle
-satisfies local dual sharpness around `M` with constants
+/-- **Proposition A.2** (a uniformly convex patch with residual gap). Let `C` be compact.
+Suppose that near `M` the region `C` lies in an `(α, q)`-uniformly convex set `K`, and that for
+every direction the selected atom either supports `K` or leaves a gap of at least `β ‖g‖`. Then
+the oracle satisfies local dual sharpness around `M` with constants
 `(min {α/2, β / max {1, diam(C)^q}}, q)`. -/
 def PatchCriterion : Prop :=
   ∀ {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E]

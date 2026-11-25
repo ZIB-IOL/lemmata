@@ -149,11 +149,11 @@ on its flat sides. The next proposition is the paper's criterion for such patche
 :enumerator: A.2
 
 Let $C$ be compact, $M \subseteq C$, let $K$ be $(\alpha, q)$-uniformly convex with $q \ge 2$,
-and let $\rho, \beta > 0$. Suppose every $x \in C$ with $\operatorname{dist}(x, M) < \rho$ lies in $K$,
-and that for every direction $g$ the atom $s = \mathrm{lmo}(g)$ either lies in $K$ and supports
-it, $\langle g, y - s\rangle \ge 0$ for all $y \in K$, or leaves a residual gap,
-$\beta \|g\| \le \langle g, x - s\rangle$. Then the oracle satisfies local dual sharpness
-around $M$ with constants
+and let $\rho, \beta > 0$. Suppose every $x \in C$ with $\operatorname{dist}(x, M) < \rho$ lies
+in $K$, and that for every direction $g$ the atom $s = \mathrm{lmo}(g)$ either lies in $K$ and
+supports it, $\langle g, y - s\rangle \ge 0$ for all $y \in K$, or leaves a residual gap,
+$\beta \|g\| \le \langle g, x - s\rangle$. Then the oracle satisfies local dual sharpness around
+$M$ with constants
 $\left(\min\{\alpha/2,\ \beta / \max\{1, \operatorname{diam}(C)^q\}\},\ q\right)$.
 ```
 
