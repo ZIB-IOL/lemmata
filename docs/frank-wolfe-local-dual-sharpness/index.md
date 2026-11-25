@@ -59,8 +59,8 @@ moves toward it, $x_{t+1} = x_t + \gamma_t (s_t - x_t)$, with step size $\gamma_
 given by one of three rules:
 
 - the *open-loop* rule $\gamma_t = 2/(t+2)$;
-- the *short step* $\gamma_t = \min\{g_t/(L \|s_t - x_t\|^2), 1\}$, where
-  $g_t = \langle \nabla f(x_t), x_t - s_t\rangle$ is the *Frank–Wolfe gap*;
+- the *short step* $\gamma_t = \min\{g_t/(L \|s_t - x_t\|^2), 1\}$ (and $\gamma_t = 0$ if
+  $s_t = x_t$), where $g_t = \langle \nabla f(x_t), x_t - s_t\rangle$ is the *Frank–Wolfe gap*;
 - *exact line search*: $\gamma_t$ minimizes $f(x_t + \gamma (s_t - x_t))$ over
   $\gamma \in [0, 1]$, chosen by a fixed rule when there are several minimizers.
 ```
@@ -85,7 +85,8 @@ two endpoints of that edge, so $\|s_t - x_t\|$ never becomes small. The iterates
 the edge, and the guaranteed progress, of order $F_t^2$, gives no more than $1/t$. In this
 regime the zig-zag really is that slow [@canon1968tight]. Known ways around it assume something
 about the objective or about where its minimizer lies: an interior minimizer
-[@guelat1986some], a gradient bounded away from zero on a strongly convex region, a strongly
+[@guelat1986some], a gradient bounded away from zero on a strongly convex region
+[@levitin1966constrained], a strongly
 convex objective on a strongly convex region [@garber2015faster], or an error bound on a
 uniformly convex region [@kerdreux2021projection]; see [@braun2025conditional] for the whole
 landscape.
@@ -134,8 +135,8 @@ $A \|g\| \, \|x - s\|^q \le \langle g, x - s\rangle$.
 :label: prop-frank-wolfe-local-dual-sharpness-uc-lds
 :enumerator: 3.4
 
-If $C$ is $(\alpha, q)$-uniformly convex, then every oracle for $C$ satisfies local dual
-sharpness around every nonempty $M \subseteq C$ with constants $(\alpha/2, q)$.
+If $C$ is compact and $(\alpha, q)$-uniformly convex, then every oracle for $C$ satisfies local
+dual sharpness around every nonempty $M \subseteq C$ with constants $(\alpha/2, q)$.
 ```
 
 Local dual sharpness is genuinely weaker. It holds around any minimizer in the interior of $C$
@@ -147,8 +148,8 @@ on its flat sides. The next proposition is the paper's criterion for such patche
 :label: prop-frank-wolfe-local-dual-sharpness-patch
 :enumerator: A.2
 
-Let $M \subseteq C$, let $K$ be $(\alpha, q)$-uniformly convex with $q \ge 2$, and let
-$\rho, \beta > 0$. Suppose every $x \in C$ with $\operatorname{dist}(x, M) < \rho$ lies in $K$,
+Let $C$ be compact, $M \subseteq C$, let $K$ be $(\alpha, q)$-uniformly convex with $q \ge 2$,
+and let $\rho, \beta > 0$. Suppose every $x \in C$ with $\operatorname{dist}(x, M) < \rho$ lies in $K$,
 and that for every direction $g$ the atom $s = \mathrm{lmo}(g)$ either lies in $K$ and supports
 it, $\langle g, y - s\rangle \ge 0$ for all $y \in K$, or leaves a residual gap,
 $\beta \|g\| \le \langle g, x - s\rangle$. Then the oracle satisfies local dual sharpness

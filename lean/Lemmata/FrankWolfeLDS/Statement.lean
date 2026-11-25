@@ -46,7 +46,7 @@ def StandardRate : Prop :=
         2 * L * Metric.diam C ^ 2 / (t + 2) ∧
       f (fwIterates lmo f (fun _ => σ) x₀ t) - f xStar ≤ 2 * L * Metric.diam C ^ 2 / (t + 2)
 
-/-- **Proposition 3.4** (uniform convexity implies local dual sharpness). If `C` is
+/-- **Proposition 3.4** (uniform convexity implies local dual sharpness). If `C` is compact and
 `(α, q)`-uniformly convex, then every oracle for `C` satisfies local dual sharpness around every
 nonempty `M ⊆ C` with constants `(α/2, q)`. -/
 def UniformlyConvexImpliesLDS : Prop :=
@@ -161,8 +161,8 @@ def UniformlyConvexGap : Prop :=
     ∀ g x s : E, x ∈ C → s ∈ C → (∀ y ∈ C, ⟪g, s⟫_ℝ ≤ ⟪g, y⟫_ℝ) →
       α / 2 * ‖g‖ * ‖x - s‖ ^ q ≤ ⟪g, x - s⟫_ℝ
 
-/-- **Proposition A.2** (a uniformly convex patch with residual gap). Suppose that near `M` the
-region `C` lies in an `(α, q)`-uniformly convex set `K`, and that for every direction the
+/-- **Proposition A.2** (a uniformly convex patch with residual gap). Let `C` be compact. Suppose
+that near `M` the region `C` lies in an `(α, q)`-uniformly convex set `K`, and that for every direction the
 selected atom either supports `K` or leaves a gap of at least `β ‖g‖`. Then the oracle
 satisfies local dual sharpness around `M` with constants
 `(min {α/2, β / max {1, diam(C)^q}}, q)`. -/
