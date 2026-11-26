@@ -4,6 +4,9 @@ numbering:
   headings: false
 ---
 
+```{include} ../_generated/provenance/frank-wolfe-local-dual-sharpness.md
+```
+
 :::{note}
 This is the Lean formalization accompanying the NeurIPS 2026 paper *Frank–Wolfe Beyond 1/t
 Convergence* of @pokutta2026frank. Its authors differ from the paper's: Christoph Spiegel
@@ -11,9 +14,6 @@ independently checked the paper's original Lean development and substantially st
 and his streamlined version is the basis of the formalization here. The results and their proofs
 are the paper's; this entry adds the formal statements and their Lean proofs.
 :::
-
-```{include} ../_generated/provenance/frank-wolfe-local-dual-sharpness.md
-```
 
 The Frank–Wolfe algorithm [@frank1956algorithm; @levitin1966constrained] minimizes a smooth
 convex function over a compact convex set with nothing but a linear minimization oracle, and it
