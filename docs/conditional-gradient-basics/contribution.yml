@@ -69,3 +69,23 @@ exports:
     kind: theorem
     page: index.md
     label: thm-conditional-gradient-basics-approx
+  - name: Lemmata.CGBasics.vanilla_rate
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-basics-vanilla
+  - name: Lemmata.CGBasics.fixed_step_lower_bound
+    kind: theorem
+    page: index.md
+    label: prop-conditional-gradient-basics-fixed-step
+  - name: Lemmata.CGBasics.fixed_step_lower_bound_open_loop
+    kind: theorem
+    page: index.md
+    label: prop-conditional-gradient-basics-fixed-step-open-loop
+  - name: Lemmata.CGBasics.fixed_step_decomposition
+    kind: theorem
+    page: index.md
+    label: prop-conditional-gradient-basics-fixed-step-point
+  - name: Lemmata.CGBasics.nonconvex_short_step_rate
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-basics-nonconvex

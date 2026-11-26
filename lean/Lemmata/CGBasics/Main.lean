@@ -4,6 +4,8 @@ public import Lemmata.CGBasics.Smoothness
 public import Lemmata.CGBasics.Interior
 public import Lemmata.CGBasics.Rates
 public import Lemmata.CGBasics.Approx
+public import Lemmata.CGBasics.FixedStep
+public import Lemmata.FrankWolfeIntro.Main
 
 @[expose] public section
 
@@ -39,6 +41,22 @@ theorem contraction_linear : ContractionLinear := Proof.contraction_linear
 
 /-- Lemma 2.23: power contraction. -/
 theorem contraction_power : ContractionPower := Proof.contraction_power
+
+/-- Theorem 2.2: primal and Frank–Wolfe gap rates of vanilla Frank–Wolfe. -/
+theorem vanilla_rate : VanillaRate := Proof.vanilla_rate
+
+/-- Proposition 2.9: the value bound for any step sizes. -/
+theorem fixed_step_lower_bound : FixedStepLowerBound := Lemmata.FrankWolfeIntro.fixed_lower_bound
+
+/-- Proposition 2.9: the value bound for the open-loop rule. -/
+theorem fixed_step_lower_bound_open_loop : FixedStepLowerBoundOpenLoop :=
+  Lemmata.FrankWolfeIntro.fixed_lower_bound_open_loop
+
+/-- Proposition 2.9: iterates as combinations of the first iterate. -/
+theorem fixed_step_decomposition : FixedStepDecomposition := Proof.fixed_step_decomposition
+
+/-- Theorem 2.11: Frank–Wolfe gap rate for nonconvex objectives. -/
+theorem nonconvex_short_step_rate : NonconvexShortStepRate := Proof.nonconvex_short_step_rate
 -- DOCS_END_MAIN
 
 end Lemmata.CGBasics

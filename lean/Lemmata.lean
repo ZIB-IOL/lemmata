@@ -19,11 +19,13 @@ public import Lemmata.AwayStepFW.Statement
 public import Lemmata.C19IsotropicSymbol.Main
 public import Lemmata.C19IsotropicSymbol.Statement
 public import Lemmata.CGBasics.Approx
+public import Lemmata.CGBasics.FixedStep
 public import Lemmata.CGBasics.Interior
 public import Lemmata.CGBasics.Main
 public import Lemmata.CGBasics.Rates
 public import Lemmata.CGBasics.Smoothness
 public import Lemmata.CGBasics.Statement
+public import Lemmata.CGBasics.Vanilla
 public import Lemmata.Centroid.Def.Bounds
 public import Lemmata.Centroid.Def.Rank
 public import Lemmata.Centroid.Def.Tensor
