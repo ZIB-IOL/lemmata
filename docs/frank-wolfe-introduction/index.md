@@ -12,10 +12,11 @@ convex set $C$ using only a linear minimization oracle. Each step asks the oracl
 $v_t \in \operatorname{argmin}_{v \in C} f'(x_t)(v)$ and moves toward it,
 $x_{t+1} = x_t + \gamma_t (v_t - x_t)$. The paper formalized here is a short introduction to the
 method and its baseline results. This entry covers Lemmas 4.1–4.3, Theorems 4.4 and 4.5,
-Proposition 4.6, Theorem 4.7, Lemmas 4.9–4.11 and Theorem 5.1, in the paper's numbering. The objects (oracle, iterates,
-step-size rules, gaps) are those of [Frank–Wolfe: the core](../frank-wolfe-core/index.md), and
-Lemmas 4.1 and 4.3 and Theorem 4.4 are bound to the core's theorems. The statements hold in any
-real normed space.
+Proposition 4.6, Theorem 4.7, Lemmas 4.9–4.11 and Theorem 5.1, in the paper's numbering. The
+objects (oracle, iterates, step-size rules, gaps) are those of
+[Frank–Wolfe: the core](../frank-wolfe-core/index.md), and Lemmas 4.1 and 4.3 and Theorem 4.4 are
+bound to the core's theorems. The statements of Section 4 hold in any real normed space;
+Theorem 5.1 is about $\ell_p^n$.
 
 ## Gaps and optimality
 
@@ -145,8 +146,9 @@ $\dfrac{\left((f'(y) - f'(x))(y - x)\right)^2}{2L\|y - x\|^2} \le f(y) - f(x) - 
 ```
 
 The paper assumes smoothness and convexity on a neighbourhood of $C$; the Lean statement assumes
-them on the whole space. The proof goes through co-coercivity,
-$\|f'(y) - f'(x)\|^2 \le 2L(f(y) - f(x) - f'(x)(y - x))$, which holds in any normed space.
+them on the whole space. The proof goes through co-coercivity (Lemma 1.8 of
+@braun2025conditional), $\|f'(y) - f'(x)\|^2 \le 2L(f(y) - f(x) - f'(x)(y - x))$, which holds in
+any normed space.
 
 ```{prf:lemma} Primal progress from the adaptive test
 :label: lem-frank-wolfe-introduction-adaptive-progress
