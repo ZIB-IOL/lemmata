@@ -41,12 +41,35 @@ const errors = [];
 // does not exist yet; that is its normal state, not a site error.
 page.on("console", (m) => { if (m.type() === "error" && !/giscus\.app/.test(m.location()?.url ?? "")) errors.push(`console: ${m.text()}`); });
 page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
-page.on("requestfailed", (r) => errors.push(`requestfailed: ${r.url()}`));
+// Its widget's own requests are cut off when the crawl below leaves a page while it loads.
+page.on("requestfailed", (r) => { if (!/^https:\/\/giscus\.app\//.test(r.url())) errors.push(`requestfailed: ${r.url()}`); });
 page.on("response", (r) => { if (r.status() >= 400 && r.url().startsWith(origin)) errors.push(`HTTP ${r.status()} ${r.url()}`); });
 
 await page.goto(`${origin}${base}/`, { waitUntil: "networkidle" });
 check(await page.locator("h1", { hasText: "Lemmata" }).count() > 0, "landing page renders");
-check(await page.locator("table a", { hasText: "Composition of implications" }).count() === 1, "catalog lists entries");
+check(await page.locator(".lemmata-catalog .lemmata-entry-title a", { hasText: "Composition of implications" }).count() === 1, "catalog lists entries");
+// The catalog's filter (a widget in a shadow root; Playwright's locators reach into it).
+// Entries are only hidden, so "shown" means laid out.
+const shown = () => page.locator(".lemmata-catalog .lemmata-entry").evaluateAll((es) => es.filter((e) => e.offsetParent !== null).map((e) => e.textContent));
+const filter = page.locator("input[type=search]");
+await filter.waitFor({ timeout: 15000 }).catch(() => {});
+check(await filter.count() === 1, "catalog filter loads");
+if (await filter.count()) {
+  const all = (await shown()).length;
+  await filter.fill("implications"); await page.waitForTimeout(400);
+  const hits = await shown();
+  check(hits.length >= 1 && hits.length < all && hits.every((t) => /implications/i.test(t)), `search filters the list (${hits.length} of ${all})`);
+  check(new URL(page.url()).searchParams.get("q") === "implications", "search kept in the address");
+  await filter.fill(""); await page.waitForTimeout(400);
+  const subject = page.locator(".lemmata-catalog-subjects a").first();
+  const name = (await subject.textContent()).trim();
+  await subject.click(); await page.waitForTimeout(400);
+  const inSubject = await shown();
+  check(new URL(page.url()).pathname === `${base}/` && new URL(page.url()).searchParams.get("subject") === name &&
+    inSubject.length >= 1 && inSubject.length <= all, `a subject in the right column filters in place (${name}: ${inSubject.length})`);
+  await subject.click(); await page.waitForTimeout(400);
+  check((await shown()).length === all && !new URL(page.url()).search, "clicking it again shows every entry");
+}
 
 await page.goto(`${origin}${base}/implication-composition/`, { waitUntil: "networkidle" });
 check(await page.locator(".katex").count() >= 3, "KaTeX renders inline and display math");
@@ -83,7 +106,7 @@ if (await widget.count()) {
 // Cross-page navigation: from a subject page to an entry, client-side, staying inside
 // the release, and landing on the entry's theorem anchor.
 await page.goto(`${origin}${base}/s/math-lo/`, { waitUntil: "networkidle" });
-await page.locator("table a", { hasText: "Composition of implications" }).first().click();
+await page.locator(".lemmata-entry-title a", { hasText: "Composition of implications" }).first().click();
 await page.waitForURL(/implication-composition/, { timeout: 10000 }).catch(() => {});
 check(page.url().includes(`${base}/implication-composition`), `subject link navigates inside the release (${page.url().replace(origin, "")})`);
 check(await page.locator("#thm-implication-composition").count() === 1, "target theorem anchor exists");
@@ -139,8 +162,16 @@ while (queue.length && seen.size < LIMIT) {
   for (const href of await page.locator("a[href]").evaluateAll((as) => as.map((a) => a.href))) {
     if (!href.startsWith(origin)) continue;
     if (!href.startsWith(`${origin}${base}/`)) { broken.push(`outside the release: ${href} (on ${url})`); continue; }
-    if (/\.(md|json|zip|pdf|txt|xml|ico)$/.test(new URL(href).pathname)) {
-      if (/\.md$/.test(new URL(href).pathname)) broken.push(`raw .md link: ${href} (on ${url})`);
+    // A file, not a page (an entry's downloads: .zip, .cjs, ...): it must exist, but is not
+    // opened -- the browser downloads it instead of loading a page.
+    const file = new URL(href).pathname;
+    if (/\.[A-Za-z0-9]+$/.test(file) && !/\.html?$/.test(file)) {
+      if (/\.md$/.test(file)) broken.push(`raw .md link: ${href} (on ${url})`);
+      else if (!seen.has(href)) {
+        seen.add(href);
+        const f = await page.request.get(href).catch(() => null);
+        if (!f || f.status() >= 400) broken.push(`${f?.status()} ${href} (on ${url})`);
+      }
       continue;
     }
     // Remember the anchor, checked once its page is loaded (below); fragments used to be
