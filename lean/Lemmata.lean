@@ -11,6 +11,8 @@ public import Lemmata.AwayStepFW.Geometry
 public import Lemmata.AwayStepFW.Invariants
 public import Lemmata.AwayStepFW.LowerBound
 public import Lemmata.AwayStepFW.Main
+public import Lemmata.AwayStepFW.Pairwise
+public import Lemmata.AwayStepFW.PairwiseRate
 public import Lemmata.AwayStepFW.Progress
 public import Lemmata.AwayStepFW.PyramidalEq
 public import Lemmata.AwayStepFW.Statement
