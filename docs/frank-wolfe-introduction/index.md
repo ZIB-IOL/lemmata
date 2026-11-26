@@ -11,11 +11,12 @@ The Frank–Wolfe algorithm [@frank1956algorithm] minimizes a smooth function ov
 convex set $C$ using only a linear minimization oracle. Each step asks the oracle for the atom
 $v_t \in \operatorname{argmin}_{v \in C} f'(x_t)(v)$ and moves toward it,
 $x_{t+1} = x_t + \gamma_t (v_t - x_t)$. The paper formalized here is a short introduction to the
-method and its baseline results. This entry covers Lemmas 4.1–4.3, Theorem 4.4,
-Proposition 4.6 and Theorem 4.7, in the paper's numbering. The objects (oracle, iterates,
-step-size rules, gaps) are those of [Frank–Wolfe: the core](../frank-wolfe-core/index.md), and
-Lemmas 4.1 and 4.3 and Theorem 4.4 are bound to the core's theorems. The statements hold in any
-real normed space.
+method and its baseline results. This entry covers Lemmas 4.1–4.3, Theorems 4.4 and 4.5,
+Proposition 4.6, Theorem 4.7, Lemmas 4.9–4.11 and Theorem 5.1, in the paper's numbering. The
+objects (oracle, iterates, step-size rules, gaps) are those of
+[Frank–Wolfe: the core](../frank-wolfe-core/index.md), and Lemmas 4.1 and 4.3 and Theorem 4.4 are
+bound to the core's theorems. The statements of Section 4 hold in any real normed space;
+Theorem 5.1 is about $\ell_p^n$.
 
 ## Gaps and optimality
 
@@ -71,6 +72,19 @@ step sizes $\gamma_t = 2/(t+2)$, $f(x_t) - f(x^\star) \le 2 L D^2 / (t+2)$ for a
 
 The Lean statement covers short steps and exact line search as well.
 
+The Frank–Wolfe gap converges at the same rate. The iterates of the second half of the run,
+from $k_0 = \lfloor (t+2)/2 \rfloor$ on, cannot all have a large gap. Each step decreases the primal
+gap by about $\gamma_k g_k$, and the primal gap at $k_0$ is already at most $2LD^2/(k_0+2)$.
+
+```{prf:theorem} Frank–Wolfe gap convergence of the Frank–Wolfe algorithm
+:label: thm-frank-wolfe-introduction-gap
+:enumerator: 4.5
+
+Under the assumptions of Theorem 4.4, for every $t \ge 1$ the running minimum of the Frank–Wolfe
+gaps satisfies
+$\min_{0 \le \tau \le t} \max_{v \in C} f'(x_\tau)(x_\tau - v) \le 6.75\, L D^2/(t+2)$.
+```
+
 ## A lower bound for any step sizes
 
 The iterates are convex combinations of $x_1$ and the atoms. The weight of $x_1$ shrinks by the
@@ -115,12 +129,69 @@ Frank–Wolfe gap at most $\max\{2 h_0, L D^2\} / \sqrt{T+1}$, where
 $h_0 = f(x_0) - f(x^\star)$.
 ```
 
-## Not yet covered
+## Adaptive step sizes
 
-Theorem 4.5 (the running minimum of the Frank–Wolfe gaps is at most $6.75\,LD^2/(t+2)$), the
-adaptive step sizes of Lemmas 4.9–4.11, and the approximate Carathéodory theorem
-(Theorem 5.1) are planned for a later version of this entry; see @braun2025conditional for the
-broader picture.
+The short step needs the smoothness constant $L$, which is rarely known. The adaptive strategy
+works with an estimate $M$: it takes the short step for $M$ and accepts it if
+$f'(x^+)(x - v) \ge 0$ at the new point $x^+$, otherwise it increases $M$. This test needs a
+single gradient and no function values. The next lemmas show that the test certifies progress,
+and that it always passes once $M = L$.
+
+```{prf:lemma} Smoothness revisited
+:label: lem-frank-wolfe-introduction-smoothness
+:enumerator: 4.9
+
+If $f$ is convex and $L$-smooth with $L > 0$, then for all $x, y$:
+$\dfrac{\left((f'(y) - f'(x))(y - x)\right)^2}{2L\|y - x\|^2} \le f(y) - f(x) - f'(x)(y - x)$.
+```
+
+The paper assumes smoothness and convexity on a neighbourhood of $C$; the Lean statement assumes
+them on the whole space. The proof goes through co-coercivity (Lemma 1.8 of
+@braun2025conditional), $\|f'(y) - f'(x)\|^2 \le 2L(f(y) - f(x) - f'(x)(y - x))$, which holds in
+any normed space.
+
+```{prf:lemma} Primal progress from the adaptive test
+:label: lem-frank-wolfe-introduction-adaptive-progress
+:enumerator: 4.10
+
+Let $f$ be convex and $L$-smooth, $g = f'(x)(x - v) \ge 0$, $d = \|v - x\| > 0$, $M > 0$,
+$\gamma = \min\{g/(Md^2), 1\}$ and $x^+ = x + \gamma (v - x)$, and suppose
+$a = f'(x^+)(x - v) \ge 0$. If $g/(Md^2) \le 1$, then
+$f(x) - f(x^+) \ge (g^2 + a^2)/(2\max\{L, M\} d^2)$. If $\gamma = 1$ and $M \ge L$, then
+$f(x) - f(x^+) \ge g/2 + a^2/(2g)$.
+```
+
+```{prf:lemma} Smoothness implies the adaptive test
+:label: lem-frank-wolfe-introduction-adaptive-test
+:enumerator: 4.11
+
+If $f$ is $L$-smooth and $x^+$ is the short step from $x$ toward $v$ for the constant $L$, with
+$f'(x)(x - v) \ge 0$, then $f'(x^+)(x - v) \ge 0$.
+```
+
+## Approximate Carathéodory
+
+Carathéodory's theorem writes every point of the convex hull of $V \subseteq \mathbb{R}^n$ as a
+convex combination of $n + 1$ points of $V$. Allowing an error $\varepsilon$ removes the dimension:
+run Frank–Wolfe on $f(x) = \|x - x^*\|_p^2$ over the convex hull of $V$, with the oracle answering
+points of $V$. After $t$ steps the iterate is a convex combination of at most $t + 1$ points of $V$,
+and the convergence rate bounds its distance to $x^*$.
+
+```{prf:theorem} Approximate Carathéodory
+:label: thm-frank-wolfe-introduction-caratheodory
+:enumerator: 5.1
+
+Let $2 \le p < \infty$, let $V \subseteq \mathbb{R}^n$ be compact with $\ell_p$-diameter $D$, let
+$x^*$ lie in the convex hull of $V$, and let $\varepsilon > 0$. There is a set $S \subseteq V$ of at
+most $\lceil 4(p-1)D^2/\varepsilon^2 \rceil + 2$ points with a point $x$ in its convex hull such
+that $\|x - x^*\|_p \le \varepsilon$.
+```
+
+The paper states the bound as $O(pD^2/\varepsilon^2)$; the formal statement makes the constant
+explicit. The smoothness behind it is that $\|\cdot\|_p^2$ is $2(p-1)$-smooth with respect to the
+$\ell_p$ norm. The proof bounds the second derivative of $t \mapsto \|a + tb\|_p^2$ by
+$2(p-1)\|b\|_p^2$ using Hölder's inequality, after replacing $|x_i|^p$ by $(x_i^2 + \delta)^{p/2}$
+to keep every term smooth, and then lets $\delta \to 0$.
 
 ## The formal statements at a glance
 

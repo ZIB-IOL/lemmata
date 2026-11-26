@@ -2,6 +2,11 @@ module
 
 public import Lemmata.FrankWolfeIntro.Statement
 public import Lemmata.FrankWolfeIntro.Proof
+public import Lemmata.FrankWolfeIntro.GapRate
+public import Lemmata.FrankWolfeIntro.Adaptive
+public import Lemmata.FrankWolfeIntro.Cocoercive
+public import Lemmata.FrankWolfeIntro.AdaptiveProgress
+public import Lemmata.FrankWolfeIntro.Caratheodory.Theorem
 
 @[expose] public section
 
@@ -29,6 +34,9 @@ theorem primal_progress : ProgressLemma := FrankWolfe.progress_lemma
 /-- Theorem 4.4 (primal convergence): the core's `standard_rate`. -/
 theorem primal_convergence : StandardRate := FrankWolfe.standard_rate
 
+/-- Theorem 4.5 (Frank–Wolfe gap convergence). -/
+theorem gap_rate : GapRate := Proof.gap_rate
+
 /-- Proposition 4.6 (a lower bound for any step sizes). -/
 theorem fixed_lower_bound : FixedLowerBound := Proof.fixed_lower_bound
 
@@ -37,6 +45,19 @@ theorem fixed_lower_bound_open_loop : FixedLowerBoundOpenLoop := Proof.fixed_low
 
 /-- Theorem 4.7 (convergence for nonconvex objectives). -/
 theorem nonconvex_rate : NonconvexRate := Proof.nonconvex_rate
+
+/-- Lemma 4.9 (smoothness revisited). -/
+theorem smoothness_revisited : SmoothnessRevisited := Proof.smoothness_revisited
+
+/-- Lemma 4.10 (primal progress from the adaptive test). -/
+theorem adaptive_progress : AdaptiveProgress := Proof.adaptive_progress
+
+/-- Lemma 4.11 (smoothness implies the adaptive test). -/
+theorem smooth_implies_adaptive_test : SmoothImpliesAdaptiveTest :=
+  Proof.smooth_implies_adaptive_test
+
+/-- Theorem 5.1 (approximate Carathéodory). -/
+theorem approximate_caratheodory : ApproximateCaratheodory := Proof.approximate_caratheodory
 -- DOCS_END_MAIN
 
 end Lemmata.FrankWolfeIntro

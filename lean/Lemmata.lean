@@ -493,6 +493,12 @@ public import Lemmata.FrankWolfe.Proof.Hilbert
 public import Lemmata.FrankWolfe.Proof.Interfaces
 public import Lemmata.FrankWolfe.Proof.Rate
 public import Lemmata.FrankWolfe.Statement
+public import Lemmata.FrankWolfeIntro.Adaptive
+public import Lemmata.FrankWolfeIntro.AdaptiveProgress
+public import Lemmata.FrankWolfeIntro.Caratheodory.Smooth
+public import Lemmata.FrankWolfeIntro.Caratheodory.Theorem
+public import Lemmata.FrankWolfeIntro.Cocoercive
+public import Lemmata.FrankWolfeIntro.GapRate
 public import Lemmata.FrankWolfeIntro.Main
 public import Lemmata.FrankWolfeIntro.Proof
 public import Lemmata.FrankWolfeIntro.Statement
