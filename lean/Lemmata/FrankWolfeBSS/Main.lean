@@ -24,6 +24,14 @@ theorem primal_dual_rate : PrimalDualRate := Proof.primal_dual_rate
 
 /-- Proposition 4.1: the rate for the explicit primal-dual short step. -/
 theorem primal_dual_short_step_rate : PrimalDualShortStepRate := Proof.primal_dual_short_step_rate
+/-- Heavy-ball Frank–Wolfe: the primal-dual gap bounds the primal gap. -/
+theorem heavy_ball_gap_bounds_primal : HeavyBallGapBoundsPrimal := Proof.hb_gap_bounds_primal
+
+/-- Proposition 4.1 for heavy-ball Frank–Wolfe: the gap recursion. -/
+theorem heavy_ball_gap_recursion : HeavyBallGapRecursion := Proof.hb_gap_recursion
+
+/-- Proposition 4.1 for heavy-ball Frank–Wolfe: the rate. -/
+theorem heavy_ball_rate : HeavyBallRate := Proof.hb_rate
 -- DOCS_END_MAIN
 
 end Lemmata.FrankWolfeBSS

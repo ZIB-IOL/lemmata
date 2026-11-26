@@ -76,4 +76,43 @@ def PrimalDualShortStepRate : Prop :=
     (∀ t : ℕ, γ (t + 1) = pdShortStep L (pdGap f (fderiv ℝ f) x v γ t) (x (t + 1)) (v (t + 1))) →
     ∀ t : ℕ, pdGap f (fderiv ℝ f) x v γ t ≤ 2 * L * Metric.diam C ^ 2 / ((t : ℝ) + 2)
 
+/-- **Heavy-ball Frank–Wolfe: the primal-dual gap bounds the primal gap.** For a convex
+differentiable `f` and every heavy-ball run on `C`, `f(x_{t+1}) - f(y) ≤ G_t` for all `y ∈ C`. -/
+def HeavyBallGapBoundsPrimal : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (x v : ℕ → E) (γ : ℕ → ℝ),
+    ConvexOn ℝ Set.univ f → Differentiable ℝ f → IsHBRun C (fderiv ℝ f) x v γ →
+      ∀ y ∈ C, ∀ t, f (x (t + 1)) - f y ≤ hbGap f (fderiv ℝ f) x v γ t
+
+/-- **Proposition 4.1 for heavy-ball Frank–Wolfe** (the gap recursion). For every heavy-ball run,
+`G_{t+1} ≤ (1 - γ) G_t - γ f'(x)(v - x) - f(x) + f(x + γ (v - x))` with `x = x_{t+1}`,
+`v = v_{t+1}` and `γ = γ_{t+1}`. -/
+def HeavyBallGapRecursion : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (x v : ℕ → E) (γ : ℕ → ℝ),
+    IsHBRun C (fderiv ℝ f) x v γ → ∀ t,
+      hbGap f (fderiv ℝ f) x v γ (t + 1) ≤
+        pdBound f (fderiv ℝ f) (hbGap f (fderiv ℝ f) x v γ t) (x (t + 1)) (v (t + 1)) (γ (t + 1))
+
+/-- **Proposition 4.1 for heavy-ball Frank–Wolfe** (the rate). Under the assumptions of
+`PrimalDualRate`, every heavy-ball run with `γ₀ = 1` whose later steps are open-loop steps,
+primal-dual short steps or line-search steps for its own gap satisfies `G_t ≤ 2 L D²/(t + 2)`. For
+the adaptive rules the atom `v_{t+1}` depends on `γ_{t+1}` through `ḡ_{t+1}`, so these rules are
+conditions on the run rather than a procedure. -/
+def HeavyBallRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (L : NNReal)
+    (x v : ℕ → E) (γ : ℕ → ℝ),
+    IsCompact C → Convex ℝ C → ConvexOn ℝ Set.univ f → IsSmooth f L →
+    IsHBRun C (fderiv ℝ f) x v γ → γ 0 = 1 →
+    (∀ t : ℕ,
+      γ (t + 1) = 2 / ((t : ℝ) + 3) ∨
+      (∀ s ∈ Set.Icc (0 : ℝ) 1,
+        pdSmoothBound L (hbGap f (fderiv ℝ f) x v γ t) (x (t + 1)) (v (t + 1)) (γ (t + 1)) ≤
+          pdSmoothBound L (hbGap f (fderiv ℝ f) x v γ t) (x (t + 1)) (v (t + 1)) s) ∨
+      (∀ s ∈ Set.Icc (0 : ℝ) 1,
+        pdBound f (fderiv ℝ f) (hbGap f (fderiv ℝ f) x v γ t) (x (t + 1)) (v (t + 1))
+            (γ (t + 1)) ≤
+          pdBound f (fderiv ℝ f) (hbGap f (fderiv ℝ f) x v γ t) (x (t + 1)) (v (t + 1)) s)) →
+    ∀ t : ℕ, hbGap f (fderiv ℝ f) x v γ t ≤ 2 * L * Metric.diam C ^ 2 / ((t : ℝ) + 2)
+
 end Lemmata.FrankWolfeBSS
