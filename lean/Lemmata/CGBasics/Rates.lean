@@ -3,6 +3,7 @@ module
 public import Lemmata.CGBasics.Statement
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
+public import Mathlib.Analysis.SpecialFunctions.Log.Base
 
 @[expose] public section
 
@@ -108,6 +109,131 @@ theorem contraction_power : ContractionPower := by
   calc h t = (h t ^ (-α)) ^ (-1 / α) := hht
     _ ≤ B ^ (-1 / α) := hmono
     _ = c₀ / (1 + c₂ * c₀ ^ α * α * ((t : ℝ) - 1)) ^ (1 / α) := hfin
+
+theorem contraction_mixed : ContractionMixed := by
+  intro h c₀ c₁ c₂ α hpos hc₀ hc₁ hc₁' hc₂ hα h1 hrec
+  set τ := (c₁ / c₂) ^ (1 / α) with hτ
+  set ℓ := Real.logb (1 - c₁) (τ / c₀) with hℓ
+  set T : ℤ := max (⌊ℓ⌋ + 2) 1 with hT
+  have hb0 : 0 < 1 - c₁ := by linarith
+  have hb1 : 1 - c₁ < 1 := by linarith
+  have hτpos : 0 < τ := Real.rpow_pos_of_pos (div_pos hc₁ hc₂) _
+  have hτα : c₂ * τ ^ α = c₁ := by
+    rw [hτ, ← Real.rpow_mul (div_pos hc₁ hc₂).le, one_div, inv_mul_cancel₀ hα.ne', Real.rpow_one]
+    field_simp
+  have hmono : ∀ t, 1 ≤ t → h (t + 1) ≤ h t := by
+    intro t ht
+    have := hrec t ht
+    have hm : 0 ≤ min c₁ (c₂ * h t ^ α) :=
+      le_min hc₁.le (mul_nonneg hc₂.le (Real.rpow_pos_of_pos (hpos t) α).le)
+    nlinarith [mul_nonneg (hpos t).le hm]
+  have hbig : ∀ t, 1 ≤ t → τ ≤ h t → h (t + 1) ≤ (1 - c₁) * h t := by
+    intro t ht hτt
+    have hge : c₁ ≤ c₂ * h t ^ α := by
+      rw [← hτα]
+      exact mul_le_mul_of_nonneg_left (Real.rpow_le_rpow hτpos.le hτt hα.le) hc₂.le
+    have := hrec t ht
+    rw [min_eq_left hge] at this
+    linarith
+  have hpowℓ : (1 - c₁) ^ ℓ = τ / c₀ := Real.rpow_logb hb0 hb1.ne (div_pos hτpos hc₀)
+  have K1 : ∀ k : ℕ, (k : ℤ) ≤ ⌊ℓ⌋ → τ ≤ c₀ * (1 - c₁) ^ k := by
+    intro k hk
+    have hkℓ : (k : ℝ) ≤ ℓ := by
+      have h2 : ((k : ℤ) : ℝ) ≤ (⌊ℓ⌋ : ℝ) := Int.cast_le.mpr hk
+      push_cast at h2
+      exact h2.trans (Int.floor_le ℓ)
+    have := Real.rpow_le_rpow_of_exponent_ge hb0 hb1.le hkℓ
+    rw [hpowℓ, Real.rpow_natCast, div_le_iff₀ hc₀] at this
+    linarith
+  have K2 : ∀ k : ℕ, ⌊ℓ⌋ < (k : ℤ) → c₀ * (1 - c₁) ^ k < τ := by
+    intro k hk
+    have hkℓ : ℓ < (k : ℝ) := by
+      have h2 : (⌊ℓ⌋ : ℝ) + 1 ≤ ((k : ℤ) : ℝ) := by exact_mod_cast hk
+      push_cast at h2
+      linarith [Int.lt_floor_add_one ℓ]
+    have := Real.rpow_lt_rpow_of_exponent_gt hb0 hb1 hkℓ
+    rw [hpowℓ, Real.rpow_natCast, lt_div_iff₀ hc₀] at this
+    linarith
+  have phase1 : ∀ t : ℕ, 1 ≤ t → (t : ℤ) < T → h t ≤ c₀ * (1 - c₁) ^ (t - 1) := by
+    intro t ht
+    induction t, ht using Nat.le_induction with
+    | base => intro _; simpa using h1
+    | succ t ht ih =>
+      intro htT
+      have ih' := ih (by omega)
+      by_cases hτt : τ ≤ h t
+      · calc h (t + 1) ≤ (1 - c₁) * h t := hbig t ht hτt
+          _ ≤ (1 - c₁) * (c₀ * (1 - c₁) ^ (t - 1)) := mul_le_mul_of_nonneg_left ih' hb0.le
+          _ = c₀ * (1 - c₁) ^ (t + 1 - 1) := by
+            rw [show t + 1 - 1 = (t - 1) + 1 by omega, pow_succ]; ring
+      · push Not at hτt
+        have hk : ((t + 1 - 1 : ℕ) : ℤ) ≤ ⌊ℓ⌋ := by
+          rcases lt_max_iff.mp htT with h2 | h2
+          · push_cast at h2 ⊢; omega
+          · push_cast at h2; omega
+        exact (hmono t ht).trans (hτt.le.trans (K1 _ hk))
+  have hT1 : 1 ≤ T := le_max_right _ _
+  set t₀ := T.toNat with ht₀
+  have ht₀T : (t₀ : ℤ) = T := Int.toNat_of_nonneg (by omega)
+  have ht₀1 : 1 ≤ t₀ := by omega
+  have hbase2 : h t₀ ≤ τ := by
+    by_cases hTeq : T = 1
+    · have ht₀' : t₀ = 1 := by omega
+      have hfl : ⌊ℓ⌋ < ((0 : ℕ) : ℤ) := by
+        have := le_max_left (⌊ℓ⌋ + 2) 1
+        rw [← hT, hTeq] at this
+        push_cast
+        omega
+      have := K2 0 hfl
+      rw [pow_zero, mul_one] at this
+      rw [ht₀']
+      linarith
+    · have hTval : T = ⌊ℓ⌋ + 2 := by
+        rcases le_total (⌊ℓ⌋ + 2) 1 with h2 | h2
+        · exfalso; apply hTeq; rw [hT, max_eq_right h2]
+        · rw [hT, max_eq_left h2]
+      have hprev := phase1 (t₀ - 1) (by omega) (by omega)
+      have hk : ⌊ℓ⌋ < ((t₀ - 1 + 1 - 1 : ℕ) : ℤ) := by push_cast; omega
+      by_cases hτt : τ ≤ h (t₀ - 1)
+      · have h3 := hbig (t₀ - 1) (by omega) hτt
+        rw [show t₀ - 1 + 1 = t₀ by omega] at h3
+        have h4 := K2 (t₀ - 1 + 1 - 1) hk
+        rw [show t₀ - 1 + 1 - 1 = (t₀ - 1 - 1) + 1 by omega, pow_succ] at h4
+        nlinarith [mul_le_mul_of_nonneg_left hprev hb0.le]
+      · push Not at hτt
+        have h3 := hmono (t₀ - 1) (by omega)
+        rw [show t₀ - 1 + 1 = t₀ by omega] at h3
+        linarith
+  have hle_τ : ∀ t, t₀ ≤ t → h t ≤ τ := by
+    intro t ht
+    induction t, ht using Nat.le_induction with
+    | base => exact hbase2
+    | succ t ht ih => exact (hmono t (by omega)).trans ih
+  refine ⟨phase1, fun t ht => ?_⟩
+  have htt₀ : t₀ ≤ t := by omega
+  set h' : ℕ → ℝ := fun k => h (k + t₀ - 1) with hh'
+  have hrec' : ∀ k, 1 ≤ k → c₂ * h' k ^ (1 + α) ≤ h' k - h' (k + 1) := by
+    intro k hk
+    have hrt := hrec (k + t₀ - 1) (by omega)
+    have hle := hle_τ (k + t₀ - 1) (by omega)
+    have hsmall : c₂ * h (k + t₀ - 1) ^ α ≤ c₁ := by
+      rw [← hτα]
+      exact mul_le_mul_of_nonneg_left (Real.rpow_le_rpow (hpos _).le hle hα.le) hc₂.le
+    rw [min_eq_right hsmall] at hrt
+    have e1 : h (k + t₀ - 1) ^ (1 + α) = h (k + t₀ - 1) * h (k + t₀ - 1) ^ α := by
+      rw [Real.rpow_add (hpos _), Real.rpow_one]
+    have e2 : k + 1 + t₀ - 1 = k + t₀ - 1 + 1 := by omega
+    simp only [hh', e2]
+    rw [e1]
+    linarith
+  have hmain := contraction_power h' τ c₂ α (fun k => hpos _) hτpos hc₂ hα
+    (by simp only [hh']; rw [show 1 + t₀ - 1 = t₀ by omega]; exact hbase2) hrec' (t - t₀ + 1)
+    (by omega)
+  have e3 : h' (t - t₀ + 1) = h t := by simp only [hh']; congr 1; omega
+  have e4 : ((t - t₀ + 1 : ℕ) : ℝ) - 1 = (t : ℝ) - (T : ℝ) := by
+    rw [← ht₀T]; push_cast [Nat.cast_sub htt₀]; ring
+  rw [e3, e4, hτα] at hmain
+  exact hmain
 
 end Proof
 

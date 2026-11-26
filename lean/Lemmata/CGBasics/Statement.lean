@@ -1,6 +1,7 @@
 module
 
 public import Lemmata.FrankWolfe.Statement
+public import Mathlib.Analysis.SpecialFunctions.Log.Base
 
 @[expose] public section
 
@@ -93,5 +94,20 @@ def ContractionPower : Prop :=
   ∀ (h : ℕ → ℝ) (c₀ c₂ α : ℝ), (∀ t, 0 < h t) → 0 < c₀ → 0 < c₂ → 0 < α → h 1 ≤ c₀ →
     (∀ t, 1 ≤ t → c₂ * h t ^ (1 + α) ≤ h t - h (t + 1)) →
     ∀ t : ℕ, 1 ≤ t → h t ≤ c₀ / (1 + c₂ * c₀ ^ α * α * ((t : ℝ) - 1)) ^ (1 / α)
+
+/-- **Lemma 2.21** (from contractions to convergence rates). Let `h_t > 0`, `c₀, c₂, α > 0`,
+`0 < c₁ < 1`, `h₁ ≤ c₀` and `h_t - h_{t+1} ≥ h_t min {c₁, c₂ h_t^α}` for `t ≥ 1`. With
+`τ = (c₁/c₂)^{1/α}` and `t₀ = max {⌊log_{1-c₁}(τ/c₀)⌋ + 2, 1}`, `h_t ≤ c₀ (1 - c₁)^{t-1}` for
+`1 ≤ t < t₀`, and `h_t ≤ τ / (1 + c₁ α (t - t₀))^{1/α}` for `t ≥ t₀`. The book states the first
+bound also at `t = t₀`, where it can fail. -/
+def ContractionMixed : Prop :=
+  ∀ (h : ℕ → ℝ) (c₀ c₁ c₂ α : ℝ), (∀ t, 0 < h t) → 0 < c₀ → 0 < c₁ → c₁ < 1 → 0 < c₂ → 0 < α →
+    h 1 ≤ c₀ → (∀ t, 1 ≤ t → h t * min c₁ (c₂ * h t ^ α) ≤ h t - h (t + 1)) →
+    (∀ t : ℕ, 1 ≤ t →
+      (t : ℤ) < max (⌊Real.logb (1 - c₁) ((c₁ / c₂) ^ (1 / α) / c₀)⌋ + 2) 1 →
+        h t ≤ c₀ * (1 - c₁) ^ (t - 1)) ∧
+    (∀ t : ℕ, max (⌊Real.logb (1 - c₁) ((c₁ / c₂) ^ (1 / α) / c₀)⌋ + 2) 1 ≤ (t : ℤ) →
+      h t ≤ (c₁ / c₂) ^ (1 / α) / (1 + c₁ * α * ((t : ℝ) -
+        (max (⌊Real.logb (1 - c₁) ((c₁ / c₂) ^ (1 / α) / c₀)⌋ + 2) 1 : ℤ))) ^ (1 / α))
 
 end Lemmata.CGBasics
