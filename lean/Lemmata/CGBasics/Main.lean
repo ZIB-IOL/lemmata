@@ -3,6 +3,7 @@ module
 public import Lemmata.CGBasics.Smoothness
 public import Lemmata.CGBasics.Interior
 public import Lemmata.CGBasics.Rates
+public import Lemmata.CGBasics.Approx
 
 @[expose] public section
 
@@ -16,6 +17,9 @@ theorem smooth_iff_lipschitz : SmoothIffLipschitz := Proof.smooth_iff_lipschitz
 
 /-- Proposition 1.12: the Frank–Wolfe gap is bounded by the primal gap. -/
 theorem gap_by_primal_gap : GapByPrimalGap := Proof.gap_by_primal_gap
+
+/-- Theorem 2.6: Frank–Wolfe with an approximate linear minimization oracle. -/
+theorem approximate_oracle_rate : ApproximateOracleRate := Proof.approximate_oracle_rate
 
 /-- Lemma 2.13: the primal gap bound via strong convexity. -/
 theorem primal_gap_strong_convexity : PrimalGapStrongConvexity :=

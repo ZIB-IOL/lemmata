@@ -50,6 +50,28 @@ $D$. For $x \in C$, $g(x) \le h(x) + LD^2/2$ if $h(x) \ge LD^2/2$, and $g(x) \le
 if $h(x) \le LD^2/2$.
 ```
 
+## Approximate linear minimization
+
+The oracle need not be exact: an error that shrinks like the step size costs only a constant
+factor in the rate.
+
+```{prf:theorem} Approximate linear minimization
+:label: thm-conditional-gradient-basics-approx
+:enumerator: 2.6
+
+Let $C$ be compact and convex with diameter $D$, let $f$ be convex and $L$-smooth, and let
+$\delta \ge 0$. Suppose every atom satisfies
+$f'(x_t)(v_t) \le \min_{v \in C} f'(x_t)(v) + LD^2\delta/(t+3)$ and every step $\gamma_t \in [0, 1]$
+does at least as well as every $s \in [0, 1]$ in the smoothness bound, as clipped short steps and
+exact line search do. Then $f(x_t) - f(x^*) \le 2LD^2(1 + \delta)/(t+3)$ for $t \ge 1$.
+```
+
+The book allows the error $2LD^2\delta/(t+3)$ and states the same rate. With that error, its
+proof gives $1 + 2\delta$ instead of $1 + \delta$: the step $2/(t+3)$ times the error is
+$(2/(t+3))^2 LD^2\delta$, not half of it. The formal statement uses half the error, as in the
+original normalization of @jaggi2013revisiting. The book's bound on the running minimum of the
+Frank–Wolfe gaps under approximation is not formalized here.
+
 ## Strong convexity and gradient domination
 
 ```{prf:lemma} Primal gap bound via strong convexity
@@ -163,9 +185,8 @@ using $s^{-\alpha} \ge 1 + \alpha(1 - s)$ for $0 < s \le 1$.
 
 ## Not yet covered
 
-Theorem 2.6 (approximate linear minimization), the lower
-bounds of Section 2.1.2, and the away-step and fully-corrective variants of Sections 2.2.5 and
-2.2.6 are not formalized here. Rates over uniformly convex sets are in
+The lower bounds of Section 2.1.2 and the away-step and fully-corrective variants of Sections
+2.2.5 and 2.2.6 are not formalized here. Rates over uniformly convex sets are in
 [Frank–Wolfe beyond 1/t under local dual sharpness](../frank-wolfe-local-dual-sharpness/index.md),
 and the baseline results of Chapter 2 are in
 [The Frank–Wolfe algorithm: a short introduction](../frank-wolfe-introduction/index.md).
