@@ -27,6 +27,9 @@ theorem scaling_interior : ScalingInterior := Proof.scaling_interior
 /-- Theorem 2.17: linear convergence for an interior minimizer. -/
 theorem linear_rate_interior : LinearRateInterior := Proof.linear_rate_interior
 
+/-- Lemma 2.21: contractions of mixed type. -/
+theorem contraction_mixed : ContractionMixed := Proof.contraction_mixed
+
 /-- Lemma 2.22: linear contraction. -/
 theorem contraction_linear : ContractionLinear := Proof.contraction_linear
 

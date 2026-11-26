@@ -124,7 +124,23 @@ Things to try:
 ## From contractions to rates
 
 Most rates for Frank–Wolfe variants come from a per-step inequality for the primal gap. The book's
-lemmas turn the two basic shapes into rates.
+lemmas turn the basic shapes into rates.
+
+```{prf:lemma} Contractions of mixed type
+:label: lem-conditional-gradient-basics-contraction-mixed
+:enumerator: 2.21
+
+Let $h_t > 0$, $c_0, c_2, \alpha > 0$, $0 < c_1 < 1$, $h_1 \le c_0$ and
+$h_t - h_{t+1} \ge h_t \min\{c_1, c_2 h_t^\alpha\}$ for $t \ge 1$. With $\tau = (c_1/c_2)^{1/\alpha}$ and
+$t_0 = \max\{\lfloor \log_{1-c_1}(\tau/c_0) \rfloor + 2, 1\}$, $h_t \le c_0 (1 - c_1)^{t-1}$ for
+$1 \le t < t_0$, and $h_t \le \tau/(1 + c_1 \alpha (t - t_0))^{1/\alpha}$ for $t \ge t_0$.
+```
+
+While $h_t \ge \tau$ the contraction is linear; once $h_t$ falls below $\tau$ it stays there, the
+minimum is $c_2 h_t^\alpha$, and Lemma 2.23 applies from $t_0$ on. The book states the first bound
+for $1 \le t \le t_0$. At $t = t_0$ it can fail: for $c_0 = 10$, $c_1 = c_2 = 0.9$ and $\alpha = 1$
+we have $\tau = 1$ and $t_0 = 3$, and $h = (10, 5/9, 5/18, \dots)$ satisfies the hypotheses
+while $h_3 = 5/18 > c_0 (1 - c_1)^2 = 1/10$. The second bound holds at $t_0$.
 
 ```{prf:lemma} Linear contraction
 :label: lem-conditional-gradient-basics-contraction-linear
@@ -147,7 +163,7 @@ using $s^{-\alpha} \ge 1 + \alpha(1 - s)$ for $0 < s \le 1$.
 
 ## Not yet covered
 
-Lemma 2.21 (contractions of mixed type), Theorem 2.6 (approximate linear minimization), the lower
+Theorem 2.6 (approximate linear minimization), the lower
 bounds of Section 2.1.2, and the away-step and fully-corrective variants of Sections 2.2.5 and
 2.2.6 are not formalized here. Rates over uniformly convex sets are in
 [Frank–Wolfe beyond 1/t under local dual sharpness](../frank-wolfe-local-dual-sharpness/index.md),

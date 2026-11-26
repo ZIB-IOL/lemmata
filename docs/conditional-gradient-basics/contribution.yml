@@ -14,8 +14,8 @@ abstract: >-
   bounds the primal gap by $f'(x)(x - x^*)^2/(2\mu\|x - x^*\|^2) \le \|f'(x)\|^2/(2\mu)$. When the
   minimizer lies in the interior of the feasible region, Frank–Wolfe atoms satisfy the scaling
   condition $f'(x)(x - v) \ge r\|f'(x)\|$, and short steps or exact line search converge linearly
-  for gradient dominated objectives. Two lemmas turn linear and power-type contractions of a
-  sequence into convergence rates. The statements hold in real normed spaces.
+  for gradient dominated objectives. Three lemmas turn linear, power-type and mixed contractions
+  of a sequence into convergence rates. The statements hold in real normed spaces.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -60,3 +60,7 @@ exports:
     kind: theorem
     page: index.md
     label: lem-conditional-gradient-basics-contraction-power
+  - name: Lemmata.CGBasics.contraction_mixed
+    kind: theorem
+    page: index.md
+    label: lem-conditional-gradient-basics-contraction-mixed
