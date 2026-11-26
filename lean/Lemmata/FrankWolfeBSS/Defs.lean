@@ -55,4 +55,31 @@ open Classical in
 noncomputable def pdShortStep (L G : ℝ) (x v : E) : ℝ :=
   if v = x then 1 else min 1 (G / (L * ‖v - x‖ ^ 2))
 
+/-- The averaged derivative of heavy-ball Frank–Wolfe: `ḡ₀ = f'(x₀)` and
+`ḡ_{t+1} = (1 - γ_{t+1}) ḡ_t + γ_{t+1} f'(x_{t+1})`, that is `(1/A_t) ∑_{ℓ ≤ t} a_ℓ f'(x_ℓ)`. -/
+noncomputable def hbDir (f' : E → StrongDual ℝ E) (x : ℕ → E) (γ : ℕ → ℝ) : ℕ → StrongDual ℝ E
+  | 0 => f' (x 0)
+  | t + 1 => (1 - γ (t + 1)) • hbDir f' x γ t + γ (t + 1) • f' (x (t + 1))
+
+/-- The averaged constant term of heavy-ball Frank–Wolfe: `c₀ = f(x₀) - f'(x₀)(x₀)` and
+`c_{t+1} = (1 - γ_{t+1}) c_t + γ_{t+1} (f(x_{t+1}) - f'(x_{t+1})(x_{t+1}))`, so that
+`c_t + ḡ_t(y)` is the average of the linear models `f(x_ℓ) + f'(x_ℓ)(y - x_ℓ)`. -/
+noncomputable def hbConst (f : E → ℝ) (f' : E → StrongDual ℝ E) (x : ℕ → E) (γ : ℕ → ℝ) :
+    ℕ → ℝ
+  | 0 => f (x 0) - f' (x 0) (x 0)
+  | t + 1 => (1 - γ (t + 1)) * hbConst f f' x γ t +
+      γ (t + 1) * (f (x (t + 1)) - f' (x (t + 1)) (x (t + 1)))
+
+/-- A heavy-ball Frank–Wolfe run on `C`: as a Frank–Wolfe run, except that every `v t` minimizes
+the averaged derivative `hbDir f' x γ t` over `C`. -/
+def IsHBRun (C : Set E) (f' : E → StrongDual ℝ E) (x v : ℕ → E) (γ : ℕ → ℝ) : Prop :=
+  x 0 ∈ C ∧ ∀ t, v t ∈ C ∧ (∀ y ∈ C, hbDir f' x γ t (v t) ≤ hbDir f' x γ t y) ∧
+    γ t ∈ Set.Icc (0 : ℝ) 1 ∧ x (t + 1) = x t + γ t • (v t - x t)
+
+/-- The primal-dual gap of heavy-ball Frank–Wolfe: `G_t = f(x_{t+1}) - L_t` with the lower bound
+`L_t = c_t + ḡ_t(v_t) = min_{y ∈ C} (c_t + ḡ_t(y))`. -/
+noncomputable def hbGap (f : E → ℝ) (f' : E → StrongDual ℝ E) (x v : ℕ → E) (γ : ℕ → ℝ)
+    (t : ℕ) : ℝ :=
+  f (x (t + 1)) - (hbConst f f' x γ t + hbDir f' x γ t (v t))
+
 end Lemmata.FrankWolfeBSS

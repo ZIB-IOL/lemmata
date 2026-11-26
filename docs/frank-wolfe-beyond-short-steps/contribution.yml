@@ -14,8 +14,9 @@ abstract: >-
   whose right-hand side is convex in the step size. Choosing every step size as the open-loop step,
   as the primal-dual short step $\min\{1, G_{t-1}/(L\|v_t - x_t\|^2)\}$, or by a line search on that
   right-hand side gives $G_t \le 2LD^2/(t+2)$ for a convex $L$-smooth objective on a compact convex
-  set of diameter $D$. The statements hold for every Frank–Wolfe run in real normed spaces, for
-  any tie-breaking of the oracle.
+  set of diameter $D$. The same holds for heavy-ball Frank–Wolfe, whose lower bound minimizes the
+  average of the linear models. The statements hold for every run in real normed spaces, for any
+  tie-breaking of the oracle.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -66,3 +67,23 @@ exports:
     kind: theorem
     page: index.md
     label: prop-frank-wolfe-beyond-short-steps-short-step
+  - name: Lemmata.FrankWolfeBSS.IsHBRun
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-beyond-short-steps-hb-run
+  - name: Lemmata.FrankWolfeBSS.hbGap
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-beyond-short-steps-hb-gap
+  - name: Lemmata.FrankWolfeBSS.heavy_ball_gap_bounds_primal
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-beyond-short-steps-hb-valid
+  - name: Lemmata.FrankWolfeBSS.heavy_ball_gap_recursion
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-beyond-short-steps-hb-recursion
+  - name: Lemmata.FrankWolfeBSS.heavy_ball_rate
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-beyond-short-steps-hb-rate

@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-26
 
+- **Updated entry:** [Beyond short steps in Frank–Wolfe algorithms](frank-wolfe-beyond-short-steps/index.md), adding heavy-ball Frank–Wolfe with the same primal-dual rate $2LD^2/(t+2)$ and an interactive comparison of the step-size rules.
 - **New entry:** [Beyond short steps in Frank–Wolfe algorithms](frank-wolfe-beyond-short-steps/index.md), proving that Frank–Wolfe with primal-dual short steps, line search on the primal-dual gap or open-loop steps, mixed freely, has a computable primal-dual gap of at most $2LD^2/(t+2)$.
 - **Updated entry:** [The Frank–Wolfe algorithm: a short introduction](frank-wolfe-introduction/index.md), adding the Frank–Wolfe gap bound $6.75\,LD^2/(t+2)$ of Theorem 4.5, the adaptive step-size lemmas 4.9–4.11 and the approximate Carathéodory theorem 5.1 in $\ell_p$, $p \ge 2$.
 - **New entry:** [The Frank–Wolfe algorithm: a short introduction](frank-wolfe-introduction/index.md), proving first-order optimality, a lower bound for any step sizes and the convergence for nonconvex objectives, with the gap inequalities, primal progress and the $O(1/t)$ rate bound to the core.

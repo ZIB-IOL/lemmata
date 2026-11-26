@@ -117,12 +117,91 @@ open-loop step instead: each of them gives
 $G_t \le (1 - s) G_{t-1} + s^2 \frac{L}{2} D^2$ at $s = 2/(t+2)$, and this recursion gives the
 constant $2$. It is the same rate as the classical primal analysis, now for a computable gap.
 
+## Racing the rules
+
+The widget runs Frank–Wolfe with five step-size rules from the same start, on
+$f(x) = \frac12 (x - c)^\top Q (x - c)$ with $Q = \operatorname{diag}(1, \mu)$, so $L = 1$. The chart
+shows the computable gap $G_t$ of every rule on log–log axes, with the guarantee $2LD^2/(t+2)$
+dashed. Drag $c$, switch the region and the objective, and toggle the rules.
+
+```{anywidget} ./widgets/pd.mjs
+:css: ./widgets/pd.css
+{"region": "square", "objective": "elongated", "cx": 1.35, "cy": 0.55, "rules": "open,short,pd,ls,hb", "primal": false}
+```
+
+Things to try:
+
+- **Classical short step.** Its own gap, built from its own step sizes, can stall far above the
+  guarantee: when $v_t = x_t$ the short step is $0$, so new lower bounds get no weight. With $c$
+  near a corner of the square, the iterate reaches $x^*$ at once and the gap never moves. The
+  primal-dual short step takes $\gamma_t = 1$ there and certifies optimality immediately.
+- **Elongated objective.** The smoothness bound with $L = 1$ overestimates the curvature along the
+  second axis, so line search on the primal-dual gap pulls ahead of the primal-dual short step.
+  With the round objective the bound is exact and the two rules coincide.
+- **Heavy ball.** Averaging the gradients gives a tighter lower bound, and its gap is often the
+  smallest.
+- **Primal gaps.** Switch them on to see $f(x_{t+1}) - f(x^*) \le G_t$ for every rule.
+
+## Heavy-ball Frank–Wolfe
+
+Heavy-ball Frank–Wolfe asks the oracle about the average of the derivatives seen so far instead
+of the current one, and its lower bound minimizes the average of the linear models.
+
+```{prf:definition} Heavy-ball run
+:label: def-frank-wolfe-beyond-short-steps-hb-run
+:nonumber:
+
+Let $\bar g_0 = f'(x_0)$ and $\bar g_t = (1 - \gamma_t)\bar g_{t-1} + \gamma_t f'(x_t)$. A
+*heavy-ball run* is a run in which every $v_t$ minimizes $\bar g_t$ over $C$ instead of
+$f'(x_t)$.
+```
+
+```{prf:definition} Heavy-ball primal-dual gap
+:label: def-frank-wolfe-beyond-short-steps-hb-gap
+:nonumber:
+
+Let $c_0 = f(x_0) - f'(x_0)(x_0)$ and $c_t = (1 - \gamma_t) c_{t-1} + \gamma_t (f(x_t) - f'(x_t)(x_t))$,
+so that $c_t + \bar g_t(y)$ is the weighted average of the linear models
+$f(x_\ell) + f'(x_\ell)(y - x_\ell)$. The lower bound is $L_t = c_t + \bar g_t(v_t)$, the minimum of
+this average over $C$, and the gap is $G_t = f(x_{t+1}) - L_t$.
+```
+
+```{prf:lemma} The heavy-ball gap bounds the primal gap
+:label: lem-frank-wolfe-beyond-short-steps-hb-valid
+:nonumber:
+
+For a convex differentiable $f$ and every heavy-ball run, $f(x_{t+1}) - f(y) \le G_t$ for all
+$y \in C$.
+```
+
+```{prf:proposition} Heavy-ball gap recursion
+:label: prop-frank-wolfe-beyond-short-steps-hb-recursion
+:enumerator: 4.1
+
+For every heavy-ball run and $t \ge 1$,
+$G_t \le (1 - \gamma_t) G_{t-1} - \gamma_t f'(x_t)(v_t - x_t) - f(x_t) + f(x_t + \gamma_t (v_t - x_t))$.
+```
+
+```{prf:proposition} Heavy-ball rate
+:label: prop-frank-wolfe-beyond-short-steps-hb-rate
+:enumerator: 4.1
+
+Under the assumptions of the rate for Frank–Wolfe, every heavy-ball run with $\gamma_0 = 1$
+whose later step sizes follow the same three rules, for its own gap, satisfies
+$G_t \le 2LD^2/(t+2)$.
+```
+
+For open-loop steps a heavy-ball run is defined step by step. For the two adaptive rules the atom
+$v_t$ depends on $\gamma_t$ through $\bar g_t$, while $\gamma_t$ is computed from $v_t$, so these
+rules are conditions that a run satisfies rather than a procedure; the proposition holds for every
+run that satisfies them. Both rates come from one lemma: any sequence with
+$G_t \le (1 - \gamma_t) G_{t-1} - \gamma_t f'(x_t)(v_t - x_t) - f(x_t) + f(x_t + \gamma_t (v_t - x_t))$
+and $G_0 \le \frac{L}{2}D^2$ whose steps follow the three rules satisfies $G_t \le 2LD^2/(t+2)$.
+
 ## Not yet covered
 
-The optimistic Frank–Wolfe algorithm (Theorem 3.1), primal-dual short steps for gradient descent
-(Proposition 4.2), and the heavy-ball variant of Proposition 4.1 are not formalized here. For the
-heavy-ball variant with adaptive steps, the atom $v_t$ minimizes a weighted sum of past gradients
-whose weights depend on $\gamma_t$, so the run is not of the form above.
+The optimistic Frank–Wolfe algorithm (Theorem 3.1) and primal-dual short steps for gradient
+descent (Proposition 4.2) are not formalized here.
 
 ## The formal statements at a glance
 

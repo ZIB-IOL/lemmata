@@ -111,6 +111,58 @@ theorem rate_step (K : ℝ) (hK : 0 ≤ K) (t : ℝ) (ht : 0 ≤ t) :
   have : 0 ≤ 2 * K / ((t + 2) * (t + 3) ^ 2) := by positivity
   linarith
 
+/-- The rate from the gap inequality: any sequence `G` with `G₀ ≤ L/2 D²` and
+`G_{t+1} ≤ pdBound (G_t) (γ_{t+1})`, whose steps follow one of the three rules, satisfies
+`G_t ≤ 2 L D²/(t + 2)`. -/
+theorem rate_of_gap_bound {f : E → ℝ} {L : NNReal} (hsm : IsSmooth f L) {x v : ℕ → E}
+    {γ : ℕ → ℝ} {G : ℕ → ℝ} {D : ℝ}
+    (hdist : ∀ t, ‖v t - x t‖ ^ 2 ≤ D ^ 2) (hbase : G 0 ≤ L / 2 * D ^ 2)
+    (hrec : ∀ t, G (t + 1) ≤ pdBound f (fderiv ℝ f) (G t) (x (t + 1)) (v (t + 1)) (γ (t + 1)))
+    (hrule : ∀ t : ℕ,
+      γ (t + 1) = 2 / ((t : ℝ) + 3) ∨
+      (∀ s ∈ Set.Icc (0 : ℝ) 1,
+        pdSmoothBound L (G t) (x (t + 1)) (v (t + 1)) (γ (t + 1)) ≤
+          pdSmoothBound L (G t) (x (t + 1)) (v (t + 1)) s) ∨
+      (∀ s ∈ Set.Icc (0 : ℝ) 1,
+        pdBound f (fderiv ℝ f) (G t) (x (t + 1)) (v (t + 1)) (γ (t + 1)) ≤
+          pdBound f (fderiv ℝ f) (G t) (x (t + 1)) (v (t + 1)) s)) :
+    ∀ t : ℕ, G t ≤ 2 * L * D ^ 2 / ((t : ℝ) + 2) := by
+  have hL0 : (0 : ℝ) ≤ L := L.2
+  have hK : 0 ≤ (L : ℝ) * D ^ 2 := mul_nonneg hL0 (sq_nonneg D)
+  intro t
+  induction t with
+  | zero =>
+    rw [Nat.cast_zero, zero_add]
+    have e : (2 : ℝ) * L * D ^ 2 / 2 = L * D ^ 2 := by ring
+    rw [e]
+    linarith
+  | succ t ih =>
+    set s0 : ℝ := 2 / ((t : ℝ) + 3) with hs0
+    have ht0 : (0 : ℝ) ≤ t := Nat.cast_nonneg t
+    have hs0I : s0 ∈ Set.Icc (0 : ℝ) 1 :=
+      ⟨by positivity, by rw [hs0, div_le_one (by positivity)]; linarith⟩
+    have hkey : G (t + 1) ≤ pdSmoothBound L (G t) (x (t + 1)) (v (t + 1)) s0 := by
+      refine (hrec t).trans ?_
+      rcases hrule t with h1 | h2 | h3
+      · rw [h1]; exact pdBound_le_smooth hsm _ _ _ _
+      · exact (pdBound_le_smooth hsm _ _ _ _).trans (h2 s0 hs0I)
+      · exact (h3 s0 hs0I).trans (pdBound_le_smooth hsm _ _ _ _)
+    simp only [pdSmoothBound] at hkey
+    have hA : (1 - s0) * G t ≤ (1 - s0) * (2 * L * D ^ 2 / ((t : ℝ) + 2)) :=
+      mul_le_mul_of_nonneg_left ih (sub_nonneg.mpr hs0I.2)
+    have hB : s0 ^ 2 * (L / 2) * ‖v (t + 1) - x (t + 1)‖ ^ 2 ≤ s0 ^ 2 * (L / 2) * D ^ 2 :=
+      mul_le_mul_of_nonneg_left (hdist (t + 1)) (by positivity)
+    have hstep := rate_step (L * D ^ 2) hK t ht0
+    have ecast : ((t + 1 : ℕ) : ℝ) + 2 = (t : ℝ) + 3 := by push_cast; ring
+    rw [ecast]
+    have e1 : s0 ^ 2 * (L / 2) * D ^ 2 = (2 / ((t : ℝ) + 3)) ^ 2 * (L * D ^ 2) / 2 := by
+      rw [hs0]; ring
+    have e2 : (1 - s0) * (2 * L * D ^ 2 / ((t : ℝ) + 2)) =
+        (1 - 2 / ((t : ℝ) + 3)) * (2 * (L * D ^ 2) / ((t : ℝ) + 2)) := by
+      rw [hs0]; ring
+    have e3 : 2 * (L * D ^ 2) / ((t : ℝ) + 3) = 2 * L * D ^ 2 / ((t : ℝ) + 3) := by ring
+    linarith
+
 theorem primal_dual_rate : PrimalDualRate.{u} := by
   intro E _ _ C f L x v γ hC hCc hconv hsm h hγ0 hrule
   have hbdd := hC.isBounded
@@ -118,51 +170,16 @@ theorem primal_dual_rate : PrimalDualRate.{u} := by
   have hdist : ∀ t, ‖v t - x t‖ ^ 2 ≤ Metric.diam C ^ 2 := fun t =>
     pow_le_pow_left₀ (norm_nonneg _)
       (by rw [← dist_eq_norm]; exact Metric.dist_le_diam_of_mem hbdd (h.2 t).1 (hxC t)) 2
-  have hL0 : (0 : ℝ) ≤ L := L.2
-  intro t
-  induction t with
-  | zero =>
-    have hx1 : x 1 = v 0 := by rw [(h.2 0).2.2.2, hγ0, one_smul, add_sub_cancel]
-    have hd := hsm.le_quadratic (x 0) (v 0)
-    have hD := mul_le_mul_of_nonneg_left (hdist 0) hL0
-    have hD2 : 0 ≤ (L : ℝ) * Metric.diam C ^ 2 := by positivity
-    have e : fderiv ℝ f (x 0) (x 0 - v 0) = -fderiv ℝ f (x 0) (v 0 - x 0) := by
-      rw [← map_neg, neg_sub]
-    show f (x (0 + 1)) - (f (x 0) - fderiv ℝ f (x 0) (x 0 - v 0)) ≤
-      2 * L * Metric.diam C ^ 2 / (((0 : ℕ) : ℝ) + 2)
-    rw [zero_add, hx1, e, Nat.cast_zero, zero_add]
-    linarith
-  | succ t ih =>
-    have hrec := gap_recursion C f x v γ h t
-    set G := pdGap f (fderiv ℝ f) x v γ t with hG
-    set s0 : ℝ := 2 / ((t : ℝ) + 3) with hs0
-    have ht0 : (0 : ℝ) ≤ t := Nat.cast_nonneg t
-    have hs0I : s0 ∈ Set.Icc (0 : ℝ) 1 :=
-      ⟨by positivity, by rw [hs0, div_le_one (by positivity)]; linarith⟩
-    have hkey : pdGap f (fderiv ℝ f) x v γ (t + 1) ≤
-        pdSmoothBound L G (x (t + 1)) (v (t + 1)) s0 := by
-      rw [hrec]
-      rcases hrule t with h1 | h2 | h3
-      · rw [h1]; exact pdBound_le_smooth hsm _ _ _ _
-      · exact (pdBound_le_smooth hsm _ _ _ _).trans (h2 s0 hs0I)
-      · exact (h3 s0 hs0I).trans (pdBound_le_smooth hsm _ _ _ _)
-    simp only [pdSmoothBound] at hkey
-    have hA : (1 - s0) * G ≤ (1 - s0) * (2 * L * Metric.diam C ^ 2 / ((t : ℝ) + 2)) :=
-      mul_le_mul_of_nonneg_left ih (sub_nonneg.mpr hs0I.2)
-    have hB : s0 ^ 2 * (L / 2) * ‖v (t + 1) - x (t + 1)‖ ^ 2 ≤
-        s0 ^ 2 * (L / 2) * Metric.diam C ^ 2 :=
-      mul_le_mul_of_nonneg_left (hdist (t + 1)) (by positivity)
-    have hstep := rate_step (L * Metric.diam C ^ 2) (by positivity) t ht0
-    have ecast : ((t + 1 : ℕ) : ℝ) + 2 = (t : ℝ) + 3 := by push_cast; ring
-    rw [ecast]
-    have e1 : s0 ^ 2 * (L / 2) * Metric.diam C ^ 2 = (2 / ((t : ℝ) + 3)) ^ 2 *
-        (L * Metric.diam C ^ 2) / 2 := by rw [hs0]; ring
-    have e2 : (1 - s0) * (2 * L * Metric.diam C ^ 2 / ((t : ℝ) + 2)) =
-        (1 - 2 / ((t : ℝ) + 3)) * (2 * (L * Metric.diam C ^ 2) / ((t : ℝ) + 2)) := by
-      rw [hs0]; ring
-    have e3 : 2 * (L * Metric.diam C ^ 2) / ((t : ℝ) + 3) =
-        2 * L * Metric.diam C ^ 2 / ((t : ℝ) + 3) := by ring
-    linarith
+  refine rate_of_gap_bound (G := pdGap f (fderiv ℝ f) x v γ) hsm hdist ?_
+    (fun t => (gap_recursion C f x v γ h t).le) hrule
+  have hx1 : x 1 = v 0 := by rw [(h.2 0).2.2.2, hγ0, one_smul, add_sub_cancel]
+  have hd := hsm.le_quadratic (x 0) (v 0)
+  have e : fderiv ℝ f (x 0) (x 0 - v 0) = -fderiv ℝ f (x 0) (v 0 - x 0) := by
+    rw [← map_neg, neg_sub]
+  show f (x (0 + 1)) - (f (x 0) - fderiv ℝ f (x 0) (x 0 - v 0)) ≤ L / 2 * Metric.diam C ^ 2
+  rw [zero_add, hx1, e]
+  have := mul_le_mul_of_nonneg_left (hdist 0) (by positivity : (0 : ℝ) ≤ L / 2)
+  linarith
 
 omit [NormedSpace ℝ E] in
 theorem pdShortStep_min {L G : ℝ} (hL : 0 < L) (hG : 0 ≤ G) (x v : E) :
@@ -201,6 +218,83 @@ theorem primal_dual_short_step_rate : PrimalDualShortStepRate.{u} := by
     linarith
   rw [hstep t]
   exact pdShortStep_min hL hG _ _
+
+/-! ### Heavy-ball Frank–Wolfe -/
+
+theorem hb_run_mem {C : Set E} {f' : E → StrongDual ℝ E} {x v : ℕ → E} {γ : ℕ → ℝ}
+    (hC : Convex ℝ C) (h : IsHBRun C f' x v γ) : ∀ t, x t ∈ C := by
+  intro t
+  induction t with
+  | zero => exact h.1
+  | succ t ih =>
+    obtain ⟨hv, -, hγ, hx⟩ := h.2 t
+    rw [hx]
+    exact hC.add_smul_sub_mem ih hv hγ
+
+theorem hbDir_succ_apply (f' : E → StrongDual ℝ E) (x : ℕ → E) (γ : ℕ → ℝ) (t : ℕ) (y : E) :
+    hbDir f' x γ (t + 1) y =
+      (1 - γ (t + 1)) * hbDir f' x γ t y + γ (t + 1) * f' (x (t + 1)) y := by
+  simp [hbDir]
+
+theorem hb_model_le {C : Set E} {f : E → ℝ} {x v : ℕ → E} {γ : ℕ → ℝ}
+    (hconv : ConvexOn ℝ Set.univ f) (hf : Differentiable ℝ f)
+    (h : IsHBRun C (fderiv ℝ f) x v γ) (y : E) :
+    ∀ t, hbConst f (fderiv ℝ f) x γ t + hbDir (fderiv ℝ f) x γ t y ≤ f y := by
+  intro t
+  induction t with
+  | zero =>
+    have h1 := add_fderiv_le_of_convexOn hconv hf (x 0) y
+    rw [map_sub] at h1
+    show f (x 0) - fderiv ℝ f (x 0) (x 0) + fderiv ℝ f (x 0) y ≤ f y
+    linarith
+  | succ t ih =>
+    have hγ := (h.2 (t + 1)).2.2.1
+    have h1 := add_fderiv_le_of_convexOn hconv hf (x (t + 1)) y
+    rw [map_sub] at h1
+    rw [hbDir_succ_apply]
+    show (1 - γ (t + 1)) * hbConst f (fderiv ℝ f) x γ t +
+        γ (t + 1) * (f (x (t + 1)) - fderiv ℝ f (x (t + 1)) (x (t + 1))) +
+        ((1 - γ (t + 1)) * hbDir (fderiv ℝ f) x γ t y + γ (t + 1) * fderiv ℝ f (x (t + 1)) y) ≤
+      f y
+    nlinarith [mul_le_mul_of_nonneg_left ih (sub_nonneg.mpr hγ.2),
+      mul_le_mul_of_nonneg_left h1 hγ.1]
+
+theorem hb_gap_bounds_primal : HeavyBallGapBoundsPrimal.{u} := by
+  intro E _ _ C f x v γ hconv hf h y hy t
+  have h1 := hb_model_le hconv hf h y t
+  have h2 := (h.2 t).2.1 y hy
+  unfold hbGap
+  linarith
+
+theorem hb_gap_recursion : HeavyBallGapRecursion.{u} := by
+  intro E _ _ C f x v γ h t
+  have hx := (h.2 (t + 1)).2.2.2
+  have hγ := (h.2 (t + 1)).2.2.1
+  have hmin := (h.2 t).2.1 (v (t + 1)) (h.2 (t + 1)).1
+  have hc : hbConst f (fderiv ℝ f) x γ (t + 1) =
+      (1 - γ (t + 1)) * hbConst f (fderiv ℝ f) x γ t +
+        γ (t + 1) * (f (x (t + 1)) - fderiv ℝ f (x (t + 1)) (x (t + 1))) := rfl
+  unfold hbGap pdBound
+  rw [hc, hbDir_succ_apply, hx, map_sub]
+  nlinarith [mul_le_mul_of_nonneg_left hmin (sub_nonneg.mpr hγ.2)]
+
+theorem hb_rate : HeavyBallRate.{u} := by
+  intro E _ _ C f L x v γ hC hCc hconv hsm h hγ0 hrule
+  have hbdd := hC.isBounded
+  have hxC := hb_run_mem hCc h
+  have hdist : ∀ t, ‖v t - x t‖ ^ 2 ≤ Metric.diam C ^ 2 := fun t =>
+    pow_le_pow_left₀ (norm_nonneg _)
+      (by rw [← dist_eq_norm]; exact Metric.dist_le_diam_of_mem hbdd (h.2 t).1 (hxC t)) 2
+  refine rate_of_gap_bound (G := hbGap f (fderiv ℝ f) x v γ) hsm hdist ?_
+    (hb_gap_recursion C f x v γ h) hrule
+  have hx1 : x 1 = v 0 := by rw [(h.2 0).2.2.2, hγ0, one_smul, add_sub_cancel]
+  have hd := hsm.le_quadratic (x 0) (v 0)
+  rw [map_sub] at hd
+  show f (x (0 + 1)) - (f (x 0) - fderiv ℝ f (x 0) (x 0) + fderiv ℝ f (x 0) (v 0)) ≤
+    L / 2 * Metric.diam C ^ 2
+  rw [zero_add, hx1]
+  have := mul_le_mul_of_nonneg_left (hdist 0) (by positivity : (0 : ℝ) ≤ L / 2)
+  linarith
 
 end Proof
 
