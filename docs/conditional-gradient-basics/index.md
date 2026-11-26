@@ -207,8 +207,9 @@ using $s^{-\alpha} \ge 1 + \alpha(1 - s)$ for $0 < s \le 1$.
 
 ## Not yet covered
 
-The lower bounds of Section 2.1.2 and the away-step and fully-corrective variants of Sections
-2.2.5 and 2.2.6 are not formalized here. Rates over uniformly convex sets are in
+The lower bounds of Section 2.1.2 are not formalized here. The away-step, fully-corrective and
+pairwise variants of Sections 2.2.5, 2.2.6 and 3.1.1 are in
+[Conditional gradient methods: away-step, fully-corrective and pairwise Frank–Wolfe](../away-step-frank-wolfe/index.md). Rates over uniformly convex sets are in
 [Frank–Wolfe beyond 1/t under local dual sharpness](../frank-wolfe-local-dual-sharpness/index.md),
 and the baseline results of Chapter 2 are in
 [The Frank–Wolfe algorithm: a short introduction](../frank-wolfe-introduction/index.md).

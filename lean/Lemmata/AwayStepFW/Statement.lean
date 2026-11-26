@@ -101,4 +101,19 @@ def PyramidalWidthLowerBound : Prop :=
       0 < ∑ i ∈ I, (b i - a i v) ∧ r = (∑ i ∈ I, (b i - a i v)) / ‖∑ i ∈ I, a i‖} ≤
       pyramidalWidth V
 
+/-- **Theorem 3.2** (linear convergence of pairwise Frank–Wolfe). Under the assumptions of
+`AwayStepConvergence`, every run of pairwise Frank–Wolfe satisfies
+`f(x_t) - f(x⋆) ≤ (1 - min {1/2, μ δ² / (L D²)})^⌊(t-1)/(2|V|! + 2)⌋ L D²/2` for `t ≥ 1`. -/
+def PairwiseConvergence : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ) (L : NNReal)
+    (μ δ : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ),
+    0 < (L : ℝ) → 0 < μ → 0 < δ → IsScaling V δ → ConvexOn ℝ Set.univ f → IsSmooth f L →
+    (∀ x ∈ convexHull ℝ (↑V : Set E), ∀ y ∈ convexHull ℝ (↑V : Set E),
+      f x + fderiv ℝ f x (y - x) + μ / 2 * ‖y - x‖ ^ 2 ≤ f y) →
+    IsPFWRun V f L x S lam →
+    ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f, ∀ t : ℕ, 1 ≤ t →
+      f (x t) - f xStar ≤
+        (1 - min (1 / 2) (μ * δ ^ 2 / (L * Metric.diam (↑V : Set E) ^ 2))) ^
+            ((t - 1) / (2 * V.card.factorial + 2)) * (L * Metric.diam (↑V : Set E) ^ 2 / 2)
+
 end Lemmata.AwayStepFW

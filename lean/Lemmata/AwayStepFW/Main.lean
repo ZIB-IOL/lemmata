@@ -6,6 +6,7 @@ public import Lemmata.AwayStepFW.FCFW
 public import Lemmata.AwayStepFW.FacialDistance
 public import Lemmata.AwayStepFW.PyramidalEq
 public import Lemmata.AwayStepFW.LowerBound
+public import Lemmata.AwayStepFW.PairwiseRate
 
 @[expose] public section
 
@@ -40,6 +41,9 @@ theorem pyramidal_width_lower_bound : PyramidalWidthLowerBound := by
   intro E _ _ _ V ι _ a b hprop hfeas hcut
   rw [Proof.pyramidalWidth_eq_facialDistance V]
   exact Proof.lowerBound_le_facialDistance V a b hprop hfeas hcut
+
+/-- Theorem 3.2: linear convergence of pairwise Frank–Wolfe. -/
+theorem pairwise_convergence : PairwiseConvergence := Proof.pairwise_convergence
 -- DOCS_END_MAIN
 
 end Lemmata.AwayStepFW

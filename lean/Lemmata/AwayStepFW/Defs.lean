@@ -78,4 +78,25 @@ noncomputable def facialDistance (V : Finset E) : ℝ :=
     ∃ p ∈ convexHull ℝ (↑(exposedFace V ψ) : Set E),
       ∃ q ∈ convexHull ℝ (↑(V \ exposedFace V ψ) : Set E), r = ‖p - q‖}
 
+open Classical in
+/-- One step of pairwise Frank–Wolfe (Algorithm 3.1 of the book): move the weight
+`γ = min {g(a - v) / (L ‖a - v‖²), λ_a}` from the away vertex `a` to the Frank–Wolfe vertex `v`,
+and drop `a` from the active set when its weight is used up. -/
+def IsPFWStep (L : ℝ) (g : StrongDual ℝ E) (x : E) (S : Finset E) (lam : E → ℝ) (v a : E)
+    (x' : E) (S' : Finset E) (lam' : E → ℝ) : Prop :=
+  let γ := min (g (a - v) / (L * ‖a - v‖ ^ 2)) (lam a)
+  x' = x - γ • (a - v) ∧
+    lam' = (fun w => lam w - (if w = a then γ else 0) + (if w = v then γ else 0)) ∧
+    S' = if γ = lam a then (insert v S).erase a else insert v S
+
+open Classical in
+/-- A run of pairwise Frank–Wolfe on `conv V`: it starts at a vertex with active set `{x₀}` and
+weight `1`, and every step is a pairwise step with some Frank–Wolfe vertex and some away vertex. -/
+def IsPFWRun (V : Finset E) (f : E → ℝ) (L : ℝ) (x : ℕ → E) (S : ℕ → Finset E)
+    (lam : ℕ → E → ℝ) : Prop :=
+  x 0 ∈ V ∧ S 0 = {x 0} ∧ lam 0 = (fun w => if w = x 0 then 1 else 0) ∧
+    ∀ t, ∃ v ∈ V, (∀ w ∈ V, fderiv ℝ f (x t) v ≤ fderiv ℝ f (x t) w) ∧
+      ∃ a ∈ S t, (∀ w ∈ S t, fderiv ℝ f (x t) w ≤ fderiv ℝ f (x t) a) ∧
+        IsPFWStep L (fderiv ℝ f (x t)) (x t) (S t) (lam t) v a (x (t + 1)) (S (t + 1)) (lam (t + 1))
+
 end Lemmata.AwayStepFW

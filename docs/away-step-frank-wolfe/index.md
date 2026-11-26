@@ -1,5 +1,5 @@
 ---
-title: "Conditional gradient methods: away-step and fully-corrective Frank–Wolfe"
+title: "Conditional gradient methods: away-step, fully-corrective and pairwise Frank–Wolfe"
 numbering:
   headings: false
 ---
@@ -10,8 +10,8 @@ numbering:
 :::{note}
 This entry comes from the book *Conditional Gradient Methods: From Core Principles to AI
 Applications* by Gábor Braun, Alejandro Carderera, Cyrille W. Combettes, Hamed Hassani, Amin
-Karbasi, Aryan Mokhtari and Sebastian Pokutta [@braun2025conditional]. It formalizes Sections 2.2.5
-and 2.2.6; numbers refer to the arXiv version [@braun2022conditional].
+Karbasi, Aryan Mokhtari and Sebastian Pokutta [@braun2025conditional]. It formalizes Sections 2.2.5,
+2.2.6 and 3.1.1; numbers refer to the arXiv version [@braun2022conditional].
 :::
 
 :::{admonition} Errata
@@ -30,11 +30,12 @@ $\sqrt{|I|}$.
 Over a polytope, the Frank–Wolfe algorithm converges only at the rate $O(1/t)$ when the minimizer
 lies on a face: the iterates zig-zag between vertices of that face, because the algorithm can only
 move toward vertices and never away from them. Away steps [@guelat1986some] remove weight from a
-vertex that is currently used, and fully-corrective steps reoptimize over all vertices used so far.
-With the pyramidal width of @lacostejulien2015global as the measure of the polytope's geometry,
-both variants converge linearly for smooth strongly convex objectives. This entry formalizes
-Sections 2.2.5 and 2.2.6 of the book *Conditional Gradient Methods* [@braun2025conditional], in the
-numbering of its arXiv version, for a polytope $P = \operatorname{conv} V$ with $V$ a finite set in a
+vertex that is currently used, fully-corrective steps reoptimize over all vertices used so far, and
+pairwise steps move weight directly from one vertex to another. With the pyramidal width of
+@lacostejulien2015global as the measure of the polytope's geometry, all three variants converge
+linearly for smooth strongly convex objectives. This entry formalizes Sections 2.2.5, 2.2.6 and
+3.1.1 of the book *Conditional Gradient Methods* [@braun2025conditional], in the numbering of its
+arXiv version, for a polytope $P = \operatorname{conv} V$ with $V$ a finite set in a
 real normed space. The objects are those of [Frank–Wolfe: the core](../frank-wolfe-core/index.md).
 
 ## Pyramidal width
@@ -200,18 +201,47 @@ At a minimizer over the convex hull of the active set, every vertex carrying wei
 value of $f'(x_t)$, so the away gap vanishes on these vertices and the Frank–Wolfe gap alone
 controls the primal gap. There are no drop steps.
 
+## Pairwise Frank–Wolfe
+
+The pairwise variant of Section 3.1.1 combines the two steps of away-step Frank–Wolfe: it moves
+weight from the away vertex directly to the Frank–Wolfe vertex.
+
+```{prf:definition} Pairwise Frank–Wolfe run
+:label: def-away-step-frank-wolfe-pfw
+:nonumber:
+
+A run starts at a vertex with weight $1$. In each step, with a Frank–Wolfe vertex $v_t$ and an away
+vertex $a_t$ of the active set, the weight $\gamma_t = \min\{f'(x_t)(a_t - v_t)/(L\|a_t - v_t\|^2),
+\lambda_{a_t}\}$ moves from $a_t$ to $v_t$, so $x_{t+1} = x_t + \gamma_t (v_t - a_t)$, and $a_t$
+leaves the active set when its weight is used up, as in Algorithm 3.1.
+```
+
+```{prf:theorem} Linear convergence of pairwise Frank–Wolfe
+:label: thm-away-step-frank-wolfe-pairwise
+:enumerator: 3.2
+
+Under the assumptions of Theorem 2.29, every run satisfies
+$f(x_t) - f(x^*) \le (1 - \min\{1/2, \mu\delta^2/(LD^2)\})^{\lfloor (t-1)/(2|V|! + 2) \rfloor}
+LD^2/2$ for $t \ge 1$.
+```
+
+A step whose weight is not used up is a good step: by Lemma 2.27 it contracts the primal gap. A
+step that uses up the weight of the away vertex is a drop step if the Frank–Wolfe vertex is already
+active, and a swap step otherwise. Drop steps shrink the active set, so they cannot outnumber good
+steps by more than one. A swap step moves the whole weight of one vertex to a new vertex: the
+weights are permuted while $f$ strictly decreases, so no weight vector repeats, and fewer than
+$|V|!$ swap steps can follow each other.
+
 :::{note}
 **Differences from the book.** The theorems are stated for any constant $\delta > 0$ with the
 scaling property, in particular the pyramidal width. In Theorem 2.29 the contraction factor is
 $1 - \min\{1/2, \mu\delta^2/(4LD^2)\}$; the book's $1 - \mu\delta^2/(4LD^2)$ is the same whenever
 $\mu\delta^2 \le 2LD^2$, which its proof uses. The exponent is $\lfloor (t-1)/2 \rfloor$ instead of
 the book's $\lceil (t-1)/2 \rceil$: after the first step the active set can contain two vertices, and
-the formal count of drop steps allows one more drop step than good steps.
+the formal count of drop steps allows one more drop step than good steps. In Theorem 3.2 the
+exponent is $\lfloor (t-1)/(2|V|! + 2) \rfloor$; the book's $(t-1)/(3|V|! + 1)$ is never larger,
+up to rounding down.
 :::
-
-## Not yet covered
-
-The pairwise variant of Section 3.1 is not formalized here.
 
 ## The formal statements at a glance
 
