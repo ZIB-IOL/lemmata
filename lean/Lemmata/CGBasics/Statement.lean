@@ -110,4 +110,22 @@ def ContractionMixed : Prop :=
       h t ≤ (c₁ / c₂) ^ (1 / α) / (1 + c₁ * α * ((t : ℝ) -
         (max (⌊Real.logb (1 - c₁) ((c₁ / c₂) ^ (1 / α) / c₀)⌋ + 2) 1 : ℤ))) ^ (1 / α))
 
+/-- **Theorem 2.6** (approximate linear minimization). Let `C` be compact and convex with diameter
+`D`, `f` convex and `L`-smooth, and `δ ≥ 0`. Take a Frank–Wolfe run in which `v_t ∈ C` minimizes
+`f'(x_t)` over `C` up to the additive error `L D² δ / (t + 3)`, and every step `γ_t ∈ [0, 1]` does
+at least as well as every `s ∈ [0, 1]` in the smoothness bound (short steps clipped to `[0, 1]` and
+exact line search qualify). Then `f(x_t) - f(x⋆) ≤ 2 L D² (1 + δ) / (t + 3)` for `t ≥ 1`. -/
+def ApproximateOracleRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (L : NNReal)
+    (δ : ℝ) (x v : ℕ → E) (γ : ℕ → ℝ),
+    IsCompact C → Convex ℝ C → ConvexOn ℝ Set.univ f → IsSmooth f L → 0 ≤ δ → x 0 ∈ C →
+    (∀ t : ℕ, v t ∈ C ∧
+      (∀ y ∈ C, fderiv ℝ f (x t) (v t) ≤
+        fderiv ℝ f (x t) y + L * Metric.diam C ^ 2 * δ / ((t : ℝ) + 3)) ∧
+      γ t ∈ Set.Icc (0 : ℝ) 1 ∧ x (t + 1) = x t + γ t • (v t - x t) ∧
+      ∀ s ∈ Set.Icc (0 : ℝ) 1, f (x (t + 1)) ≤
+        f (x t) - s * fderiv ℝ f (x t) (x t - v t) + s ^ 2 * L / 2 * ‖v t - x t‖ ^ 2) →
+    ∀ xStar ∈ minimizers C f, ∀ t : ℕ, 1 ≤ t →
+      f (x t) - f xStar ≤ 2 * L * Metric.diam C ^ 2 * (1 + δ) / ((t : ℝ) + 3)
+
 end Lemmata.CGBasics

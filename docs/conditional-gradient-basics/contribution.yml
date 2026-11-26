@@ -10,7 +10,8 @@ abstract: >-
   $O(1/t)$ rate of the Frank–Wolfe algorithm into faster rates. For convex functions, the
   quadratic upper bound of smoothness is equivalent to Lipschitz continuity of the derivative.
   For smooth, not necessarily convex functions, the Frank–Wolfe gap is at most $h + LD^2/2$ when
-  the primal gap $h$ is at least $LD^2/2$, and at most $D\sqrt{2Lh}$ otherwise. Strong convexity
+  the primal gap $h$ is at least $LD^2/2$, and at most $D\sqrt{2Lh}$ otherwise. An approximate
+  oracle with error $LD^2\delta/(t+3)$ still gives the rate $2LD^2(1+\delta)/(t+3)$. Strong convexity
   bounds the primal gap by $f'(x)(x - x^*)^2/(2\mu\|x - x^*\|^2) \le \|f'(x)\|^2/(2\mu)$. When the
   minimizer lies in the interior of the feasible region, Frank–Wolfe atoms satisfy the scaling
   condition $f'(x)(x - v) \ge r\|f'(x)\|$, and short steps or exact line search converge linearly
@@ -64,3 +65,7 @@ exports:
     kind: theorem
     page: index.md
     label: lem-conditional-gradient-basics-contraction-mixed
+  - name: Lemmata.CGBasics.approximate_oracle_rate
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-basics-approx

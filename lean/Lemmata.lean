@@ -5,6 +5,7 @@ module
 -- specific modules they need instead, which keeps the import graph acyclic.
 public import Lemmata.C19IsotropicSymbol.Main
 public import Lemmata.C19IsotropicSymbol.Statement
+public import Lemmata.CGBasics.Approx
 public import Lemmata.CGBasics.Interior
 public import Lemmata.CGBasics.Main
 public import Lemmata.CGBasics.Rates
