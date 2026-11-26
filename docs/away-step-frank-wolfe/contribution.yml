@@ -65,3 +65,11 @@ exports:
     kind: theorem
     page: index.md
     label: thm-away-step-frank-wolfe-fcfw
+  - name: Lemmata.AwayStepFW.facialDistance
+    kind: definition
+    page: index.md
+    label: def-away-step-frank-wolfe-facial
+  - name: Lemmata.AwayStepFW.facial_distance_is_scaling
+    kind: theorem
+    page: index.md
+    label: prop-away-step-frank-wolfe-facial

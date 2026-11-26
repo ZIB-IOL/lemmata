@@ -6,6 +6,7 @@ module
 public import Lemmata.AwayStepFW.Convergence
 public import Lemmata.AwayStepFW.Defs
 public import Lemmata.AwayStepFW.FCFW
+public import Lemmata.AwayStepFW.FacialDistance
 public import Lemmata.AwayStepFW.Geometry
 public import Lemmata.AwayStepFW.Invariants
 public import Lemmata.AwayStepFW.Main
@@ -502,6 +503,9 @@ public import Lemmata.FockCircuits.Wick
 public import Lemmata.FrankWolfe.Defs
 public import Lemmata.FrankWolfe.HilbertDefs
 public import Lemmata.FrankWolfe.Main
+public import Lemmata.FrankWolfe.Polytope.Cone
+public import Lemmata.FrankWolfe.Polytope.Defs
+public import Lemmata.FrankWolfe.Polytope.Faces
 public import Lemmata.FrankWolfe.Proof.Calculus
 public import Lemmata.FrankWolfe.Proof.Hilbert
 public import Lemmata.FrankWolfe.Proof.Interfaces

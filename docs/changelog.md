@@ -12,6 +12,8 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-26
 
+- **Updated entry:** [Conditional gradient methods: away-step and fully-corrective Frank–Wolfe](away-step-frank-wolfe/index.md), adding Proposition 2.31's lower bound: the facial distance is a scaling constant, so the linear rates hold with it.
+- **Updated entry:** [Frank–Wolfe: the core](frank-wolfe-core/index.md), adding polyhedral tools for later entries: closedness of finitely generated cones, the Farkas lemma, and exposed and minimal faces of polytopes.
 - **New entry:** [Conditional gradient methods: away-step and fully-corrective Frank–Wolfe](away-step-frank-wolfe/index.md), proving that the away-step and fully-corrective Frank–Wolfe algorithms converge linearly over polytopes for smooth strongly convex objectives, with rates governed by the pyramidal width.
 - **Updated entry:** [Conditional gradient methods: smoothness, scaling and linear rates](conditional-gradient-basics/index.md), adding Theorem 2.6 on approximate linear minimization, with the error normalized so that the stated rate $2LD^2(1+\delta)/(t+3)$ holds.
 - **Updated entry:** [Conditional gradient methods: smoothness, scaling and linear rates](conditional-gradient-basics/index.md), adding Lemma 2.21 on contractions of mixed type; the first bound holds before the cutoff $t_0$, and a counterexample shows it can fail at $t_0$.

@@ -1,5 +1,7 @@
 module
 
+public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
+public import Lemmata.FrankWolfe.Polytope.Defs
 public import Lemmata.FrankWolfe.HilbertDefs
 public import Mathlib.Topology.MetricSpace.Bounded
 
@@ -68,5 +70,22 @@ def StandardRateHilbert : Prop :=
         2 * L * Metric.diam C ^ 2 / (t + 2) ∧
       f (Hilbert.fwIterates lmo f (fun _ => σ) x₀ t) - f xStar ≤
         2 * L * Metric.diam C ^ 2 / (t + 2)
+
+/-- **Farkas lemma.** In a finite-dimensional real normed space, a point outside the cone generated
+by a finite set `G` is separated from it by a functional that is nonpositive on `G` and positive at
+the point. -/
+def FarkasLemma : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] (G : Finset E)
+    (x : E), x ∉ coneHull G → ∃ ψ : StrongDual ℝ E, (∀ g ∈ G, ψ g ≤ 0) ∧ 0 < ψ x
+
+/-- **The minimal face of a point of a polytope.** For `y ∈ conv V` in a finite-dimensional real
+normed space, the minimal face of `y` is an exposed face, its convex hull contains `y`, and every
+vertex `v` of it can be pushed away from: `(1 + γ) y - γ v ∈ conv V` for some `γ > 0`. -/
+def MinimalFace : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] (V : Finset E)
+    (y : E), y ∈ convexHull ℝ (↑V : Set E) →
+      (∃ Ψ : StrongDual ℝ E, (∀ u ∈ V, Ψ u ≤ Ψ y) ∧ minFace V y = exposedFace V Ψ) ∧
+      y ∈ convexHull ℝ (↑(minFace V y) : Set E) ∧
+      ∀ v ∈ minFace V y, ∃ γ : ℝ, 0 < γ ∧ (1 + γ) • y - γ • v ∈ convexHull ℝ (↑V : Set E)
 
 end Lemmata.FrankWolfe

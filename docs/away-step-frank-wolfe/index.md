@@ -68,6 +68,33 @@ The proof combines the primal gap bound via strong convexity of
 [Conditional gradient methods: smoothness, scaling and linear rates](../conditional-gradient-basics/index.md)
 with the scaling property at $y = x^*$.
 
+## Facial distance
+
+The pyramidal width is defined by an inequality over all directions. A geometric lower bound comes
+from the faces of the polytope, through the polyhedral tools of the core.
+
+```{prf:definition} Facial distance
+:label: def-away-step-frank-wolfe-facial
+:nonumber:
+
+The facial distance of $\operatorname{conv} V$ is the infimum of $\|p - q\|$ over proper exposed
+faces $F$, points $p \in \operatorname{conv} F$ and $q \in \operatorname{conv}(V \setminus F)$.
+```
+
+```{prf:proposition} Pyramidal width and facial distance
+:label: prop-away-step-frank-wolfe-facial
+:enumerator: 2.31
+
+In a finite-dimensional real normed space, the facial distance of $\operatorname{conv} V$ has the
+scaling property. Hence the pyramidal width is at least the facial distance, and Theorems 2.29 and
+2.34 hold with $\delta$ the facial distance.
+```
+
+The book proves equality in Euclidean space; the formal statement is the lower bound, which is the
+direction the convergence theorems use. The proof follows the book: by induction on the number of
+vertices of $S$ in the minimal face of $y$, pushing $x$ and $y$ away from a common vertex until
+either $y$ leaves the face of that vertex or the vertex drops out of the representation of $x$.
+
 ## Away-step Frank–Wolfe
 
 The algorithm keeps an active set $S_t \subseteq V$ with weights representing $x_t$. It compares the
@@ -135,8 +162,9 @@ the formal count of drop steps allows one more drop step than good steps.
 
 ## Not yet covered
 
-The characterization of the pyramidal width as a facial distance (Proposition 2.31), its lower
-bound (Corollary 2.32), and the pairwise variant of Section 3.1 are not formalized here.
+The reverse inequality of Proposition 2.31 (pyramidal width at most the facial distance), the lower
+bound of Corollary 2.32 in terms of an inequality description, and the pairwise variant of Section
+3.1 are not formalized here.
 
 ## The formal statements at a glance
 

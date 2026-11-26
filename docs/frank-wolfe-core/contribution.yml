@@ -79,3 +79,23 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-core-rate-hilbert
+  - name: Lemmata.FrankWolfe.coneHull
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-core-cone
+  - name: Lemmata.FrankWolfe.exposedFace
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-core-face
+  - name: Lemmata.FrankWolfe.minFace
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-core-minface
+  - name: Lemmata.FrankWolfe.farkas_lemma
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-core-farkas
+  - name: Lemmata.FrankWolfe.minimal_face
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-core-minface
