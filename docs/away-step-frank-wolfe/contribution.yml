@@ -77,3 +77,7 @@ exports:
     kind: theorem
     page: index.md
     label: prop-away-step-frank-wolfe-facial-eq
+  - name: Lemmata.AwayStepFW.pyramidal_width_lower_bound
+    kind: theorem
+    page: index.md
+    label: prop-away-step-frank-wolfe-lower

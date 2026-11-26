@@ -5,6 +5,7 @@ public import Lemmata.AwayStepFW.Convergence
 public import Lemmata.AwayStepFW.FCFW
 public import Lemmata.AwayStepFW.FacialDistance
 public import Lemmata.AwayStepFW.PyramidalEq
+public import Lemmata.AwayStepFW.LowerBound
 
 @[expose] public section
 
@@ -33,6 +34,12 @@ theorem facial_distance_is_scaling : FacialDistanceScaling := fun V =>
 /-- Proposition 2.31: the pyramidal width equals the facial distance. -/
 theorem pyramidal_width_eq_facial_distance : PyramidalWidthEqFacial := fun V =>
   Proof.pyramidalWidth_eq_facialDistance V
+
+/-- Corollary 2.32 (corrected): a lower bound on the pyramidal width from inequalities. -/
+theorem pyramidal_width_lower_bound : PyramidalWidthLowerBound := by
+  intro E _ _ _ V ι _ a b hprop hfeas hcut
+  rw [Proof.pyramidalWidth_eq_facialDistance V]
+  exact Proof.lowerBound_le_facialDistance V a b hprop hfeas hcut
 -- DOCS_END_MAIN
 
 end Lemmata.AwayStepFW

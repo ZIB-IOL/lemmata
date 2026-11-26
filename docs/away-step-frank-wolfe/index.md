@@ -14,6 +14,19 @@ Karbasi, Aryan Mokhtari and Sebastian Pokutta [@braun2025conditional]. It formal
 and 2.2.6; numbers refer to the arXiv version [@braun2022conditional].
 :::
 
+:::{admonition} Errata
+:class: warning
+
+**Corollary 2.32.** The book bounds the pyramidal width by $\min \|b_I - A_I v\| / \|A_I\|$ and
+justifies it by saying that this fraction bounds the distance between the face
+$F = \{A_I z = b_I\}$ and the convex hull of the other vertices. That holds for each vertex but
+not for their convex hull: in the triangle with vertices $(0,0)$, $(1,0)$, $(0,1)$ and the rows
+$-y \le 0$, $-x \le 0$, $x + y \le 1$, the face $\{(0,0)\}$ gives the fraction $1$ for both other
+vertices, while its distance to the opposite edge is $1/\sqrt{2}$. The corrected statement below
+sums the tight rows; it is exact in this example and implies the book's bound up to a factor
+$\sqrt{|I|}$.
+:::
+
 Over a polytope, the Frank–Wolfe algorithm converges only at the rate $O(1/t)$ when the minimizer
 lies on a face: the iterates zig-zag between vertices of that face, because the algorithm can only
 move toward vertices and never away from them. Away steps [@guelat1986some] remove weight from a
@@ -110,6 +123,27 @@ minimal face, and the scaling inequality at $(x, y)$ forces every scaling consta
 facial distance. The book states the proposition in Euclidean space; the proof works in every
 finite-dimensional real normed space.
 
+### Lower bounds from inequalities
+
+If the polytope is given by inequalities $a_i \cdot x \le b_i$, every face is cut out by the rows
+tight on it, and summing those rows gives a functional that separates the face from the other
+vertices by their total slack.
+
+```{prf:proposition} Pyramidal width from inequalities (corrected)
+:label: prop-away-step-frank-wolfe-lower
+:enumerator: 2.32
+
+Let the inequalities $a_i \cdot x \le b_i$ hold on $V$, and let every vertex off a proper face be
+slack in some row that is tight on the face. Then the pyramidal width is at least the minimum of
+$\dfrac{\sum_{i \in I} (b_i - a_i \cdot v)}{\|\sum_{i \in I} a_i\|}$ over row sets $I$ tight at some
+vertex and vertices $v$ with positive total slack on $I$.
+```
+
+For an inequality description of $\operatorname{conv} V$ the hypothesis holds. In Euclidean space
+it implies the book's bound up to a factor: with $s = b_I - A_I v \ge 0$,
+$\sum_i s_i \ge \|s\|_2$ and $\|\sum_{i \in I} a_i\| \le \sqrt{|I|}\,\|A_I\|$, so the pyramidal
+width is at least the minimum of $\|b_I - A_I v\|_2 / (\sqrt{|I|}\,\|A_I\|)$.
+
 ## Away-step Frank–Wolfe
 
 The algorithm keeps an active set $S_t \subseteq V$ with weights representing $x_t$. It compares the
@@ -177,8 +211,7 @@ the formal count of drop steps allows one more drop step than good steps.
 
 ## Not yet covered
 
-The lower bound of Corollary 2.32 in terms of an inequality description and the pairwise variant of
-Section 3.1 are not formalized here.
+The pairwise variant of Section 3.1 is not formalized here.
 
 ## The formal statements at a glance
 
