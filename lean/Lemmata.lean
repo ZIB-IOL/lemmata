@@ -493,6 +493,9 @@ public import Lemmata.FrankWolfe.Proof.Hilbert
 public import Lemmata.FrankWolfe.Proof.Interfaces
 public import Lemmata.FrankWolfe.Proof.Rate
 public import Lemmata.FrankWolfe.Statement
+public import Lemmata.FrankWolfeIntro.Main
+public import Lemmata.FrankWolfeIntro.Proof
+public import Lemmata.FrankWolfeIntro.Statement
 public import Lemmata.FrankWolfeLDS.Defs
 public import Lemmata.FrankWolfeLDS.Main
 public import Lemmata.FrankWolfeLDS.Proof.AnalyticFacts
