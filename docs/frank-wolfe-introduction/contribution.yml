@@ -9,11 +9,17 @@ abstract: >-
   Baseline results for the Frank–Wolfe algorithm, formalized from a short introduction to the
   method. The primal gap is bounded by the dual gap and the Frank–Wolfe gap, and the
   Frank–Wolfe gap vanishes exactly at the minimizers. Smoothness gives primal progress in every
-  step and the rate $2LD^2/(t+2)$. For any step sizes the primal gap is at least
+  step, the rate $2LD^2/(t+2)$, and a running minimum of the Frank–Wolfe gaps of at most
+  $6.75\,LD^2/(t+2)$. For any step sizes the primal gap is at least
   $\prod_{\tau=1}^{t-1}(1-\gamma_\tau)\, f'(x^\star)(x_1 - x^\star)$, which is
   $2/(t(t+1))$ times that quantity for the open-loop rule. For nonconvex objectives, constant
   step sizes $1/\sqrt{T+1}$ give an iterate with Frank–Wolfe gap at most
-  $\max\{2h_0, LD^2\}/\sqrt{T+1}$. The statements hold in real normed spaces.
+  $\max\{2h_0, LD^2\}/\sqrt{T+1}$. The test of the adaptive step-size strategy certifies
+  progress and always passes for the true smoothness constant. Running the algorithm on
+  $\|x - x^*\|_p^2$ proves the approximate Carathéodory theorem: for $2 \le p < \infty$, every
+  point of the convex hull of a compact $V \subseteq \mathbb{R}^n$ is within $\varepsilon$ in
+  $\ell_p$ of the convex hull of at most $\lceil 4(p-1)D^2/\varepsilon^2 \rceil + 2$ points of
+  $V$. The statements of Section 4 hold in real normed spaces.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -58,3 +64,23 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-introduction-nonconvex
+  - name: Lemmata.FrankWolfeIntro.gap_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-introduction-gap
+  - name: Lemmata.FrankWolfeIntro.smoothness_revisited
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-introduction-smoothness
+  - name: Lemmata.FrankWolfeIntro.adaptive_progress
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-introduction-adaptive-progress
+  - name: Lemmata.FrankWolfeIntro.smooth_implies_adaptive_test
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-introduction-adaptive-test
+  - name: Lemmata.FrankWolfeIntro.approximate_caratheodory
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-introduction-caratheodory
