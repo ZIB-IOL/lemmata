@@ -14,11 +14,9 @@ abstract: >-
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
-  - name: Christoph Spiegel
-    orcid: "0000-0002-6545-202X"
 ai_use: >-
   The core was factored out of the formalization of Frank–Wolfe beyond 1/t under local dual
-  sharpness and generalized to normed spaces with Claude (Anthropic), under the authors'
+  sharpness and generalized to normed spaces with Claude (Anthropic), under the author's
   direction and review.
 acknowledgements: >-
   This research was conducted in the context of the Agentic AI for Mathematics
@@ -26,6 +24,9 @@ acknowledgements: >-
   (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
   (DFG, German Research Foundation) under Germany's Excellence Strategy.
   This work has been partially supported by OpenAI's Academic Researchers program.
+  The author thanks Christoph Spiegel, who streamlined the original Lean development of
+  [Frank–Wolfe beyond 1/t under local dual sharpness](https://lemmata.iol.berlin/frank-wolfe-local-dual-sharpness/);
+  the Hilbert-space definitions of this entry come from his version.
 license: CC-BY-4.0
 pages:
   - index.md
