@@ -220,4 +220,32 @@ theorem mem_convexHull_minFace {V : Finset E} {y : E} (hy : y ∈ convexHull ℝ
   rw [hface]
   exact (mem_convexHull_exposedFace_iff Ψ hy).mpr hmax
 
+/-- A point lies in the relative interior of its minimal face: a functional that is maximized at `y`
+over the minimal face of `y` is constant on that face. -/
+theorem eq_of_mem_minFace_of_max [FiniteDimensional ℝ E] {V : Finset E} {y : E}
+    (hy : y ∈ convexHull ℝ (↑V : Set E)) (ψ : StrongDual ℝ E)
+    (hmax : ∀ w ∈ minFace V y, ψ w ≤ ψ y) : ∀ v ∈ minFace V y, ψ v = ψ y := by
+  classical
+  intro v hv
+  obtain ⟨Ψ, hΨ, hface⟩ := minFace_exposed hy
+  obtain ⟨γ, hγ, hyγ⟩ := push_away hy hv
+  have hvF : v ∈ exposedFace V Ψ := hface ▸ hv
+  have hvV : v ∈ V := exposedFace_subset V Ψ hvF
+  have hΨv : Ψ v = Ψ y := by
+    have h1 : Ψ v ≤ Ψ y := hΨ v hvV
+    have h2 : Ψ y ≤ Ψ v := by
+      unfold exposedFace at hvF
+      exact apply_le_of_mem_convexHull Ψ (Finset.mem_filter.mp hvF).2 hy
+    linarith
+  have hΨγ : ∀ u ∈ V, Ψ u ≤ Ψ ((1 + γ) • y - γ • v) := by
+    intro u hu
+    rw [map_sub, map_smul, map_smul, smul_eq_mul, smul_eq_mul, hΨv]
+    linarith [hΨ u hu]
+  have hyγF : (1 + γ) • y - γ • v ∈ convexHull ℝ (↑(minFace V y) : Set E) := by
+    rw [hface]; exact (mem_convexHull_exposedFace_iff Ψ hyγ).mpr hΨγ
+  have hle := apply_le_of_mem_convexHull ψ hmax hyγF
+  rw [map_sub, map_smul, map_smul, smul_eq_mul, smul_eq_mul] at hle
+  have := hmax v hv
+  nlinarith
+
 end Lemmata.FrankWolfe

@@ -4,6 +4,7 @@ public import Lemmata.AwayStepFW.Geometry
 public import Lemmata.AwayStepFW.Convergence
 public import Lemmata.AwayStepFW.FCFW
 public import Lemmata.AwayStepFW.FacialDistance
+public import Lemmata.AwayStepFW.PyramidalEq
 
 @[expose] public section
 
@@ -28,6 +29,10 @@ theorem fully_corrective_convergence : FullyCorrectiveConvergence :=
 /-- Proposition 2.31, lower bound: the facial distance is a scaling constant. -/
 theorem facial_distance_is_scaling : FacialDistanceScaling := fun V =>
   Proof.facialDistance_isScaling V
+
+/-- Proposition 2.31: the pyramidal width equals the facial distance. -/
+theorem pyramidal_width_eq_facial_distance : PyramidalWidthEqFacial := fun V =>
+  Proof.pyramidalWidth_eq_facialDistance V
 -- DOCS_END_MAIN
 
 end Lemmata.AwayStepFW

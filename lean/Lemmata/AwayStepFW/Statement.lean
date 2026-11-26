@@ -79,4 +79,10 @@ def FacialDistanceScaling : Prop :=
   ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] (V : Finset E),
     IsScaling V (facialDistance V)
 
+/-- **Proposition 2.31** (pyramidal width as facial distance). In a finite-dimensional real normed
+space, the pyramidal width of `conv V` equals its facial distance. -/
+def PyramidalWidthEqFacial : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] (V : Finset E),
+    pyramidalWidth V = facialDistance V
+
 end Lemmata.AwayStepFW
