@@ -1,0 +1,60 @@
+schema_version: 1
+id: frank-wolfe-introduction
+lean_namespace: Lemmata.FrankWolfeIntro
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "2311.05313"
+abstract: >-
+  Baseline results for the Frank–Wolfe algorithm, formalized from a short introduction to the
+  method. The primal gap is bounded by the dual gap and the Frank–Wolfe gap, and the
+  Frank–Wolfe gap vanishes exactly at the minimizers. Smoothness gives primal progress in every
+  step and the rate $2LD^2/(t+2)$. For any step sizes the primal gap is at least
+  $\prod_{\tau=1}^{t-1}(1-\gamma_\tau)\, f'(x^\star)(x_1 - x^\star)$, which is
+  $2/(t(t+1))$ times that quantity for the open-loop rule. For nonconvex objectives, constant
+  step sizes $1/\sqrt{T+1}$ give an iterate with Frank–Wolfe gap at most
+  $\max\{2h_0, LD^2\}/\sqrt{T+1}$. The statements hold in real normed spaces.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.FrankWolfeIntro.gaps
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-introduction-gaps
+  - name: Lemmata.FrankWolfeIntro.first_order_optimality
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-introduction-optimality
+  - name: Lemmata.FrankWolfeIntro.primal_progress
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-introduction-progress
+  - name: Lemmata.FrankWolfeIntro.primal_convergence
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-introduction-convergence
+  - name: Lemmata.FrankWolfeIntro.fixed_lower_bound
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-introduction-lower
+  - name: Lemmata.FrankWolfeIntro.fixed_lower_bound_open_loop
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-introduction-lower-open-loop
+  - name: Lemmata.FrankWolfeIntro.nonconvex_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-introduction-nonconvex
