@@ -68,7 +68,7 @@ copyright violations. Requests for removal or withdrawal go to the maintainers.
 
 ## Support
 
-This platform has been partially supported by:
+We gratefully acknowledge the support of:
 
 :::{div}
 :class: lemmata-supporters
