@@ -2,6 +2,9 @@
 numbering:
   headings: false
 title: Lemmata Repository
+# The right column holds the subjects of the entry list, not this page's outline.
+site:
+  hide_outline: true
 ---
 
 # Lemmata Repository

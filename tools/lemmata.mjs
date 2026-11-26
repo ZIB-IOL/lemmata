@@ -1356,10 +1356,11 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
     fs.writeFileSync(path.join(gen, "provenance", `${m.id}.md`), lines.join("\n"));
   }
 
-  // Entries per subject (primary members: catalog and sidebar; cross-listed members: also
-  // listed on the subject's page) and per topic, each sorted by title. Only subjects and
-  // topics with entries get a page. Withdrawn entries are not listed (they keep their pages
-  // and identifiers). Subjects with the most entries first (by primary entries, then
+  // Entries per subject (primary members: sidebar groups; cross-listed members: also listed
+  // on the subject's page) and per topic. Lists show the newest entries first (newestFirst);
+  // the sidebar, whose entries are hidden, keeps them by title. Only subjects and topics
+  // with entries get a page. Withdrawn entries are not listed (they keep their pages and
+  // identifiers). Subjects with the most entries first (by primary entries, then
   // cross-listed ones), ties in arXiv's order -- for a small archive, alphabetical order put
   // a one-entry class above the one most entries share.
   const byTitle = (a, b) => titleOf(a).localeCompare(titleOf(b));
@@ -1376,17 +1377,54 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
   // "math.OC · cs.LG · topics: duality" under an entry's title, linked.
   const classLine = (m, rel) => [m.subject, ...m.crossLists].map((id) => `[${id}](${subjectHref(id, rel)})`).join(" · ") +
     (m.topics.length ? " · " + m.topics.map((t) => `[${esc(tax.topics.find((x) => x.id === t)?.title ?? t)}](${topicHref(t, rel)})`).join(", ") : "");
-  // `rel` is the path prefix from the page that will contain the table to docs/: links in
+  // Newest first: identifiers (YYMM.NNNNN) are handed out in order of publication, so the
+  // highest is the newest. An entry without one -- unpublished, so newer still; in a local
+  // preview every entry -- goes before them, by its first commit, newest first.
+  const firstDate = (m) => prov?.entries?.[m.id]?.first?.date ?? "";
+  const newestFirst = (a, b) => {
+    const x = idents[a.id] ?? "", y = idents[b.id] ?? "";
+    if (x !== y) return !x ? -1 : !y ? 1 : x < y ? 1 : -1;
+    return (firstDate(a) < firstDate(b) ? 1 : firstDate(a) > firstDate(b) ? -1 : 0) || byTitle(a, b);
+  };
+  // The month an entry was published in, as YYMM: its identifier's, else its first commit's.
+  const monthOf = (m) => idents[m.id]?.slice(0, 4) ?? (firstDate(m) ? firstDate(m).slice(2, 4) + firstDate(m).slice(5, 7) : null);
+  const statusText = (m, rel) => {
+    const s = statusOf(m);
+    if (s === "frozen") return (entryComp(m) === "kernel" ? "✓\u00a0" : "◐\u00a0") + `checked with v${esc(frozen[m.id].lean_version ?? "?")}` +
+      (entryComp(m) === "kernel" ? "" : ", mod. computation");
+    if (s === "computation") return `[◐\u00a0${COMPUTATION_WORDS.own.short}](${rel}checked.md#computation)`;
+    return { checked: "✓\u00a0kernel-checked", failed: "✗\u00a0not checked", preview: "○\u00a0not verified (preview)" }[s];
+  };
+  // `rel` is the path prefix from the page that will contain the list to docs/: links in
   // generated text must be relative to the page MyST renders them on (an included file
   // resolves against the INCLUDING page; `../<id>/index.md` from _generated/ once
   // rendered as a raw href and 404'd).
-  // Each entry's identifier after its title, outside the link so the space before it is not
-  // underlined (a code span, styled by `table a.link + code` in lemmata.css); a local
-  // preview has none and shows the title only.
-  const table = (list, rel) => ["| Entry | Results | Status |", "|---|---|---|",
-    ...list.map((m) => `| [${esc(titleOf(m))}](${entryHref(m, rel)})${idents[m.id] ? ` \`${idents[m.id]}\`` : ""} | ${m.exports.length} | ` +
-      (statusOf(m) === "frozen" ? `checked with v${esc(frozen[m.id].lean_version ?? "?")}` + (entryComp(m) === "kernel" ? "" : ", mod. computation")
-        : statusOf(m) === "computation" ? `[${COMPUTATION_WORDS.own.short}](${rel}checked.md#computation)` : statusOf(m)) + " |")];
+  // One block per entry, like an arXiv listing: the identifier in its own column (a local
+  // preview has none), the linked title, authors and dates, subjects, topics and status, and
+  // the abstract. Its classes carry what the start page's filter (CATALOG_WIDGET) needs:
+  // lemmata-f-<facet>-<value> for subjects (s, primary and cross-lists), topics (t), status
+  // (st) and month of publication (m), and the date of the last change for sorting. Styled
+  // by lemmata.css (.lemmata-catalog, .lemmata-entry-*); without the filter the list is
+  // complete as it is.
+  const entryBlock = (m, rel) => {
+    const ident = idents[m.id], p = prov?.entries?.[m.id], n = m.exports.length, month = monthOf(m);
+    const classes = ["lemmata-entry", ...(ident ? [] : ["lemmata-entry-noid"]),
+      ...[m.subject, ...m.crossLists].map((id) => `lemmata-f-s-${subjectSlug(id)}`), ...m.topics.map((t) => `lemmata-f-t-${t}`),
+      `lemmata-f-st-${statusOf(m)}`, ...(month ? [`lemmata-f-m-${month}`] : []), ...(p ? [`lemmata-updated-${day(p.last.date)}`] : [])];
+    const authors = people(m, p).map((c) => c.orcid ? `[${esc(c.name)}](${rel}${AUTHOR_DIR}/${authorDir(c.orcid)}/index.md)` : esc(c.name)).join(", ");
+    const dates = p ? `v1\u00a0${day(p.first.date)}` + (day(p.last.date) !== day(p.first.date) ? ` · updated\u00a0${day(p.last.date)}` : "") : "";
+    const who = [authors, dates].filter(Boolean).join(" · ");
+    return [":::::{div}", `:class: ${classes.join(" ")}`, "",
+      ...(ident ? ["::::{div}", ":class: lemmata-entry-id", "", `\`${ident}\``, "::::", ""] : []),
+      "::::{div}", ":class: lemmata-entry-title", "", `[${esc(titleOf(m))}](${entryHref(m, rel)})`, "::::", "",
+      "::::{div}", ":class: lemmata-entry-meta", "", ...(who ? [who + "  "] : []),
+      [classLine(m, rel), statusText(m, rel), `${n}\u00a0result${n === 1 ? "" : "s"}`].join(" · "), "::::", "",
+      ...(m.notes?.abstract ? ["::::{div}", ":class: lemmata-entry-abstract", "", m.notes.abstract, "::::", ""] : []),
+      ":::::", ""];
+  };
+  // `compact`: abstracts folded (the start page; its filter can unfold them).
+  const entryList = (list, rel, { compact = false } = {}) => ["::::::{div}", `:class: lemmata-catalog${compact ? " lemmata-catalog-compact" : ""}`, "",
+    ...[...list].sort(newestFirst).flatMap((m) => entryBlock(m, rel)), "::::::", ""];
 
   // "Contributing" paragraph of the landing page, with the repository address from the
   // build (SOURCE_WEB_URL) rather than written into docs/index.md, so moving the
@@ -1405,16 +1443,36 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
   fs.writeFileSync(path.join(gen, "contributing.md"), "**Contributing.** " + contributing);
   fs.writeFileSync(path.join(gen, "contributing-body.md"), contributing);
 
-  // Landing page catalog (included from docs/index.md, so rel = ""): by primary subject, as
-  // arXiv lists, then the topics.
-  const cat = ["## Entries", ""];
-  for (const id of usedSubjects) {
-    if (!primary.get(id).length) continue;
-    cat.push(`### [${esc(subjectTitle(tax, id))}](${subjectHref(id, "")})`, "");
-    cat.push(...table(primary.get(id), ""), "");
-  }
-  if (usedTopics.length) cat.push("### Topics", "", usedTopics.map((t) =>
-    `[${esc(t.title)}](${topicHref(t.id, "")}) (${current.filter((m) => m.topics.includes(t.id)).length})`).join(" · "), "");
+  // Landing page catalog (included from docs/index.md, so rel = ""): every current entry in
+  // one list, newest first (until 2026-11 one table per primary subject, by title). Above it
+  // the filter, a widget the tools write (CATALOG_WIDGET) that searches and filters the list
+  // in the browser; its model holds only the facets' names, the entries are the list itself.
+  // Beside it, in the page's right column, the subjects with their counts: links to the
+  // subject pages, which the filter turns into a filter of the list. One block
+  // (lemmata-catalog-layout) holds all three, so lemmata.css can lay them out on the theme's
+  // article grid (the start page hides its outline, which uses that column elsewhere).
+  const nListed = (id) => nPrimary(id) + nCross(id);
+  const bySize = [...usedSubjects].sort((a, b) => nListed(b) - nListed(a) || subjectOrder.indexOf(a) - subjectOrder.indexOf(b));
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const statuses = [["checked", "Kernel-checked"], ["computation", "Checked modulo computation"], ["frozen", "Checked with an earlier Lean"],
+    ["failed", "Not checked"], ["preview", "Not verified (preview)"]].filter(([s]) => current.some((m) => statusOf(m) === s));
+  const filterModel = {
+    subjects: bySize.map((id) => [id, subjectSlug(id), tax.subjects[id] ?? id]),
+    topics: usedTopics.map((t) => [t.id, t.title]),
+    statuses,
+    months: [...new Set(current.map(monthOf).filter(Boolean))].sort().reverse()
+      .map((m) => [m, `${MONTHS[Number(m.slice(2)) - 1] ?? m} 20${m.slice(0, 2)}`]),
+  };
+  fs.mkdirSync(path.join(gen, "catalog"), { recursive: true });
+  fs.writeFileSync(path.join(gen, "catalog", "filter.mjs"), CATALOG_WIDGET);
+  const cat = ["## Entries", "", ":::::::{div}", ":class: lemmata-catalog-layout", "",
+    // Path relative to the including page, docs/index.md (see the identifier widget). A
+    // backtick in a name must not end the fence: JSON can spell it \u0060.
+    "```{anywidget} _generated/catalog/filter.mjs", JSON.stringify(filterModel).replace(/`/g, "\\u0060"), "```", "",
+    // Each count is a code span, so the filter can find and update it.
+    "::::{div}", ":class: lemmata-catalog-subjects", "", "**Subjects**", "",
+    ...bySize.map((id) => `- [${id}](${subjectHref(id, "")}) \`${nListed(id)}\``), "::::", "",
+    ...entryList(current, "", { compact: true }), ":::::::", ""];
   fs.writeFileSync(path.join(gen, "catalog.md"), cat.join("\n"));
 
   // One landing page per entry with an identifier, at /abs/<ident>/ (like arXiv's abstract
@@ -1473,16 +1531,16 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
   for (const id of usedSubjects) {
     const dir = path.join(subjRoot, subjectSlug(id));
     fs.mkdirSync(dir, { recursive: true });
-    const body = [`Entries whose primary subject is the arXiv class ${id} (${esc(tax.subjects[id])}), then entries cross-listed to it.`, ""];
-    if (primary.get(id).length) body.push(...table(primary.get(id), "../../"), "");
-    if (crossListed.get(id).length) body.push("## Also listed", "", ...table(crossListed.get(id), "../../"), "");
+    const body = [`Entries whose primary subject is the arXiv class ${id} (${esc(tax.subjects[id])}), newest first, then entries cross-listed to it.`, ""];
+    if (primary.get(id).length) body.push(...entryList(primary.get(id), "../../"), "");
+    if (crossListed.get(id).length) body.push("## Also listed", "", ...entryList(crossListed.get(id), "../../"), "");
     fs.writeFileSync(path.join(dir, "index.md"), page(subjectTitle(tax, id), body));
   }
   for (const t of usedTopics) {
     const dir = path.join(topicRoot, t.id);
     fs.mkdirSync(dir, { recursive: true });
     const body = t.description ? [esc(t.description), ""] : [];
-    body.push(...table(current.filter((m) => m.topics.includes(t.id)).sort(byTitle), "../../"), "");
+    body.push(...entryList(current.filter((m) => m.topics.includes(t.id)), "../../"), "");
     fs.writeFileSync(path.join(dir, "index.md"), page(`Topic: ${t.title}`, body));
   }
   // The old category pages (/c/<id>/) were linked from outside; each now points to the topic
@@ -1523,8 +1581,8 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
     const lines = ["---", "numbering:", "  headings: false", `title: ${JSON.stringify(a.name)}`, "---", "",
       `ORCID iD: [${a.orcid}](https://orcid.org/${a.orcid})`, "",
       `Entries in the Lemmata Repository credited to ${esc(a.name)}.`, ""];
-    if (cur.length) lines.push(...table(cur, "../../"), "");
-    if (gone.length) lines.push("## Withdrawn", "", ...table(gone, "../../"), "");
+    if (cur.length) lines.push(...entryList(cur, "../../"), "");
+    if (gone.length) lines.push("## Withdrawn", "", ...entryList(gone, "../../"), "");
     fs.writeFileSync(path.join(dir, "index.md"), lines.join("\n"));
     authorPages.push(`${AUTHOR_DIR}/${authorDir(a.orcid)}/index.md`);
   }
@@ -1636,6 +1694,228 @@ function render({ model, el }) {
 }
 export default { render };
 `;
+
+// The start page's filter, a widget like the identifier line (written by the tools, so
+// contributors cannot change it). MyST mounts it after React has hydrated the page, in a
+// shadow root, so it brings its own styles. It works on the list printed right below it
+// (entryList in prepare): plain MyST output, complete without JavaScript, whose blocks carry
+// their facets as classes, lemmata-f-<facet>-<value>. The search matches every word anywhere
+// in a block's text (identifier, title, authors, subjects, topics, abstract, the TeX of its
+// formulas), ignoring case and accents. Each list of choices counts the entries it would
+// leave, given the other filters. The subjects are the list in the page's right column
+// (.lemmata-catalog-subjects): links to the subject pages, which filter instead when clicked
+// plainly (a click with a modifier key still opens the page); without that list, a select.
+// Blocks are only hidden and, for another order, given a CSS `order` -- inline styles, never
+// moved or rewritten, so React's tree stays as it rendered it and an unfiltered block is
+// exactly the static one. The state is kept in the address
+// (?q=&subject=&topic=&status=&month=&sort=&abstracts=1), so a filtered list can be linked.
+// Serialized with toString(): one self-contained function that uses nothing from outside.
+function catalogFilter({ model, el }) {
+  const doc = el.ownerDocument;
+  const facets = [
+    ["subject", "s", "Subject", "All subjects", (model.get("subjects") || []).map(([id, value, name]) => [id, value, `${id} — ${name}`])],
+    ["topic", "t", "Topic", "All topics", (model.get("topics") || []).map(([id, title]) => [id, id, title])],
+    ["status", "st", "Status", "Any status", (model.get("statuses") || []).map(([id, text]) => [id, id, text])],
+    ["month", "m", "Published", "Any month", (model.get("months") || []).map(([id, text]) => [id, id, text])],
+  ].map(([key, cls, label, all, values]) => ({ key, cls, label, all, select: null,
+    values: values.map(([param, value, text]) => ({ param, value, text })) }));
+  const sorts = [["new", "Newest first"], ["old", "Oldest first"], ["updated", "Recently updated"], ["title", "Title A–Z"]];
+  const fresh = () => ({ q: "", subject: "", topic: "", status: "", month: "", sort: "new", abstracts: false });
+  const state = fresh();
+  // From the address; values that name nothing are ignored.
+  const params = new URLSearchParams(location.search);
+  state.q = params.get("q") || "";
+  if (sorts.some(([k]) => k === params.get("sort"))) state.sort = params.get("sort");
+  state.abstracts = params.get("abstracts") === "1";
+  for (const f of facets) state[f.key] = (f.values.find((v) => v.param === params.get(f.key)) || { value: "" }).value;
+  const write = () => {
+    const p = new URLSearchParams(location.search);
+    const put = (k, v) => { if (v) p.set(k, v); else p.delete(k); };
+    put("q", state.q.trim());
+    for (const f of facets) put(f.key, (f.values.find((v) => v.value === state[f.key]) || {}).param);
+    put("sort", state.sort === "new" ? "" : state.sort);
+    put("abstracts", state.abstracts ? "1" : "");
+    const qs = p.toString(), url = location.pathname + (qs ? "?" + qs : "") + location.hash;
+    // replaceState keeps the router's state, as the page script does for anchors.
+    if (url !== location.pathname + location.search + location.hash) {
+      try { history.replaceState(history.state, "", url); } catch (e) { /* the list filters all the same */ }
+    }
+  };
+
+  // Two rows: the search with the count and Clear; then the filters, the order, the abstracts.
+  const wrap = doc.createElement("div"); wrap.className = "wrap"; wrap.setAttribute("role", "search");
+  const row1 = doc.createElement("div"), row2 = doc.createElement("div"); row1.className = row2.className = "row";
+  const search = doc.createElement("input");
+  search.type = "search"; search.value = state.q; search.autocomplete = "off"; search.spellcheck = false;
+  search.placeholder = "Search titles, authors, abstracts …"; search.setAttribute("aria-label", "Search the entries");
+  const select = (row, label, options, value) => {
+    const s = doc.createElement("select"); s.title = label; s.setAttribute("aria-label", label);
+    for (const [v, text] of options) { const o = doc.createElement("option"); o.value = v; o.textContent = text; o.dataset.text = text; s.append(o); }
+    s.value = value; row.append(s); return s;
+  };
+  const count = doc.createElement("span"); count.className = "count"; count.setAttribute("aria-live", "polite");
+  const clear = doc.createElement("button"); clear.type = "button"; clear.className = "clear"; clear.textContent = "Clear";
+  // The subject chosen in the right column, shown here too, with a way back to all.
+  const chip = doc.createElement("button"); chip.type = "button"; chip.className = "chip"; chip.hidden = true;
+  chip.title = "Show all subjects";
+  row1.append(search, chip, count, clear);
+  const subject = facets.find((f) => f.key === "subject");
+  const margin = !!doc.querySelector(".lemmata-catalog-subjects a");
+  for (const f of facets) if (f.values.length > 1 && !(f === subject && margin))   // a single value filters nothing
+    f.select = select(row2, f.label, [["", f.all], ...f.values.map((v) => [v.value, v.text])], state[f.key]);
+  const order = select(row2, "Order", sorts, state.sort);
+  const toggle = doc.createElement("label"); toggle.className = "toggle";
+  const abstracts = doc.createElement("input"); abstracts.type = "checkbox"; abstracts.checked = state.abstracts;
+  toggle.append(abstracts, "Abstracts");
+  row2.append(toggle);
+  const empty = doc.createElement("p"); empty.className = "empty"; empty.textContent = "No entry matches."; empty.hidden = true;
+  const style = doc.createElement("style");
+  style.textContent = ".wrap{margin:.5rem 0 1.5rem;font-size:.875rem;line-height:1.4}" +
+    ".row{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}.row+.row{margin-top:.5rem}" +
+    "input[type=search]{flex:1 1 16rem;min-width:10rem}select{flex:1 1 0;min-width:7rem}" +
+    "input[type=search],select{font:inherit;color:inherit;background:transparent;border:1px solid color-mix(in srgb,currentColor 28%,transparent);" +
+    "border-radius:.375rem;padding:.35rem .5rem;margin:0}" +
+    "select{max-width:13rem;cursor:pointer;text-overflow:ellipsis}" +
+    "input[type=search]:focus-visible,select:focus-visible,.clear:focus-visible,.toggle input:focus-visible{outline:2px solid color-mix(in srgb,currentColor 45%,transparent);outline-offset:1px}" +
+    ".toggle{display:inline-flex;align-items:center;gap:.3rem;cursor:pointer;user-select:none;white-space:nowrap}" +
+    ".toggle input{margin:0}" +
+    ".count{opacity:.75;font-variant-numeric:tabular-nums;white-space:nowrap}" +
+    ".chip{font:inherit;color:inherit;background:color-mix(in srgb,currentColor 8%,transparent);border:1px solid color-mix(in srgb,currentColor 28%,transparent);" +
+    "border-radius:999px;padding:.15rem .6rem;cursor:pointer;white-space:nowrap}.chip:hover{background:color-mix(in srgb,currentColor 14%,transparent)}" +
+    ".clear{font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;opacity:.8}" +
+    ".clear:hover{opacity:1}.empty{margin:.75rem 0 0;opacity:.8}";
+  wrap.append(style, row1, row2, empty);
+  el.append(wrap);
+  // The theme switches dark mode with a class on <html>; the controls' own parts (the
+  // options of a list) follow through color-scheme.
+  const theme = () => { wrap.style.colorScheme = doc.documentElement.classList.contains("dark") ? "dark" : "light"; };
+  const themes = new MutationObserver(theme);
+  themes.observe(doc.documentElement, { attributes: true, attributeFilter: ["class"] });
+  theme();
+
+  const norm = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const texts = new WeakMap();
+  const textOf = (e) => { let t = texts.get(e); if (t === undefined) { t = norm(e.textContent || ""); texts.set(e, t); } return t; };
+  const valuesOf = (e, cls) => { const pre = `lemmata-f-${cls}-`, out = []; for (const c of e.classList) if (c.startsWith(pre)) out.push(c.slice(pre.length)); return out; };
+  const updatedOf = (e) => { for (const c of e.classList) if (c.startsWith("lemmata-updated-")) return c.slice(16); return ""; };
+  const titleOf = (e) => ((e.querySelector(".lemmata-entry-title") || e).textContent || "").trim();
+  const show = (e, on) => { const v = on ? "" : "none"; if (e.style.display !== v) e.style.display = v; };
+  // The subject links of the right column, each with the facet value it stands for (by its
+  // text, the arXiv class); their counts are code spans, kept as printed to be restored.
+  const printed = new Map();
+  const subjectLinks = () => [...doc.querySelectorAll(".lemmata-catalog-subjects a")].map((a) => {
+    const num = a.parentElement && a.parentElement.querySelector("code");
+    if (num && !printed.has(num)) printed.set(num, num.textContent);
+    return { a, v: (subject.values.find((x) => x.param === a.textContent.trim()) || {}).value };
+  }).filter((x) => x.v);
+  let first = null;
+  const apply = () => {
+    const blocks = [...doc.querySelectorAll(".lemmata-catalog .lemmata-entry")];
+    first = blocks[0] || null;
+    const words = norm(state.q).split(/\s+/).filter(Boolean);
+    const fits = (e, skip) => {
+      for (const f of facets) if (f.key !== skip && state[f.key] && !valuesOf(e, f.cls).includes(state[f.key])) return false;
+      if (words.length) { const t = textOf(e); for (const w of words) if (!t.includes(w)) return false; }
+      return true;
+    };
+    let shown = 0;
+    for (const e of blocks) { const on = fits(e); show(e, on); if (on) shown++; }
+    const counts = (f) => {
+      const n = new Map();
+      for (const e of blocks) if (fits(e, f.key)) for (const v of valuesOf(e, f.cls)) n.set(v, (n.get(v) || 0) + 1);
+      return n;
+    };
+    for (const f of facets) {
+      if (!f.select) continue;
+      const n = counts(f);
+      for (const o of f.select.options) if (o.value) {
+        const k = n.get(o.value) || 0;
+        o.textContent = `${o.dataset.text} (${k})`; o.disabled = !k && o.value !== state[f.key];
+      }
+    }
+    // The right column: counts follow the other filters, the chosen subject is marked.
+    const n = counts(subject);
+    for (const { a, v } of subjectLinks()) {
+      const k = n.get(v) || 0, num = a.parentElement && a.parentElement.querySelector("code");
+      if (num && num.textContent !== String(k)) num.textContent = String(k);
+      if (state.subject === v) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current");
+      const row = a.closest("li") || a, dim = !k && state.subject !== v ? "0.45" : "";
+      if (row.style.opacity !== dim) row.style.opacity = dim;
+    }
+    const chosen = subject.values.find((x) => x.value === state.subject);
+    chip.hidden = !chosen; chip.textContent = chosen ? `${chosen.param} ×` : "";
+    // The list is printed newest first; any other order is CSS `order` in a flex column.
+    const ranked = blocks.map((e, i) => ({ e, i }));
+    if (state.sort === "old") ranked.reverse();
+    else if (state.sort === "title") ranked.sort((a, b) => titleOf(a.e).localeCompare(titleOf(b.e)) || a.i - b.i);
+    else if (state.sort === "updated") ranked.sort((a, b) => (updatedOf(a.e) < updatedOf(b.e) ? 1 : updatedOf(a.e) > updatedOf(b.e) ? -1 : 0) || a.i - b.i);
+    ranked.forEach(({ e }, k) => { const v = state.sort === "new" ? "" : String(k); if (e.style.order !== v) e.style.order = v; });
+    for (const p of new Set(blocks.map((e) => e.parentElement))) {
+      if (p && getComputedStyle(p).display !== "flex") { p.style.display = "flex"; p.style.flexDirection = "column"; }
+    }
+    // Abstracts: folded on the start page (lemmata.css), unfolded here on request.
+    for (const e of blocks) for (const a of e.querySelectorAll(".lemmata-entry-abstract")) {
+      const v = state.abstracts ? "block" : "none"; if (a.style.display !== v) a.style.display = v;
+    }
+    const total = blocks.length;
+    count.textContent = shown === total ? `${total} ${total === 1 ? "entry" : "entries"}` : `${shown} of ${total} ${total === 1 ? "entry" : "entries"}`;
+    empty.hidden = shown > 0 || !total;
+    clear.hidden = JSON.stringify(state) === JSON.stringify(fresh());
+  };
+  const update = () => { apply(); write(); };
+
+  let typing = null;
+  search.addEventListener("input", () => { clearTimeout(typing); typing = setTimeout(() => { state.q = search.value; update(); }, 120); });
+  search.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && search.value) { e.preventDefault(); search.value = ""; clearTimeout(typing); state.q = ""; update(); }
+  });
+  for (const f of facets) if (f.select) f.select.addEventListener("change", () => { state[f.key] = f.select.value; update(); });
+  order.addEventListener("change", () => { state.sort = order.value; update(); });
+  abstracts.addEventListener("change", () => { state.abstracts = abstracts.checked; update(); });
+  chip.addEventListener("click", () => { state.subject = ""; update(); });
+  // A plain click on a subject in the right column filters (again: all subjects). Taken on
+  // the way down, before the theme's router would follow the link.
+  const onClick = (e) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !e.target.closest) return;
+    const a = e.target.closest(".lemmata-catalog-subjects a"); if (!a) return;
+    const hit = subjectLinks().find((x) => x.a === a); if (!hit) return;
+    e.preventDefault(); e.stopPropagation();
+    state.subject = state.subject === hit.v ? "" : hit.v; update();
+  };
+  window.addEventListener("click", onClick, true);
+  clear.addEventListener("click", () => {
+    Object.assign(state, fresh()); clearTimeout(typing);
+    search.value = ""; order.value = "new"; abstracts.checked = false;
+    for (const f of facets) if (f.select) f.select.value = "";
+    update(); search.focus();
+  });
+  // "/" moves to the search, unless one is typing somewhere.
+  const onKey = (e) => {
+    if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
+    const t = e.composedPath()[0];
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || ""))) return;
+    e.preventDefault(); search.focus();
+  };
+  doc.addEventListener("keydown", onKey);
+  // React may render the list again (new elements); filter those as well.
+  let pending = null;
+  const watch = new MutationObserver(() => {
+    clearTimeout(pending);
+    pending = setTimeout(() => { if (doc.querySelector(".lemmata-catalog .lemmata-entry") !== first) apply(); }, 100);
+  });
+  watch.observe(doc.body, { childList: true, subtree: true });
+  apply();
+  // Unmounted (the reader left the page): leave the list as it was printed.
+  return () => {
+    watch.disconnect(); themes.disconnect(); doc.removeEventListener("keydown", onKey); window.removeEventListener("click", onClick, true);
+    clearTimeout(pending); clearTimeout(typing);
+    for (const e of doc.querySelectorAll(".lemmata-catalog .lemmata-entry")) { e.style.display = ""; e.style.order = ""; }
+    for (const a of doc.querySelectorAll(".lemmata-catalog .lemmata-entry-abstract")) a.style.display = "";
+    for (const { a } of subjectLinks()) { a.removeAttribute("aria-current"); (a.closest("li") || a).style.opacity = ""; }
+    for (const [num, text] of printed) num.textContent = text;
+  };
+}
+const CATALOG_WIDGET = `const render = ${catalogFilter.toString()};\nexport default { render };\n`;
 
 // ------------------------------------------------------------------------- site index
 
