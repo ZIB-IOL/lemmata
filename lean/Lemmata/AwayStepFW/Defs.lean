@@ -1,6 +1,7 @@
 module
 
 public import Lemmata.FrankWolfe.Defs
+public import Lemmata.FrankWolfe.Polytope.Defs
 
 @[expose] public section
 
@@ -67,5 +68,14 @@ def IsFCFWRun (V : Finset E) (f : E → ℝ) (x : ℕ → E) (S : ℕ → Finset
     (∀ y ∈ convexHull ℝ (↑(S t) : Set E), f (x t) ≤ f y) ∧
     ∃ v ∈ V, (∀ w ∈ V, fderiv ℝ f (x t) v ≤ fderiv ℝ f (x t) w) ∧
       ∀ γ ∈ Set.Icc (0 : ℝ) 1, f (x (t + 1)) ≤ f (x t + γ • (v - x t))
+
+open Lemmata.FrankWolfe in
+open Classical in
+/-- The facial distance of `conv V`: the infimum of `‖p - q‖` over proper exposed faces `F`, points
+`p ∈ conv F` and `q ∈ conv (V \ F)`. -/
+noncomputable def facialDistance (V : Finset E) : ℝ :=
+  sInf {r : ℝ | ∃ ψ : StrongDual ℝ E, exposedFace V ψ ≠ V ∧
+    ∃ p ∈ convexHull ℝ (↑(exposedFace V ψ) : Set E),
+      ∃ q ∈ convexHull ℝ (↑(V \ exposedFace V ψ) : Set E), r = ‖p - q‖}
 
 end Lemmata.AwayStepFW

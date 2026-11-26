@@ -3,6 +3,7 @@ module
 public import Lemmata.AwayStepFW.Geometry
 public import Lemmata.AwayStepFW.Convergence
 public import Lemmata.AwayStepFW.FCFW
+public import Lemmata.AwayStepFW.FacialDistance
 
 @[expose] public section
 
@@ -23,6 +24,10 @@ theorem away_step_convergence : AwayStepConvergence := Proof.away_step_convergen
 /-- Theorem 2.34: linear convergence of fully-corrective Frank–Wolfe. -/
 theorem fully_corrective_convergence : FullyCorrectiveConvergence :=
   Proof.fully_corrective_convergence
+
+/-- Proposition 2.31, lower bound: the facial distance is a scaling constant. -/
+theorem facial_distance_is_scaling : FacialDistanceScaling := fun V =>
+  Proof.facialDistance_isScaling V
 -- DOCS_END_MAIN
 
 end Lemmata.AwayStepFW

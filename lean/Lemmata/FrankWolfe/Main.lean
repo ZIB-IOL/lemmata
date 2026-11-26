@@ -1,5 +1,6 @@
 module
 
+public import Lemmata.FrankWolfe.Polytope.Faces
 public import Lemmata.FrankWolfe.Statement
 public import Lemmata.FrankWolfe.Proof.Interfaces
 
@@ -29,6 +30,13 @@ theorem standard_rate : StandardRate := Proof.standard_rate
 
 /-- `O(1/t)` convergence in a Hilbert space, in the language of gradients. -/
 theorem standard_rate_hilbert : StandardRateHilbert := Proof.standard_rate_hilbert
+
+/-- The Farkas lemma for finitely generated cones. -/
+theorem farkas_lemma : FarkasLemma := fun G _ hx => farkas G hx
+
+/-- The minimal face of a point of a polytope: exposed, containing the point, and pushable. -/
+theorem minimal_face : MinimalFace := fun _ _ hy =>
+  ⟨minFace_exposed hy, mem_convexHull_minFace hy, fun _ hv => push_away hy hv⟩
 -- DOCS_END_MAIN
 
 end Lemmata.FrankWolfe

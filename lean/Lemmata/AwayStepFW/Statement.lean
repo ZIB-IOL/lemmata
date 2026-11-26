@@ -1,5 +1,6 @@
 module
 
+public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Lemmata.AwayStepFW.Defs
 
 @[expose] public section
@@ -68,5 +69,14 @@ def FullyCorrectiveConvergence : Prop :=
       f (x t) - f xStar ≤
         (1 - min (1 / 2) (μ * δ ^ 2 / (L * Metric.diam (↑V : Set E) ^ 2))) ^ (t - 1) *
           (L * Metric.diam (↑V : Set E) ^ 2 / 2)
+
+/-- **Proposition 2.31, lower bound** (facial distance). In a finite-dimensional real normed space,
+the facial distance of `conv V` (the smallest distance between a proper exposed face and the convex
+hull of the remaining vertices) is a scaling constant; hence the pyramidal width is at least the
+facial distance, and Theorems 2.29 and 2.34 hold with `δ` the facial distance when it is positive.
+-/
+def FacialDistanceScaling : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] (V : Finset E),
+    IsScaling V (facialDistance V)
 
 end Lemmata.AwayStepFW
