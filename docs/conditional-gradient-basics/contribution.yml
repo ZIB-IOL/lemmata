@@ -1,0 +1,62 @@
+schema_version: 1
+id: conditional-gradient-basics
+lean_namespace: Lemmata.CGBasics
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "2211.14103"
+abstract: >-
+  Tools from the first two chapters of the book Conditional Gradient Methods that turn the
+  $O(1/t)$ rate of the Frank–Wolfe algorithm into faster rates. For convex functions, the
+  quadratic upper bound of smoothness is equivalent to Lipschitz continuity of the derivative.
+  For smooth, not necessarily convex functions, the Frank–Wolfe gap is at most $h + LD^2/2$ when
+  the primal gap $h$ is at least $LD^2/2$, and at most $D\sqrt{2Lh}$ otherwise. Strong convexity
+  bounds the primal gap by $f'(x)(x - x^*)^2/(2\mu\|x - x^*\|^2) \le \|f'(x)\|^2/(2\mu)$. When the
+  minimizer lies in the interior of the feasible region, Frank–Wolfe atoms satisfy the scaling
+  condition $f'(x)(x - v) \ge r\|f'(x)\|$, and short steps or exact line search converge linearly
+  for gradient dominated objectives. Two lemmas turn linear and power-type contractions of a
+  sequence into convergence rates. The statements hold in real normed spaces.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.CGBasics.smooth_iff_lipschitz
+    kind: theorem
+    page: index.md
+    label: lem-conditional-gradient-basics-smooth
+  - name: Lemmata.CGBasics.gap_by_primal_gap
+    kind: theorem
+    page: index.md
+    label: prop-conditional-gradient-basics-gap
+  - name: Lemmata.CGBasics.primal_gap_strong_convexity
+    kind: theorem
+    page: index.md
+    label: lem-conditional-gradient-basics-strong
+  - name: Lemmata.CGBasics.scaling_interior
+    kind: theorem
+    page: index.md
+    label: prop-conditional-gradient-basics-scaling
+  - name: Lemmata.CGBasics.linear_rate_interior
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-basics-linear
+  - name: Lemmata.CGBasics.contraction_linear
+    kind: theorem
+    page: index.md
+    label: lem-conditional-gradient-basics-contraction-linear
+  - name: Lemmata.CGBasics.contraction_power
+    kind: theorem
+    page: index.md
+    label: lem-conditional-gradient-basics-contraction-power
