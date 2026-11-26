@@ -1,11 +1,18 @@
 ---
-title: "Away-step and fully-corrective Frank–Wolfe: linear convergence via pyramidal width"
+title: "Conditional gradient methods: away-step and fully-corrective Frank–Wolfe"
 numbering:
   headings: false
 ---
 
 ```{include} ../_generated/provenance/away-step-frank-wolfe.md
 ```
+
+:::{note}
+This entry comes from the book *Conditional Gradient Methods: From Core Principles to AI
+Applications* by Gábor Braun, Alejandro Carderera, Cyrille W. Combettes, Hamed Hassani, Amin
+Karbasi, Aryan Mokhtari and Sebastian Pokutta [@braun2025conditional]. It formalizes Sections 2.2.5
+and 2.2.6; numbers refer to the arXiv version [@braun2022conditional].
+:::
 
 Over a polytope, the Frank–Wolfe algorithm converges only at the rate $O(1/t)$ when the minimizer
 lies on a face: the iterates zig-zag between vertices of that face, because the algorithm can only
