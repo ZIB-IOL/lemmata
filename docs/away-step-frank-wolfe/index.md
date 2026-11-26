@@ -90,10 +90,25 @@ scaling property. Hence the pyramidal width is at least the facial distance, and
 2.34 hold with $\delta$ the facial distance.
 ```
 
-The book proves equality in Euclidean space; the formal statement is the lower bound, which is the
-direction the convergence theorems use. The proof follows the book: by induction on the number of
-vertices of $S$ in the minimal face of $y$, pushing $x$ and $y$ away from a common vertex until
-either $y$ leaves the face of that vertex or the vertex drops out of the representation of $x$.
+The proof follows the book: by induction on the number of vertices of $S$ in the minimal face of
+$y$, pushing $x$ and $y$ away from a common vertex until either $y$ leaves the face of that vertex or
+the vertex drops out of the representation of $x$. The reverse inequality holds as well.
+
+```{prf:proposition} Pyramidal width as facial distance
+:label: prop-away-step-frank-wolfe-facial-eq
+:enumerator: 2.31
+
+In a finite-dimensional real normed space, the pyramidal width of $\operatorname{conv} V$ equals
+its facial distance.
+```
+
+For the upper bound, take a closest pair $y \in \operatorname{conv} F$,
+$x \in \operatorname{conv}(V \setminus F)$, with $F$ the minimal face of $y$. A functional separating
+the open $\delta$-neighbourhood of $\operatorname{conv} F$ from $\operatorname{conv}(V \setminus F)$ is
+maximized at $y$ over $F$, hence constant on $F$ because $y$ lies in the relative interior of its
+minimal face, and the scaling inequality at $(x, y)$ forces every scaling constant to be at most the
+facial distance. The book states the proposition in Euclidean space; the proof works in every
+finite-dimensional real normed space.
 
 ## Away-step Frank–Wolfe
 
@@ -162,9 +177,8 @@ the formal count of drop steps allows one more drop step than good steps.
 
 ## Not yet covered
 
-The reverse inequality of Proposition 2.31 (pyramidal width at most the facial distance), the lower
-bound of Corollary 2.32 in terms of an inequality description, and the pairwise variant of Section
-3.1 are not formalized here.
+The lower bound of Corollary 2.32 in terms of an inequality description and the pairwise variant of
+Section 3.1 are not formalized here.
 
 ## The formal statements at a glance
 

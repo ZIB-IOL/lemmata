@@ -11,6 +11,7 @@ public import Lemmata.AwayStepFW.Geometry
 public import Lemmata.AwayStepFW.Invariants
 public import Lemmata.AwayStepFW.Main
 public import Lemmata.AwayStepFW.Progress
+public import Lemmata.AwayStepFW.PyramidalEq
 public import Lemmata.AwayStepFW.Statement
 public import Lemmata.C19IsotropicSymbol.Main
 public import Lemmata.C19IsotropicSymbol.Statement

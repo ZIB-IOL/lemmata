@@ -73,3 +73,7 @@ exports:
     kind: theorem
     page: index.md
     label: prop-away-step-frank-wolfe-facial
+  - name: Lemmata.AwayStepFW.pyramidal_width_eq_facial_distance
+    kind: theorem
+    page: index.md
+    label: prop-away-step-frank-wolfe-facial-eq
