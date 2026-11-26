@@ -345,5 +345,13 @@ $\gamma_t = \ell/(t + \ell)$ of Remark A.7 are not formalized as statements here
 :end-before: -- DOCS_END_MAIN
 ```
 
+:::{note}
+**Refactored (2026-11-26).** The general Frank–Wolfe objects of this entry have been factored out into
+the shared entry [Frank–Wolfe: the core](../frank-wolfe-core/index.md), on which this entry now
+builds. They are the linear minimization oracle, the Frank–Wolfe step and its iterates, the three
+step-size rules, the standing assumptions, the minimizer set and uniform convexity. The proof of
+Proposition 2.2 moved there too. The statements of this entry are unchanged.
+:::
+
 ```{include} ../_generated/verification/frank-wolfe-local-dual-sharpness.md
 ```

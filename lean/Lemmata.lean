@@ -485,6 +485,14 @@ public import Lemmata.FockCircuits.StateIdentity
 public import Lemmata.FockCircuits.Symmetric
 public import Lemmata.FockCircuits.SymmetricBound
 public import Lemmata.FockCircuits.Wick
+public import Lemmata.FrankWolfe.Defs
+public import Lemmata.FrankWolfe.HilbertDefs
+public import Lemmata.FrankWolfe.Main
+public import Lemmata.FrankWolfe.Proof.Calculus
+public import Lemmata.FrankWolfe.Proof.Hilbert
+public import Lemmata.FrankWolfe.Proof.Interfaces
+public import Lemmata.FrankWolfe.Proof.Rate
+public import Lemmata.FrankWolfe.Statement
 public import Lemmata.FrankWolfeLDS.Defs
 public import Lemmata.FrankWolfeLDS.Main
 public import Lemmata.FrankWolfeLDS.Proof.AnalyticFacts

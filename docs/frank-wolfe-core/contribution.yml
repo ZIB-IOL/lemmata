@@ -1,0 +1,80 @@
+schema_version: 1
+id: frank-wolfe-core
+lean_namespace: Lemmata.FrankWolfe
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+abstract: >-
+  The shared foundation of the archive's Frank–Wolfe entries. It defines the linear
+  minimization oracle, the Frank–Wolfe step and its iterates under open-loop, short-step and
+  exact line-search step sizes, the Frank–Wolfe gap, smoothness and the standing assumptions. The
+  setting is a real normed space, with an equivalent formulation for Hilbert spaces through the
+  Riesz isometry. It proves the gap inequalities, the descent and progress lemmas, and the
+  classical rate $f(x_t) - f(x^\star) \le 2LD^2/(t+2)$ for all three step-size rules.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+  - name: Christoph Spiegel
+    orcid: "0000-0002-6545-202X"
+ai_use: >-
+  The core was factored out of the formalization of Frank–Wolfe beyond 1/t under local dual
+  sharpness and generalized to normed spaces with Claude (Anthropic), under the authors'
+  direction and review.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.FrankWolfe.IsLMO
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-core-lmo
+  - name: Lemmata.FrankWolfe.fwIterates
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-core-fw
+  - name: Lemmata.FrankWolfe.fwGap
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-core-gap
+  - name: Lemmata.FrankWolfe.IsSmooth
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-core-smooth
+  - name: Lemmata.FrankWolfe.StandingAssumptions
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-core-setting
+  - name: Lemmata.FrankWolfe.IsUniformlyConvexSet
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-core-uc
+  - name: Lemmata.FrankWolfe.Hilbert.fwIterates
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-core-hilbert-fw
+  - name: Lemmata.FrankWolfe.gap_inequalities
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-core-gaps
+  - name: Lemmata.FrankWolfe.descent_lemma
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-core-descent
+  - name: Lemmata.FrankWolfe.progress_lemma
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-core-progress
+  - name: Lemmata.FrankWolfe.standard_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-core-rate
+  - name: Lemmata.FrankWolfe.standard_rate_hilbert
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-core-rate-hilbert
