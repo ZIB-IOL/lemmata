@@ -317,6 +317,10 @@ public import Lemmata.DistributionalLowerBounds.Core.Distributional.WaterLevel
 public import Lemmata.DistributionalLowerBounds.Core.Distributional.YoungOld
 public import Lemmata.DistributionalLowerBounds.Main
 public import Lemmata.DistributionalLowerBounds.Statement
+public import Lemmata.EnergyShellCrossings.BalancedCrossing
+public import Lemmata.EnergyShellCrossings.EnergyShellCrossing
+public import Lemmata.EnergyShellCrossings.Main
+public import Lemmata.EnergyShellCrossings.Statement
 public import Lemmata.FishburnReedsClassicalBound.Blocks
 public import Lemmata.FishburnReedsClassicalBound.Comparison
 public import Lemmata.FishburnReedsClassicalBound.Envelope
