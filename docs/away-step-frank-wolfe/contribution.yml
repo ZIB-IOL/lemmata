@@ -1,0 +1,67 @@
+schema_version: 1
+id: away-step-frank-wolfe
+lean_namespace: Lemmata.AwayStepFW
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "2211.14103"
+abstract: >-
+  Linear convergence of the away-step and fully-corrective Frank–Wolfe algorithms over polytopes,
+  following Sections 2.2.5 and 2.2.6 of the book Conditional Gradient Methods. For a polytope
+  $P = \operatorname{conv} V$, the pyramidal width is the largest $\delta$ such that the away vertex
+  $a$ and the Frank–Wolfe vertex $v$ of any direction $\psi$ satisfy
+  $\psi(a - v) \ge \delta\, \psi(x - y)/\|x - y\|$; it has this scaling property itself. For a
+  $\mu$-strongly convex objective the scaling property gives
+  $f(x) - f(x^*) \le f'(x)(a - v)^2/(2\mu\delta^2)$. Every run of away-step Frank–Wolfe with short
+  steps then satisfies $f(x_t) - f(x^*) \le (1 - \min\{1/2, \mu\delta^2/(4LD^2)\})^{\lfloor (t-1)/2
+  \rfloor} LD^2/2$, and every run of fully-corrective Frank–Wolfe satisfies
+  $f(x_t) - f(x^*) \le (1 - \min\{1/2, \mu\delta^2/(LD^2)\})^{t-1} LD^2/2$. The statements hold in
+  real normed spaces, for every tie-breaking of the oracles.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.AwayStepFW.IsScaling
+    kind: definition
+    page: index.md
+    label: def-away-step-frank-wolfe-scaling
+  - name: Lemmata.AwayStepFW.pyramidalWidth
+    kind: definition
+    page: index.md
+    label: def-away-step-frank-wolfe-width
+  - name: Lemmata.AwayStepFW.IsAFWRun
+    kind: definition
+    page: index.md
+    label: def-away-step-frank-wolfe-afw
+  - name: Lemmata.AwayStepFW.IsFCFWRun
+    kind: definition
+    page: index.md
+    label: def-away-step-frank-wolfe-fcfw
+  - name: Lemmata.AwayStepFW.scaling_via_pyramidal_width
+    kind: theorem
+    page: index.md
+    label: lem-away-step-frank-wolfe-scaling
+  - name: Lemmata.AwayStepFW.geometric_strong_convexity
+    kind: theorem
+    page: index.md
+    label: lem-away-step-frank-wolfe-geometric
+  - name: Lemmata.AwayStepFW.away_step_convergence
+    kind: theorem
+    page: index.md
+    label: thm-away-step-frank-wolfe-afw
+  - name: Lemmata.AwayStepFW.fully_corrective_convergence
+    kind: theorem
+    page: index.md
+    label: thm-away-step-frank-wolfe-fcfw

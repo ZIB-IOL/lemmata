@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-26
 
+- **New entry:** [Away-step and fully-corrective Frank–Wolfe: linear convergence via pyramidal width](away-step-frank-wolfe/index.md), proving that the away-step and fully-corrective Frank–Wolfe algorithms converge linearly over polytopes for smooth strongly convex objectives, with rates governed by the pyramidal width.
 - **Updated entry:** [Conditional gradient methods: smoothness, scaling and linear rates](conditional-gradient-basics/index.md), adding Theorem 2.6 on approximate linear minimization, with the error normalized so that the stated rate $2LD^2(1+\delta)/(t+3)$ holds.
 - **Updated entry:** [Conditional gradient methods: smoothness, scaling and linear rates](conditional-gradient-basics/index.md), adding Lemma 2.21 on contractions of mixed type; the first bound holds before the cutoff $t_0$, and a counterexample shows it can fail at $t_0$.
 - **New entry:** [Conditional gradient methods: smoothness, scaling and linear rates](conditional-gradient-basics/index.md), proving that Frank–Wolfe with short steps or line search converges linearly when the minimizer is interior and the objective is gradient dominated, together with the smoothness, gap and contraction lemmas of the first two chapters of the book.
