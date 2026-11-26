@@ -493,6 +493,10 @@ public import Lemmata.FrankWolfe.Proof.Hilbert
 public import Lemmata.FrankWolfe.Proof.Interfaces
 public import Lemmata.FrankWolfe.Proof.Rate
 public import Lemmata.FrankWolfe.Statement
+public import Lemmata.FrankWolfeBSS.Defs
+public import Lemmata.FrankWolfeBSS.Main
+public import Lemmata.FrankWolfeBSS.Proof
+public import Lemmata.FrankWolfeBSS.Statement
 public import Lemmata.FrankWolfeIntro.Adaptive
 public import Lemmata.FrankWolfeIntro.AdaptiveProgress
 public import Lemmata.FrankWolfeIntro.Caratheodory.Smooth
