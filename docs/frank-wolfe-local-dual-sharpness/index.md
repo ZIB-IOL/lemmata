@@ -4,6 +4,14 @@ numbering:
   headings: false
 ---
 
+:::{note}
+This is the Lean formalization accompanying the NeurIPS 2026 paper *Frank–Wolfe Beyond 1/t
+Convergence* of @pokutta2026frank. Its authors differ from the paper's: Christoph Spiegel
+independently checked the paper's original Lean development and substantially streamlined it,
+and his streamlined version is the basis of the formalization here. The results and their proofs
+are the paper's; this entry adds the formal statements and their Lean proofs.
+:::
+
 ```{include} ../_generated/provenance/frank-wolfe-local-dual-sharpness.md
 ```
 
@@ -162,13 +170,15 @@ $\left(\min\{\alpha/2,\ \beta / \max\{1, \operatorname{diam}(C)^q\}\},\ q\right)
 Below, Frank–Wolfe minimizes $f(x) = \tfrac12 \|x - c\|^2$ (so $L = 1$) over four regions in
 the plane. Drag the target $c$. The squares are the most recent atoms $s_t$, the dashed segment
 is the current step, and the right panel plots $(t+2)\,F_t$ against $t$ on logarithmic axes.
-A falling curve means $F_t = o(1/t)$; a level curve is the $1/t$ barrier. The line below the
-plot shows the current step length $\|s_t - x_t\|$: it stays large on flat parts and shrinks
-where local dual sharpness holds.
+A falling curve means $F_t = o(1/t)$; a level curve is the $1/t$ barrier. The dashed line,
+which the *1/t guide* button switches off, is the guarantee $F_t \le 2LD^2/(t+2)$ of
+[](#prop-frank-wolfe-local-dual-sharpness-standard): a curve parallel to it converges like $1/t$,
+one that bends away beats $1/t$. The line below the plot shows the current step length
+$\|s_t - x_t\|$: it stays large on flat parts and shrinks where local dual sharpness holds.
 
 ```{anywidget} ./widgets/fw.mjs
 :css: ./widgets/fw.css
-{"region": "square", "rule": "short", "cx": 0, "cy": 1.45}
+{"region": "square", "rule": "short", "cx": 0, "cy": 1.45, "guide": true}
 ```
 
 Things to try, with short steps:
