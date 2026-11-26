@@ -1,7 +1,7 @@
 // Frank–Wolfe on four planar regions, for f(x) = ½‖x − c‖² (so L = 1). Drag c, pick a region
 // and a step-size rule, and watch the iterates, the atoms returned by the linear minimization
 // oracle, and (t + 2)·F_t on log–log axes: a falling curve is F_t = o(1/t), a level one is the
-// 1/t barrier. Everything runs in the browser; it uses only model.get/set/on (no kernel).
+// 1/t barrier. The dashed 1/t guide is the guarantee F_t ≤ 2LD²/(t+2) of Proposition 2.2. Everything runs in the browser; it uses only model.get/set/on (no kernel).
 
 const T_MAX = 3000;
 const VIEW = 1.75; // the canvas shows [-VIEW, VIEW]²
@@ -36,7 +36,7 @@ let FLAT = "";
 
 const REGIONS = {
   square: {
-    name: "square", color: "#d1495b",
+    name: "square", color: "#d1495b", diam: 2 * Math.SQRT2,
     lmo: (g) => [-sgn(g[0]), -sgn(g[1])],
     project: (c) => [clamp(c[0], -1, 1), clamp(c[1], -1, 1)],
     outline: () => [[-1, -1], [1, -1], [1, 1], [-1, 1]],
@@ -46,7 +46,7 @@ const REGIONS = {
         "jump between the two corners." + FLAT,
   },
   disk: {
-    name: "disk", color: "#2e86ab",
+    name: "disk", color: "#2e86ab", diam: 2,
     lmo: (g) => { const n = norm(g); return n === 0 ? [1, 0] : [-g[0] / n, -g[1] / n]; },
     project: (c) => { const n = norm(c); return n <= 1 ? [c[0], c[1]] : [c[0] / n, c[1] / n]; },
     outline: () => Array.from({ length: 160 }, (_, k) => {
@@ -56,7 +56,7 @@ const REGIONS = {
       "sharpness holds around every minimizer.",
   },
   l4: {
-    name: "ℓ₄ ball", color: "#3c9d5d",
+    name: "ℓ₄ ball", color: "#3c9d5d", diam: 2 ** 1.25,
     lmo: (g) => {
       const a = Math.abs(g[0]) ** (4 / 3) + Math.abs(g[1]) ** (4 / 3);
       if (a === 0) return [1, 0];
@@ -72,7 +72,7 @@ const REGIONS = {
       "dual sharpness holds around every minimizer, with a weaker power.",
   },
   stadium: {
-    name: "stadium", color: "#8e6fbf",
+    name: "stadium", color: "#8e6fbf", diam: 2 * (A_ST + R_ST),
     lmo: (g) => {
       const n = norm(g), d = n === 0 ? [1, 0] : [g[0] / n, g[1] / n];
       return [-A_ST * sgn(g[0]) - R_ST * d[0], -R_ST * d[1]];
@@ -144,7 +144,10 @@ function render({ model, el: root }) {
   const restart = el("button", "fw-btn", "Restart"); restart.type = "button";
   const speed = el("input"); speed.type = "range"; speed.min = "0"; speed.max = "4"; speed.value = "2";
   speed.setAttribute("aria-label", "Speed");
-  runRow.append(play, restart, el("span", "fw-label", "speed"), speed);
+  const guideBtn = el("button", "fw-btn", "1/t guide"); guideBtn.type = "button";
+  guideBtn.title = "Show the guarantee F_t ≤ 2LD²/(t+2) of Proposition 2.2, a level line in this plot";
+  guideBtn.addEventListener("click", () => model.set("guide", !guideOn()));
+  runRow.append(play, restart, guideBtn, el("span", "fw-label", "speed"), speed);
   controls.append(regionRow, ruleRow, runRow);
 
   const panes = el("div", "fw-panes");
@@ -164,6 +167,8 @@ function render({ model, el: root }) {
   const toWorld = (px, py) => [(px / W) * 2 * VIEW - VIEW, VIEW - (py / H) * 2 * VIEW];
   const ink = () => getComputedStyle(box).color || "#333";
 
+  const guideOn = () => model.get("guide") !== false;
+  const syncGuide = () => guideBtn.setAttribute("aria-pressed", String(guideOn()));
   let state = null, ghost = null, running = true, raf = 0;
   const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -262,7 +267,9 @@ function render({ model, el: root }) {
     k.clearRect(0, 0, CW, CH);
     const lx = (t) => L + (Math.log10(t + 1) / Math.log10(T_MAX)) * pw;
     const all = s.ys.concat(ghost ? ghost.ys : []).filter((y) => y > 0);
-    const ymax = Math.max(1, Math.ceil(Math.log10(Math.max(...all.slice(0, 50), 1e-12)) + 0.3));
+    const level = 2 * s.region.diam ** 2; // 2 L D² with L = 1
+    const ymax = Math.max(1, Math.ceil(Math.log10(Math.max(...all.slice(0, 50), 1e-12)) + 0.3),
+      guideOn() ? Math.ceil(Math.log10(level) + 0.3) : 1);
     const ymin = -8;
     const ly = (y) => Tp + ((ymax - Math.log10(Math.max(y, 10 ** ymin))) / (ymax - ymin)) * ph;
     k.strokeStyle = col; k.fillStyle = col; k.font = "11px sans-serif"; k.lineWidth = 1;
@@ -281,6 +288,14 @@ function render({ model, el: root }) {
       ys.forEach((y, t) => { const X = lx(t), Y = ly(y); t ? k.lineTo(X, Y) : k.moveTo(X, Y); });
       k.stroke(); k.globalAlpha = 1;
     };
+    if (guideOn()) {
+      const Y = ly(level);
+      k.save(); k.setLineDash([6, 4]); k.strokeStyle = col; k.globalAlpha = 0.6; k.lineWidth = 1.2;
+      k.beginPath(); k.moveTo(L, Y); k.lineTo(L + pw, Y); k.stroke(); k.restore();
+      k.globalAlpha = 0.75; k.fillStyle = col; k.textAlign = "right";
+      k.fillText("1/t: the guarantee 2LD²/(t+2) (Prop. 2.2)", L + pw - 4, Y - 5);
+      k.textAlign = "left"; k.globalAlpha = 1;
+    }
     if (ghost) {
       curve(ghost.ys, col, 1.2, 0.3);
       k.globalAlpha = 0.5; k.fillStyle = col; k.fillText(`previous: ${ghost.label}`, L + 6, Tp + ph - 8);
@@ -329,6 +344,8 @@ function render({ model, el: root }) {
   geo.addEventListener("pointerup", () => { dragging = false; });
 
   for (const key of ["region", "rule", "cx", "cy"]) model.on(`change:${key}`, start);
+  model.on("change:guide", () => { syncGuide(); if (state) draw(); });
+  syncGuide();
   start();
   return () => cancelAnimationFrame(raf);
 }
