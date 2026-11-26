@@ -1,6 +1,7 @@
 module
 
 public import Lemmata.FrankWolfe.Statement
+public import Lemmata.FrankWolfeIntro.Statement
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
 
 @[expose] public section
@@ -127,5 +128,56 @@ def ApproximateOracleRate : Prop :=
         f (x t) - s * fderiv ℝ f (x t) (x t - v t) + s ^ 2 * L / 2 * ‖v t - x t‖ ^ 2) →
     ∀ xStar ∈ minimizers C f, ∀ t : ℕ, 1 ≤ t →
       f (x t) - f xStar ≤ 2 * L * Metric.diam C ^ 2 * (1 + δ) / ((t : ℝ) + 3)
+
+/-- **Theorem 2.2** (vanilla Frank–Wolfe). Let `C` be compact and convex with diameter `D` and `f`
+convex and `L`-smooth. If every `v_t` is a Frank–Wolfe vertex and every step does at least as well
+as each `s ∈ [0, 1]` in the smoothness bound, as the short step and line search do, then for `t ≥ 1`
+the primal gap is at most `2 L D²/(t + 3)` and some Frank–Wolfe gap `g_τ = f'(x_τ)(x_τ - v_τ)` with
+`τ ≤ t` is at most `4 L D²/(t + 3)`. -/
+def VanillaRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (L : NNReal)
+    (x v : ℕ → E) (γ : ℕ → ℝ),
+    IsCompact C → Convex ℝ C → ConvexOn ℝ Set.univ f → IsSmooth f L → x 0 ∈ C →
+    (∀ t : ℕ, v t ∈ C ∧ (∀ y ∈ C, fderiv ℝ f (x t) (v t) ≤ fderiv ℝ f (x t) y) ∧
+      γ t ∈ Set.Icc (0 : ℝ) 1 ∧ x (t + 1) = x t + γ t • (v t - x t) ∧
+      ∀ s ∈ Set.Icc (0 : ℝ) 1, f (x (t + 1)) ≤
+        f (x t) - s * fderiv ℝ f (x t) (x t - v t) + s ^ 2 * L / 2 * ‖v t - x t‖ ^ 2) →
+    ∀ xStar ∈ minimizers C f, ∀ t : ℕ, 1 ≤ t →
+      f (x t) - f xStar ≤ 2 * L * Metric.diam C ^ 2 / ((t : ℝ) + 3) ∧
+        ∃ τ ≤ t, fderiv ℝ f (x τ) (x τ - v τ) ≤ 4 * L * Metric.diam C ^ 2 / ((t : ℝ) + 3)
+
+/-- **Theorem 2.11** (nonconvex objectives). For `L`-smooth, not necessarily convex `f` and steps as
+in Theorem 2.2, some Frank–Wolfe gap `g_τ` with `τ ≤ t` is at most `max {2 h₀, L D²}/√(t + 1)`,
+where `h₀ = f(x₀) - f(x⋆)`. -/
+def NonconvexShortStepRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (L : NNReal)
+    (x v : ℕ → E) (γ : ℕ → ℝ),
+    IsCompact C → Convex ℝ C → IsSmooth f L → x 0 ∈ C →
+    (∀ t : ℕ, v t ∈ C ∧ (∀ y ∈ C, fderiv ℝ f (x t) (v t) ≤ fderiv ℝ f (x t) y) ∧
+      γ t ∈ Set.Icc (0 : ℝ) 1 ∧ x (t + 1) = x t + γ t • (v t - x t) ∧
+      ∀ s ∈ Set.Icc (0 : ℝ) 1, f (x (t + 1)) ≤
+        f (x t) - s * fderiv ℝ f (x t) (x t - v t) + s ^ 2 * L / 2 * ‖v t - x t‖ ^ 2) →
+    ∀ xStar ∈ minimizers C f, ∀ t : ℕ, ∃ τ ≤ t,
+      fderiv ℝ f (x τ) (x τ - v τ) ≤
+        max (2 * (f (x 0) - f xStar)) (L * Metric.diam C ^ 2) / Real.sqrt ((t : ℝ) + 1)
+
+/-- **Proposition 2.9** (a lower bound for any step sizes), the value bound:
+`f(x_t) - f(x⋆) ≥ ∏_{τ=1}^{t-1} (1 - γ_τ) · f'(x⋆)(x₁ - x⋆)` for `t ≥ 1`. This is Proposition 4.6 of
+the introduction `Lemmata.FrankWolfeIntro`. -/
+abbrev FixedStepLowerBound : Prop := Lemmata.FrankWolfeIntro.FixedLowerBound.{u}
+
+/-- **Proposition 2.9** for the open-loop rule `γ_t = 2/(t+2)`:
+`f(x_t) - f(x⋆) ≥ 2/(t(t+1)) · f'(x⋆)(x₁ - x⋆)` for `t ≥ 1`. -/
+abbrev FixedStepLowerBoundOpenLoop : Prop := Lemmata.FrankWolfeIntro.FixedLowerBoundOpenLoop.{u}
+
+/-- **Proposition 2.9**, the decomposition: for step sizes in `[0, 1]` and atoms in `C`, every
+iterate `x_T` with `T ≥ 1` equals `P x₁ + (1 - P) y_T` for `P = ∏_{t=1}^{T-1} (1 - γ_t)` and some
+`y_T ∈ C`. -/
+def FixedStepDecomposition : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (x v : ℕ → E) (γ : ℕ → ℝ),
+    Convex ℝ C → x 0 ∈ C →
+    (∀ t : ℕ, v t ∈ C ∧ γ t ∈ Set.Icc (0 : ℝ) 1 ∧ x (t + 1) = x t + γ t • (v t - x t)) →
+    ∀ T : ℕ, 1 ≤ T → ∃ y ∈ C,
+      x T = (∏ t ∈ Finset.Ico 1 T, (1 - γ t)) • x 1 + (1 - ∏ t ∈ Finset.Ico 1 T, (1 - γ t)) • y
 
 end Lemmata.CGBasics

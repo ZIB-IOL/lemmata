@@ -10,8 +10,8 @@ numbering:
 :::{note}
 This entry comes from the book *Conditional Gradient Methods: From Core Principles to AI
 Applications* by Gábor Braun, Alejandro Carderera, Cyrille W. Combettes, Hamed Hassani, Amin
-Karbasi, Aryan Mokhtari and Sebastian Pokutta [@braun2025conditional]. It formalizes Sections 2.2.5,
-2.2.6 and 3.1.1; numbers refer to the arXiv version [@braun2022conditional].
+Karbasi, Aryan Mokhtari and Sebastian Pokutta [@braun2025conditional]. It formalizes Sections 2.2.4,
+2.2.5 and 3.1.1; numbers refer to the arXiv version [@braun2022conditional].
 :::
 
 :::{admonition} Errata
@@ -33,7 +33,7 @@ move toward vertices and never away from them. Away steps [@guelat1986some] remo
 vertex that is currently used, fully-corrective steps reoptimize over all vertices used so far, and
 pairwise steps move weight directly from one vertex to another. With the pyramidal width of
 @lacostejulien2015global as the measure of the polytope's geometry, all three variants converge
-linearly for smooth strongly convex objectives. This entry formalizes Sections 2.2.5, 2.2.6 and
+linearly for smooth strongly convex objectives. This entry formalizes Sections 2.2.4, 2.2.5 and
 3.1.1 of the book *Conditional Gradient Methods* [@braun2025conditional], in the numbering of its
 arXiv version, for a polytope $P = \operatorname{conv} V$ with $V$ a finite set in a
 real normed space. The objects are those of [Frank–Wolfe: the core](../frank-wolfe-core/index.md).

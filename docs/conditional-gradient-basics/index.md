@@ -72,6 +72,33 @@ $D$. For $x \in C$, $g(x) \le h(x) + LD^2/2$ if $h(x) \ge LD^2/2$, and $g(x) \le
 if $h(x) \le LD^2/2$.
 ```
 
+## Vanilla Frank–Wolfe
+
+With exact linear minimization and short steps or line search, both the primal gap and the smallest
+Frank–Wolfe gap so far decrease like $1/t$.
+
+```{prf:theorem} Vanilla Frank–Wolfe
+:label: thm-conditional-gradient-basics-vanilla
+:enumerator: 2.2
+
+Let $C$ be compact and convex with diameter $D$ and let $f$ be convex and $L$-smooth. If every $v_t$
+is a Frank–Wolfe vertex and every step $\gamma_t \in [0, 1]$ does at least as well as every
+$s \in [0, 1]$ in the smoothness bound, as clipped short steps and exact line search do, then for
+$t \ge 1$
+
+$$
+f(x_t) - f(x^*) \le \frac{2LD^2}{t+3} \qquad\text{and}\qquad
+\min_{0 \le \tau \le t} g_\tau \le \frac{4LD^2}{t+3},
+$$
+
+where $g_\tau = f'(x_\tau)(x_\tau - v_\tau)$ is the Frank–Wolfe gap.
+```
+
+The primal bound is Theorem 2.6 without oracle error. For the gaps, a step with gap
+$g_\tau \le LD^2$ gains at least $g_\tau^2/(2LD^2)$, and from $t = 1$ on every gap is at most
+$LD^2$. If all gaps in the second half of the run exceeded $4LD^2/(t+3)$, the gains there would
+exceed the primal gap at the start of that half.
+
 ## Approximate linear minimization
 
 The oracle need not be exact: an error that shrinks like the step size costs only a constant
@@ -93,6 +120,58 @@ proof gives $1 + 2\delta$ instead of $1 + \delta$: the step $2/(t+3)$ times the 
 $(2/(t+3))^2 LD^2\delta$, not half of it. The formal statement uses half the error, as in the
 original normalization of @jaggi2013revisiting. The book's bound on the running minimum of the
 Frank–Wolfe gaps under approximation is not formalized here.
+
+## Fixed step sizes
+
+The open-loop rule cannot converge faster than $1/t^2$ when the minimizer is not where the run
+starts: the weight of the first iterate only decays like the product of the $1 - \gamma_t$.
+
+```{prf:proposition} Iterates under fixed step sizes
+:label: prop-conditional-gradient-basics-fixed-step-point
+:enumerator: 2.9
+
+For step sizes $\gamma_t \in [0, 1]$ and atoms $v_t \in C$, every iterate $x_T$ with $T \ge 1$
+equals $P x_1 + (1 - P) y_T$ with $P = \prod_{t=1}^{T-1} (1 - \gamma_t)$ and some $y_T \in C$.
+```
+
+```{prf:proposition} A lower bound for any step sizes
+:label: prop-conditional-gradient-basics-fixed-step
+:enumerator: 2.9
+
+Let $f$ be convex. For step sizes $\gamma_t \in [0, 1]$ and $T \ge 1$,
+$f(x_T) - f(x^*) \ge \prod_{t=1}^{T-1} (1 - \gamma_t) \cdot f'(x^*)(x_1 - x^*)$.
+```
+
+```{prf:proposition} A lower bound for the open-loop rule
+:label: prop-conditional-gradient-basics-fixed-step-open-loop
+:enumerator: 2.9
+
+Let $f$ be convex. For $\gamma_t = 2/(t+2)$ and $T \ge 1$,
+$f(x_T) - f(x^*) \ge \frac{2}{T(T+1)} \, f'(x^*)(x_1 - x^*)$.
+```
+
+The value bounds are Proposition 4.6 of
+[The Frank–Wolfe algorithm: a short introduction](../frank-wolfe-introduction/index.md), restated
+here in the book's numbering.
+
+## Nonconvex objectives
+
+Without convexity the primal gap need not converge to $0$, but the Frank–Wolfe gap, which vanishes
+exactly at stationary points, still does.
+
+```{prf:theorem} Nonconvex objectives
+:label: thm-conditional-gradient-basics-nonconvex
+:enumerator: 2.11
+
+Let $C$ be compact and convex with diameter $D$ and let $f$ be $L$-smooth, not necessarily convex.
+With steps as in Theorem 2.2,
+$\min_{0 \le \tau \le t} g_\tau \le \max\{2h_0, LD^2\}/\sqrt{t+1}$ for every $t$, where
+$h_0 = f(x_0) - f(x^*)$.
+```
+
+Each step gains at least $\min\{g_\tau^2/(2LD^2), g_\tau/2\}$, and the gains add up to at most
+$h_0$. The book states the bound for $t \ge 1$; it also holds at $t = 0$. The introduction proves
+the same bound for the constant step size $1/\sqrt{T+1}$.
 
 ## Strong convexity and gradient domination
 
@@ -207,12 +286,12 @@ using $s^{-\alpha} \ge 1 + \alpha(1 - s)$ for $0 < s \le 1$.
 
 ## Not yet covered
 
-The lower bounds of Section 2.1.2 are not formalized here. The away-step, fully-corrective and
-pairwise variants of Sections 2.2.5, 2.2.6 and 3.1.1 are in
-[Conditional gradient methods: away-step, fully-corrective and pairwise Frank–Wolfe](../away-step-frank-wolfe/index.md). Rates over uniformly convex sets are in
-[Frank–Wolfe beyond 1/t under local dual sharpness](../frank-wolfe-local-dual-sharpness/index.md),
-and the baseline results of Chapter 2 are in
-[The Frank–Wolfe algorithm: a short introduction](../frank-wolfe-introduction/index.md).
+The lower bounds of Example 2.7 and Theorem 2.8 in Section 2.1.2 and the rates over uniformly convex
+sets of Section 2.2.3 are not formalized here; rates over uniformly convex sets under local dual
+sharpness are in
+[Frank–Wolfe beyond 1/t under local dual sharpness](../frank-wolfe-local-dual-sharpness/index.md).
+The away-step, fully-corrective and pairwise variants of Sections 2.2.4, 2.2.5 and 3.1.1 are in
+[Conditional gradient methods: away-step, fully-corrective and pairwise Frank–Wolfe](../away-step-frank-wolfe/index.md).
 
 ## The formal statements at a glance
 
