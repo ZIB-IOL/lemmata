@@ -1,0 +1,68 @@
+schema_version: 1
+id: frank-wolfe-beyond-short-steps
+lean_namespace: Lemmata.FrankWolfeBSS
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "2501.18773"
+abstract: >-
+  Primal-dual short steps for the Frank–Wolfe algorithm. The primal-dual gap
+  $G_t = f(x_{t+1}) - L_t$, where $L_t$ is a weighted average of the Frank–Wolfe lower bounds
+  $f(x_\ell) - \max_{v \in C} f'(x_\ell)(x_\ell - v)$ on the optimal value, is computable and
+  bounds the primal gap, so it serves as a stopping criterion. It satisfies the exact recursion
+  $G_t = (1-\gamma_t)G_{t-1} - \gamma_t f'(x_t)(v_t - x_t) - f(x_t) + f(x_t + \gamma_t(v_t - x_t))$,
+  whose right-hand side is convex in the step size. Choosing every step size as the open-loop step,
+  as the primal-dual short step $\min\{1, G_{t-1}/(L\|v_t - x_t\|^2)\}$, or by a line search on that
+  right-hand side gives $G_t \le 2LD^2/(t+2)$ for a convex $L$-smooth objective on a compact convex
+  set of diameter $D$. The statements hold for every Frank–Wolfe run in real normed spaces, for
+  any tie-breaking of the oracle.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+  - name: David Martínez-Rubio
+    orcid: "0000-0002-4345-5422"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the direction
+  and review of Sebastian Pokutta, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.FrankWolfeBSS.IsFWRun
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-beyond-short-steps-run
+  - name: Lemmata.FrankWolfeBSS.pdGap
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-beyond-short-steps-gap
+  - name: Lemmata.FrankWolfeBSS.pdShortStep
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-beyond-short-steps-step
+  - name: Lemmata.FrankWolfeBSS.gap_bounds_primal
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-beyond-short-steps-valid
+  - name: Lemmata.FrankWolfeBSS.gap_recursion
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-beyond-short-steps-recursion
+  - name: Lemmata.FrankWolfeBSS.gap_bound_convex
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-beyond-short-steps-convex
+  - name: Lemmata.FrankWolfeBSS.primal_dual_rate
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-beyond-short-steps-rate
+  - name: Lemmata.FrankWolfeBSS.primal_dual_short_step_rate
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-beyond-short-steps-short-step
