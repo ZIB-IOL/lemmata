@@ -99,6 +99,28 @@ Three details differ from the book:
 - **The start.** The gradient vanishes at an interior minimizer, so already $f(x_0) - f(x^*) \le
   LD^2/2$ and the bound holds from $t = 0$; the book has the exponent $t - 1$.
 
+The widget runs Frank–Wolfe on $f(x) = \frac12 (x - c)^\top Q (x - c)$ with
+$Q = \operatorname{diag}(1, \mu)$, so $L = 1$ and $c^2 = 1/(2\mu)$ in Theorem 2.17. On the
+semi-log chart a linear rate is a straight line; the dashed line is the guarantee
+$q^t LD^2/2$, drawn while the minimizer is interior. Drag $c$.
+
+```{anywidget} ./widgets/lin.mjs
+:css: ./widgets/lin.css
+{"region": "square", "objective": "elongated", "cx": 0.45, "cy": 0.25}
+```
+
+Things to try:
+
+- **Move $c$ toward an edge.** The inscribed ball shrinks, $q$ approaches $1$, and the guarantee
+  flattens. The iterates still converge linearly, but more slowly.
+- **Move $c$ outside the square or the triangle.** The minimizer moves to the boundary and the
+  short step slows down to a sublinear rate: the iterates zig-zag toward a face.
+- **The disk.** With $c$ outside, the minimizer is on the boundary of a strongly convex set and
+  the gradient does not vanish there; convergence stays fast, for the reason explained in
+  [Frank–Wolfe beyond 1/t under local dual sharpness](../frank-wolfe-local-dual-sharpness/index.md).
+- **The open-loop rule** $2/(t+2)$ never converges linearly: its steps shrink no matter how good
+  the geometry is.
+
 ## From contractions to rates
 
 Most rates for Frank–Wolfe variants come from a per-step inequality for the primal gap. The book's
