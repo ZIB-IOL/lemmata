@@ -1702,9 +1702,10 @@ export default { render };
 // their facets as classes, lemmata-f-<facet>-<value>. The search matches every word anywhere
 // in a block's text (identifier, title, authors, subjects, topics, abstract, the TeX of its
 // formulas), ignoring case and accents. Each list of choices counts the entries it would
-// leave, given the other filters. The subjects are the list in the page's right column
-// (.lemmata-catalog-subjects): links to the subject pages, which filter instead when clicked
-// plainly (a click with a modifier key still opens the page); without that list, a select.
+// leave, given the other filters. The subjects are a list of choices like the others, and
+// also the list in the page's right column (.lemmata-catalog-subjects): links to the subject
+// pages, which filter instead when clicked plainly (a click with a modifier key still opens
+// the page). Both show the same choice and the same counts.
 // Blocks are only hidden and, for another order, given a CSS `order` -- inline styles, never
 // moved or rewritten, so React's tree stays as it rendered it and an unfiltered block is
 // exactly the static one. The state is kept in the address
@@ -1742,7 +1743,8 @@ function catalogFilter({ model, el }) {
     }
   };
 
-  // Two rows: the search with the count and Clear; then the filters, the order, the abstracts.
+  // Two rows: how to look (the search, the order, the abstracts); what to show (the filters,
+  // with the count and Clear).
   const wrap = doc.createElement("div"); wrap.className = "wrap"; wrap.setAttribute("role", "search");
   const row1 = doc.createElement("div"), row2 = doc.createElement("div"); row1.className = row2.className = "row";
   const search = doc.createElement("input");
@@ -1755,24 +1757,21 @@ function catalogFilter({ model, el }) {
   };
   const count = doc.createElement("span"); count.className = "count"; count.setAttribute("aria-live", "polite");
   const clear = doc.createElement("button"); clear.type = "button"; clear.className = "clear"; clear.textContent = "Clear";
-  // The subject chosen in the right column, shown here too, with a way back to all.
-  const chip = doc.createElement("button"); chip.type = "button"; chip.className = "chip"; chip.hidden = true;
-  chip.title = "Show all subjects";
-  row1.append(search, chip, count, clear);
-  const subject = facets.find((f) => f.key === "subject");
-  const margin = !!doc.querySelector(".lemmata-catalog-subjects a");
-  for (const f of facets) if (f.values.length > 1 && !(f === subject && margin))   // a single value filters nothing
-    f.select = select(row2, f.label, [["", f.all], ...f.values.map((v) => [v.value, v.text])], state[f.key]);
-  const order = select(row2, "Order", sorts, state.sort);
+  row1.append(search);
+  const order = select(row1, "Order", sorts, state.sort); order.className = "order";
   const toggle = doc.createElement("label"); toggle.className = "toggle";
   const abstracts = doc.createElement("input"); abstracts.type = "checkbox"; abstracts.checked = state.abstracts;
   toggle.append(abstracts, "Abstracts");
-  row2.append(toggle);
+  row1.append(toggle);
+  const subject = facets.find((f) => f.key === "subject");
+  for (const f of facets) if (f.values.length > 1)      // a single value filters nothing
+    f.select = select(row2, f.label, [["", f.all], ...f.values.map((v) => [v.value, v.text])], state[f.key]);
+  row2.append(count, clear);
   const empty = doc.createElement("p"); empty.className = "empty"; empty.textContent = "No entry matches."; empty.hidden = true;
   const style = doc.createElement("style");
   style.textContent = ".wrap{margin:.5rem 0 1.5rem;font-size:.875rem;line-height:1.4}" +
     ".row{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}.row+.row{margin-top:.5rem}" +
-    "input[type=search]{flex:1 1 16rem;min-width:10rem}select{flex:1 1 0;min-width:7rem}" +
+    "input[type=search]{flex:1 1 16rem;min-width:10rem}select{flex:1 1 0;min-width:7rem}select.order{flex:0 0 auto}" +
     "input[type=search],select{font:inherit;color:inherit;background:transparent;border:1px solid color-mix(in srgb,currentColor 28%,transparent);" +
     "border-radius:.375rem;padding:.35rem .5rem;margin:0}" +
     "select{max-width:13rem;cursor:pointer;text-overflow:ellipsis}" +
@@ -1780,8 +1779,6 @@ function catalogFilter({ model, el }) {
     ".toggle{display:inline-flex;align-items:center;gap:.3rem;cursor:pointer;user-select:none;white-space:nowrap}" +
     ".toggle input{margin:0}" +
     ".count{opacity:.75;font-variant-numeric:tabular-nums;white-space:nowrap}" +
-    ".chip{font:inherit;color:inherit;background:color-mix(in srgb,currentColor 8%,transparent);border:1px solid color-mix(in srgb,currentColor 28%,transparent);" +
-    "border-radius:999px;padding:.15rem .6rem;cursor:pointer;white-space:nowrap}.chip:hover{background:color-mix(in srgb,currentColor 14%,transparent)}" +
     ".clear{font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;opacity:.8}" +
     ".clear:hover{opacity:1}.empty{margin:.75rem 0 0;opacity:.8}";
   wrap.append(style, row1, row2, empty);
@@ -1832,6 +1829,8 @@ function catalogFilter({ model, el }) {
         const k = n.get(o.value) || 0;
         o.textContent = `${o.dataset.text} (${k})`; o.disabled = !k && o.value !== state[f.key];
       }
+      // A choice made elsewhere (a subject in the right column) shows here too.
+      if (f.select.value !== state[f.key]) f.select.value = state[f.key];
     }
     // The right column: counts follow the other filters, the chosen subject is marked.
     const n = counts(subject);
@@ -1842,8 +1841,6 @@ function catalogFilter({ model, el }) {
       const row = a.closest("li") || a, dim = !k && state.subject !== v ? "0.45" : "";
       if (row.style.opacity !== dim) row.style.opacity = dim;
     }
-    const chosen = subject.values.find((x) => x.value === state.subject);
-    chip.hidden = !chosen; chip.textContent = chosen ? `${chosen.param} ×` : "";
     // The list is printed newest first; any other order is CSS `order` in a flex column.
     const ranked = blocks.map((e, i) => ({ e, i }));
     if (state.sort === "old") ranked.reverse();
@@ -1872,7 +1869,6 @@ function catalogFilter({ model, el }) {
   for (const f of facets) if (f.select) f.select.addEventListener("change", () => { state[f.key] = f.select.value; update(); });
   order.addEventListener("change", () => { state.sort = order.value; update(); });
   abstracts.addEventListener("change", () => { state.abstracts = abstracts.checked; update(); });
-  chip.addEventListener("click", () => { state.subject = ""; update(); });
   // A plain click on a subject in the right column filters (again: all subjects). Taken on
   // the way down, before the theme's router would follow the link.
   const onClick = (e) => {
