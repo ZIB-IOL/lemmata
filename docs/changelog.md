@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-26
 
+- **Updated entry:** [Conditional gradient methods: away-step and fully-corrective Frank–Wolfe](away-step-frank-wolfe/index.md), adding a corrected Corollary 2.32: a lower bound on the pyramidal width from an inequality description, with an erratum for the book's argument.
 - **Updated entry:** [Conditional gradient methods: away-step and fully-corrective Frank–Wolfe](away-step-frank-wolfe/index.md), completing Proposition 2.31: the pyramidal width equals the facial distance, in every finite-dimensional real normed space.
 - **Updated entry:** [Conditional gradient methods: away-step and fully-corrective Frank–Wolfe](away-step-frank-wolfe/index.md), adding Proposition 2.31's lower bound: the facial distance is a scaling constant, so the linear rates hold with it.
 - **Updated entry:** [Frank–Wolfe: the core](frank-wolfe-core/index.md), adding polyhedral tools for later entries: closedness of finitely generated cones, the Farkas lemma, and exposed and minimal faces of polytopes.

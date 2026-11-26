@@ -85,4 +85,20 @@ def PyramidalWidthEqFacial : Prop :=
   ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] (V : Finset E),
     pyramidalWidth V = facialDistance V
 
+open Classical in
+/-- **Corollary 2.32, corrected** (pyramidal width from an inequality description). Let the rows
+`a_i x ≤ b_i` hold on `V`, and let every vertex off a proper exposed face be slack in some row that
+is tight on the face. Then the pyramidal width is at least the infimum of `(∑_{i ∈ I} (b_i - a_i v))
+/ ‖∑_{i ∈ I} a_i‖` over row sets `I` tight at some vertex and vertices `v` with positive total slack
+on `I`. -/
+def PyramidalWidthLowerBound : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] (V : Finset E)
+    {ι : Type} [Fintype ι] (a : ι → StrongDual ℝ E) (b : ι → ℝ),
+    (∃ ψ : StrongDual ℝ E, exposedFace V ψ ≠ V) → (∀ v ∈ V, ∀ i, a i v ≤ b i) →
+    (∀ ψ : StrongDual ℝ E, exposedFace V ψ ≠ V → ∀ v ∈ V \ exposedFace V ψ,
+      ∃ i, (∀ w ∈ exposedFace V ψ, a i w = b i) ∧ a i v < b i) →
+    sInf {r : ℝ | ∃ I : Finset ι, ∃ w ∈ V, (∀ i ∈ I, a i w = b i) ∧ ∃ v ∈ V,
+      0 < ∑ i ∈ I, (b i - a i v) ∧ r = (∑ i ∈ I, (b i - a i v)) / ‖∑ i ∈ I, a i‖} ≤
+      pyramidalWidth V
+
 end Lemmata.AwayStepFW
