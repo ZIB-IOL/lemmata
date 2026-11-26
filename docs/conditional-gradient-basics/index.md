@@ -7,6 +7,13 @@ numbering:
 ```{include} ../_generated/provenance/conditional-gradient-basics.md
 ```
 
+:::{note}
+This entry comes from the book *Conditional Gradient Methods: From Core Principles to AI
+Applications* by Gábor Braun, Alejandro Carderera, Cyrille W. Combettes, Hamed Hassani, Amin
+Karbasi, Aryan Mokhtari and Sebastian Pokutta [@braun2025conditional]. It formalizes results from
+Chapters 1 and 2; numbers refer to the arXiv version [@braun2022conditional].
+:::
+
 The Frank–Wolfe algorithm converges at the rate $O(1/t)$ for smooth convex objectives, and this
 is optimal in general. The first two chapters of the book *Conditional Gradient Methods*
 [@braun2025conditional] collect the tools that give faster rates under additional structure:
