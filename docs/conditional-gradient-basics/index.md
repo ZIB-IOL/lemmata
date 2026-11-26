@@ -16,6 +16,21 @@ real normed spaces, with the derivative as a continuous linear functional; the o
 oracle, the iterates, the step-size rules) are those of
 [Frank–Wolfe: the core](../frank-wolfe-core/index.md). The numbering is that of the arXiv version.
 
+:::{admonition} Errata
+:class: warning
+
+The formal statements correct three slips in the book:
+
+- **Lemma 2.21.** The first bound $h_t \le c_0(1-c_1)^{t-1}$ is stated for $1 \le t \le t_0$. It
+  holds for $t < t_0$ and can fail at $t = t_0$; an exact counterexample is given below.
+- **Theorem 2.6.** With the allowed oracle error $2LD^2\delta/(t+3)$ the proof gives the rate
+  $2LD^2(1 + 2\delta)/(t+3)$. The stated rate $2LD^2(1 + \delta)/(t+3)$ holds for the error
+  $LD^2\delta/(t+3)$.
+- **Theorem 2.17.** The statement omits convexity, which the proof uses through Proposition 2.16.
+  The contraction factor $1 - r^2/(2Lc^2D^2)$ has to be clipped at $0$: for a constant function
+  every $c > 0$ is admissible, and for small $c$ the unclipped bound is negative at odd $t$.
+:::
+
 ## Smoothness
 
 A function is $L$-smooth when it satisfies the quadratic upper bound

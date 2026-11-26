@@ -18,6 +18,16 @@ objects (oracle, iterates, step-size rules, gaps) are those of
 bound to the core's theorems. The statements of Section 4 hold in any real normed space;
 Theorem 5.1 is about $\ell_p^n$.
 
+:::{admonition} Errata
+:class: warning
+
+**Lemma 4.10.** The first case is stated "if $\gamma_t \in [0, 1]$", which always holds. Read
+literally it includes the clipped step $\gamma_t = 1$, where the bound can fail: for a quadratic
+with $L = M = 1$, $\|v - x\| = 1$ and $g = 10$, the decrease is $9.5$ while the bound claims
+$(g^2 + a^2)/2 = 90.5$. The proof treats the unclipped step, and the formal statement assumes
+$g/(M\|v - x\|^2) \le 1$.
+:::
+
 ## Gaps and optimality
 
 Three quantities measure how far $x \in C$ is from optimal. The *primal gap*
