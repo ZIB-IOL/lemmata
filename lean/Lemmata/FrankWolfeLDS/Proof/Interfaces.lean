@@ -3,6 +3,7 @@ module
 public import Lemmata.FrankWolfeLDS.Statement
 public import Lemmata.FrankWolfeLDS.Proof.LocalGapGeometry
 public import Lemmata.FrankWolfeLDS.Proof.Smoothness
+public import Lemmata.FrankWolfe.Main
 
 @[expose] public section
 
@@ -89,7 +90,8 @@ theorem openLoop_eq (x₀ : E) :
         (openLoopStepSize 2 t) = fwStep lmo f (fwIterates lmo f openLoopStep x₀ t)
         (openLoopStep t (fwIterates lmo f openLoopStep x₀ t))
     rw [ih]
-    simp [frankWolfeStep, fwStep, LMO, oracle, openLoopStepSize, openLoopStep]
+    simp [frankWolfeStep, fwStep, FrankWolfe.Hilbert.fwStep, LMO, oracle, openLoopStepSize,
+      openLoopStep, FrankWolfe.Hilbert.openLoopStep]
 
 theorem shortStep_eq (x₀ : E) :
     globalShortStepSequence h.oracle (∇ f) L x₀ = fwIterates lmo f (shortStep lmo f L) x₀ := by
@@ -247,17 +249,9 @@ theorem standardRate_of {C : Set E} {lmo : E → E} {f : E → ℝ} {L : ℝ≥0
     f (fwIterates lmo f openLoopStep x₀ t) - f xStar ≤ 2 * L * Metric.diam C ^ 2 / (t + 2) ∧
     f (fwIterates lmo f (shortStep lmo f L) x₀ t) - f xStar ≤
       2 * L * Metric.diam C ^ 2 / (t + 2) ∧
-    f (fwIterates lmo f (fun _ => σ) x₀ t) - f xStar ≤ 2 * L * Metric.diam C ^ 2 / (t + 2) := by
-  refine ⟨?_, ?_, ?_⟩
-  · have := frank_wolfe_convergence_after_first_step h.oracle h.convex f (∇ f) L h.smooth
-      h.firstOrder hxStar.1 hx₀ t ht
-    rwa [h.openLoop_eq] at this
-  · have := global_short_step_convergence_after_first_step h.oracle h.convex f (∇ f) L h.L_pos
-      h.smooth h.firstOrder hxStar.1 hx₀ t ht
-    rwa [h.shortStep_eq] at this
-  · have := exact_line_search_convergence_after_first_step h.oracle h.convex f (∇ f)
-      (h.lineSearch hσ) L h.smooth h.firstOrder hxStar.1 hx₀ t ht
-    rwa [h.lineSearch_eq hσ] at this
+    f (fwIterates lmo f (fun _ => σ) x₀ t) - f xStar ≤ 2 * L * Metric.diam C ^ 2 / (t + 2) :=
+  -- Proposition 2.2 is the core's `O(1/t)` theorem in a Hilbert space
+  FrankWolfe.standard_rate_hilbert C lmo f L h σ hσ xStar hxStar x₀ hx₀ t ht
 
 namespace Proof
 

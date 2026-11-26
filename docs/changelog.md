@@ -10,6 +10,10 @@ entry shows its own last change and links to the exact commit.
 
 Newest first. Add an item in the same pull request as the change it describes.
 
+## 2026-11-26
+
+- **New entry:** [Frank–Wolfe: the core](frank-wolfe-core/index.md), the shared objects of the Frank–Wolfe entries in normed and Hilbert spaces, proving the gap inequalities, the descent and progress lemmas and the classical $O(1/t)$ rate; [Frank–Wolfe beyond 1/t under local dual sharpness](frank-wolfe-local-dual-sharpness/index.md) now builds on it, with its statements unchanged.
+
 ## 2026-11-25
 
 - **New entry:** [Frank–Wolfe beyond 1/t under local dual sharpness](frank-wolfe-local-dual-sharpness/index.md), proving that Frank–Wolfe with short steps, exact line search or open-loop steps converges with primal gap $o(1/t)$ for every smooth convex objective when the feasible region and its oracle are locally dually sharp around the minimizers.
