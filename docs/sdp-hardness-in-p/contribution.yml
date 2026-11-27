@@ -1,0 +1,30 @@
+schema_version: 1
+id: sdp-hardness-in-p
+lean_namespace: Lemmata.SDPHardnessInP
+subject: cs.CC
+cross_lists: [math.OC, math.CO]
+topics: [extended-formulations]
+contributors:
+  - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
+abstract: >-
+  We transfer the exponential real PSD-rank bound for positively shifted matching matrices to constant-factor approximate SDP formulations of minimum-cost perfect matching, minimum-cost V-join, and minimum odd cut. The first two reductions use strictly positive metric costs and the third uses zero-one weights. No symmetry restriction is imposed. Lean proves the affine certificate construction and the finite reductions on concrete graph domains, with the external positive-shift PSD-rank bound as an explicit hypothesis.
+ai_use: The exposition and Lean formalization were developed with OpenAI Codex.
+pages:
+  - index.md
+exports:
+  - name: Lemmata.SDPHardnessInP.certified_slack_lower_bound
+    kind: theorem
+    page: index.md
+    label: thm-sdp-hardness-in-p-certificate
+  - name: Lemmata.SDPHardnessInP.matching_sdp_lower_bound
+    kind: theorem
+    page: index.md
+    label: thm-sdp-hardness-in-p-matching
+  - name: Lemmata.SDPHardnessInP.vjoin_sdp_lower_bound
+    kind: theorem
+    page: index.md
+    label: thm-sdp-hardness-in-p-join
+  - name: Lemmata.SDPHardnessInP.oddCut_sdp_lower_bound
+    kind: theorem
+    page: index.md
+    label: thm-sdp-hardness-in-p-odd-cut

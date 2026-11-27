@@ -1,0 +1,31 @@
+schema_version: 1
+id: complete-graph-tensor-rank
+lean_namespace: Lemmata.CompleteGraphTensorRank
+subject: cs.CC
+cross_lists: [math.AG, math.CO]
+topics: [tensor-rank]
+contributors:
+  - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
+abstract: >-
+  We close the odd-order gap for complete-graph tensors using the exact rectangular matrix multiplication exponent. Grouping the vertices of $K_{2r+1}$ into blocks of sizes $r,r,1$ and projecting away internal edges gives a rectangular tensor with weights $r^2,r,r$, whose exponent is $r^2+r+1/4$. Combined with Kirill Khoruzhii's upper bound, this gives asymptotic rank $d^{k^2/4}$ and per-edge exponent $k/[2(k-1)]$ for every $k\ge2$ over every field. Lean proves the restriction and the implication from an explicitly stated external rectangular lower bound.
+ai_use: The exposition and Lean formalization were developed with OpenAI Codex.
+acknowledgements: This contribution uses Kirill Khoruzhii's complete-graph upper bound and tensor formalization from lemmata:2610.00005.
+pages:
+  - index.md
+exports:
+  - name: Lemmata.CompleteGraphTensorRank.rectangle_le_completeGraph
+    kind: theorem
+    page: index.md
+    label: thm-complete-graph-tensor-rank-restriction
+  - name: Lemmata.CompleteGraphTensorRank.odd_completeGraph_rank
+    kind: theorem
+    page: index.md
+    label: thm-complete-graph-tensor-rank-odd
+  - name: Lemmata.CompleteGraphTensorRank.completeGraph_rank
+    kind: theorem
+    page: index.md
+    label: thm-complete-graph-tensor-rank-all
+  - name: Lemmata.CompleteGraphTensorRank.edgeExponent_eq
+    kind: theorem
+    page: index.md
+    label: cor-complete-graph-tensor-rank-edge
