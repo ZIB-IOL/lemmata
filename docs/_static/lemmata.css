@@ -1,5 +1,13 @@
 /* Lemmata site styles. Kept small: the book theme does the rest. */
 
+/* Math at the size of the text around it (2026-11-27). KaTeX draws formulas at 1.21em, which
+   lines up their lowercase with a sans-serif's taller lowercase, but its capitals, digits and
+   brackets (Computer Modern) then stand a size taller than the text's. Compared against
+   Roboto (proportioned like San Francisco): 1.12em matches capitals and lowercase best (1.15
+   still tall capitals, 1.10 small lowercase). Relative, so display math and math in smaller
+   text (abstracts, the start page) follow; `html` outranks katex.min.css whatever the order. */
+html .katex { font-size: 1.12em; }
+
 /* Entry header: contributors line + "Cite as", set apart from the mathematics below.
    Neutral colours via currentColor so it works in light and dark mode. */
 .lemmata-header {
