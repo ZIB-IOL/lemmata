@@ -58,3 +58,11 @@ exports:
     kind: theorem
     page: index.md
     label: thm-conditional-gradient-improvements-lazy
+  - name: Lemmata.CGImprovements.IsLazyAFWRun
+    kind: definition
+    page: index.md
+    label: def-conditional-gradient-improvements-lazy-afw-run
+  - name: Lemmata.CGImprovements.lazy_away_rate
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-improvements-lazy-afw
