@@ -1,0 +1,26 @@
+schema_version: 1
+id: energy-shell-crossings
+lean_namespace: Lemmata.EnergyShellCrossings
+subject: cs.CC
+topics: [arithmetic-circuits, tensor-rank]
+contributors:
+  - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
+abstract: >-
+  We refine Khoruzhii's integral crossing construction by restricting both alphabets to exact energy levels. If the levels of energies $H$ and $E$ contain at least $n$ and $m$ states, respectively, each crossing cut needs at most $Q(H+E)$ rank coordinates, where $Q$ counts all states at or below the energy cutoff. This gives a complex bilinear sum-of-squares identity with at most $4Q(H+E)$ squares. We also prove a balanced composition theorem with one rank index per distinct transversal cut, and discuss quantitative consequences of the classical partition asymptotic.
+ai_use: >-
+  The mathematical arguments, Lean formalization, exposition and finite comparisons were developed with OpenAI Codex.
+pages:
+  - index.md
+exports:
+  - name: Lemmata.EnergyShellCrossings.shellCrossingDecomposition
+    kind: theorem
+    page: index.md
+    label: thm-energy-shell-crossings-integral
+  - name: Lemmata.EnergyShellCrossings.shellHurwitzBound
+    kind: theorem
+    page: index.md
+    label: cor-energy-shell-crossings-squares
+  - name: Lemmata.EnergyShellCrossings.balancedCrossingDecomposition
+    kind: theorem
+    page: index.md
+    label: thm-energy-shell-crossings-balanced
