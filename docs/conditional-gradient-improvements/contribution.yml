@@ -1,0 +1,52 @@
+schema_version: 1
+id: conditional-gradient-improvements
+lean_namespace: Lemmata.CGImprovements
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "2211.14103"
+abstract: >-
+  Variants of the Frank–Wolfe algorithm from Chapter 3 of the book Conditional Gradient Methods,
+  starting with adaptive step sizes (AdaFW, Section 3.1.2). The adaptive strategy keeps an estimate
+  $M$ of the smoothness constant, takes the short step for $M$ and increases $M$ by a factor
+  $\tau > 1$ until a sufficient decrease test passes. For an $L$-smooth objective the test passes
+  as soon as $M \ge L$, so the search stops after at most $\lceil \log_\tau (L/M_0) \rceil$ increases
+  with an estimate at most $\max\{M_0, \tau L\}$, and Frank–Wolfe with these steps keeps the rates
+  $2KD^2/(t+3)$ for the primal gap and $4KD^2/(t+3)$ for the smallest Frank–Wolfe gap, with $K$
+  the largest estimate used. The statements hold in real normed spaces.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.CGImprovements.adaStep
+    kind: definition
+    page: index.md
+    label: def-conditional-gradient-improvements-ada-step
+  - name: Lemmata.CGImprovements.SufficientDecrease
+    kind: definition
+    page: index.md
+    label: def-conditional-gradient-improvements-sufficient-decrease
+  - name: Lemmata.CGImprovements.smooth_passes_test
+    kind: theorem
+    page: index.md
+    label: lem-conditional-gradient-improvements-smooth-test
+  - name: Lemmata.CGImprovements.adaptive_step_terminates
+    kind: theorem
+    page: index.md
+    label: prop-conditional-gradient-improvements-terminates
+  - name: Lemmata.CGImprovements.adaptive_rate
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-improvements-adafw
