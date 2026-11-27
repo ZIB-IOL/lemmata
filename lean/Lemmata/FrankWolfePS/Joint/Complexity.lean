@@ -31,7 +31,7 @@ theorem joint_body_linear_tolerance {C : Set E} (hc : IsCompact C) (cv : Convex 
     let H := (L : ℝ) / 2 * (Metric.diam C) ^ 2
     let θ := share r R * (μ / L)
     let n := iterationCount H ε θ
-    let ans := jointRun O (∇ f) L r ball x₀ n
+    let ans := projectedGradientRun O (∇ f) L r ball x₀ n
     ans.1 ∈ C ∧ ans.2.1 ≤ 1 + n * (if ball then 0 else 1) ∧ ans.2.2 ≤ 1 + n ∧
       ∀ w ∈ C, f ans.1 - f w ≤ ε := by
   dsimp only
@@ -51,7 +51,7 @@ theorem joint_body_linear_tolerance {C : Set E} (hc : IsCompact C) (cv : Convex 
 arithmetic. Only body-oracle evaluations are charged. -/
 noncomputable def disclosedJointRun {C : Set E} (O : LMO C) (u : E) (L r : ℝ)
     (ball : Bool) (x₀ : E) (n : ℕ) : E × ℕ × ℕ :=
-  let ans := jointRun O (isoGrad L u) L r ball x₀ n
+  let ans := projectedGradientRun O (isoGrad L u) L r ball x₀ n
   (ans.1, ans.2.1, 0)
 
 theorem disclosed_joint_quadratic {C : Set E} (hc : IsCompact C) (cv : Convex ℝ C) {r R L : ℝ}
