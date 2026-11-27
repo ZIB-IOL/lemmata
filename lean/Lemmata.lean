@@ -623,6 +623,7 @@ public import Lemmata.FrankWolfePS.Upper.Product
 public import Lemmata.FrankWolfePS.Upper.Quadratic
 public import Lemmata.FrankWolfePS.Upper.Sliding
 public import Lemmata.GrothendieckLowerBounds.Data3
+public import Lemmata.GrothendieckLowerBounds.Data3Orbit
 public import Lemmata.GrothendieckLowerBounds.Data3Split
 public import Lemmata.GrothendieckLowerBounds.Data5
 public import Lemmata.GrothendieckLowerBounds.Encoding
@@ -631,6 +632,7 @@ public import Lemmata.GrothendieckLowerBounds.Rotation
 public import Lemmata.GrothendieckLowerBounds.Sphere
 public import Lemmata.GrothendieckLowerBounds.Statement
 public import Lemmata.GrothendieckLowerBounds.Witness3
+public import Lemmata.GrothendieckLowerBounds.Witness3Orbit
 public import Lemmata.GrothendieckLowerBounds.Witness3Split
 public import Lemmata.GrothendieckLowerBounds.Witness5
 public import Lemmata.ImplicationComposition.Main

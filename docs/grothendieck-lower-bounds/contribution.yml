@@ -5,12 +5,13 @@ subject: math.OC
 cross_lists: [math.FA, quant-ph]
 topics: [bell-inequalities]
 abstract: >-
-  An explicit $141\times321$ integer matrix gives $K_G(3)>1.4396139030752404$.
+  An explicit $301\times321$ integer matrix gives $K_G(3)>1.4397098471655953$.
   Averaging rotations of the published 406-direction local model of Designolle et al.
   gives $K_G(3)<1.451263576$. The rotation argument uses the published finite-model
   result and exact rational bounds. Lean checks the lower witness vectors and their
   objective and proves the uniform numerical upper estimate from the model and geometric
-  hypotheses. An exhaustive integer search certifies the classical value. New vectors
+  hypotheses. Transposing an exhaustive sign list certifies the classical value of
+  the 301-row matrix. New vectors
   on the matrix of Márton et al. give $K_G(5),K_G(6)>1.49936483533988$.
 contributors:
   - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
@@ -20,7 +21,8 @@ ai_use: >-
   formalized the checks of the vectors and the passage to unit vectors in Lean, and was used
   for review, consistency edits and independent replays of the certificates. OpenAI Codex
   developed the 141-row extension, its numerical checks and Lean update, and the rotation
-  argument and arithmetic checker for the global upper bound.
+  argument and arithmetic checker for the global upper bound. For the 301-row extension,
+  OpenAI Codex developed the search, integer certificates, independent replays and Lean proofs.
 acknowledgements: >-
   Research reported in this paper was partially supported by the Berlin Mathematics
   Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche
@@ -31,6 +33,18 @@ native_computation: true
 pages:
   - index.md
 exports:
+  - name: Lemmata.GrothendieckLowerBounds.order_three_orbit
+    kind: theorem
+    page: index.md
+    label: thm-grothendieck-lower-bounds-order-three-orbit
+  - name: Lemmata.GrothendieckLowerBounds.orbit_attained
+    kind: theorem
+    page: index.md
+    label: prop-grothendieck-lower-bounds-orbit-attained
+  - name: Lemmata.GrothendieckLowerBounds.transport_one_norm
+    kind: theorem
+    page: index.md
+    label: lem-grothendieck-lower-bounds-orbit-transport
   - name: Lemmata.GrothendieckLowerBounds.order_three_rotation_upper
     kind: theorem
     page: index.md
