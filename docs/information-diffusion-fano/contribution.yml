@@ -98,3 +98,7 @@ exports:
     kind: theorem
     page: index.md
     label: cor-information-diffusion-fano-distance-entropy
+  - name: Lemmata.FanoDiffusion.independent_samples_fano
+    kind: theorem
+    page: index.md
+    label: cor-information-diffusion-fano-samples

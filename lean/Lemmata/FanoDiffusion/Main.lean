@@ -4,6 +4,7 @@ public import Lemmata.FanoDiffusion.Proof
 public import Lemmata.FanoDiffusion.Corollaries
 public import Lemmata.FanoDiffusion.Renyi
 public import Lemmata.FanoDiffusion.Entropy
+public import Lemmata.FanoDiffusion.Samples
 
 @[expose] public section
 
@@ -40,6 +41,9 @@ theorem entropy_fano : EntropyFano := Proof.entropy_fano
 
 /-- Corollary 2.5: the distance-based Fano inequality. -/
 theorem distance_fano_entropy : DistanceFanoEntropy := Proof.distance_fano_entropy
+
+/-- Corollary 2.4, with left-hand side `P[R]`: the Fano inequality for independent samples. -/
+theorem independent_samples_fano : IndependentSamplesFano := Proof.independent_samples_fano
 -- DOCS_END_MAIN
 
 end Lemmata.FanoDiffusion

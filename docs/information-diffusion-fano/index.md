@@ -22,6 +22,11 @@ claims $P(R) \le (1/2)^2 = 1/4$, while $P(R) = 1/2$. The last step of the proof,
 (4)", needs $P(R)^\alpha + (1 - P(R))^\alpha \le 1$, which holds only for $\alpha \ge 1$. The
 corrected statement below divides $P(R)^\alpha$ by $P(R)^\alpha + (1 - P(R))^\alpha$; for
 $\alpha > 1$ it implies (2), which is formalized as stated.
+
+**Corollary 2.4.** The left-hand side of (6) should be $P[R]$, as in (5), not $P[\neg R]$. For
+$X$ uniform on four values, $Y_1$ independent of $X$, $\hat X$ constant and $R = \{X = \hat X\}$, so
+that $I(X; Y_1) = \beta = 0$ and $p_{\min} = p_{\max} = 1/4$, the right-hand side of (6) is
+$(H(1/4) + \log(3/4))/\log 3 = 1/4$, while $P[\neg R] = 3/4$.
 :::
 
 Fano's inequality is a standard tool for lower bounds in statistics and optimization: a hidden
@@ -219,6 +224,33 @@ $$
 Corollary 2.5 is Corollary 2.3 with $p_{\min} = N_{\min}/|\mathcal X|$ and
 $p_{\max} = N_{\max}/|\mathcal X|$, since $H(X) = \log|\mathcal X|$ for uniform $X$.
 
+## Independent samples
+
+If $Y = (Y_1, \dots, Y_n)$ consists of samples that are i.i.d. given $X$, the mutual information
+grows at most linearly in $n$.
+
+```{prf:corollary} Fano inequality for independent samples
+:label: cor-information-diffusion-fano-samples
+:enumerator: 2.4
+
+Let $X$ take finitely many values, let $Y_1, \dots, Y_n$ take finitely many values and be i.i.d.
+with law $\eta(x)$ given $X = x$, and let $\hat X$ be drawn from a Markov kernel applied to $Y$. Let
+$R$, $p_{\min}$ and $p_{\max}$ be as in Proposition 2.2, and let $\eta(x) \ll \eta(x')$ and
+$D(\eta(x) \| \eta(x')) \le \beta$ for all $x, x'$. Then
+$$
+P[R] \le \frac{n\, I(X; Y_1) + H(P[R]) + \log(1 - p_{\min})}
+    {\log\bigl((1 - p_{\min})/p_{\max}\bigr)}
+  \le \frac{n\beta + H(P[R]) + \log(1 - p_{\min})}{\log\bigl((1 - p_{\min})/p_{\max}\bigr)}.
+$$
+```
+
+Let $Q$ be the product of the laws of the $Y_i$, and $P_x$ the law of $Y$ given $X = x$. Then
+$\sum_x P(X = x)\, D(P_x \| Q) = I(X; Y) + D(P_Y \| Q)$, and since $D(P_Y \| Q) \ge 0$,
+$I(X; Y) \le \sum_x P(X = x)\, D(P_x \| Q) = n\, I(X; Y_1)$, the last step because $P_x$ and $Q$
+are products. Concavity of the logarithm gives
+$D(\eta(x) \| P_{Y_1}) \le \sum_{x'} P(X = x')\, D(\eta(x) \| \eta(x'))$, hence
+$I(X; Y_1) \le \beta$.
+
 ## Special cases
 
 For a function $\rho$ and a radius $t$, the relation $\rho(x, \hat x) \le t$ with $p_{\min} = 0$
@@ -258,11 +290,13 @@ $\{\hat x \mid \rho(x, \hat x) \le t\}$; the formal statements bound the section
 $\{x \mid \rho(x, \hat x) \le t\}$ that the proof uses, which is the same for symmetric $\rho$, and
 take any bound $N$ or $V$ in place of the maximum or supremum. Corollaries 2.3 and 2.5 hold for
 any joint law of $(X, \hat X)$ with finitely many values; the Markov chain is not needed for them.
+Corollary 2.4 is stated for finitely many values of $X$ and of the samples, with the joint laws
+given by their point masses, and with any bound $\beta$ on the relative entropies.
 :::
 
-## Not yet covered
+## Coverage
 
-The version for independent samples (Corollary 2.4) is not yet covered.
+All results of the note are formalized: Propositions 2.1 and 2.2 and Corollaries 2.3 to 2.7.
 
 ## The formal statements at a glance
 
