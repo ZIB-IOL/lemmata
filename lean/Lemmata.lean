@@ -25,6 +25,7 @@ public import Lemmata.CGBasics.Main
 public import Lemmata.CGBasics.Rates
 public import Lemmata.CGBasics.Smoothness
 public import Lemmata.CGBasics.Statement
+public import Lemmata.CGBasics.UniformlyConvex
 public import Lemmata.CGBasics.Vanilla
 public import Lemmata.Centroid.Def.Bounds
 public import Lemmata.Centroid.Def.Rank

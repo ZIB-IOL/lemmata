@@ -175,6 +175,14 @@ the same bound for the constant step size $1/\sqrt{T+1}$.
 
 ## Strong convexity and gradient domination
 
+```{prf:definition} Gradient domination
+:label: def-conditional-gradient-basics-gradient-dominated
+:enumerator: 2.12
+
+A differentiable function $f$ is $c$-gradient dominated on $C$, for a constant $c > 0$, if
+$(f(x) - f(y))/c^2 \le \|f'(x)\|^2$ for all $x, y \in C$.
+```
+
 ```{prf:lemma} Primal gap bound via strong convexity
 :label: lem-conditional-gradient-basics-strong
 :enumerator: 2.13
@@ -284,11 +292,74 @@ $t \ge 1$, then $h_t \le c_0 / (1 + c_2 c_0^\alpha \alpha (t - 1))^{1/\alpha}$ f
 The proof of the power case shows that $h_t^{-\alpha}$ grows by at least $\alpha c_2$ per step,
 using $s^{-\alpha} \ge 1 + \alpha(1 - s)$ for $0 < s \le 1$.
 
+## Uniformly convex sets
+
+A set is $(\alpha, q)$-uniformly convex (Definition 2.18) if for $x, y$ in the set and
+$\theta \in [0, 1]$, every point within $\theta(1 - \theta)\alpha\|x - y\|^q$ of
+$\theta x + (1 - \theta) y$ is in the set; $q = 2$ gives strongly convex sets such as balls.
+Such a set curves away from every supporting hyperplane, so a Frank–Wolfe vertex far from the
+iterate comes with a large Frank–Wolfe gap.
+
+```{prf:proposition} Scaling condition for uniformly convex sets
+:label: prop-conditional-gradient-basics-uc-scaling
+:enumerator: 2.19
+
+Let $C$ be $(\alpha, q)$-uniformly convex and let $v \in C$ minimize the linear functional $\psi$
+over $C$. Then $\alpha \|\psi\| \|x - v\|^q \le \psi(x - v)$ for every $x \in C$.
+```
+
+With the gradient as $\psi$, every short step contracts the primal gap, and the contraction lemmas
+above turn this into rates. Below, $C$ is compact and convex, $f$ is convex and $L$-smooth, and
+every step is a short step or a line search step with exact linear minimization.
+
+```{prf:theorem} Strongly convex sets
+:label: thm-conditional-gradient-basics-uc-linear
+:enumerator: 2.20
+
+Let $C$ be $(\alpha, 2)$-uniformly convex and let $\|f'(y)\| \ge c > 0$ on $C$. Then
+$f(x_t) - f(x^*) \le \max\{1/2, 1 - \alpha c/(2L)\}^{t-1} LD^2/2$ for $t \ge 1$.
+```
+
+```{prf:theorem} Uniformly convex sets
+:label: thm-conditional-gradient-basics-uc-power
+:enumerator: 2.20
+
+Let $C$ be $(\alpha, q)$-uniformly convex with $q > 2$ and let $\|f'(y)\| \ge c > 0$ on $C$. With
+$K = (L/(\alpha c))^{2/(q-2)}$ and $t_0 = \max\{\lfloor \log_2(D^2/K) \rfloor + 1, 1\}$,
+$f(x_t) - f(x^*) \le LD^2/2^t$ for $1 \le t < t_0$ and
+$f(x_t) - f(x^*) \le LK/(1 + (1/2 - 1/q)(t - t_0))^{q/(q-2)}$ for $t \ge t_0$.
+```
+
+```{prf:theorem} Gradient-dominated objectives
+:label: thm-conditional-gradient-basics-gradient-dominated
+:enumerator: 2.24
+
+Let $C$ be $(\alpha, q)$-uniformly convex with $q \ge 2$ and let $f$ be $c$-gradient dominated on
+$C$. With $K = (Lc^2/\alpha^2)^{1/(q-1)}$ and
+$t_0 = \max\{\lfloor \log_2(D^2/K) \rfloor + 1, 1\}$, $f(x_t) - f(x^*) \le LD^2/2^t$ for
+$1 \le t < t_0$ and $f(x_t) - f(x^*) \le LK/(1 + \tfrac12(1 - 1/q)(t - t_0))^{q/(q-1)}$ for
+$t \ge t_0$.
+```
+
+A short step with Frank–Wolfe gap $g$ toward $v$ gains at least
+$\min\{g/2, g^2/(2L\|v - x\|^2)\}$. Proposition 2.19 bounds $\|v - x\|^q$ by $g/(\alpha c)$, or
+by $g c/(\alpha \sqrt{h})$ under gradient domination, and $g \ge h$ by convexity; this gives
+$h_{t+1} \le h_t (1 - \min\{1/2, c_2 h_t^{a}\})$, and Lemma 2.21 or 2.22 gives the rates.
+
+:::{note}
+**Differences from the book.** The starting point can be any point of $C$; the book starts at a
+Frank–Wolfe vertex, which the proofs do not use. The first regime is stated for $t < t_0$, as in
+Lemma 2.21. In Theorem 2.24 the book has $(4Lc^2/\alpha^2)^{1/(q-1)}$ in place of $LK$ and
+$(4c^2/\alpha^2)^{1/(q-1)}$ in place of $K$ in $t_0$; these are not invariant under scaling $f$ by
+a constant, which leaves the iterates unchanged, while the constants used here, which follow from
+the proof, are. Definition 2.18 asks for all directions $\|z\| \le 1$; the formal definition
+asks only for unit directions, a weaker assumption.
+:::
+
 ## Not yet covered
 
-The lower bounds of Example 2.7 and Theorem 2.8 in Section 2.1.2 and the rates over uniformly convex
-sets of Section 2.2.3 are not formalized here; rates over uniformly convex sets under local dual
-sharpness are in
+The lower bounds of Example 2.7 and Theorem 2.8 in Section 2.1.2 are not formalized here. Rates over
+uniformly convex sets under local dual sharpness are in
 [Frank–Wolfe beyond 1/t under local dual sharpness](../frank-wolfe-local-dual-sharpness/index.md).
 The away-step, fully-corrective and pairwise variants of Sections 2.2.4, 2.2.5 and 3.1.1 are in
 [Conditional gradient methods: away-step, fully-corrective and pairwise Frank–Wolfe](../away-step-frank-wolfe/index.md).

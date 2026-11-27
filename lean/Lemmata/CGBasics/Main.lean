@@ -5,6 +5,7 @@ public import Lemmata.CGBasics.Interior
 public import Lemmata.CGBasics.Rates
 public import Lemmata.CGBasics.Approx
 public import Lemmata.CGBasics.FixedStep
+public import Lemmata.CGBasics.UniformlyConvex
 public import Lemmata.FrankWolfeIntro.Main
 
 @[expose] public section
@@ -57,6 +58,18 @@ theorem fixed_step_decomposition : FixedStepDecomposition := Proof.fixed_step_de
 
 /-- Theorem 2.11: Frank–Wolfe gap rate for nonconvex objectives. -/
 theorem nonconvex_short_step_rate : NonconvexShortStepRate := Proof.nonconvex_short_step_rate
+
+/-- Proposition 2.19: the scaling inequality for uniformly convex sets. -/
+theorem uniformly_convex_scaling : UniformlyConvexScaling := Proof.uniformly_convex_scaling
+
+/-- Theorem 2.20 for `q = 2`: linear rate over strongly convex sets. -/
+theorem uniformly_convex_linear : UniformlyConvexLinear := Proof.uniformly_convex_linear
+
+/-- Theorem 2.20 for `q > 2`: rates over uniformly convex sets. -/
+theorem uniformly_convex_power : UniformlyConvexPower := Proof.uniformly_convex_power
+
+/-- Theorem 2.24: rates for gradient-dominated objectives over uniformly convex sets. -/
+theorem gradient_dominated_rate : GradientDominatedRate := Proof.gradient_dominated_rate
 -- DOCS_END_MAIN
 
 end Lemmata.CGBasics

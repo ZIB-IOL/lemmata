@@ -180,4 +180,72 @@ def FixedStepDecomposition : Prop :=
     ∀ T : ℕ, 1 ≤ T → ∃ y ∈ C,
       x T = (∏ t ∈ Finset.Ico 1 T, (1 - γ t)) • x 1 + (1 - ∏ t ∈ Finset.Ico 1 T, (1 - γ t)) • y
 
+/-- **Definition 2.12** (gradient domination). `f` is `c`-gradient dominated on `C` if
+`(f(x) - f(y))/c² ≤ ‖f'(x)‖²` for all `x, y ∈ C`. -/
+def IsGradientDominated {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E)
+    (f : E → ℝ) (c : ℝ) : Prop :=
+  ∀ x ∈ C, ∀ y ∈ C, (f x - f y) / c ^ 2 ≤ ‖fderiv ℝ f x‖ ^ 2
+
+/-- A Frank–Wolfe run on `C` with exact linear minimization in which every step does at least as
+well as each `s ∈ [0, 1]` in the smoothness bound, as short steps and line search do. -/
+def IsShortStepRun {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (L : NNReal) (x v : ℕ → E) (γ : ℕ → ℝ) : Prop :=
+  x 0 ∈ C ∧ ∀ t : ℕ, v t ∈ C ∧ (∀ y ∈ C, fderiv ℝ f (x t) (v t) ≤ fderiv ℝ f (x t) y) ∧
+    γ t ∈ Set.Icc (0 : ℝ) 1 ∧ x (t + 1) = x t + γ t • (v t - x t) ∧
+    ∀ s ∈ Set.Icc (0 : ℝ) 1, f (x (t + 1)) ≤
+      f (x t) - s * fderiv ℝ f (x t) (x t - v t) + s ^ 2 * L / 2 * ‖v t - x t‖ ^ 2
+
+/-- **Proposition 2.19** (scaling condition for uniformly convex sets). If `C` is
+`(α, q)`-uniformly convex and `v ∈ C` minimizes `ψ` over `C`, then `α ‖ψ‖ ‖x - v‖^q ≤ ψ(x - v)`
+for every `x ∈ C`. -/
+def UniformlyConvexScaling : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (α q : ℝ),
+    IsUniformlyConvexSet C α q → ∀ (ψ : StrongDual ℝ E) (v : E), v ∈ C → (∀ y ∈ C, ψ v ≤ ψ y) →
+    ∀ x ∈ C, α * ‖ψ‖ * ‖x - v‖ ^ q ≤ ψ (x - v)
+
+/-- **Theorem 2.20** for `q = 2` (strongly convex sets). If `C` is compact, convex and
+`(α, 2)`-uniformly convex, `f` is convex and `L`-smooth with `‖f'(y)‖ ≥ c > 0` on `C`, then every
+short-step run satisfies `f(x_t) - f(x⋆) ≤ max {1/2, 1 - α c/(2 L)}^{t-1} L D²/2` for `t ≥ 1`. -/
+def UniformlyConvexLinear : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (L : NNReal)
+    (α c : ℝ) (x v : ℕ → E) (γ : ℕ → ℝ),
+    IsCompact C → Convex ℝ C → IsUniformlyConvexSet C α 2 → 0 < α → 0 < c → 0 < (L : ℝ) →
+    ConvexOn ℝ Set.univ f → IsSmooth f L → (∀ y ∈ C, c ≤ ‖fderiv ℝ f y‖) →
+    IsShortStepRun C f L x v γ → ∀ xStar ∈ minimizers C f, ∀ t : ℕ, 1 ≤ t →
+      f (x t) - f xStar ≤
+        max (1 / 2) (1 - α * c / (2 * L)) ^ (t - 1) * (L * Metric.diam C ^ 2 / 2)
+
+/-- **Theorem 2.20** for `q > 2`. Under the assumptions of `UniformlyConvexLinear` with an
+`(α, q)`-uniformly convex set, let `K = (L/(α c))^{2/(q-2)}` and
+`t₀ = max {⌊log₂ (D²/K)⌋ + 1, 1}`. Then `f(x_t) - f(x⋆) ≤ L D²/2^t` for `1 ≤ t < t₀` and
+`f(x_t) - f(x⋆) ≤ L K/(1 + (1/2 - 1/q)(t - t₀))^{q/(q-2)}` for `t ≥ t₀`. -/
+def UniformlyConvexPower : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (L : NNReal)
+    (α c q : ℝ) (x v : ℕ → E) (γ : ℕ → ℝ),
+    IsCompact C → Convex ℝ C → IsUniformlyConvexSet C α q → 2 < q → 0 < α → 0 < c → 0 < (L : ℝ) →
+    ConvexOn ℝ Set.univ f → IsSmooth f L → (∀ y ∈ C, c ≤ ‖fderiv ℝ f y‖) →
+    IsShortStepRun C f L x v γ → ∀ xStar ∈ minimizers C f,
+      let K := ((L : ℝ) / (α * c)) ^ (2 / (q - 2))
+      let t₀ : ℤ := max (⌊Real.logb 2 (Metric.diam C ^ 2 / K)⌋ + 1) 1
+      (∀ t : ℕ, 1 ≤ t → (t : ℤ) < t₀ → f (x t) - f xStar ≤ L * Metric.diam C ^ 2 / 2 ^ t) ∧
+      (∀ t : ℕ, t₀ ≤ (t : ℤ) → f (x t) - f xStar ≤
+        L * K / (1 + (1 / 2 - 1 / q) * ((t : ℝ) - t₀)) ^ (q / (q - 2)))
+
+/-- **Theorem 2.24** (gradient-dominated objectives), with scale-invariant constants. If `C` is
+compact, convex and `(α, q)`-uniformly convex with `q ≥ 2`, and `f` is convex, `L`-smooth and
+`c`-gradient dominated on `C`, let `K = (L c²/α²)^{1/(q-1)}` and `t₀ = max {⌊log₂ (D²/K)⌋ + 1, 1}`.
+Then every short-step run satisfies `f(x_t) - f(x⋆) ≤ L D²/2^t` for `1 ≤ t < t₀` and
+`f(x_t) - f(x⋆) ≤ L K/(1 + (1/2)(1 - 1/q)(t - t₀))^{q/(q-1)}` for `t ≥ t₀`. -/
+def GradientDominatedRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (L : NNReal)
+    (α c q : ℝ) (x v : ℕ → E) (γ : ℕ → ℝ),
+    IsCompact C → Convex ℝ C → IsUniformlyConvexSet C α q → 2 ≤ q → 0 < α → 0 < c → 0 < (L : ℝ) →
+    ConvexOn ℝ Set.univ f → IsSmooth f L → IsGradientDominated C f c →
+    IsShortStepRun C f L x v γ → ∀ xStar ∈ minimizers C f,
+      let K := ((L : ℝ) * c ^ 2 / α ^ 2) ^ (1 / (q - 1))
+      let t₀ : ℤ := max (⌊Real.logb 2 (Metric.diam C ^ 2 / K)⌋ + 1) 1
+      (∀ t : ℕ, 1 ≤ t → (t : ℤ) < t₀ → f (x t) - f xStar ≤ L * Metric.diam C ^ 2 / 2 ^ t) ∧
+      (∀ t : ℕ, t₀ ≤ (t : ℤ) → f (x t) - f xStar ≤
+        L * K / (1 + 1 / 2 * (1 - 1 / q) * ((t : ℝ) - t₀)) ^ (q / (q - 1)))
+
 end Lemmata.CGBasics
