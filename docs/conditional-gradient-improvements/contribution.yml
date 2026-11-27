@@ -82,3 +82,11 @@ exports:
     kind: theorem
     page: index.md
     label: cor-conditional-gradient-improvements-sharp-afw
+  - name: Lemmata.CGImprovements.IsNEPRun
+    kind: definition
+    page: index.md
+    label: def-conditional-gradient-improvements-nep-run
+  - name: Lemmata.CGImprovements.nep_rate
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-improvements-nep
