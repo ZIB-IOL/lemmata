@@ -1,9 +1,10 @@
 // Oracle methods on smooth bodies C = K + B_r, for f(x) = ½‖x − c‖² (L = 1).
 // Panel "planar": a planar core K (point, segment, triangle, ellipse) rounded by a disk; drag the
-// target c. Vanilla Frank–Wolfe uses C's oracle; the quadratic method (Theorem: matching upper
-// bound) runs Frank–Wolfe on K and lifts by the ball; the joint method (Theorem: linear rate) uses
-// exact line search on K. Panel "hard": a hidden instance of the hard family in dimension 256k+1
-// with the vertex oracle, a barycenter oracle, or the unique oracle of a jittered body.
+// target c. Frank–Wolfe uses the LMO of C; Frank–Wolfe on K (the upper bound for isotropic
+// quadratics) runs on the inner parallel body K and adds the closest point of the ball; projected
+// gradient with Frank–Wolfe projections (the linear rate) uses exact line search on K. Panel
+// "hard": an instance of the hard bodies in dimension 256k+1, with the vertex LMO, an LMO that
+// answers the vertical direction with the barycenter, or the LMO of a body with perturbed vertices.
 // Everything runs in the browser; it uses only model.get/set/on (no kernel).
 
 const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
@@ -84,7 +85,7 @@ export function simulatePlanar(coreKey, c, T) {
     const gam = dd > 0 ? Math.min(1, Math.max(0, dot(g, d) / dd)) : 0;
     x = sub(x, mul(d, gam)); fw.push(gap(x)); fwPath.push(x);
   }
-  // quadratic method: one call for a core point, then Frank–Wolfe 2/(j+2) on K, lifted
+  // Frank–Wolfe on K: one call for a point of K, then steps 2/(j+2) on K, plus the ball part
   const qm = [], qmPath = [];
   let a = add(lmoC(e), mul(e, r));
   qm.push(gap(lift(a))); qmPath.push(lift(a));
@@ -94,7 +95,7 @@ export function simulatePlanar(coreKey, c, T) {
     a = add(mul(a, 1 - 2 / (j + 2)), mul(s, 2 / (j + 2)));
     qm.push(gap(lift(a))); qmPath.push(lift(a));
   }
-  // joint method: exact line search on K for ½‖a − c‖², lifted
+  // projected gradient with Frank–Wolfe projections: exact line search on K for ½‖a − c‖²
   const jm = [], jmPath = [];
   const x0 = lmoC(e), q0 = sub(x0, c);
   a = norm(q0) === 0 ? x0 : add(lmoC(q0), mul(q0, r / norm(q0)));
@@ -129,45 +130,46 @@ function projSimplex(v) {
   return v.map((x) => Math.max(0, x - th));
 }
 
-/** The hard family with a = r = 1: gaps after t calls for vanilla FW, the quadratic method and
- * probe-then-exploit, with the vertex, barycenter or unique (jittered) oracle. */
+/** The hard bodies with a = r = 1: primal gaps after t calls for Frank–Wolfe, Frank–Wolfe on K and
+ * a method that reads I off the answer, with the vertex LMO, the barycenter answer or the LMO of a
+ * body with perturbed vertices. */
 export function simulateHard(k, rule, T, seed = 7) {
   const N = 256 * k, d = 8 * k, rnd = mulberry(seed);
-  const labels = [0], pool = Array.from({ length: N - 1 }, (_, i) => i + 1);
-  for (let i = 0; i < d - 1; i++) labels.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
-  labels.sort((p, q) => p - q);
-  const xi = labels.map(() => 0.02 * (2 * rnd() - 1)), zeta = labels.map(() => 0.02 * (2 * rnd() - 1));
+  const indexSet = [0], pool = Array.from({ length: N - 1 }, (_, i) => i + 1);
+  for (let i = 0; i < d - 1; i++) indexSet.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
+  indexSet.sort((p, q) => p - q);
+  const xi = indexSet.map(() => 0.02 * (2 * rnd() - 1)), zeta = indexSet.map(() => 0.02 * (2 * rnd() - 1));
   const s = 1e-4;
   const oracle = (qx, qy) => {
     const nq = Math.hypot(qy, Math.hypot(...qx));
     const x = new Float64Array(N);
     if (nq === 0) { x[0] = 1; return [x, 0]; }
     if (rule === "unique") {
-      const g = labels.map((j, m) => (qx[j] * (1 + xi[m]) + qy * (1 + zeta[m])) / nq);
+      const g = indexSet.map((j, m) => (qx[j] * (1 + xi[m]) + qy * (1 + zeta[m])) / nq);
       const u = projSimplex(g.map((v) => -v / (2 * s)));
       let hy = 0, uu = 0;
-      labels.forEach((j, m) => { x[j] += u[m] * (1 + xi[m]); hy += u[m] * (1 + zeta[m]); uu += u[m] * u[m]; });
+      indexSet.forEach((j, m) => { x[j] += u[m] * (1 + xi[m]); hy += u[m] * (1 + zeta[m]); uu += u[m] * u[m]; });
       const rad = s * (1 - uu) + 1;
       for (let i = 0; i < N; i++) x[i] -= rad * qx[i] / nq;
       return [x, hy - rad * qy / nq];
     }
     let mn = Infinity;
-    for (const j of labels) mn = Math.min(mn, qx[j]);
-    const J = rule === "barycenter" ? labels.filter((j) => qx[j] === mn) : [labels.find((j) => qx[j] === mn)];
+    for (const j of indexSet) mn = Math.min(mn, qx[j]);
+    const J = rule === "barycenter" ? indexSet.filter((j) => qx[j] === mn) : [indexSet.find((j) => qx[j] === mn)];
     for (const j of J) x[j] += 1 / J.length;
     for (let i = 0; i < N; i++) x[i] -= qx[i] / nq;
     return [x, 1 - qy / nq];
   };
   let H = Math.sqrt(1 / d + 33 * 33);
   if (rule === "unique") {
-    // distance from c = (0, -32) to the jittered core: minimize a convex function of the weights
+    // distance from c = (0, -32) to the perturbed inner body: minimize a convex function of the weights
     const phi = (u) => { let q = 0, h = 32, uu = 0;
-      labels.forEach((_, m) => { q += (u[m] * (1 + xi[m])) ** 2; h += u[m] * (1 + zeta[m]); uu += u[m] ** 2; });
+      indexSet.forEach((_, m) => { q += (u[m] * (1 + xi[m])) ** 2; h += u[m] * (1 + zeta[m]); uu += u[m] ** 2; });
       return [Math.sqrt(q + h * h), h, uu]; };
-    let u = labels.map(() => 1 / d);
+    let u = indexSet.map(() => 1 / d);
     for (let it = 1; it <= 4000; it++) {
       const [nrm, h] = phi(u);
-      const grad = labels.map((_, m) => (u[m] * (1 + xi[m]) ** 2 + h * (1 + zeta[m])) / nrm + 2 * s * u[m]);
+      const grad = indexSet.map((_, m) => (u[m] * (1 + xi[m]) ** 2 + h * (1 + zeta[m])) / nrm + 2 * s * u[m]);
       u = projSimplex(u.map((v, m) => v - (0.5 / Math.sqrt(it)) * grad[m]));
     }
     const [nrm, , uu] = phi(u);
@@ -187,7 +189,7 @@ export function simulateHard(k, rule, T, seed = 7) {
     for (let i = 0; i < N; i++) x[i] -= gam * (x[i] - vx[i]);
     y -= gam * (y - vy); fw.push(gap(x, y));
   }
-  // quadratic method; the first call is the vertical direction
+  // Frank–Wolfe on K; the first call is the vertical direction
   const center = [new Float64Array(N), -32];
   const lift = (ax, ay) => {
     const dx = ax.map((v) => -v), dy = center[1] - ay, n = Math.hypot(dy, Math.hypot(...dx));
@@ -237,17 +239,17 @@ function render({ model, el: root }) {
   };
   rows[0].append(elt("span", "fs-label", "Body"));
   for (const [kk, K] of Object.entries(CORES)) button(rows[0], "body", kk, K.name);
-  button(rows[0], "body", "hard", "hard family");
-  rows[1].append(elt("span", "fs-label", "Hard family"));
+  button(rows[0], "body", "hard", "hard body");
+  rows[1].append(elt("span", "fs-label", "Hard body"));
   for (const kk of [1, 2, 4, 8]) button(rows[1], "k", kk, `k = ${kk}`);
-  rows[2].append(elt("span", "fs-label", "Oracle"));
-  for (const [kk, lab] of [["vertex", "vertex rule"], ["barycenter", "barycenter rule"],
-    ["unique", "unique (jittered)"]]) button(rows[2], "rule", kk, lab);
+  rows[2].append(elt("span", "fs-label", "LMO"));
+  for (const [kk, lab] of [["vertex", "vertex LMO"], ["barycenter", "barycenter answer"],
+    ["unique", "perturbed vertices"]]) button(rows[2], "rule", kk, lab);
   const panes = elt("div", "fs-panes");
   const geo = elt("canvas", "fs-geo"), chart = elt("canvas", "fs-chart");
   geo.setAttribute("role", "img"); chart.setAttribute("role", "img");
   geo.setAttribute("aria-label", "The body, the target c and the iterates; drag to move c");
-  chart.setAttribute("aria-label", "Gap against the number of oracle calls, logarithmic axes");
+  chart.setAttribute("aria-label", "Primal gap against the number of oracle calls, logarithmic axes");
   panes.append(geo, chart);
   const stats = elt("p", "fs-stats");
   box.append(...rows, panes, stats);
@@ -300,18 +302,18 @@ function render({ model, el: root }) {
     if (body === "hard") {
       const kk = Number(model.get("k")) || 4, rule = model.get("rule") || "vertex", T = 300;
       const S = simulateHard(kk, rule, T);
-      chartCurves([[S.fw, COLORS.fw, "vanilla FW"], [S.qm, COLORS.qm, "quadratic method"],
-        [S.probe, COLORS.probe, "probe, then exploit"]],
-        [[(t) => 2 * S.delta ** 2 / (t + 1), "2δ²/(t+1)"], [() => S.lower, `lower level 1/(16k)`]], T);
+      chartCurves([[S.fw, COLORS.fw, "Frank–Wolfe"], [S.qm, COLORS.qm, "Frank–Wolfe on K"],
+        [S.probe, COLORS.probe, "reads I off the answer"]],
+        [[(t) => 2 * S.delta ** 2 / (t + 1), "2δ²/(t+1)"], [() => S.lower, `threshold 1/(16k)`]], T);
       g.fillStyle = col; g.font = "13px sans-serif";
-      const lines = [`hidden set: ${S.d} of ${S.N} labels`, `dimension ${S.N + 1}`, ""].concat(
+      const lines = [`index set I: ${S.d} of ${S.N} indices`, `dimension ${S.N + 1}`, ""].concat(
         rule === "barycenter"
           ? ["the vertical query returns the", "barycenter of the bottom face:", "the instance is read off",
             "after one call"]
-          : ["each call reveals at most one", "hidden label"]);
+          : ["each call reveals at most one", "index of I"]);
       lines.forEach((l, i) => g.fillText(l, 12, 30 + 20 * i));
-      stats.textContent = `after ${T} calls: vanilla FW ${S.fw[T].toExponential(1)}, quadratic ` +
-        `method ${S.qm[T].toExponential(1)}, probe ${S.probe[T].toExponential(1)}`;
+      stats.textContent = `after ${T} calls: Frank–Wolfe ${S.fw[T].toExponential(1)}, Frank–Wolfe ` +
+        `on K ${S.qm[T].toExponential(1)}, reads I off ${S.probe[T].toExponential(1)}`;
       return;
     }
     const c = [Number(model.get("cx")), Number(model.get("cy"))], T = 1000;
@@ -335,10 +337,10 @@ function render({ model, el: root }) {
     g.fillStyle = "#e07a1f"; g.fillText("c", cp[0] + 9, cp[1] + 15);
     const guides = [[(t) => 2 * S.delta ** 2 / (t + 1), "2δ²/(t+1)"]];
     if (S.rate) guides.push([S.rate, "linear rate"]);
-    chartCurves([[S.fw, COLORS.fw, "vanilla FW"], [S.qm, COLORS.qm, "quadratic method"],
-      [S.jm, COLORS.jm, "joint method"]], S.delta > 0 ? guides : guides.slice(1), T);
-    stats.textContent = `after ${T} calls: vanilla FW ${S.fw[T].toExponential(1)}, quadratic ` +
-      `method ${S.qm[T].toExponential(1)}, joint method ${S.jm[T].toExponential(1)}`;
+    chartCurves([[S.fw, COLORS.fw, "Frank–Wolfe"], [S.qm, COLORS.qm, "Frank–Wolfe on K"],
+      [S.jm, COLORS.jm, "projected gradient"]], S.delta > 0 ? guides : guides.slice(1), T);
+    stats.textContent = `after ${T} calls: Frank–Wolfe ${S.fw[T].toExponential(1)}, Frank–Wolfe ` +
+      `on K ${S.qm[T].toExponential(1)}, projected gradient ${S.jm[T].toExponential(1)}`;
   }
 
   let dragging = false;

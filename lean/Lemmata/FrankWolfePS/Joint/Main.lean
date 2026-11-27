@@ -65,7 +65,7 @@ theorem linear_of_parallel_rep {C K : Set E} {r R L μ : ℝ} (rep : C = Rounded
     (outer : OuterBall C R) (O : LMO C) {f : E → ℝ} {g : E → E}
     (mdl : Models C f g L) (strong : StrongLower C f g μ) (hμ : 0 < μ) (hLμ : μ ≤ L)
     (ball : Bool) (cert : ball = true → R = r) {x₀ : E} (hx : x₀ ∈ C) (n : ℕ) :
-    let ans := jointRun O g L r ball x₀ n
+    let ans := projectedGradientRun O g L r ball x₀ n
     ans.1 ∈ C ∧ ans.2.1 ≤ 1 + n * (if ball then 0 else 1) ∧ ans.2.2 ≤ 1 + n ∧
     ∀ w ∈ C, f ans.1 - f w ≤ (1 - share r R * (μ / L)) ^ n * (L / 2 * (Metric.diam C) ^ 2) := by
   subst C
@@ -93,7 +93,7 @@ theorem joint_body_linear_upper {C : Set E} (hc : IsCompact C) (cv : Convex ℝ 
     (O : LMO C) {f : E → ℝ} {L : ℝ≥0} (hμ : 0 < μ) (df : Differentiable ℝ f)
     (sc : StrongConvexOn Set.univ μ f) (smooth : LipschitzWith L (∇ f))
     (ball : Bool) (cert : ball = true → R = r) {x₀ : E} (hx : x₀ ∈ C) (n : ℕ) :
-    let ans := jointRun O (∇ f) L r ball x₀ n
+    let ans := projectedGradientRun O (∇ f) L r ball x₀ n
     ans.1 ∈ C ∧ ans.2.1 ≤ 1 + n * (if ball then 0 else 1) ∧ ans.2.2 ≤ 1 + n ∧
     ∀ w ∈ C, f ans.1 - f w ≤
       (1 - share r R * (μ / L)) ^ n * ((L : ℝ) / 2 * (Metric.diam C) ^ 2) := by
@@ -108,7 +108,7 @@ theorem joint_ball_linear_upper {C : Set E} (hc : IsCompact C) (cv : Convex ℝ 
     (O : LMO C) {f : E → ℝ} {L : ℝ≥0} (hμ : 0 < μ) (df : Differentiable ℝ f)
     (sc : StrongConvexOn Set.univ μ f) (smooth : LipschitzWith L (∇ f))
     {x₀ : E} (hx : x₀ ∈ C) (n : ℕ) :
-    let ans := jointRun O (∇ f) L r true x₀ n
+    let ans := projectedGradientRun O (∇ f) L r true x₀ n
     ans.1 ∈ C ∧ ans.2.1 ≤ 1 ∧ ans.2.2 ≤ 1 + n ∧
     ∀ w ∈ C, f ans.1 - f w ≤ (1 - μ / L) ^ n * ((L : ℝ) / 2 * (Metric.diam C) ^ 2) := by
   simpa [share] using joint_body_linear_upper hc cv hr (le_refl r) innerBall outer O hμ df sc
@@ -121,7 +121,7 @@ theorem chord_body_linear_upper {C : Set E} (hc : IsCompact C) (cv : Convex ℝ 
     (O : LMO C) {f : E → ℝ} {L : ℝ≥0} (hμ : 0 < μ) (df : Differentiable ℝ f)
     (sc : StrongConvexOn Set.univ μ f) (smooth : LipschitzWith L (∇ f))
     {x₀ : E} (hx : x₀ ∈ C) (n : ℕ) :
-    let ans := jointRun O (∇ f) L r false x₀ n
+    let ans := projectedGradientRun O (∇ f) L r false x₀ n
     ans.1 ∈ C ∧ ans.2.1 ≤ 1 + n ∧ ans.2.2 ≤ 1 + n ∧
     ∀ w ∈ C, f ans.1 - f w ≤
       (1 - share r R * (μ / L)) ^ n * ((L : ℝ) / 2 * (Metric.diam C) ^ 2) := by
