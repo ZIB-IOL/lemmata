@@ -5,6 +5,7 @@ public import Lemmata.CGImprovements.Lazy
 public import Lemmata.CGImprovements.LazyAway
 public import Lemmata.CGImprovements.Sharp
 public import Lemmata.CGImprovements.SharpAFW
+public import Lemmata.CGImprovements.SharpSublinear
 public import Lemmata.CGImprovements.NEP
 public import Lemmata.CGImprovements.BCG
 public import Lemmata.CGImprovements.BCGLinear
@@ -50,6 +51,12 @@ theorem bcg_linear_rate : BCGLinearRate := Proof.bcg_linear_rate
 
 /-- Lemma 3.45: the simplex descent step. -/
 theorem simplex_descent : SimplexDescent := Proof.simplex_descent
+
+/-- Corollary 3.33 for `θ < 1/2`: away-step Frank–Wolfe under sharpness. -/
+theorem sharp_away_sublinear : SharpAwaySublinear := Proof.sharp_away_sublinear
+
+/-- Lemma 3.35, first half: sharp functions are gradient dominated. -/
+theorem sharp_gradient_dominated : SharpGradientDominated := Proof.sharp_gradient_dominated
 -- DOCS_END_MAIN
 
 end Lemmata.CGImprovements

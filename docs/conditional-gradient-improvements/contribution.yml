@@ -106,3 +106,11 @@ exports:
     kind: theorem
     page: index.md
     label: lem-conditional-gradient-improvements-simplex-descent
+  - name: Lemmata.CGImprovements.sharp_away_sublinear
+    kind: theorem
+    page: index.md
+    label: cor-conditional-gradient-improvements-sharp-afw-sublinear
+  - name: Lemmata.CGImprovements.sharp_gradient_dominated
+    kind: theorem
+    page: index.md
+    label: lem-conditional-gradient-improvements-sharp-gradient-dominated

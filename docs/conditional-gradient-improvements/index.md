@@ -225,6 +225,46 @@ $\min\{h/2, f'(x)(a - v)^2/(8LD^2)\}$, and Lemma 3.32 bounds $f'(x)(a - v)^2$ be
 $\delta^2 h/c^2$. As in Theorem 2.29, the exponent is $\lfloor (t-1)/2 \rfloor$ instead of the book's
 $\lceil (t-1)/2 \rceil$.
 
+```{prf:corollary} Away-step Frank–Wolfe under sharpness, $\theta < 1/2$
+:label: cor-conditional-gradient-improvements-sharp-afw-sublinear
+:enumerator: 3.33
+
+Let $f$ be convex, $L$-smooth and $(c, \theta)$-sharp over $P = \operatorname{conv} V$ with
+$0 \le \theta < 1/2$, let $\delta > 0$ have the scaling property of the pyramidal width, and put
+$K = (4c^2LD^2/\delta^2)^{1/(1-2\theta)}$ and
+$t_0 = \max\{\lfloor \log_2(LD^2/K) \rfloor + 1, 1\}$. For $t \ge 1$ let
+$T = \lfloor (t-1)/2 \rfloor + 1$. Every run of away-step Frank–Wolfe satisfies
+$$
+f(x_t) - f(x^*) \le
+\begin{cases}
+  LD^2/2^T & T < t_0, \\
+  K / \bigl(1 + (1/2 - \theta)(T - t_0)\bigr)^{1/(1-2\theta)} & T \ge t_0.
+\end{cases}
+$$
+```
+
+A step that does not drop a vertex maps the primal gap $h$ below
+$\varphi(h) = h - h \min\{1/2, c_2 h^{1-2\theta}\}$ with $c_2 = \delta^2/(8c^2LD^2)$. Since
+$\varphi$ is monotone, after $G$ such steps the gap is below the $G$-th iterate of $\varphi$
+started at $LD^2/2$, and Lemma 2.21 applies to that sequence. The book counts the second regime in
+iterations, with $\lceil (t - t_0)/2 \rceil$; here $T$ is the number of guaranteed good steps plus
+one, and the first regime $LD^2/2^T$ is at least as strong as the book's
+$LD^2/2^{\lceil (t-1)/2 \rceil}$.
+
+Sharpness implies a lower bound on the dual norm of the gradient, the gradient dominated property.
+
+```{prf:lemma} Sharp functions are gradient dominated
+:label: lem-conditional-gradient-improvements-sharp-gradient-dominated
+:enumerator: 3.35
+
+Let $C$ be compact and $f$ convex, differentiable and $(c, \theta)$-sharp over $C$ with
+$\theta < 1$. Then $(f(x) - f(x^*))^{1-\theta}/c \le \|f'(x)\|_*$ for every $x \in C$.
+```
+
+This is the first half of Lemma 3.35; it follows from Lemma 3.31, since
+$f'(x)(x - y) \le \|f'(x)\|_* \|x - y\|$. The converse, for smooth functions whose minimizers lie in
+the relative interior, uses the gradient flow and is not formalized here.
+
 :::{note}
 **Differences from the book.** Lemmas 3.31 and 3.32 are stated for points with positive primal
 gap. At a minimizer the left-hand side is $0^{1-\theta}/c$, which is $1/c$ for $\theta = 1$, while the
@@ -354,9 +394,8 @@ $LD^2$ for the simplex descent of Lemma 3.45, which gives the book's $\mathcal{O
 
 ## Not yet covered
 
-From Section 3.1.5, Corollary 3.33 for $\theta < 1/2$, the comparison with gradient domination
-(Lemma 3.35), the Hoffman bound (Lemma 3.27) and the Łojasiewicz-type Lemma 3.30 are not
-formalized here.
+From Section 3.1.5, the converse half of Lemma 3.35, the Hoffman bound (Lemma 3.27) and the
+Łojasiewicz-type Lemma 3.30 are not formalized here.
 
 ## The formal statements at a glance
 

@@ -43,6 +43,7 @@ public import Lemmata.CGImprovements.NEP
 public import Lemmata.CGImprovements.Proof
 public import Lemmata.CGImprovements.Sharp
 public import Lemmata.CGImprovements.SharpAFW
+public import Lemmata.CGImprovements.SharpSublinear
 public import Lemmata.CGImprovements.SimplexDescent
 public import Lemmata.CGImprovements.Statement
 public import Lemmata.Centroid.Def.Bounds
