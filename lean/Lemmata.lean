@@ -552,6 +552,7 @@ public import Lemmata.FrankWolfe.Proof.Calculus
 public import Lemmata.FrankWolfe.Proof.Hilbert
 public import Lemmata.FrankWolfe.Proof.Interfaces
 public import Lemmata.FrankWolfe.Proof.Rate
+public import Lemmata.FrankWolfe.Proof.Run
 public import Lemmata.FrankWolfe.Statement
 public import Lemmata.FrankWolfeBSS.Defs
 public import Lemmata.FrankWolfeBSS.Main

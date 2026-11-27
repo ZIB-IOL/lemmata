@@ -5,6 +5,7 @@ public import Mathlib.Analysis.Convex.Function
 public import Mathlib.Topology.EMetricSpace.Lipschitz
 public import Mathlib.Order.ConditionallyCompleteLattice.Basic
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+public import Mathlib.Topology.MetricSpace.HausdorffDistance
 
 @[expose] public section
 
@@ -78,5 +79,24 @@ def StandingAssumptions (C : Set E) (lmo : StrongDual ℝ E → E) (f : E → �
 def IsUniformlyConvexSet (C : Set E) (α q : ℝ) : Prop :=
   ∀ x ∈ C, ∀ y ∈ C, ∀ θ ∈ Set.Icc (0 : ℝ) 1, ∀ z : E, ‖z‖ = 1 →
     θ • x + (1 - θ) • y + (θ * (1 - θ) * α * ‖x - y‖ ^ q) • z ∈ C
+
+/-- A Frank–Wolfe run on `C` for the derivative `f'`, with any tie-breaking: `x₀ ∈ C`, every atom
+`v t ∈ C` minimizes `f'(x t)` over `C`, every step size `γ t` lies in `[0, 1]`, and
+`x (t + 1) = x t + γ t • (v t - x t)`. Unlike `fwIterates`, which follows one fixed oracle, a run
+may break ties differently in every iteration, and its step sizes are arbitrary. -/
+def IsFWRun (C : Set E) (f' : E → StrongDual ℝ E) (x v : ℕ → E) (γ : ℕ → ℝ) : Prop :=
+  x 0 ∈ C ∧ ∀ t, v t ∈ C ∧ (∀ y ∈ C, f' (x t) (v t) ≤ f' (x t) y) ∧ γ t ∈ Set.Icc (0 : ℝ) 1 ∧
+    x (t + 1) = x t + γ t • (v t - x t)
+
+/-- `f` is `L`-smooth over `C`: the quadratic upper bound
+`f y ≤ f x + f'(x)(y - x) + L/2 ‖y - x‖²` holds for all `x, y ∈ C`. An `L`-smooth function
+(`IsSmooth`) is `L`-smooth over every set; this weaker notion only constrains `f` on `C`. -/
+def IsSmoothOn (C : Set E) (f : E → ℝ) (L : ℝ) : Prop :=
+  ∀ x ∈ C, ∀ y ∈ C, f y ≤ f x + fderiv ℝ f x (y - x) + L / 2 * ‖y - x‖ ^ 2
+
+/-- `f` satisfies a `(μ, θ)`-Hölderian error bound on `C` (it is `(μ, θ)`-sharp): every `x ∈ C`
+lies within distance `μ (f(x) - f(x⋆))^θ` of the set of minimizers of `f` over `C`. -/
+def IsHolderErrorBound (C : Set E) (f : E → ℝ) (μ θ : ℝ) : Prop :=
+  ∀ x ∈ C, ∀ xStar ∈ minimizers C f, Metric.infDist x (minimizers C f) ≤ μ * (f x - f xStar) ^ θ
 
 end Lemmata.FrankWolfe
