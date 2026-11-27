@@ -3,6 +3,7 @@ module
 public import Lemmata.CGImprovements.Proof
 public import Lemmata.CGImprovements.Lazy
 public import Lemmata.CGImprovements.LazyAway
+public import Lemmata.CGImprovements.Sharp
 
 @[expose] public section
 
@@ -23,6 +24,12 @@ theorem lazy_rate : LazyRate := Proof.lazy_rate
 
 /-- Theorem 3.16, with a corrected count: lazy away-step Frank–Wolfe. -/
 theorem lazy_away_rate : LazyAwayRate := Proof.lazy_away_rate
+
+/-- Lemma 3.31: the primal gap bound from sharpness. -/
+theorem sharp_primal_gap : SharpPrimalGap := Proof.sharp_primal_gap
+
+/-- Lemma 3.32: geometric sharpness. -/
+theorem geometric_sharpness : GeometricSharpness := Proof.geometric_sharpness
 -- DOCS_END_MAIN
 
 end Lemmata.CGImprovements

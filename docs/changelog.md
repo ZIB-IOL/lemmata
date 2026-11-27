@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding sharpness (Definition 3.25) with the primal gap bound (Lemma 3.31) and geometric sharpness (Lemma 3.32).
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding lazy away-step Frank–Wolfe (Theorem 3.16) with a corrected iteration count and an erratum.
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding lazy conditional gradients with a weak separation oracle (Theorem 3.15).
 - [Bounds for finite-order Grothendieck constants](grothendieck-lower-bounds/index.md) adds a 141-row witness for $K_G(3)>1.4396139030752404$ and a rotation proof of $K_G(3)<1.451263576$ from the published finite local model of Designolle et al.

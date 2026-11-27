@@ -131,4 +131,34 @@ def LazyAwayRate : Prop :=
           Real.log ((f (x 0) - f xStar) / ε)⌉₊ ≤ t →
       f (x t) - f xStar ≤ ε
 
+/-- **Sharpness** (Hölder error bound). A function `f` is `(c, θ)`-sharp over `C` if
+`dist(x, Ω*) ≤ c (f(x) - f(x⋆))^θ` for all `x ∈ C` and minimizers `x⋆`, where `Ω*` is the set of
+minimizers of `f` over `C`. -/
+def IsSharp {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (c θ : ℝ) : Prop :=
+  ∀ x ∈ C, ∀ xStar ∈ minimizers C f, Metric.infDist x (minimizers C f) ≤ c * (f x - f xStar) ^ θ
+
+/-- **Lemma 3.31** (primal gap bound from sharpness). Let `C` be compact and `f` convex,
+differentiable and `(c, θ)`-sharp over `C`. For every `x ∈ C` with positive primal gap `h` there is
+a minimizer `y` with `h^{1-θ}/c ≤ f'(x)(x - y)/‖x - y‖`. -/
+def SharpPrimalGap : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (c θ : ℝ),
+    IsCompact C → ConvexOn ℝ Set.univ f → Differentiable ℝ f → 0 < c → IsSharp C f c θ →
+    ∀ xStar ∈ minimizers C f, ∀ x ∈ C, f xStar < f x →
+      ∃ y ∈ minimizers C f, (f x - f xStar) ^ (1 - θ) / c ≤ fderiv ℝ f x (x - y) / ‖x - y‖
+
+/-- **Lemma 3.32** (geometric sharpness). Let `f` be convex, differentiable and `(c, θ)`-sharp over
+`conv V`, and let `δ > 0` have the scaling property of the pyramidal width. If `x ∈ conv S` for some
+`S ⊆ V`, `a` maximizes `f'(x)` over `S` and `v` minimizes it over `V`, and the primal gap `h` at `x`
+is positive, then `h^{1-θ}/c ≤ f'(x)(a - v)/δ`. -/
+def GeometricSharpness : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ)
+    (c θ δ : ℝ), ConvexOn ℝ Set.univ f → Differentiable ℝ f → 0 < c → 0 < δ →
+    Lemmata.AwayStepFW.IsScaling V δ → IsSharp (convexHull ℝ (↑V : Set E)) f c θ →
+    ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f, ∀ S ⊆ V,
+    ∀ x ∈ convexHull ℝ (↑S : Set E),
+    f xStar < f x → ∀ a ∈ S, (∀ w ∈ S, fderiv ℝ f x w ≤ fderiv ℝ f x a) →
+    ∀ v ∈ V, (∀ w ∈ V, fderiv ℝ f x v ≤ fderiv ℝ f x w) →
+      (f x - f xStar) ^ (1 - θ) / c ≤ fderiv ℝ f x (a - v) / δ
+
 end Lemmata.CGImprovements
