@@ -7,13 +7,16 @@ open Upper
 open scoped RealInnerProductSpace Gradient NNReal Classical
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [ProperSpace E] [Nontrivial E]
 
-noncomputable def share (r R : ℝ) := if R = r then 1 else rateShare r (R - r)
+/-- The rate constant `c = min{1, r/(2(R - r))}/2` for `R > r`, and `c = 1` for `R = r`. -/
+noncomputable def rateConstant (r R : ℝ) := if R = r then 1 else rateShare r (R - r)
 
-theorem share_bounds {r R : ℝ} (hr : 0 < r) (hR : r ≤ R) : 0 < share r R ∧ share r R ≤ 1 := by
+theorem share_bounds {r R : ℝ} (hr : 0 < r) (hR : r ≤ R) :
+    0 < rateConstant r R ∧ rateConstant r R ≤ 1 := by
   by_cases eq : R = r
-  · simp [share, eq]
+  · simp [rateConstant, eq]
   · have H := share_spec hr (sub_pos.mpr (lt_of_le_of_ne hR (Ne.symm eq)))
-    exact ⟨by simpa [share, eq] using H.1, by rw [share, ite_eq_right eq]; linarith [H.2.1]⟩
+    exact ⟨by simpa [rateConstant, eq] using H.1,
+      by rw [rateConstant, ite_eq_right eq]; linarith [H.2.1]⟩
 
 omit [ProperSpace E] [Nontrivial E] in
 theorem equal_radii_center {C K : Set E} {r : ℝ} (rep : C = Rounded K r) (hr : 0 < r)
@@ -40,7 +43,7 @@ radii, directly from the rolling-ball hypotheses on the body. -/
 theorem equal_radii_recovery {C : Set E} (hc : IsCompact C) (cv : Convex ℝ C) {r : ℝ}
     (hr : 0 < r) (innerBall : InnerBall C r) (outer : OuterBall C r) (O : LMO C) (e : E)
         (he : e ≠ 0) :
-    erosion C r = {unwrap O r e} ∧ C = Metric.closedBall (unwrap O r e) r := by
+    innerParallelBody C r = {unwrap O r e} ∧ C = Metric.closedBall (unwrap O r e) r := by
   have rep := parallel_of_normals hc cv ⟨_, O.mem e⟩ hr (normals_of_inner hr.le innerBall) he
   exact equal_radii_center rep hr outer O e he
 
@@ -67,10 +70,11 @@ theorem linear_of_parallel_rep {C K : Set E} {r R L μ : ℝ} (rep : C = Rounded
     (ball : Bool) (cert : ball = true → R = r) {x₀ : E} (hx : x₀ ∈ C) (n : ℕ) :
     let ans := projectedGradientRun O g L r ball x₀ n
     ans.1 ∈ C ∧ ans.2.1 ≤ 1 + n * (if ball then 0 else 1) ∧ ans.2.2 ≤ 1 + n ∧
-    ∀ w ∈ C, f ans.1 - f w ≤ (1 - share r R * (μ / L)) ^ n * (L / 2 * (Metric.diam C) ^ 2) := by
+    ∀ w ∈ C, f ans.1 - f w ≤
+      (1 - rateConstant r R * (μ / L)) ^ n * (L / 2 * (Metric.diam C) ^ 2) := by
   subst C
   have B := share_bounds hr hR
-  have reg : Regime K r (share r R) ball := by
+  have reg : Regime K r (rateConstant r R) ball := by
     by_cases eq : R = r
     · subst R
       obtain ⟨e, he⟩ := exists_ne (0 : E)
@@ -81,8 +85,8 @@ theorem linear_of_parallel_rep {C K : Set E} {r R L μ : ℝ} (rep : C = Rounded
     · have pos : 0 < R - r := sub_pos.mpr (lt_of_le_of_ne hR (Ne.symm eq))
       have flag : ball = false := by cases ball <;> simp_all
       have s := share_spec hr pos
-      exact Or.inr ⟨flag, R - r, pos, core_outer hr.le hR outer, by simpa [share, eq] using s.2.1,
-        by simpa [share, eq] using s.2.2⟩
+      exact Or.inr ⟨flag, R - r, pos, core_outer hr.le hR outer,
+        by simpa [rateConstant, eq] using s.2.1, by simpa [rateConstant, eq] using s.2.2⟩
   exact parallel_linear_upper hk cv O mdl strong hr hμ hLμ B.1.le B.2 reg hx
     (fun y hy => diameter_width hc y hy _ hx) n
 
@@ -96,7 +100,7 @@ theorem joint_body_linear_upper {C : Set E} (hc : IsCompact C) (cv : Convex ℝ 
     let ans := projectedGradientRun O (∇ f) L r ball x₀ n
     ans.1 ∈ C ∧ ans.2.1 ≤ 1 + n * (if ball then 0 else 1) ∧ ans.2.2 ≤ 1 + n ∧
     ∀ w ∈ C, f ans.1 - f w ≤
-      (1 - share r R * (μ / L)) ^ n * ((L : ℝ) / 2 * (Metric.diam C) ^ 2) := by
+      (1 - rateConstant r R * (μ / L)) ^ n * ((L : ℝ) / 2 * (Metric.diam C) ^ 2) := by
   obtain ⟨e, he⟩ := exists_ne (0 : E)
   obtain ⟨mdl, strong, lge⟩ := analytic_parameters hμ df sc smooth C
   have eq := parallel_of_normals hc cv ⟨_, hx⟩ hr (normals_of_inner hr.le innerBall) he
@@ -111,7 +115,7 @@ theorem joint_ball_linear_upper {C : Set E} (hc : IsCompact C) (cv : Convex ℝ 
     let ans := projectedGradientRun O (∇ f) L r true x₀ n
     ans.1 ∈ C ∧ ans.2.1 ≤ 1 ∧ ans.2.2 ≤ 1 + n ∧
     ∀ w ∈ C, f ans.1 - f w ≤ (1 - μ / L) ^ n * ((L : ℝ) / 2 * (Metric.diam C) ^ 2) := by
-  simpa [share] using joint_body_linear_upper hc cv hr (le_refl r) innerBall outer O hμ df sc
+  simpa [rateConstant] using joint_body_linear_upper hc cv hr (le_refl r) innerBall outer O hμ df sc
     smooth true (fun _ => rfl) hx n
 
 /-- Equivalent geometry using a bound on supporting normals and the chord-ball
@@ -124,7 +128,7 @@ theorem chord_body_linear_upper {C : Set E} (hc : IsCompact C) (cv : Convex ℝ 
     let ans := projectedGradientRun O (∇ f) L r false x₀ n
     ans.1 ∈ C ∧ ans.2.1 ≤ 1 + n ∧ ans.2.2 ≤ 1 + n ∧
     ∀ w ∈ C, f ans.1 - f w ≤
-      (1 - share r R * (μ / L)) ^ n * ((L : ℝ) / 2 * (Metric.diam C) ^ 2) := by
+      (1 - rateConstant r R * (μ / L)) ^ n * ((L : ℝ) / 2 * (Metric.diam C) ^ 2) := by
   simpa using joint_body_linear_upper hc cv hr hR (inner_of_normals hc cv hr normal)
     (outer_of_chord (hr.trans_le hR) chord) O hμ df sc smooth false (by simp) hx n
 

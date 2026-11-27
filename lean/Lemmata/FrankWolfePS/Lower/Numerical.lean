@@ -160,11 +160,11 @@ open MeasureTheory
 theorem numerical_randomized_lower_bound (T : ℕ) (a : ι) (hN : Fintype.card ι = 256 * (T + 1))
     (R : ℝ) (hR : 0 < R) (μ : Measure Ω) [IsProbabilityMeasure μ]
     (s : Ω → Method (Ambient ι) T)
-    (meas : ∀ S ∈ shells T a, MeasurableSet {ω | failure R (T + 1) (insert a S)
+    (meas : ∀ S ∈ instanceSets T a, MeasurableSet {ω | failure R (T + 1) (insert a S)
       (coords ((s ω).run (oracle R a (insert a S))))}) :
-    (↑(shells T a).card : ℝ) / 4 ≤ ∑ S ∈ shells T a,
+    (↑(instanceSets T a).card : ℝ) / 4 ≤ ∑ S ∈ instanceSets T a,
       μ.real {ω | failure R (T + 1) (insert a S) (coords ((s ω).run (oracle R a (insert a S))))} ∧
-      ∃ S ∈ shells T a, 1 / 4 ≤ μ.real {ω | failure R (T + 1) (insert a S)
+      ∃ S ∈ instanceSets T a, 1 / 4 ≤ μ.real {ω | failure R (T + 1) (insert a S)
         (coords ((s ω).run (oracle R a (insert a S))))} := by
   simpa only [badSeeds, Method.orders_run] using
     randomized_lower_bound T a hN R hR μ (fun ω => (s ω).orders R a)

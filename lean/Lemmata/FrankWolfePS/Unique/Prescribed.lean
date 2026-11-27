@@ -149,7 +149,7 @@ jittered family is compact and convex with nonempty interior, diameter at most `
 unit normals and a unique minimizer in every nonzero direction; it contains `hardStart β D a`,
 and its oracle is the rescaled oracle of `C`, which is measurable. -/
 theorem scaled_instance {β D : ℝ} (hβ : 0 < β) (hD : 2 < β * D) (T : ℕ) (a : ι)
-    (Dt : Draw ι T) {J : Finset ι} (hJ : J ∈ shells T a) :
+    (Dt : Draw ι T) {J : Finset ι} (hJ : J ∈ instanceSets T a) :
     let C := instanceBody (unitScale β D) a T Dt (insert a J)
     IsCompact ((1 / β) • C) ∧ Convex ℝ ((1 / β) • C) ∧ (interior ((1 / β) • C)).Nonempty ∧
       Metric.diam ((1 / β) • C) ≤ D ∧ Upper.LipschitzNormals ((1 / β) • C) β ∧

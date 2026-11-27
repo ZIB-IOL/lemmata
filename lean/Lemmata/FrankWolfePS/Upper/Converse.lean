@@ -83,13 +83,15 @@ theorem rolling_of_normals {C : Set E} (hc : IsCompact C) (hv : Convex ℝ C)
   have hp0 : 0 ≤ ⟪y - z, m⟫ := by rw [real_inner_comm, inner_sub_right]; linarith [hs z hz]
   nlinarith [mul_nonneg hd.le hp0, sq_pos_of_pos hd]
 
-def erosion (C : Set E) (r : ℝ) : Set E := {a | ∀ b : E, ‖b‖ ≤ r → a + b ∈ C}
+/-- The inner parallel body of `C` at distance `r`: the points `a` with `a + B_r ⊆ C`. -/
+def innerParallelBody (C : Set E) (r : ℝ) : Set E := {a | ∀ b : E, ‖b‖ ≤ r → a + b ∈ C}
 
 omit [ProperSpace E] in
 theorem erosion_compact_convex {C : Set E} (hc : IsCompact C) (hv : Convex ℝ C)
-    {r : ℝ} (hr : 0 ≤ r) : IsCompact (erosion C r) ∧ Convex ℝ (erosion C r) := by
-  have eq : erosion C r = ⋂ b : E, ⋂ (_ : ‖b‖ ≤ r), (fun a => a + b) ⁻¹' C := by
-    ext a; simp [erosion]
+    {r : ℝ} (hr : 0 ≤ r) :
+    IsCompact (innerParallelBody C r) ∧ Convex ℝ (innerParallelBody C r) := by
+  have eq : innerParallelBody C r = ⋂ b : E, ⋂ (_ : ‖b‖ ≤ r), (fun a => a + b) ⁻¹' C := by
+    ext a; simp [innerParallelBody]
   constructor
   · apply hc.of_isClosed_subset
     · rw [eq]; exact isClosed_iInter fun b => isClosed_iInter fun _ =>
@@ -104,16 +106,16 @@ theorem erosion_compact_convex {C : Set E} (hc : IsCompact C) (hv : Convex ℝ C
 
 private theorem support_in_rounded {C : Set E} (hc : IsCompact C) (hv : Convex ℝ C)
     {r : ℝ} (hr : 0 < r) (regular : NormalBound C r) {z n : E} (hz : z ∈ C)
-    (hn : ‖n‖ = 1) (hs : Supports C z n) : z ∈ Rounded (erosion C r) r := by
+    (hn : ‖n‖ = 1) (hs : Supports C z n) : z ∈ Rounded (innerParallelBody C r) r := by
   have ball := rolling_of_normals hc hv hr regular hz hn hs
   refine ⟨z - r • n, fun b hb => ball (by simpa [mem_closedBall, dist_eq_norm] using hb), ?_⟩
   simp [norm_smul, abs_of_pos hr, hn]
 
-/-- The core is the concrete erosion. The argument never supplies it to the algorithm. -/
+/-- The core is the concrete innerParallelBody. The argument never supplies it to the algorithm. -/
 theorem parallel_of_normals {C : Set E} (hc : IsCompact C) (hv : Convex ℝ C) (hne : C.Nonempty)
     {r : ℝ} (hr : 0 < r) (regular : NormalBound C r) {e : E} (he : e ≠ 0) :
-    C = Rounded (erosion C r) r := by
-  let K := erosion C r
+    C = Rounded (innerParallelBody C r) r := by
+  let K := innerParallelBody C r
   have hk := erosion_compact_convex hc hv hr.le
   have addEq := rounded_eq_add K r
   have hrc : IsCompact (Rounded K r) := addEq ▸ hk.1.add (isCompact_closedBall _ _)

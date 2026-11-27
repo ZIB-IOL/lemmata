@@ -9,9 +9,9 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 noncomputable def iso (L : ℝ) (u x : E) : ℝ := L / 2 * ‖x - u‖ ^ 2
 def isoGrad (L : ℝ) (u x : E) : E := L • (x - u)
-noncomputable def liftCore (r : ℝ) (u a : E) : E := a + clip r (u - a)
-noncomputable def envelope (L r : ℝ) (u a : E) : ℝ := iso L u (liftCore r u a)
-noncomputable def envGrad (L r : ℝ) (u a : E) : E := isoGrad L u (liftCore r u a)
+noncomputable def liftInner (r : ℝ) (u a : E) : E := a + clip r (u - a)
+noncomputable def envelope (L r : ℝ) (u a : E) : ℝ := iso L u (liftInner r u a)
+noncomputable def envGrad (L r : ℝ) (u a : E) : E := isoGrad L u (liftInner r u a)
 
 theorem iso_taylor (L : ℝ) (u x y : E) :
     iso L u y = iso L u x + ⟪isoGrad L u x, y - x⟫ + L / 2 * ‖y - x‖ ^ 2 := by
@@ -20,33 +20,33 @@ theorem iso_taylor (L : ℝ) (u x y : E) :
   ring
 
 theorem lift_mem {K : Set E} {r : ℝ} (hr : 0 ≤ r) (u : E) {a : E} (ha : a ∈ K) :
-    liftCore r u a ∈ Rounded K r := ⟨a, ha, by simpa [liftCore] using norm_clip hr (u - a)⟩
+    liftInner r u a ∈ Rounded K r := ⟨a, ha, by simpa [liftInner] using norm_clip hr (u - a)⟩
 
 theorem lift_vi {L r : ℝ} (hL : 0 ≤ L) (hr : 0 ≤ r) (u a b : E) (hb : ‖b‖ ≤ r) :
     0 ≤ ⟪envGrad L r u a, b - clip r (u - a)⟫ := by
   have h := clip_vi hr (u - a) b hb
-  unfold envGrad isoGrad liftCore
+  unfold envGrad isoGrad liftInner
   rw [show a + clip r (u - a) - u =
       -((u - a) - clip r (u - a)) by abel, real_inner_smul_left, inner_neg_left]
   exact mul_nonneg hL (neg_nonneg.mpr h)
 
 theorem lift_min {L r : ℝ} (hL : 0 ≤ L) (hr : 0 ≤ r) (u a b : E) (hb : ‖b‖ ≤ r) :
     envelope L r u a ≤ iso L u (a + b) := by
-  have H := iso_taylor L u (liftCore r u a) (a + b)
-  have e : a + b - liftCore r u a = b - clip r (u - a) := by unfold liftCore; abel
+  have H := iso_taylor L u (liftInner r u a) (a + b)
+  have e : a + b - liftInner r u a = b - clip r (u - a) := by unfold liftInner; abel
   rw [e] at H
   have h := lift_vi hL hr u a b hb
   unfold envelope
-  change 0 ≤ ⟪isoGrad L u (liftCore r u a), _⟫ at h
+  change 0 ≤ ⟪isoGrad L u (liftInner r u a), _⟫ at h
   nlinarith [mul_nonneg (show 0 ≤ L / 2 by positivity) (_root_.sq_nonneg ‖b - clip r (u - a)‖)]
 
 theorem envelope_models {L r : ℝ} (hL : 0 ≤ L) (hr : 0 ≤ r) (u : E) (K : Set E) :
     Models K (envelope L r u) (envGrad L r u) L := by
   constructor
   · intro a _ v _
-    have h := iso_taylor L u (liftCore r u a) (liftCore r u v)
-    have e : liftCore r u v - liftCore r u a = (v - a) + (clip r (u - v) - clip r (u - a)) := by
-      unfold liftCore; abel
+    have h := iso_taylor L u (liftInner r u a) (liftInner r u v)
+    have e : liftInner r u v - liftInner r u a = (v - a) + (clip r (u - v) - clip r (u - a)) := by
+      unfold liftInner; abel
     rw [e, inner_add_right] at h
     have pos := lift_vi hL hr u a _ (norm_clip hr (u - v))
     unfold envelope envGrad at *
@@ -54,8 +54,8 @@ theorem envelope_models {L r : ℝ} (hL : 0 ≤ L) (hr : 0 ≤ r) (u : E) (K : S
         (clip r (u - v) - clip r (u - a))‖)]
   · intro a _ v _
     apply (lift_min hL hr u v _ (norm_clip hr (u - a))).trans
-    have h := iso_taylor L u (liftCore r u a) (v + clip r (u - a))
-    rw [show v + clip r (u - a) - liftCore r u a = v - a by unfold liftCore; abel] at h
+    have h := iso_taylor L u (liftInner r u a) (v + clip r (u - a))
+    rw [show v + clip r (u - a) - liftInner r u a = v - a by unfold liftInner; abel] at h
     exact h.le
 
 noncomputable def realQueryCost (q : E) : ℕ := if q = 0 then 0 else 1
@@ -71,7 +71,7 @@ noncomputable def quadraticRun {C : Set E} (O : LMO C) (gradient : E → E) (L r
   let u := z - L⁻¹ • gradient z
   let coreQuery := fun q => if q = 0 then p else unwrap O r q
   let v := fwRun (envGrad L r u) coreQuery realQueryCost p steps
-  (liftCore r u v.1, 1 + v.2, 1)
+  (liftInner r u v.1, 1 + v.2, 1)
 
 theorem recover_center {L : ℝ} (hL : 0 < L) (u z : E) : z - L⁻¹ • isoGrad L u z = u := by
   simp [isoGrad, smul_smul, hL.ne']
@@ -90,7 +90,7 @@ theorem quadratic_parallel_upper {K : Set E} (hK : Convex ℝ K) {r D L : ℝ}
   let V := coreLMO hr O p hp
   let v := fwRun (envGrad L r u) V.query realQueryCost p (n + 1)
   simp only [quadraticRun, recover_center hL]
-  change liftCore r u v.1 ∈ _ ∧ 1 + v.2 ≤ n + 2 ∧ _ ∧ _
+  change liftInner r u v.1 ∈ _ ∧ 1 + v.2 ≤ n + 2 ∧ _ ∧ _
   have hmem : v.1 ∈ K := fwRun_mem hK V _ _ hp _
   have cnt : v.2 ≤ n + 1 := fwRun_cost _ _ _ realQueryCost_le _ _
   refine ⟨lift_mem hr.le u hmem, by omega, trivial, ?_⟩

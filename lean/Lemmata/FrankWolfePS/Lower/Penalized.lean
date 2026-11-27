@@ -198,9 +198,9 @@ mean of the penalized error, in `[0, ∞]`, is at least a quarter of that. -/
 theorem penalized_lower_bound (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 256 * (T + 1))
     {L a r ρ : ℝ} (hL : 0 < L) (ha : 0 < a) (hr : 0 < r) (hρ : L * (2 * a + 34 * r) ≤ ρ)
     (μ : Measure Ω) [IsProbabilityMeasure μ] (s : Ω → Method (Ambient ι) T)
-    (meas : ∀ S ∈ shells T anchor,
+    (meas : ∀ S ∈ instanceSets T anchor,
       Measurable fun ω => (s ω).run (physOracle a r anchor (insert anchor S))) :
-    ∃ S ∈ shells T anchor, let I := insert anchor S
+    ∃ S ∈ instanceSets T anchor, let I := insert anchor S
       1 / 4 ≤ μ.real {ω | L * a ^ 2 / (128 * ((T + 1 : ℕ) : ℝ)) ≤
         physicalPenalized L a r ρ I ((s ω).run (physOracle a r anchor I))} ∧
       ENNReal.ofReal (L * a ^ 2 / (512 * ((T + 1 : ℕ) : ℝ))) ≤
@@ -233,16 +233,17 @@ theorem penalized_lower_bound (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 25
     rw [Method.orders_run, Method.simulate_run, ← scale_embed, scale_scale,
       mul_inv_cancel₀ ha.ne', scale_one, embed_coords]
   have fixed (ω : Ω) :
-      ((shells T anchor).card : ℝ) * (1 / 4) ≤ ∑ S ∈ shells T anchor, flag (ω ∈ e S) := by
+      ((instanceSets T anchor).card : ℝ) * (1 / 4) ≤
+        ∑ S ∈ instanceSets T anchor, flag (ω ∈ e S) := by
     have H := fixed_tape_mass T anchor hN F hF (((s ω).simulate a).orders (r / a) anchor)
     rw [mul_one_div]
     refine H.trans (le_of_eq (sum_congr rfl fun S _ => ?_))
     simp only [F, e, Set.mem_ofPred_eq, back]
-  have ne : (shells T anchor).Nonempty := by
+  have ne : (instanceSets T anchor).Nonempty := by
     apply powersetCard_nonempty.mpr
     simp [hN]
     omega
-  have me (S : Finset ι) (hS : S ∈ shells T anchor) : MeasurableSet (e S) :=
+  have me (S : Finset ι) (hS : S ∈ instanceSets T anchor) : MeasurableSet (e S) :=
     measurableSet_le measurable_const
       ((physicalPenalized_continuous L a r ρ _).measurable.comp (meas S hS))
   obtain ⟨S, hS, hp⟩ := select_tape _ ne μ (1 / 4) e me fixed

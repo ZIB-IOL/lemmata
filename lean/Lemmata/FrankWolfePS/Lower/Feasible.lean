@@ -210,8 +210,8 @@ theorem feasible_path_failure {k t : ℕ} (hk : 0 < k) {R : ℝ} (hR : 0 < R)
 least `97/128` of the instances have gap at least `1 / (16 k)`. -/
 theorem feasible_fixed_tape (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 256 * (T + 1))
     {R : ℝ} (hR : 0 < R) (s : Orders ι (Pt ι) T)
-    (feas : ∀ S ∈ shells T anchor, Feasible R (insert anchor S) (s.run (insert anchor S))) :
-    (↑(shells T anchor).card : ℝ) * (97 / 128) ≤ ∑ S ∈ shells T anchor,
+    (feas : ∀ S ∈ instanceSets T anchor, Feasible R (insert anchor S) (s.run (insert anchor S))) :
+    (↑(instanceSets T anchor).card : ℝ) * (97 / 128) ≤ ∑ S ∈ instanceSets T anchor,
       flag (failure R (T + 1) (insert anchor S) (s.run (insert anchor S))) := by
   classical
   set k := T + 1 with hk_def
@@ -221,12 +221,12 @@ theorem feasible_fixed_tape (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 256 
   set h := 8 * k - 1 with hh_def
   have hn : U.card = 256 * k - 1 := by simp [U, hN, k]
   have hP : Disjoint ({anchor} : Finset ι) U := by simp [U]
-  have hsh : shells T anchor = U.powersetCard h := rfl
+  have hsh : instanceSets T anchor = U.powersetCard h := rfl
   let tr := s.compile
   have run (S : Finset ι) : tr.run ({anchor} ∪ S) = s.run (insert anchor S) := by
     rw [singleton_union, Orders.run_compile]
   let X := fun S => tr.exclusions ({anchor} ∪ S) U
-  have each (S : Finset ι) (hS : S ∈ shells T anchor) :
+  have each (S : Finset ι) (hS : S ∈ instanceSets T anchor) :
       1 - (X S : ℝ) / (128 * k) ≤
         flag (failure R k (insert anchor S) (s.run (insert anchor S))) := by
     by_cases few : X S ≤ 128 * k
@@ -249,20 +249,21 @@ theorem feasible_fixed_tape (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 256 
     rw [e1]
     apply Nat.eq_of_mul_eq_mul_right (show 0 < 8 * k by omega)
     rw [c]; ring
-  have potR : (∑ S ∈ shells T anchor, (X S : ℝ)) ≤ T * (31 * (U.card.choose h : ℝ)) := by
+  have potR : (∑ S ∈ instanceSets T anchor, (X S : ℝ)) ≤ T * (31 * (U.card.choose h : ℝ)) := by
     rw [hsh]; exact_mod_cast (pascal ▸ pot)
-  have hsc : ((shells T anchor).card : ℝ) = U.card.choose h := by
+  have hsc : ((instanceSets T anchor).card : ℝ) = U.card.choose h := by
     rw [hsh, card_powersetCard]
   have sum_each := sum_le_sum each
   rw [sum_sub_distrib, sum_const, nsmul_eq_mul, mul_one, ← sum_div] at sum_each
   rw [hsc] at sum_each ⊢
   have W0 : (0 : ℝ) ≤ U.card.choose h := Nat.cast_nonneg _
   have hT : (T : ℝ) + 1 = k := by simp [k]
-  have frac : (∑ S ∈ shells T anchor, (X S : ℝ)) / (128 * k) ≤
+  have frac : (∑ S ∈ instanceSets T anchor, (X S : ℝ)) / (128 * k) ≤
       31 * (U.card.choose h : ℝ) / 128 := by
     rw [div_le_iff₀ (by positivity)]
     nlinarith
-  change _ ≤ ∑ S ∈ shells T anchor, flag (failure R k (insert anchor S) (s.run (insert anchor S)))
+  change _ ≤ ∑ S ∈ instanceSets T anchor,
+    flag (failure R k (insert anchor S) (s.run (insert anchor S)))
   linarith
 
 end Feasible
@@ -277,30 +278,31 @@ least `3/4` of that. -/
 theorem feasible_lower_bound (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 256 * (T + 1))
     {L a r : ℝ} (hL : 0 < L) (ha : 0 < a) (hr : 0 < r) (μ : Measure Ω) [IsProbabilityMeasure μ]
     (s : Ω → Method (Ambient ι) T)
-    (meas : ∀ S ∈ shells T anchor,
+    (meas : ∀ S ∈ instanceSets T anchor,
         Measurable (fun ω => (s ω).physicalRun a r anchor (insert anchor S)))
-    (feas : ∀ S ∈ shells T anchor, ∀ ω,
+    (feas : ∀ S ∈ instanceSets T anchor, ∀ ω,
       embed ((s ω).physicalRun a r anchor (insert anchor S)) ∈ physicalBody a r (insert anchor S)) :
-    ∃ S ∈ shells T anchor, let I := insert anchor S
+    ∃ S ∈ instanceSets T anchor, let I := insert anchor S
       (3 / 4 ≤ μ.real {ω | physicalFailure L a r (T + 1) I ((s ω).physicalRun a r anchor I)}) ∧
       3 / 4 * (L * a ^ 2 / (16 * ((T + 1 : ℕ) : ℝ))) ≤ ∫ ω,
           L * obj r ((s ω).physicalRun a r anchor I) - physicalOpt L a r I ∂μ := by
   classical
-  have ne : (shells T anchor).Nonempty := by
+  have ne : (instanceSets T anchor).Nonempty := by
     apply powersetCard_nonempty.mpr
     simp [hN]
     omega
   let e := fun S => {ω | physicalFailure L a r (T + 1) (insert anchor S)
     ((s ω).physicalRun a r anchor (insert anchor S))}
   have fixed (ω : Ω) :
-      ((shells T anchor).card : ℝ) * (3 / 4) ≤ ∑ S ∈ shells T anchor, flag (ω ∈ e S) := by
+      ((instanceSets T anchor).card : ℝ) * (3 / 4) ≤
+        ∑ S ∈ instanceSets T anchor, flag (ω ∈ e S) := by
     have conv (S : Finset ι) : ((((s ω).simulate a).orders (r / a) anchor).run (insert anchor S)) =
         scalePt a⁻¹ ((s ω).physicalRun a r anchor (insert anchor S)) := by
       rw [Method.orders_run, Method.simulate_run]
     have H := feasible_fixed_tape T anchor hN (div_pos hr ha)
       (((s ω).simulate a).orders (r / a) anchor)
       (fun S hS => by rw [conv]; exact (physical_feasible_iff ha hr _ _).mp (feas S hS ω))
-    have c0 : (0 : ℝ) ≤ (shells T anchor).card := Nat.cast_nonneg _
+    have c0 : (0 : ℝ) ≤ (instanceSets T anchor).card := Nat.cast_nonneg _
     refine le_trans (by nlinarith) (H.trans (le_of_eq (sum_congr rfl fun S _ => ?_)))
     rw [conv]
     have iff := failure_scale hL ha hr (T + 1) (insert_nonempty anchor S)

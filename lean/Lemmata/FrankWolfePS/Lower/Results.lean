@@ -48,8 +48,8 @@ theorem objective_as_quadratic (L r : ℝ) (z : Pt ι) :
   simp [obj, sq, embed]
   ring
 
-/-- The hard objective `L ‖z‖² / 2 + 32 L r z_vert` on the ambient space (`r = 1/β` is the
-rounding radius). It is `L`-smooth and `L`-strongly convex, with Hessian `L Id`. -/
+/-- The objective of the lower bounds, `L (‖x‖² + y²) / 2 + 32 L r y` at `z = (x, y)`, with
+`r = 1/β`. It is `L`-smooth and `L`-strongly convex, with Hessian `L Id`. -/
 noncomputable def hardObjective (L r : ℝ) (z : Ambient ι) : ℝ :=
   quadratic L (embed (fun _ : ι => 0, 32 * L * r)) z
 

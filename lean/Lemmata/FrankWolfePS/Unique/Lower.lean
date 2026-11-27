@@ -125,7 +125,7 @@ theorem fixed_instance_spec {A : ℝ} (hA : 0 < A) (a : ι) (T : ℕ) (D : Draw 
   refine ⟨x, hx, Eq.symm (IsLeast.csInf_eq ⟨⟨_, hx, rfl⟩, ?_⟩)⟩
   rintro _ ⟨y, hy, rfl⟩; exact m hy
 
-theorem shell_info {T : ℕ} {a : ι} {S : Finset ι} (hs : S ∈ shells T a) :
+theorem shell_info {T : ℕ} {a : ι} {S : Finset ι} (hs : S ∈ instanceSets T a) :
     a ∈ insert a S ∧ (insert a S).card = 8 * (T + 1) := by
   obtain ⟨sub, sz⟩ := mem_powersetCard.mp hs
   have na : a ∉ S := fun h => (notMem_erase a _) (sub h)
@@ -134,7 +134,7 @@ theorem shell_info {T : ℕ} {a : ι} {S : Finset ι} (hs : S ∈ shells T a) :
 /-- The instances: a grid table and a hidden set. -/
 noncomputable def ensemble (ι : Type*) [Fintype ι] [DecidableEq ι] (a : ι) (T : ℕ) :
     Finset (Draw ι T × Finset ι) :=
-  univ ×ˢ shells T a
+  univ ×ˢ instanceSets T a
 
 /-- For every deterministic method (rules), at least a fifth of the instances fail. -/
 theorem unique_fixed_tape {A θ : ℝ} (hA : 0 < A) (a : ι) (T : ℕ)
@@ -148,7 +148,7 @@ theorem unique_fixed_tape {A θ : ℝ} (hA : 0 < A) (a : ι) (T : ℕ)
   let η := jitter A T
   let b := step A ι T
   let s := smooth A ι T
-  let H := shells T a
+  let H := instanceSets T a
   let M := (Fintype.card (Draw ι T) : ℝ)
   let B := trouble (Q := alphabet ι T) A a b s (start A a) ask T {a} (fun _ => [])
   let E := fun (D : Draw ι T) (J : Finset ι) =>
@@ -200,7 +200,7 @@ theorem unique_lmo_lower_bound {A θ : ℝ} (hA : 0 < A) (a : ι) (T : ℕ)
     (hθ : θ + (A + 35) * (2 * A + 5) * (2 * jitter A T) ≤ A ^ 2 / (16 * ((T + 1 : ℕ) : ℝ)))
     (μ : Measure Ω) [IsProbabilityMeasure μ] (s : Ω → Method (Ambient ι) T)
     (hs : Method.IsMeasurable s) :
-    ∃ D : Draw ι T, ∃ J ∈ shells T a, let C := instanceBody A a T D (insert a J)
+    ∃ D : Draw ι T, ∃ J ∈ instanceSets T a, let C := instanceBody A a T D (insert a J)
       IsCompact C ∧ Convex ℝ C ∧ (interior C).Nonempty ∧ Upper.LipschitzNormals C 1 ∧
       Metric.diam C ≤ 2 + Real.sqrt 2 * A + 2 * (2 * jitter A T) ∧ start A a ∈ C ∧
       reply C (start A a) 0 = start A a ∧ (∀ q, q ≠ 0 → ∃! x, MinAt C q x) ∧
@@ -210,7 +210,7 @@ theorem unique_lmo_lower_bound {A θ : ℝ} (hA : 0 < A) (a : ι) (T : ℕ)
   let H := ensemble ι a T
   let C := fun d : Draw ι T × Finset ι => instanceBody A a T d.1 (insert a d.2)
   let e := fun d : Draw ι T × Finset ι => {ω | Bad (C d) θ ((s ω).run (reply (C d) (start A a)))}
-  have sh : (shells T a).Nonempty := by
+  have sh : (instanceSets T a).Nonempty := by
     apply powersetCard_nonempty.mpr; simp [hN]; omega
   let : NeZero (alphabet ι T) := ⟨by unfold alphabet; omega⟩
   have ne : H.Nonempty := Finset.univ_nonempty.product sh

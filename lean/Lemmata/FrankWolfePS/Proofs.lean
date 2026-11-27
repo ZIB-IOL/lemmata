@@ -25,7 +25,7 @@ variable {ι : Type*} [Fintype ι] [LinearOrder ι]
 
 theorem cast_succ (T : ℕ) : ((T + 1 : ℕ) : ℝ) = (T : ℝ) + 1 := by push_cast; ring
 
-theorem shell_card {T : ℕ} {anchor : ι} {S : Finset ι} (hS : S ∈ shells T anchor) :
+theorem shell_card {T : ℕ} {anchor : ι} {S : Finset ι} (hS : S ∈ instanceSets T anchor) :
     (insert anchor S).card = 8 * (T + 1) ∧ anchor ∈ insert anchor S :=
   ⟨(Unique.shell_info hS).2, mem_insert_self _ _⟩
 
@@ -40,7 +40,7 @@ theorem lower_bound_unique_lmo_proof : LowerBoundUniqueLMO := by
 
 theorem lower_bound_unique_feasible_proof : LowerBoundUniqueFeasible := by
   intro ι Ω _ _ _ T anchor hN L β D hL hβ hD μ _ s hs hfeas
-  have feas : ∀ Dt : Unique.Draw ι T, ∀ J ∈ shells T anchor, ∀ ω,
+  have feas : ∀ Dt : Unique.Draw ι T, ∀ J ∈ instanceSets T anchor, ∀ ω,
       (s ω).run (Unique.reply ((1 / β) • Unique.instanceBody (Unique.unitScale β D) anchor T Dt
         (insert anchor J)) (Unique.hardStart β D anchor)) ∈
         (1 / β) • Unique.instanceBody (Unique.unitScale β D) anchor T Dt (insert anchor J) := by
@@ -60,7 +60,7 @@ theorem lower_bound_unique_feasible_proof : LowerBoundUniqueFeasible := by
 
 theorem lower_bound_vertex_lmo_proof : LowerBoundVertexLMO := by
   intro ι Ω _ _ _ T anchor hN L β D hL hβ hD μ _ s hs
-  have meas : ∀ S ∈ shells T anchor, Measurable fun ω =>
+  have meas : ∀ S ∈ instanceSets T anchor, Measurable fun ω =>
       (s ω).physicalRun ((D - 2 / β) / Real.sqrt 2) (1 / β) anchor (insert anchor S) :=
     fun S _ => physicalRun_measurable hs _ _ anchor (insert_nonempty anchor S)
   obtain ⟨I, hc, ha, h1, h2, h3, h4, h5⟩ :=
@@ -76,10 +76,10 @@ theorem lower_bound_vertex_lmo_proof : LowerBoundVertexLMO := by
 
 theorem lower_bound_feasible_proof : LowerBoundFeasible := by
   intro ι Ω _ _ _ T anchor hN L β D hL hβ hD μ _ s hs hfeas
-  have meas : ∀ S ∈ shells T anchor, Measurable fun ω =>
+  have meas : ∀ S ∈ instanceSets T anchor, Measurable fun ω =>
       (s ω).physicalRun ((D - 2 / β) / Real.sqrt 2) (1 / β) anchor (insert anchor S) :=
     fun S _ => physicalRun_measurable hs _ _ anchor (insert_nonempty anchor S)
-  have feas : ∀ S ∈ shells T anchor, ∀ ω, embed ((s ω).physicalRun ((D - 2 / β) / Real.sqrt 2)
+  have feas : ∀ S ∈ instanceSets T anchor, ∀ ω, embed ((s ω).physicalRun ((D - 2 / β) / Real.sqrt 2)
       (1 / β) anchor (insert anchor S)) ∈
         physicalBody ((D - 2 / β) / Real.sqrt 2) (1 / β) (insert anchor S) := by
     intro S _ ω
@@ -117,7 +117,7 @@ theorem lower_bound_penalized_proof : LowerBoundPenalized := by
       have e' : 32 / β = 32 * (1 / β) := by ring
       linarith
     exact (mul_le_mul_of_nonneg_left h2 hL.le).trans hρ
-  have meas : ∀ S ∈ shells T anchor, Measurable fun ω =>
+  have meas : ∀ S ∈ instanceSets T anchor, Measurable fun ω =>
       (s ω).run (physOracle ((D - 2 / β) / Real.sqrt 2) (1 / β) anchor (insert anchor S)) :=
     fun S _ => hs _ (physOracle_measurable _ _ anchor (insert_nonempty anchor S))
   obtain ⟨S, hS, hp, he⟩ := penalized_lower_bound T anchor hN hL ha hr hρ' μ s meas
@@ -188,7 +188,7 @@ theorem rolling_ball_proof : RollingBall := by
   have par := Upper.parallel_of_normals hc hv hne hr nb he
   refine ⟨fun z hz n hn hs => Upper.rolling_of_normals hc hv hr nb hz hn hs, par, ?_⟩
   have hK := (Upper.erosion_compact_convex hc hv hr.le).1
-  have hKne : (Upper.erosion C (1 / β)).Nonempty := by
+  have hKne : (Upper.innerParallelBody C (1 / β)).Nonempty := by
     obtain ⟨z, hz⟩ := hne
     rw [par] at hz
     obtain ⟨u, hu, -⟩ := hz

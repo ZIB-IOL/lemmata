@@ -190,13 +190,14 @@ The seed measurability hypothesis is exactly the finite set of failure events. -
 theorem scaled_randomized_lower_bound (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 256 * (T + 1))
     {L a r : ℝ} (hL : 0 < L) (ha : 0 < a) (hr : 0 < r) (μ : Measure Ω) [IsProbabilityMeasure μ]
     (s : Ω → Method (Ambient ι) T)
-    (meas : ∀ S ∈ shells T anchor, MeasurableSet {ω | physicalFailure L a r (T + 1)
+    (meas : ∀ S ∈ instanceSets T anchor, MeasurableSet {ω | physicalFailure L a r (T + 1)
       (insert anchor S) ((s ω).physicalRun a r anchor (insert anchor S))}) :
-    (↑(shells T anchor).card : ℝ) / 4 ≤ ∑ S ∈ shells T anchor,
+    (↑(instanceSets T anchor).card : ℝ) / 4 ≤ ∑ S ∈ instanceSets T anchor,
       μ.real {ω | physicalFailure L a r (T + 1) (insert anchor S)
         ((s ω).physicalRun a r anchor (insert anchor S))} ∧
-      ∃ S ∈ shells T anchor, 1 / 4 ≤ μ.real {ω | physicalFailure L a r (T + 1) (insert anchor S)
-        ((s ω).physicalRun a r anchor (insert anchor S))} := by
+      ∃ S ∈ instanceSets T anchor,
+        1 / 4 ≤ μ.real {ω | physicalFailure L a r (T + 1) (insert anchor S)
+          ((s ω).physicalRun a r anchor (insert anchor S))} := by
   have ex (S : Finset ι) : {ω | physicalFailure L a r (T + 1) (insert anchor S)
       ((s ω).physicalRun a r anchor (insert anchor S))} =
       {ω | failure (r / a) (T + 1) (insert anchor S)

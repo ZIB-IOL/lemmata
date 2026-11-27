@@ -105,8 +105,9 @@ theorem numerical_trace_fiber {t} (s : Method (Ambient ι) t) (R : ℝ) (a : ι)
 support, each listed completion having the same prior weight. -/
 theorem numerical_posterior (T : ℕ) (s : Method (Ambient ι) T) (R : ℝ) (a : ι) {I : Finset ι}
     (hi : a ∈ I) :
-    (shells T a).filter (fun S => s.numericTrace R a (insert a S) = s.numericTrace R a I) =
-    (shells T a).filter (fun S => ∀ e ∈ s.observations R a I, decide (e.1 ∈ insert a S) = e.2) := by
+    (instanceSets T a).filter (fun S => s.numericTrace R a (insert a S) = s.numericTrace R a I) =
+    (instanceSets T a).filter
+      (fun S => ∀ e ∈ s.observations R a I, decide (e.1 ∈ insert a S) = e.2) := by
   ext S
   simp only [mem_filter, numerical_trace_fiber s R a hi (mem_insert_self _ _), agrees]
 end Lemmata.FrankWolfePS

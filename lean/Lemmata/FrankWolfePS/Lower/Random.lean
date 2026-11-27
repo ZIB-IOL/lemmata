@@ -83,11 +83,11 @@ def badSeeds (R : ℝ) (T : ℕ) (strat : Ω → Orders ι (Pt ι) T)
 theorem randomized_lower_bound (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 256 * (T + 1))
     (R : ℝ) (hR : 0 < R) (μ : Measure Ω) [IsProbabilityMeasure μ]
     (strat : Ω → Orders ι (Pt ι) T)
-    (meas : ∀ S ∈ shells T anchor, MeasurableSet (badSeeds R T strat (insert anchor S))) :
-    (↑(shells T anchor).card : ℝ) / 4 ≤
-        ∑ S ∈ shells T anchor, μ.real (badSeeds R T strat (insert anchor S)) ∧
-      ∃ S ∈ shells T anchor, 1 / 4 ≤ μ.real (badSeeds R T strat (insert anchor S)) := by
-  have ne : (shells T anchor).Nonempty := by
+    (meas : ∀ S ∈ instanceSets T anchor, MeasurableSet (badSeeds R T strat (insert anchor S))) :
+    (↑(instanceSets T anchor).card : ℝ) / 4 ≤
+        ∑ S ∈ instanceSets T anchor, μ.real (badSeeds R T strat (insert anchor S)) ∧
+      ∃ S ∈ instanceSets T anchor, 1 / 4 ≤ μ.real (badSeeds R T strat (insert anchor S)) := by
+  have ne : (instanceSets T anchor).Nonempty := by
     apply powersetCard_nonempty.mpr
     simp [hN]
     omega
