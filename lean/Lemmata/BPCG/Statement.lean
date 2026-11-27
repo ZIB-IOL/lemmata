@@ -122,4 +122,24 @@ def LazyConvexRate : Prop :=
       ⌈Real.logb 2 (Φ 0 / ε)⌉₊ + 1 + 2 * ⌈8 * J ^ 2 * L * Metric.diam (↑V : Set E) ^ 2 / ε⌉₊ ≤ t →
         f (x t) - f xStar ≤ ε
 
+/-- **Theorem 3.6, case (A)** (lazified BPCG for strongly convex objectives), with explicit
+constants. Let `f` be convex, `L`-smooth and `μ`-strongly convex on `conv V`, let `δ > 0` have the
+scaling property of the pyramidal width, `J ≥ 1` and `h₀/2 ≤ Φ₀ ≤ L D²/2`. Every run of lazified
+BPCG has primal gap at most `ε > 0` after
+`⌈log₂ (Φ₀/ε)⌉₊ + 1 + 2 ⌈4 J² L D²/Φ₀⌉₊ + 2 ⌈(16 J² L D²/(μ δ²)) ln (h₀/ε)⌉₊` iterations. -/
+def LazyLinearRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ)
+    (L : NNReal) (μ δ J : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) (Φ : ℕ → ℝ),
+    0 < μ → 0 < δ → IsScaling V δ → ConvexOn ℝ Set.univ f → IsSmooth f L →
+    (∀ x ∈ convexHull ℝ (↑V : Set E), ∀ y ∈ convexHull ℝ (↑V : Set E),
+      f x + fderiv ℝ f x (y - x) + μ / 2 * ‖y - x‖ ^ 2 ≤ f y) →
+    1 ≤ J → IsLazyBPCGRun V f J x S lam Φ →
+    ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f,
+    (f (x 0) - f xStar) / 2 ≤ Φ 0 → Φ 0 ≤ L * Metric.diam (↑V : Set E) ^ 2 / 2 →
+    ∀ ε : ℝ, 0 < ε → ∀ t : ℕ,
+      ⌈Real.logb 2 (Φ 0 / ε)⌉₊ + 1 + 2 * ⌈4 * J ^ 2 * L * Metric.diam (↑V : Set E) ^ 2 / Φ 0⌉₊ +
+        2 * ⌈16 * J ^ 2 * L * Metric.diam (↑V : Set E) ^ 2 / (μ * δ ^ 2) *
+          Real.log ((f (x 0) - f xStar) / ε)⌉₊ ≤ t →
+      f (x t) - f xStar ≤ ε
+
 end Lemmata.BPCG

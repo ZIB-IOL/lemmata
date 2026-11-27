@@ -56,3 +56,7 @@ exports:
     kind: theorem
     page: index.md
     label: thm-blended-pairwise-conditional-gradients-lazy
+  - name: Lemmata.BPCG.lazy_linear_rate
+    kind: theorem
+    page: index.md
+    label: thm-blended-pairwise-conditional-gradients-lazy-linear
