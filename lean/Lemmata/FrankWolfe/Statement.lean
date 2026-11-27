@@ -4,6 +4,7 @@ public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Lemmata.FrankWolfe.Polytope.Defs
 public import Lemmata.FrankWolfe.HilbertDefs
 public import Mathlib.Topology.MetricSpace.Bounded
+public import Mathlib.Analysis.Convex.Strong
 
 @[expose] public section
 
@@ -87,5 +88,63 @@ def MinimalFace : Prop :=
       (∃ Ψ : StrongDual ℝ E, (∀ u ∈ V, Ψ u ≤ Ψ y) ∧ minFace V y = exposedFace V Ψ) ∧
       y ∈ convexHull ℝ (↑(minFace V y) : Set E) ∧
       ∀ v ∈ minFace V y, ∃ γ : ℝ, 0 < γ ∧ (1 + γ) • y - γ • v ∈ convexHull ℝ (↑V : Set E)
+
+/-- **Runs stay feasible.** The iterates of a Frank–Wolfe run on a convex set stay in it. -/
+def FWRunMem : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f' : E → StrongDual ℝ E)
+    (x v : ℕ → E) (γ : ℕ → ℝ), Convex ℝ C → IsFWRun C f' x v γ → ∀ t, x t ∈ C
+
+/-- **The iterates form a run.** For a linear minimization oracle and step sizes in `[0, 1]`, the
+iterates `fwIterates` started in `C` form a Frank–Wolfe run, with atoms `lmo (f'(x_t))` and step
+sizes `step t x_t`. -/
+def FWIteratesIsRun : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (lmo : StrongDual ℝ E → E)
+    (f' : E → StrongDual ℝ E) (step : ℕ → E → ℝ) (x₀ : E),
+    IsLMO C lmo → (∀ t y, step t y ∈ Set.Icc (0 : ℝ) 1) → x₀ ∈ C →
+      IsFWRun C f' (fwIterates lmo f' step x₀) (fun t => lmo (f' (fwIterates lmo f' step x₀ t)))
+        (fun t => step t (fwIterates lmo f' step x₀ t))
+
+/-- **Smoothness over a set.** An `L`-smooth function is `L`-smooth over every set. -/
+def SmoothOnOfSmooth : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (L : NNReal),
+    IsSmooth f L → IsSmoothOn C f L
+
+/-- **Primal progress of a run.** In a Frank–Wolfe run on a convex `C` for an `f` that is
+`L`-smooth over `C`, `f(x_{t+1}) ≤ f(x_t) - γ_t f'(x_t)(x_t - v_t) + γ_t² L/2 ‖v_t - x_t‖²`. -/
+def RunProgress : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (L : ℝ)
+    (x v : ℕ → E) (γ : ℕ → ℝ), Convex ℝ C → IsSmoothOn C f L → IsFWRun C (fderiv ℝ f) x v γ →
+    ∀ t, f (x (t + 1)) ≤
+      f (x t) - γ t * fderiv ℝ f (x t) (x t - v t) + γ t ^ 2 * L / 2 * ‖v t - x t‖ ^ 2
+
+/-- **Scaling from a Hölderian error bound.** Let `C` be compact, and let `f` be convex over `C`,
+differentiable at the points of `C` and `(μ, θ)`-sharp over `C`. Every `x ∈ C` with positive
+primal gap `h = f(x) - f(x⋆)` has a nearest minimizer `y ≠ x` with
+`h^{1-θ} ‖x - y‖ ≤ μ f'(x)(x - y)`; in particular `h^{1-θ} ≤ μ ‖f'(x)‖`. -/
+def HEBScaling : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (μ θ : ℝ),
+    IsCompact C → ConvexOn ℝ C f → (∀ x ∈ C, DifferentiableAt ℝ f x) →
+    IsHolderErrorBound C f μ θ → ∀ xStar ∈ minimizers C f, ∀ x ∈ C, f xStar < f x →
+      ∃ y ∈ minimizers C f, x ≠ y ∧ ‖x - y‖ = Metric.infDist x (minimizers C f) ∧
+        (f x - f xStar) ^ (1 - θ) * ‖x - y‖ ≤ μ * fderiv ℝ f x (x - y) ∧
+        (f x - f xStar) ^ (1 - θ) ≤ μ * ‖fderiv ℝ f x‖
+
+/-- **First-order strong convexity.** If `f` is `μ`-strongly convex on `C` (in the sense of
+Mathlib's `StrongConvexOn`) and differentiable at `x ∈ C`, then
+`f(x) + f'(x)(y - x) + μ/2 ‖y - x‖² ≤ f(y)` for all `y ∈ C`. For `μ = 0` this is first-order
+convexity on `C`. -/
+def StrongConvexFirstOrder : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (μ : ℝ),
+    StrongConvexOn C μ f → ∀ x ∈ C, DifferentiableAt ℝ f x → ∀ y ∈ C,
+      f x + fderiv ℝ f x (y - x) + μ / 2 * ‖y - x‖ ^ 2 ≤ f y
+
+/-- **Quadratic growth and an error bound from strong convexity.** If `f` is `μ`-strongly convex
+on `C` with `μ > 0`, then `μ/2 ‖x - x⋆‖² ≤ f(x) - f(x⋆)` for every minimizer `x⋆` and every
+`x ∈ C`, and `f` satisfies a `(√(2/μ), 1/2)`-Hölderian error bound on `C`. -/
+def StrongConvexHEB : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (μ : ℝ),
+    StrongConvexOn C μ f → 0 < μ →
+      (∀ xStar ∈ minimizers C f, ∀ x ∈ C, μ / 2 * ‖x - xStar‖ ^ 2 ≤ f x - f xStar) ∧
+      IsHolderErrorBound C f (Real.sqrt (2 / μ)) (1 / 2)
 
 end Lemmata.FrankWolfe

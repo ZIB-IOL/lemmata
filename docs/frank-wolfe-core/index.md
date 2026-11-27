@@ -137,6 +137,115 @@ The same bound for the algorithm in the language of gradients. It follows from t
 theorem through the Riesz isometry, since the two algorithms produce the same iterates.
 ```
 
+## Runs, error bounds and strong convexity
+
+Many analyses follow a single run of the algorithm, whatever the oracle answers, and assume
+properties of the objective only on the feasible region. Faster rates for structured problems
+add a growth condition, typically a Hölderian error bound or strong convexity. The core provides
+these objects as well.
+
+```{prf:definition} Frank–Wolfe run
+:label: def-frank-wolfe-core-run
+:nonumber:
+
+A *Frank–Wolfe run* on $C$ for the derivative $f'$ consists of iterates $x_t$, atoms $v_t$ and
+step sizes $\gamma_t$ with $x_0 \in C$, $v_t \in \operatorname{argmin}_{y \in C} f'(x_t)(y)$,
+$\gamma_t \in [0, 1]$ and $x_{t+1} = x_t + \gamma_t (v_t - x_t)$. Ties may be broken differently in
+every iteration, and the step sizes are arbitrary.
+```
+
+```{prf:definition} Smoothness over a set
+:label: def-frank-wolfe-core-smooth-on
+:nonumber:
+
+$f$ is *$L$-smooth over $C$* if $f(y) \le f(x) + f'(x)(y - x) + \tfrac{L}{2}\|y - x\|^2$ for all
+$x, y \in C$.
+```
+
+```{prf:definition} Hölderian error bound
+:label: def-frank-wolfe-core-heb
+:nonumber:
+
+Let $X^\star$ be the set of minimizers of $f$ over $C$. The function $f$ satisfies a
+*$(\mu, \theta)$-Hölderian error bound* on $C$, usually with $\mu > 0$ and $\theta \in [0, 1/2]$,
+if $\operatorname{dist}(x, X^\star) \le \mu \, (f(x) - f(x^\star))^\theta$ for all $x \in C$ and
+$x^\star \in X^\star$.
+```
+
+Strong convexity is Mathlib's `StrongConvexOn`: $f$ is *$\mu$-strongly convex on $C$* if $C$ is
+convex and
+$f(\lambda x + (1 - \lambda) y) \le \lambda f(x) + (1 - \lambda) f(y) - \lambda (1 - \lambda)
+\tfrac{\mu}{2} \|x - y\|^2$ for all $x, y \in C$ and $\lambda \in [0, 1]$.
+
+```{prf:lemma} Runs stay feasible
+:label: lem-frank-wolfe-core-run-mem
+:nonumber:
+
+The iterates of a Frank–Wolfe run on a convex set $C$ stay in $C$.
+```
+
+```{prf:lemma} The iterates form a run
+:label: lem-frank-wolfe-core-iterates-run
+:nonumber:
+
+For a linear minimization oracle and step sizes in $[0, 1]$, the iterates of the Frank–Wolfe
+algorithm started in $C$ form a run, with atoms $v_t = \mathrm{lmo}(f'(x_t))$.
+```
+
+```{prf:lemma} Smoothness over every set
+:label: lem-frank-wolfe-core-smooth-on
+:nonumber:
+
+An $L$-smooth function is $L$-smooth over every set.
+```
+
+```{prf:lemma} Primal progress of a run
+:label: lem-frank-wolfe-core-run-progress
+:nonumber:
+
+In a Frank–Wolfe run on a convex set $C$ for a function that is $L$-smooth over $C$,
+$f(x_{t+1}) \le f(x_t) - \gamma_t f'(x_t)(x_t - v_t) + \gamma_t^2 \tfrac{L}{2} \|v_t - x_t\|^2$.
+```
+
+```{prf:lemma} Scaling from a Hölderian error bound
+:label: lem-frank-wolfe-core-heb-scaling
+:nonumber:
+
+Let $C$ be compact, and let $f$ be convex over $C$, differentiable at the points of $C$ and
+satisfy a $(\mu, \theta)$-Hölderian error bound. If $x \in C$ has primal gap
+$h = f(x) - f(x^\star) > 0$, then a nearest minimizer $y$ satisfies
+$h^{1 - \theta} \|x - y\| \le \mu \, f'(x)(x - y)$. In particular,
+$h^{1 - \theta} \le \mu \|f'(x)\|$.
+```
+
+Convexity gives $h \le f'(x)(x - y)$, and the error bound gives $\|x - y\| \le \mu h^\theta$;
+multiplying the two by $h^{1-\theta}$ and $\mu$ proves the claim.
+
+```{prf:lemma} First-order strong convexity
+:label: lem-frank-wolfe-core-strong-first-order
+:nonumber:
+
+If $f$ is $\mu$-strongly convex on $C$ and differentiable at $x \in C$, then
+$f(x) + f'(x)(y - x) + \tfrac{\mu}{2} \|y - x\|^2 \le f(y)$ for all $y \in C$. For $\mu = 0$, this
+is first-order convexity over $C$.
+```
+
+```{prf:lemma} Strong convexity gives an error bound
+:label: lem-frank-wolfe-core-strong-heb
+:nonumber:
+
+If $f$ is $\mu$-strongly convex on $C$ with $\mu > 0$, then
+$\tfrac{\mu}{2} \|x - x^\star\|^2 \le f(x) - f(x^\star)$ for every minimizer $x^\star$ and every
+$x \in C$. So $f$ satisfies a $(\sqrt{2/\mu}, 1/2)$-Hölderian error bound on $C$.
+```
+
+Both follow from the definition of strong convexity by letting $\lambda \to 0$; neither needs
+differentiability of $f$ elsewhere. The run of
+[Beyond short steps in Frank–Wolfe algorithms](../frank-wolfe-beyond-short-steps/index.md) and the
+sharpness of
+[Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](../conditional-gradient-improvements/index.md)
+are the same notions; those entries keep their own definitions.
+
 ## Polytopes
 
 Many Frank–Wolfe variants work over a polytope $\operatorname{conv} V$ for a finite set $V$, and their

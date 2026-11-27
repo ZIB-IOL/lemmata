@@ -10,7 +10,10 @@ abstract: >-
   exact line-search step sizes, the Frank–Wolfe gap, smoothness and the standing assumptions. The
   setting is a real normed space, with an equivalent formulation for Hilbert spaces through the
   Riesz isometry. It proves the gap inequalities, the descent and progress lemmas, and the
-  classical rate $f(x_t) - f(x^\star) \le 2LD^2/(t+2)$ for all three step-size rules.
+  classical rate $f(x_t) - f(x^\star) \le 2LD^2/(t+2)$ for all three step-size rules. For
+  analyses of single runs, it provides Frank–Wolfe runs with arbitrary tie-breaking and step sizes,
+  smoothness over the feasible region, Hölderian error bounds and strong convexity, with the
+  progress bound of a run and the scaling inequalities that accelerated rates start from.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -99,3 +102,43 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-core-minface
+  - name: Lemmata.FrankWolfe.IsFWRun
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-core-run
+  - name: Lemmata.FrankWolfe.IsSmoothOn
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-core-smooth-on
+  - name: Lemmata.FrankWolfe.IsHolderErrorBound
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-core-heb
+  - name: Lemmata.FrankWolfe.fw_run_mem
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-core-run-mem
+  - name: Lemmata.FrankWolfe.fwIterates_isFWRun
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-core-iterates-run
+  - name: Lemmata.FrankWolfe.smoothOn_of_smooth
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-core-smooth-on
+  - name: Lemmata.FrankWolfe.run_progress
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-core-run-progress
+  - name: Lemmata.FrankWolfe.heb_scaling
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-core-heb-scaling
+  - name: Lemmata.FrankWolfe.strongConvex_first_order
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-core-strong-first-order
+  - name: Lemmata.FrankWolfe.strongConvex_heb
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-core-strong-heb
