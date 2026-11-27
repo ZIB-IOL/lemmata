@@ -275,6 +275,9 @@ public import Lemmata.CommonInformationHsb.Main
 public import Lemmata.CommonInformationHsb.Seeds
 public import Lemmata.CommonInformationHsb.Separation
 public import Lemmata.CommonInformationHsb.Units
+public import Lemmata.CompleteGraphTensorRank.Main
+public import Lemmata.CompleteGraphTensorRank.Restriction
+public import Lemmata.CompleteGraphTensorRank.Statement
 public import Lemmata.DistributionalLowerBounds.Core.Distributional.ActualCertificate
 public import Lemmata.DistributionalLowerBounds.Core.Distributional.AdaptiveEndToEnd
 public import Lemmata.DistributionalLowerBounds.Core.Distributional.ConcreteController
@@ -731,6 +734,9 @@ public import Lemmata.RM59.Proof.TraceGeometry
 public import Lemmata.RM59.Proof.TraceVertical
 public import Lemmata.RM59.Proof.UpperBound
 public import Lemmata.RM59.Proof.VerticalFrames
+public import Lemmata.SDPHardnessInP.Factorization
+public import Lemmata.SDPHardnessInP.Main
+public import Lemmata.SDPHardnessInP.Statement
 public import Lemmata.SchrodingerRemainderBound.Main
 public import Lemmata.SchrodingerRemainderBound.Statement
 public import Lemmata.Shared.Basic
