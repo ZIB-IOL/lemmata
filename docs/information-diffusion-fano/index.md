@@ -148,6 +148,77 @@ product of its marginals under the same Markov kernel. The first is Proposition 
 joint law of $(X, \hat X)$ and $Q$ the product of its marginals, under which $R$ has probability
 $\int P[(X, \hat x) \in R]\, dP_{\hat X}(\hat x) \in [p_{\min}, p_{\max}]$.
 
+## Entropy of finite random variables
+
+For random variables with finitely many values the relative entropy is a finite sum, and mutual
+information can be written with entropies.
+
+```{prf:definition} Entropy
+:label: def-information-diffusion-fano-entropy
+:nonumber:
+
+For a law $P$ on a finite set, $H(X) = -\sum_a P(a)\log P(a)$.
+```
+
+```{prf:definition} Conditional entropy
+:label: def-information-diffusion-fano-cond-entropy
+:nonumber:
+
+For a joint law of $(X, \hat X)$ on finite sets, $H(X \mid \hat X) = H(X, \hat X) - H(\hat X)$.
+```
+
+```{prf:theorem} Mutual information and entropy
+:label: thm-information-diffusion-fano-mutual-info-entropy
+:nonumber:
+
+For a joint law of $(X, \hat X)$ on finite sets, $I(X; \hat X)$ is finite and
+$I(X; \hat X) = H(X) - H(X \mid \hat X)$.
+```
+
+```{prf:proposition} Entropy of the uniform law
+:label: prop-information-diffusion-fano-entropy-uniform
+:nonumber:
+
+The uniform law on a finite set $\mathcal X$ has entropy $\log |\mathcal X|$.
+```
+
+On a finite set with all singletons measurable, the Radon–Nikodym derivative at a point of
+positive mass is the ratio of the masses, so $D(P \| Q) = \sum_b P(b)\log(P(b)/Q(b))$. For a joint
+law and the product of its marginals this is $H(X) + H(\hat X) - H(X, \hat X)$.
+
+## Entropy versions
+
+Inequality (5) rearranged in terms of $I(X; \hat X) = H(X) - H(X \mid \hat X)$ gives entropy
+versions; the condition $p_{\min} + p_{\max} < 1$ is no longer needed.
+
+```{prf:corollary} Entropy version of the Fano inequality
+:label: cor-information-diffusion-fano-entropy
+:enumerator: 2.3
+
+Let $X$ and $\hat X$ take finitely many values, and let $R$ be a relation with
+$p_{\min} \le P[(X, \hat x) \in R] \le p_{\max}$ for every $\hat x$, where $0 \le p_{\min} < 1$ and
+$0 < p_{\max}$. Then
+$$
+H(X \mid \hat X) \le H(X) + \log p_{\max} + H(P[\neg R]) +
+  P[\neg R]\log\frac{1 - p_{\min}}{p_{\max}}.
+$$
+```
+
+```{prf:corollary} Distance-based Fano inequality
+:label: cor-information-diffusion-fano-distance-entropy
+:enumerator: 2.5
+
+Let $X$ be uniform on a finite set $\mathcal X$ and $\hat X \in \mathcal X$, and let
+$N_{\min} \le |\{x \mid \rho(x, \hat x) \le t\}| \le N_{\max}$ for every $\hat x$, with
+$0 < N_{\max}$ and $N_{\min} < |\mathcal X|$. Then
+$$
+H(X \mid \hat X) \le H(P_t) + P_t\log\frac{|\mathcal X| - N_{\min}}{N_{\max}} + \log N_{\max}.
+$$
+```
+
+Corollary 2.5 is Corollary 2.3 with $p_{\min} = N_{\min}/|\mathcal X|$ and
+$p_{\max} = N_{\max}/|\mathcal X|$, since $H(X) = \log|\mathcal X|$ for uniform $X$.
+
 ## Special cases
 
 For a function $\rho$ and a radius $t$, the relation $\rho(x, \hat x) \le t$ with $p_{\min} = 0$
@@ -185,13 +256,13 @@ In the continuous case the binary entropy is bounded by $\log 2$.
 **Differences from the paper.** The paper takes $\rho$ symmetric and counts the balls
 $\{\hat x \mid \rho(x, \hat x) \le t\}$; the formal statements bound the sections
 $\{x \mid \rho(x, \hat x) \le t\}$ that the proof uses, which is the same for symmetric $\rho$, and
-take any bound $N$ or $V$ in place of the maximum or supremum.
+take any bound $N$ or $V$ in place of the maximum or supremum. Corollaries 2.3 and 2.5 hold for
+any joint law of $(X, \hat X)$ with finitely many values; the Markov chain is not needed for them.
 :::
 
 ## Not yet covered
 
-The entropy versions (Corollaries 2.3 and 2.5) and the version for independent samples
-(Corollary 2.4) are not yet covered.
+The version for independent samples (Corollary 2.4) is not yet covered.
 
 ## The formal statements at a glance
 

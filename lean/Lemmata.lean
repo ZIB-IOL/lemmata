@@ -349,6 +349,7 @@ public import Lemmata.EnergyShellCrossings.EnergyShellCrossing
 public import Lemmata.EnergyShellCrossings.Main
 public import Lemmata.EnergyShellCrossings.Statement
 public import Lemmata.FanoDiffusion.Corollaries
+public import Lemmata.FanoDiffusion.Entropy
 public import Lemmata.FanoDiffusion.Main
 public import Lemmata.FanoDiffusion.Proof
 public import Lemmata.FanoDiffusion.Renyi
