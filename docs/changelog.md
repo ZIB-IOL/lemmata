@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding the simplex descent step (Lemma 3.45).
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding blended conditional gradients for strongly convex objectives (Theorem 3.42, with explicit constants).
 - **Updated entry:** [Blended pairwise conditional gradients: BPCG and LazyBPCG](blended-pairwise-conditional-gradients/index.md), adding lazified BPCG for strongly convex objectives (Theorem 3.6, case (A), with explicit constants).
 - **Updated entry:** [Blended pairwise conditional gradients: BPCG and LazyBPCG](blended-pairwise-conditional-gradients/index.md), adding lazified BPCG for convex objectives (Theorem 3.6, case (B), with explicit constants).

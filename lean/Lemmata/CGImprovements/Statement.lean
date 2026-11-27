@@ -268,4 +268,19 @@ def BCGLinearRate : Prop :=
             Real.log ((f (x 0) - f xStar) / ε)⌉₊ ≤ t →
         f (x t) - f xStar ≤ ε
 
+/-- **Lemma 3.45** (simplex descent). Let `h` be `L`-smooth on `ℝᵏ`, let
+`d = ∇h(λ) - (⟨∇h(λ), 1⟩/k) 1` be the projection of the gradient onto the directions of the
+probability simplex, let `γ ≥ 0`, and let `λ'` minimize `h` on the segment `[λ, λ - γ d]`. Then
+either `h(λ - γ d) ≤ h(λ)`, or `h(λ) - h(λ') ≥ ⟨∇h(λ), e_i - e_j⟩²/(4L)` for all `i, j`. The book
+takes `λ ∈ Δ_k` and `γ` maximal with `λ - γ d ≥ 0`; neither is needed. -/
+def SimplexDescent : Prop :=
+  ∀ (k : ℕ) (h : EuclideanSpace ℝ (Fin k) → ℝ) (L : NNReal) (lam d lam' : EuclideanSpace ℝ (Fin k))
+    (γ : ℝ), IsSmooth h L → 0 ≤ γ →
+    (∀ i, d i = fderiv ℝ h lam (EuclideanSpace.single i 1) -
+      (∑ j, fderiv ℝ h lam (EuclideanSpace.single j 1)) / k) →
+    lam' ∈ segment ℝ lam (lam - γ • d) → (∀ y ∈ segment ℝ lam (lam - γ • d), h lam' ≤ h y) →
+    h (lam - γ • d) ≤ h lam ∨
+      ∀ i j : Fin k, (fderiv ℝ h lam (EuclideanSpace.single i 1) -
+        fderiv ℝ h lam (EuclideanSpace.single j 1)) ^ 2 / (4 * L) ≤ h lam - h lam'
+
 end Lemmata.CGImprovements
