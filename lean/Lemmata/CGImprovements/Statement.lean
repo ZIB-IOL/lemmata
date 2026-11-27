@@ -205,4 +205,45 @@ def NEPRate : Prop :=
           (t * (t + 1)) *
           (if θ < 1 / 2 then ((t : ℝ) + 2) ^ (1 - 2 * θ) / (1 - 2 * θ) else Real.log ((t : ℝ) + 2))
 
+open Classical in
+/-- A run of blended conditional gradients (Algorithm 3.44) on `conv V` with accuracy `K`, short
+steps for `L` and a simplex descent oracle (Oracle 3.43) with constant `L_S`. If some `a, s ∈ S_t`
+have `f'(x_t)(a - s) ≥ φ_t`, the oracle returns `x_{t+1} ∈ conv S_{t+1}` with `S_{t+1} ⊆ S_t`, and
+either drops a vertex without increasing `f`, or decreases `f` by at least
+`max_{u, w ∈ S_t} f'(x_t)(u - w)²/(L_S |S_t|)`. Otherwise the weak separation oracle either returns
+`v ∈ V` with `f'(x_t)(x_t - v) > φ_t/K`, followed by a Frank–Wolfe step toward `v` that does at
+least as well as every `s ∈ [0, 1]` in the smoothness bound, or certifies `f'(x_t)(x_t - z) ≤ φ_t`
+for all `z ∈ V`, and then `φ` is halved. -/
+def IsBCGRun {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ)
+    (L LS K : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (φ : ℕ → ℝ) : Prop :=
+  x 0 ∈ V ∧ S 0 = {x 0} ∧ ∀ t : ℕ, S t ⊆ V ∧ x t ∈ convexHull ℝ (↑(S t) : Set E) ∧
+    (((∃ a ∈ S t, ∃ s ∈ S t, φ t ≤ fderiv ℝ f (x t) (a - s)) ∧ S (t + 1) ⊆ S t ∧
+      ((f (x (t + 1)) ≤ f (x t) ∧ S (t + 1) ≠ S t) ∨
+        ∀ u ∈ S t, ∀ w ∈ S t,
+          fderiv ℝ f (x t) (u - w) ^ 2 ≤ LS * (S t).card * (f (x t) - f (x (t + 1)))) ∧
+      φ (t + 1) = φ t) ∨
+    ((∀ a ∈ S t, ∀ s ∈ S t, fderiv ℝ f (x t) (a - s) < φ t) ∧
+      ((∃ v ∈ V, φ t / K < fderiv ℝ f (x t) (x t - v) ∧ ∃ γ ∈ Set.Icc (0 : ℝ) 1,
+        x (t + 1) = x t + γ • (v - x t) ∧
+        (∀ σ ∈ Set.Icc (0 : ℝ) 1, f (x (t + 1)) ≤
+          f (x t) - σ * fderiv ℝ f (x t) (x t - v) + σ ^ 2 * L / 2 * ‖v - x t‖ ^ 2) ∧
+        S (t + 1) = (if γ = 1 then {v} else insert v (S t)) ∧ φ (t + 1) = φ t) ∨
+      ((∀ z ∈ V, fderiv ℝ f (x t) (x t - z) ≤ φ t) ∧ x (t + 1) = x t ∧ S (t + 1) = S t ∧
+        φ (t + 1) = φ t / 2))))
+
+/-- **Theorem 3.42** (blended conditional gradients), convex case with explicit constants. Let `f`
+be convex and `L`-smooth on `conv V` with diameter `D`, `K ≥ 1`, `L_S > 0`, `h₀/2 ≤ φ₀ ≤ L D²/2`,
+and let all active sets have at most `k` vertices. With `Q = max {8 K² L D², 4 L_S k}`, every run of
+Algorithm 3.44 has primal gap at most `ε > 0` after `⌈log₂ (φ₀/ε)⌉₊ + 1 + 2 ⌈Q/ε⌉₊` iterations. -/
+def BCGRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ) (L : NNReal)
+    (LS K : ℝ) (k : ℕ) (x : ℕ → E) (S : ℕ → Finset E) (φ : ℕ → ℝ),
+    ConvexOn ℝ Set.univ f → IsSmooth f L → 1 ≤ K → 0 < LS → IsBCGRun V f L LS K x S φ →
+    (∀ t, (S t).card ≤ k) → ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f,
+    (f (x 0) - f xStar) / 2 ≤ φ 0 → φ 0 ≤ L * Metric.diam (↑V : Set E) ^ 2 / 2 →
+    ∀ ε : ℝ, 0 < ε → ∀ t : ℕ,
+      ⌈Real.logb 2 (φ 0 / ε)⌉₊ + 1 +
+          2 * ⌈max (8 * K ^ 2 * L * Metric.diam (↑V : Set E) ^ 2) (4 * LS * k) / ε⌉₊ ≤ t →
+        f (x t) - f xStar ≤ ε
+
 end Lemmata.CGImprovements
