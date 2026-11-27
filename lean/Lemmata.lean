@@ -674,6 +674,10 @@ public import Lemmata.LPHardnessInP.ParityExtension.Witness
 public import Lemmata.LPHardnessInP.RankReduction.Main
 public import Lemmata.LPHardnessInP.RankReduction.Statement
 public import Lemmata.LagrangianDualityGap.Main
+public import Lemmata.LazyCG.Main
+public import Lemmata.LazyCG.ParamFree
+public import Lemmata.LazyCG.Proof
+public import Lemmata.LazyCG.Statement
 public import Lemmata.ModifiedE8Bell.Compute
 public import Lemmata.ModifiedE8Bell.Compute.Raw
 public import Lemmata.ModifiedE8Bell.Data
