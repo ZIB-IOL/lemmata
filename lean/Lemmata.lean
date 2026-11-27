@@ -16,6 +16,9 @@ public import Lemmata.AwayStepFW.PairwiseRate
 public import Lemmata.AwayStepFW.Progress
 public import Lemmata.AwayStepFW.PyramidalEq
 public import Lemmata.AwayStepFW.Statement
+public import Lemmata.BPCG.Main
+public import Lemmata.BPCG.Proof
+public import Lemmata.BPCG.Statement
 public import Lemmata.C19IsotropicSymbol.Main
 public import Lemmata.C19IsotropicSymbol.Statement
 public import Lemmata.CGBasics.Approx
@@ -556,12 +559,15 @@ public import Lemmata.FrankWolfeLDS.Proof.ToMathlib
 public import Lemmata.FrankWolfeLDS.Proof.UniformlyConvexSet
 public import Lemmata.FrankWolfeLDS.Statement
 public import Lemmata.GrothendieckLowerBounds.Data3
+public import Lemmata.GrothendieckLowerBounds.Data3Split
 public import Lemmata.GrothendieckLowerBounds.Data5
 public import Lemmata.GrothendieckLowerBounds.Encoding
 public import Lemmata.GrothendieckLowerBounds.Main
+public import Lemmata.GrothendieckLowerBounds.Rotation
 public import Lemmata.GrothendieckLowerBounds.Sphere
 public import Lemmata.GrothendieckLowerBounds.Statement
 public import Lemmata.GrothendieckLowerBounds.Witness3
+public import Lemmata.GrothendieckLowerBounds.Witness3Split
 public import Lemmata.GrothendieckLowerBounds.Witness5
 public import Lemmata.ImplicationComposition.Main
 public import Lemmata.LPHardnessInP.CostTransfer.Main
