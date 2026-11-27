@@ -73,7 +73,7 @@ def weightedHardSet {d : ℕ} (C : ℝ) (w : Fin d → ℝ) :
   {x | (1 / 2 : ℝ) * ‖x‖ ^ 2 + ∑ i, w i * |x i| ≤ C ^ 2}
 
 /-- Intersection-of-unit-balls formulation of the same set. -/
-def hardBallIntersection {d : ℕ} (w : Fin d → ℝ) :
+noncomputable def hardBallIntersection {d : ℕ} (w : Fin d → ℝ) :
     Set (EuclideanSpace ℝ (Fin d)) :=
   ⋂ s : Fin d → Bool, Metric.closedBall (-signedWeight w s) 1
 

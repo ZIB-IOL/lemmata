@@ -45,7 +45,7 @@ theorem derivation_sound {α : Type*} (P : α → Prop) (seeds : List α)
   have h : ∀ n, ∀ hn : n < steps.size, P (steps[n]'hn).value := by
     intro n
     induction n using Nat.strong_induction_on with
-    | h n ih =>
+    | ind n ih =>
       intro hn
       have hv := hvalid ⟨n, hn⟩
       cases hp : (steps[n]'hn).parent with

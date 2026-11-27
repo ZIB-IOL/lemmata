@@ -253,7 +253,7 @@ noncomputable def inversePrefix (d M : ℕ) : Polynomial R :=
 @[simp] theorem inversePrefix_coeff (d M n : ℕ) :
     (inversePrefix R d M).coeff n = if n < M then ((d + n).choose d : R) else 0 := by
   classical
-  simp [inversePrefix, Polynomial.coeff_monomial, eq_comm]
+  simp [inversePrefix, Polynomial.coeff_monomial_apply, Finsupp.single_apply, eq_comm]
 
 theorem inversePrefix_eq_trunc (d M : ℕ) :
     inversePrefix R d M =

@@ -20,7 +20,7 @@ theorem merge_components {ι : Type*} (d : ι → ℕ) (m : ι → Fin 3 → ℕ
       (2 ≤ s.card → (∑ a ∈ s, d a) ≤ generalBound N) := by
   classical
   induction N using Nat.strong_induction_on generalizing s with
-  | h N ih =>
+  | ind N ih =>
     by_cases hs : s = ∅
     · subst s
       simp

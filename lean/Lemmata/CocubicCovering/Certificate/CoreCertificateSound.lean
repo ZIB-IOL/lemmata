@@ -197,7 +197,7 @@ theorem check_sound (rules : Fin n → Rule n l w t)
     ∀ i, ¬ feasible allowed kernel (states i) := by
   intro i
   induction hi : i.val using Nat.strong_induction_on generalizing i with
-  | h k ih =>
+  | ind k ih =>
       intro possible
       obtain ⟨j, hj, hpossible⟩ := step_sound roots states obstructions terminals columns guard
         allowed kernel transform action hkernel hdimension hpoint haction hallowed htransport

@@ -22,8 +22,8 @@ theorem poleSelector_monomial (s c : R) (d j : ℕ) :
     poleSelector R s d (Polynomial.monomial j c) =
       if j ≤ d then s ^ (d - j) * c else 0 := by
   classical
-  simp [poleSelector, Polynomial.lcoeff_apply, Polynomial.coeff_monomial,
-    Finset.mem_range, Nat.lt_succ_iff, smul_eq_mul]
+  simp [poleSelector, Polynomial.lcoeff_apply, Polynomial.coeff_monomial_apply,
+    Finsupp.single_apply, mul_ite, mul_zero, Finset.mem_range, Nat.lt_succ_iff, smul_eq_mul]
 
 variable {α : Type*}
 
