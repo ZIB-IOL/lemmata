@@ -5,19 +5,22 @@ subject: math.OC
 cross_lists: [math.FA, quant-ph]
 topics: [bell-inequalities]
 abstract: >-
-  An explicit $81\times321$ integer matrix with classical value $320975296$ and rational
-  vectors in $\mathbb R^3$ give $K_G(3)>1.43888070193021$. Lean checks the vectors and their
-  value and proves the passage to unit vectors; the classical value of the explicit matrix
-  is the theorem's single hypothesis, established by an exhaustive integer search. New
-  vectors for the $80\times269$ matrix of Márton et al. give $K_G(5),K_G(6)>1.49936483533988$
-  with the classical value computed there.
+  An explicit $141\times321$ integer matrix gives $K_G(3)>1.4396139030752404$.
+  Averaging rotations of the published 406-direction local model of Designolle et al.
+  gives $K_G(3)<1.451263576$. The rotation argument uses the published finite-model
+  result and exact rational bounds. Lean checks the lower witness vectors and their
+  objective and proves the uniform numerical upper estimate from the model and geometric
+  hypotheses. An exhaustive integer search certifies the classical value. New vectors
+  on the matrix of Márton et al. give $K_G(5),K_G(6)>1.49936483533988$.
 contributors:
   - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
 ai_use: >-
   The literature search, matrix optimization, certificate implementations, exposition and
   Lean formalization were developed with OpenAI Codex. Claude Opus 5.5 (Anthropic)
   formalized the checks of the vectors and the passage to unit vectors in Lean, and was used
-  for review, consistency edits and independent replays of the certificates.
+  for review, consistency edits and independent replays of the certificates. OpenAI Codex
+  developed the 141-row extension, its numerical checks and Lean update, and the rotation
+  argument and arithmetic checker for the global upper bound.
 acknowledgements: >-
   Research reported in this paper was partially supported by the Berlin Mathematics
   Research Center MATH$^+$ (EXC-2046/2, project ID 390685689), funded by the Deutsche
@@ -28,6 +31,18 @@ native_computation: true
 pages:
   - index.md
 exports:
+  - name: Lemmata.GrothendieckLowerBounds.order_three_rotation_upper
+    kind: theorem
+    page: index.md
+    label: thm-grothendieck-lower-bounds-order-three-upper
+  - name: Lemmata.GrothendieckLowerBounds.averaged_vector_bound
+    kind: theorem
+    page: index.md
+    label: lem-grothendieck-lower-bounds-averaged
+  - name: Lemmata.GrothendieckLowerBounds.order_three_split
+    kind: theorem
+    page: index.md
+    label: thm-grothendieck-lower-bounds-order-three-split
   - name: Lemmata.GrothendieckLowerBounds.order_three
     kind: theorem
     page: index.md

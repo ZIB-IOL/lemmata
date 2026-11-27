@@ -1,0 +1,24 @@
+{
+  "scale_denominator": 1000000000,
+  "base_numerator": 975171336,
+  "scale_numerators": [
+    975171336,
+    975171336
+  ],
+  "delta_denominator": 10000,
+  "reference_margin": 216000,
+  "records": 4309,
+  "outside_numerator": 641951274320921384,
+  "outside_denominator": 1,
+  "classical_upper_numerator": 641951276514383746,
+  "classical_upper_denominator": 1,
+  "attained": 641951276514383746,
+  "vector_denominator": 1000000000000000000000000000000000000,
+  "quantum_numerator": 924161982767004923304275072475569794056604412473073157292179614339537187061744866701519909,
+  "strict_lower_bound": "1.4396139030752404",
+  "comparison": "column contractions",
+  "transport_mass": 975171336,
+  "dictionary_budget": 15784685527491512,
+  "reference_classical": 641978254,
+  "small_game_budget": 53915760
+}

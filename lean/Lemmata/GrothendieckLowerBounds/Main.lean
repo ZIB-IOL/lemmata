@@ -1,8 +1,10 @@
 module
 
 public import Lemmata.GrothendieckLowerBounds.Statement
+public import Lemmata.GrothendieckLowerBounds.Rotation
 public import Lemmata.GrothendieckLowerBounds.Sphere
 public import Lemmata.GrothendieckLowerBounds.Witness3
+public import Lemmata.GrothendieckLowerBounds.Witness3Split
 public import Lemmata.GrothendieckLowerBounds.Witness5
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Tactic.Linarith
@@ -92,6 +94,15 @@ theorem vectorObj_scaled {n m d : ℕ} (M : Fin n → Fin m → ℤ) (A : Fin n 
   refine Finset.sum_congr rfl fun k _ => ?_
   field_simp
 
+/-- A common positive integer denominator normalizes a family of integer vectors. -/
+theorem ball_scaled_den {n d : ℕ} (A : Fin n → Fin d → ℤ) (D : ℤ) (hD : 0 < D)
+    (hA : ∀ i, ∑ k, A i k ^ 2 ≤ D ^ 2) :
+    ∀ i, ∑ k, ((A i k : ℝ) / (D : ℝ)) ^ 2 ≤ 1 := by
+  intro i
+  have h' : (∑ k, (A i k : ℝ) ^ 2) ≤ (D : ℝ) ^ 2 := by exact_mod_cast hA i
+  have hpos : (0 : ℝ) < D := by exact_mod_cast hD
+  simpa only [div_pow, ← Finset.sum_div, div_le_one (sq_pos_of_pos hpos)] using h'
+
 /-- Integer vectors with squared numerators at most `10³⁰` lie in the unit ball. -/
 theorem ball_scaled {n d : ℕ} (A : Fin n → Fin d → ℤ) (hA : ∀ i, ∑ k, A i k ^ 2 ≤ 10 ^ 30) :
     ∀ i, ∑ k, ((A i k : ℝ) / 10 ^ 15) ^ 2 ≤ 1 := by
@@ -125,6 +136,26 @@ theorem order_three (hC : ClassicalUpper m3 320975296) :
   refine ⟨81, 321, m3, 320975296, by norm_num, hC, u, v, hu, hv, lt_of_lt_of_le ?_ hge⟩
   have hobj := vectorObj_scaled m3Z a3Z b3Z (10 ^ 15) (by norm_num)
   rw [show m3 = fun i j => (m3Z i j : ℝ) from rfl, hobj, objective3]
+  norm_num
+
+/-- **Order three, 141 rows.** The split matrix gives a strict lower bound from its
+classical upper bound, certified by the exhaustive search in `certificate-k3-split`. -/
+theorem order_three_split (hC : ClassicalUpper mSplit 641951276514383746) :
+    GrothendieckLowerBound 3 (14396139030752404 / 10 ^ 16) := by
+  have ha := ball_scaled_den aSplitZ (10 ^ 36) (by norm_num) (by
+    intro i
+    convert aSplit_ball i using 1
+    norm_num)
+  have hb := ball_scaled_den bSplitZ (10 ^ 36) (by norm_num) (by
+    intro j
+    convert bSplit_ball j using 1
+    norm_num)
+  simp only [Int.cast_pow, Int.cast_ofNat] at ha hb
+  obtain ⟨u, v, hu, hv, hge⟩ := exists_unit_ge (by norm_num) mSplit _ _ ha hb
+  refine ⟨141, 321, mSplit, 641951276514383746, by norm_num, hC, u, v, hu, hv,
+    lt_of_lt_of_le ?_ hge⟩
+  have hobj := vectorObj_scaled mSplitZ aSplitZ bSplitZ (10 ^ 36) (by norm_num)
+  rw [show mSplit = fun i j => (mSplitZ i j : ℝ) from rfl, hobj, objectiveSplit]
   norm_num
 
 /-- **Orders five and six.** If the 80 × 269 matrix `m5` of Márton et al. has classical value
