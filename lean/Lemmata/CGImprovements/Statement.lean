@@ -60,4 +60,31 @@ def AdaptiveRate : Prop :=
       f (x t) - f xStar ≤ 2 * K * Metric.diam C ^ 2 / ((t : ℝ) + 3) ∧
         ∃ τ ≤ t, fderiv ℝ f (x τ) (x τ - v τ) ≤ 4 * K * Metric.diam C ^ 2 / ((t : ℝ) + 3)
 
+/-- A run of the parameter-free lazy conditional gradient algorithm (Algorithm 3.7) with accuracy
+`K`. In every iteration the weak separation oracle either returns `v ∈ C` with
+`f'(x_t)(x_t - v) > φ_t/K`, and the step toward `v` does at least as well as every `s ∈ [0, 1]` in
+the smoothness bound, or it certifies `f'(x_t)(x_t - z) ≤ φ_t` for all `z ∈ C`; then the iterate
+stays and `φ` is halved. -/
+def IsLCGRun {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (L : NNReal) (K : ℝ) (x : ℕ → E) (φ : ℕ → ℝ) : Prop :=
+  x 0 ∈ C ∧ ∀ t : ℕ,
+    (∃ v ∈ C, φ t / K < fderiv ℝ f (x t) (x t - v) ∧ ∃ γ ∈ Set.Icc (0 : ℝ) 1,
+      x (t + 1) = x t + γ • (v - x t) ∧
+      (∀ s ∈ Set.Icc (0 : ℝ) 1, f (x (t + 1)) ≤
+        f (x t) - s * fderiv ℝ f (x t) (x t - v) + s ^ 2 * L / 2 * ‖v - x t‖ ^ 2) ∧
+      φ (t + 1) = φ t) ∨
+    ((∀ z ∈ C, fderiv ℝ f (x t) (x t - z) ≤ φ t) ∧ x (t + 1) = x t ∧ φ (t + 1) = φ t / 2)
+
+/-- **Theorem 3.15** (lazy conditional gradients). Let `C` be compact and convex with diameter
+`D`, `f` convex and `L`-smooth, `K ≥ 1` and `h₀/2 ≤ φ₀ ≤ L D²/2`. Every run of Algorithm 3.7 has
+primal gap at most `ε > 0` after `⌈log₂ (φ₀/ε)⌉₊ + ⌈8 K² L D²/ε⌉₊` iterations. -/
+def LazyRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (L : NNReal)
+    (K : ℝ) (x : ℕ → E) (φ : ℕ → ℝ),
+    IsCompact C → Convex ℝ C → ConvexOn ℝ Set.univ f → IsSmooth f L → 1 ≤ K →
+    IsLCGRun C f L K x φ → ∀ xStar ∈ minimizers C f,
+    (f (x 0) - f xStar) / 2 ≤ φ 0 → φ 0 ≤ L * Metric.diam C ^ 2 / 2 → ∀ ε : ℝ, 0 < ε →
+    ∀ t : ℕ, ⌈Real.logb 2 (φ 0 / ε)⌉₊ + ⌈8 * K ^ 2 * L * Metric.diam C ^ 2 / ε⌉₊ ≤ t →
+      f (x t) - f xStar ≤ ε
+
 end Lemmata.CGImprovements

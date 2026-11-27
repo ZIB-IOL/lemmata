@@ -1,6 +1,7 @@
 module
 
 public import Lemmata.CGImprovements.Proof
+public import Lemmata.CGImprovements.Lazy
 
 @[expose] public section
 
@@ -15,6 +16,9 @@ theorem adaptive_step_terminates : AdaptiveStepTerminates := Proof.adaptive_step
 
 /-- Algorithm 3.5 (AdaFW): the rates of vanilla Frank–Wolfe with the largest estimate. -/
 theorem adaptive_rate : AdaptiveRate := Proof.adaptive_rate
+
+/-- Theorem 3.15: lazy conditional gradients with a weak separation oracle. -/
+theorem lazy_rate : LazyRate := Proof.lazy_rate
 -- DOCS_END_MAIN
 
 end Lemmata.CGImprovements

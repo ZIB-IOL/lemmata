@@ -10,8 +10,8 @@ numbering:
 :::{note}
 This entry comes from the book *Conditional Gradient Methods: From Core Principles to AI
 Applications* by Gábor Braun, Alejandro Carderera, Cyrille W. Combettes, Hamed Hassani, Amin
-Karbasi, Aryan Mokhtari and Sebastian Pokutta [@braun2025conditional]. It formalizes Section 3.1.2;
-numbers refer to the arXiv version [@braun2022conditional].
+Karbasi, Aryan Mokhtari and Sebastian Pokutta [@braun2025conditional]. It formalizes results from
+Sections 3.1.2 and 3.1.3; numbers refer to the arXiv version [@braun2022conditional].
 :::
 
 Chapter 3 of the book improves the Frank–Wolfe algorithm in several directions: step sizes that
@@ -80,10 +80,43 @@ the sign of $f'$ at the new point instead of function values, is analyzed in
 [The Frank–Wolfe algorithm: a short introduction](../frank-wolfe-introduction/index.md)
 (Lemmas 4.10 and 4.11).
 
+## Lazification (LazyFW)
+
+A linear minimization oracle solves a linear program exactly in every iteration, although an
+improving vertex is all the algorithm needs. The weak separation oracle of @braun2016lazifying
+receives a target $\phi$ and an accuracy $K \ge 1$; it either returns a vertex $v$ that improves on
+the current iterate by more than $\phi/K$, or certifies that no point improves by more than $\phi$.
+The parameter-free lazy conditional gradient algorithm (Algorithm 3.7) halves $\phi$ after every
+negative answer.
+
+```{prf:definition} Lazy conditional gradient run
+:label: def-conditional-gradient-improvements-lcg-run
+:nonumber:
+
+In every iteration, either the oracle returns $v \in C$ with $f'(x_t)(x_t - v) > \phi_t/K$ and the
+step toward $v$ does at least as well as every $s \in [0, 1]$ in the smoothness bound, with
+$\phi_{t+1} = \phi_t$, or it certifies $f'(x_t)(x_t - z) \le \phi_t$ for all $z \in C$, and then
+$x_{t+1} = x_t$ and $\phi_{t+1} = \phi_t/2$.
+```
+
+```{prf:theorem} Lazy conditional gradients
+:label: thm-conditional-gradient-improvements-lazy
+:enumerator: 3.15
+
+Let $C$ be compact and convex with diameter $D$, let $f$ be convex and $L$-smooth, $K \ge 1$ and
+$h_0/2 \le \phi_0 \le LD^2/2$. Every run has primal gap at most $\varepsilon > 0$ after
+$\lceil \log_2(\phi_0/\varepsilon) \rceil_+ + \lceil 8K^2LD^2/\varepsilon \rceil$ iterations.
+```
+
+A negative answer certifies $h_t \le \phi_t$, so $\phi_t \ge h_t/2$ throughout. A positive answer
+gains at least $\phi_t^2/(2K^2LD^2) \ge h_t^2/(8K^2LD^2)$, so after $k$ positive answers
+$h_t \le 8K^2LD^2/(k+8)$; after $\lceil \log_2(\phi_0/\varepsilon) \rceil_+ + 1$ negative
+answers, the last one certifies $h_t \le \phi_t \le \varepsilon$.
+
 ## Not yet covered
 
-Lazification with LazyFW and LazyAFW (Section 3.1.3), sharpness (Section 3.1.5), the nearest
-extreme point oracle (NEP-FW, Section 3.1.6) and blended conditional gradients (BCG,
+The lazy away-step Frank–Wolfe algorithm (LazyAFW, Theorem 3.16), sharpness (Section 3.1.5), the
+nearest extreme point oracle (NEP-FW, Section 3.1.6) and blended conditional gradients (BCG,
 Section 3.2.2) are not formalized here yet.
 
 ## The formal statements at a glance

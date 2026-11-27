@@ -50,3 +50,11 @@ exports:
     kind: theorem
     page: index.md
     label: thm-conditional-gradient-improvements-adafw
+  - name: Lemmata.CGImprovements.IsLCGRun
+    kind: definition
+    page: index.md
+    label: def-conditional-gradient-improvements-lcg-run
+  - name: Lemmata.CGImprovements.lazy_rate
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-improvements-lazy
