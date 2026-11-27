@@ -8,6 +8,7 @@ public import Lemmata.CGImprovements.SharpAFW
 public import Lemmata.CGImprovements.NEP
 public import Lemmata.CGImprovements.BCG
 public import Lemmata.CGImprovements.BCGLinear
+public import Lemmata.CGImprovements.SimplexDescent
 
 @[expose] public section
 
@@ -46,6 +47,9 @@ theorem bcg_rate : BCGRate := Proof.bcg_rate
 
 /-- Theorem 3.42, strongly convex case with explicit constants: blended conditional gradients. -/
 theorem bcg_linear_rate : BCGLinearRate := Proof.bcg_linear_rate
+
+/-- Lemma 3.45: the simplex descent step. -/
+theorem simplex_descent : SimplexDescent := Proof.simplex_descent
 -- DOCS_END_MAIN
 
 end Lemmata.CGImprovements

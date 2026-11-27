@@ -102,3 +102,7 @@ exports:
     kind: theorem
     page: index.md
     label: thm-conditional-gradient-improvements-bcg-linear
+  - name: Lemmata.CGImprovements.simplex_descent
+    kind: theorem
+    page: index.md
+    label: lem-conditional-gradient-improvements-simplex-descent

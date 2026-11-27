@@ -321,20 +321,42 @@ strong convexity gives $\mu\delta^2 h_t \le 2\phi_t^2$; after $\phi$ is halved,
 $\mu\delta^2 h_t \le 8\phi_t^2$, and the steps that do not drop a vertex contract the primal gap by
 $1 - \mu\delta^2/(2Q)$.
 
+The simplex descent oracle can be implemented by a single projected gradient step on the weights of
+the active set.
+
+```{prf:lemma} Simplex descent
+:label: lem-conditional-gradient-improvements-simplex-descent
+:enumerator: 3.45
+
+Let $h$ be $L$-smooth on $\mathbb{R}^k$, let
+$d = \nabla h(\lambda) - (\langle \nabla h(\lambda), \mathbb{1} \rangle / k)\, \mathbb{1}$, let
+$\gamma \ge 0$, and let $\lambda'$ minimize $h$ on the segment $[\lambda, \lambda - \gamma d]$. Then
+either $h(\lambda - \gamma d) \le h(\lambda)$, or
+$$
+h(\lambda) - h(\lambda') \ge \max_{1 \le i, j \le k}
+  \frac{\langle \nabla h(\lambda), e_i - e_j \rangle^2}{4L}.
+$$
+```
+
+The book takes $\lambda \in \Delta_k$ and $\gamma$ maximal with $\lambda - \gamma d \ge 0$, so that
+the step stays in the simplex; the proof needs neither. Since
+$\langle \nabla h(\lambda), d \rangle = \|d\|^2$, either $\gamma L \le 1$ and the endpoint does not
+increase $h$, or $\lambda - d/L$ lies on the segment and $h$ drops by at least
+$\|d\|^2/(2L) \ge (d_i - d_j)^2/(4L)$.
+
 :::{note}
 **Differences from the book.** Theorem 3.42 is stated in the book as
 $\mathcal{O}(LD^2 \dim P/\varepsilon)$, without proof; the formal statement gives explicit constants,
 with the bound $k$ on the active sets in place of $\mathcal{O}(\dim P)$. The constant $L_S$ of the
 simplex descent oracle is the smoothness constant in the weights of the active set, of order
 $LD^2$ for the simplex descent of Lemma 3.45, which gives the book's $\mathcal{O}(LD^2 k/\varepsilon)$.
-Lemma 3.45 is not formalized here.
 :::
 
 ## Not yet covered
 
 From Section 3.1.5, Corollary 3.33 for $\theta < 1/2$, the comparison with gradient domination
 (Lemma 3.35), the Hoffman bound (Lemma 3.27) and the Łojasiewicz-type Lemma 3.30 are not
-formalized here; from Section 3.2.2, the simplex descent step of Lemma 3.45.
+formalized here.
 
 ## The formal statements at a glance
 
