@@ -12,6 +12,8 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **Updated entry:** [Frank–Wolfe oracle complexity with prescribed set smoothness](frank-wolfe-prescribed-smoothness/index.md) adds two kernel-checked Hilbert-space results. One fixed body gives sharp inverse-time error for gradient queries. Each deterministic arbitrary-query strategy also has a single smooth, unique-oracle body that is hard at every budget.
+
 - **Updated entry:** [Lazifying conditional gradient algorithms: LCG, LPCG and parameter-free LCG](lazifying-conditional-gradients/index.md), adding weak separation through augmentation (Proposition 6.1).
 - **Updated entry:** [Lazifying conditional gradient algorithms: LCG, LPCG and parameter-free LCG](lazifying-conditional-gradients/index.md), adding lazy pairwise conditional gradients on simplex-like polytopes (Theorem 3.2, with two errata).
 - **New entry:** [Lazifying conditional gradient algorithms: LCG, LPCG and parameter-free LCG](lazifying-conditional-gradients/index.md), formalizing the paper by Braun, Pokutta and Zink: weak separation, lazy conditional gradients (Theorem 3.1) and the parameter-free variant (Theorem 4.2, Corollary 4.3).

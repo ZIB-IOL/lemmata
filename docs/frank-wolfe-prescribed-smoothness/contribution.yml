@@ -15,7 +15,9 @@ abstract: >-
   order $L(D-2/\beta)^2/T$ is optimal. The entry also proves lower bounds for an oracle that breaks
   ties by index, including deterministic methods in dimension $64(T+1)+1$ and a penalty for
   infeasible outputs, an upper bound for general smooth convex objectives by conditional gradient
-  sliding, and a linear rate for bodies with inner and outer tangent balls.
+  sliding, and a linear rate for bodies with inner and outer tangent balls. In Hilbert space,
+  a fixed example has matching inverse-time bounds for gradient-directed Frank–Wolfe. A separate
+  fixed body gives an all-budget lower bound for each deterministic arbitrary-query method.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -24,6 +26,7 @@ ai_use: >-
   formalization were produced with [the Agentic Researcher](https://arxiv.org/abs/2603.15914)
   framework. The port to the archive, the generalized and additional statements, the widget and
   this page were developed with Claude (Anthropic) under the author's direction and review.
+  The Hilbert-space companion and its Lean proofs were developed with OpenAI Codex.
 acknowledgements: >-
   This research was conducted in the context of the Agentic AI for Mathematics
   (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
@@ -146,3 +149,83 @@ exports:
     kind: theorem
     page: index.md
     label: prop-frank-wolfe-prescribed-smoothness-comparison
+  - name: Lemmata.FrankWolfePS.Hilbert.fixed_convex
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-convex
+  - name: Lemmata.FrankWolfePS.Hilbert.fixed_weakly_compact
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-compact
+  - name: Lemmata.FrankWolfePS.Hilbert.fixed_width
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-prescribed-smoothness-hilbert-width
+  - name: Lemmata.FrankWolfePS.Hilbert.fixed_normals
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-normals
+  - name: Lemmata.FrankWolfePS.Hilbert.fixed_unique_oracle
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-unique
+  - name: Lemmata.FrankWolfePS.Hilbert.seed_exposed
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-prescribed-smoothness-hilbert-seed
+  - name: Lemmata.FrankWolfePS.Hilbert.fixed_gradient_lower
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-gradient
+  - name: Lemmata.FrankWolfePS.Hilbert.fixed_open_loop_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-rate
+  - name: Lemmata.FrankWolfePS.Hilbert.fixed_trial_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-trial
+  - name: Lemmata.FrankWolfePS.Hilbert.optimum_vertical
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-prescribed-smoothness-hilbert-escape
+  - name: Lemmata.FrankWolfePS.Hilbert.failure_strong_exposure
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-exposure
+  - name: Lemmata.FrankWolfePS.Hilbert.Anytime.frame_compact
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-compact
+  - name: Lemmata.FrankWolfePS.Hilbert.Anytime.frame_width
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-width
+  - name: Lemmata.FrankWolfePS.Hilbert.Anytime.frame_normals
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-normals
+  - name: Lemmata.FrankWolfePS.Hilbert.Anytime.frame_radius_exact
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-rolling
+  - name: Lemmata.FrankWolfePS.Hilbert.Anytime.frame_unique_oracle
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-unique
+  - name: Lemmata.FrankWolfePS.Hilbert.Anytime.exact_reply_prefix
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-prescribed-smoothness-hilbert-any-prefix
+  - name: Lemmata.FrankWolfePS.Hilbert.Anytime.optimizer_mass
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-prescribed-smoothness-hilbert-any-mass
+  - name: Lemmata.FrankWolfePS.Hilbert.Anytime.frame_all_budgets
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-gap
+  - name: Lemmata.FrankWolfePS.Hilbert.Anytime.deterministic_anytime
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-strategy
