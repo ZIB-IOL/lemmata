@@ -95,4 +95,45 @@ def ContinuousFano : Prop :=
       1 - ((mutualInfo μ).toReal + log 2) / log (volume.real S / V) ≤
         (chainLaw μ κ).real {p | t < ρ p.1 p.2}
 
+/-- The **Hellinger integral** `∫ (dP/dQ)^α dQ` of order `α`. For `α < 1` the singular part of `P`
+does not contribute; for `α > 1` it is used with `P ≪ Q`. -/
+noncomputable def hellingerInt {Ω : Type*} [MeasurableSpace Ω] (α : ℝ) (P Q : Measure Ω) : ℝ≥0∞ :=
+  ∫⁻ x, P.rnDeriv Q x ^ α ∂Q
+
+/-- The **Rényi divergence** of order `α ≠ 1`: `D_α(P ‖ Q) = log (∫ (dP/dQ)^α dQ)/(α - 1)`. -/
+noncomputable def renyiDiv {Ω : Type*} [MeasurableSpace Ω] (α : ℝ) (P Q : Measure Ω) : ℝ :=
+  log (hellingerInt α P Q).toReal / (α - 1)
+
+/-- The **binary Rényi entropy** of order `α ≠ 1`: `H_α(p) = log (p^α + (1 - p)^α)/(1 - α)`. -/
+noncomputable def binRenyiEntropy (α p : ℝ) : ℝ :=
+  log (p ^ α + (1 - p) ^ α) / (1 - α)
+
+/-- **Proposition 2.1** for orders `α ≠ 1`, corrected. Let `P` and `Q` be probability measures
+and `R` a measurable event with `p_min ≤ Q(R) ≤ p_max`, where `0 ≤ p_min`, `0 < p_max` and
+`p_min + p_max < 1`, and let `0 < α ≠ 1`, with `P ≪ Q` if `α > 1`. If the Hellinger integral is
+positive and finite, then with `p = P(R)`, `A = D_α(P ‖ Q) + H_α(p) + log (1 - p_min)` and
+`B = (1 - p_min)/p_max`,
+`p^α/(p^α + (1 - p)^α) ≤ (exp ((α - 1) A) - 1)/(B^{α-1} - 1)`. -/
+def InfoDiffusionFanoRenyi : Prop :=
+  ∀ {Ω : Type u} [MeasurableSpace Ω] (P Q : Measure Ω) [IsProbabilityMeasure P]
+    [IsProbabilityMeasure Q] (R : Set Ω) (pmin pmax α : ℝ),
+    MeasurableSet R → 0 ≤ pmin → 0 < pmax → pmin + pmax < 1 → pmin ≤ Q.real R →
+    Q.real R ≤ pmax → 0 < α → α ≠ 1 → (1 < α → P ≪ Q) → hellingerInt α P Q ≠ 0 →
+    hellingerInt α P Q ≠ ∞ →
+      P.real R ^ α / (P.real R ^ α + (1 - P.real R) ^ α) ≤
+        (exp ((α - 1) * (renyiDiv α P Q + binRenyiEntropy α (P.real R) + log (1 - pmin))) - 1) /
+          (((1 - pmin) / pmax) ^ (α - 1) - 1)
+
+/-- **Proposition 2.1** for orders `α > 1`, as stated in the paper: under the assumptions of
+`InfoDiffusionFanoRenyi` with `α > 1`,
+`P(R) ≤ ((exp ((α - 1) A) - 1)/(B^{α-1} - 1))^{1/α}`. -/
+def InfoDiffusionFanoRenyiGtOne : Prop :=
+  ∀ {Ω : Type u} [MeasurableSpace Ω] (P Q : Measure Ω) [IsProbabilityMeasure P]
+    [IsProbabilityMeasure Q] (R : Set Ω) (pmin pmax α : ℝ),
+    MeasurableSet R → 0 ≤ pmin → 0 < pmax → pmin + pmax < 1 → pmin ≤ Q.real R →
+    Q.real R ≤ pmax → 1 < α → P ≪ Q → hellingerInt α P Q ≠ ∞ →
+      P.real R ≤
+        ((exp ((α - 1) * (renyiDiv α P Q + binRenyiEntropy α (P.real R) + log (1 - pmin))) - 1) /
+          (((1 - pmin) / pmax) ^ (α - 1) - 1)) ^ (1 / α)
+
 end Lemmata.FanoDiffusion
