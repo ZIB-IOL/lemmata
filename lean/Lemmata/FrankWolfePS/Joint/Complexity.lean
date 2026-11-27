@@ -29,14 +29,14 @@ theorem joint_body_linear_tolerance {C : Set E} (hc : IsCompact C) (cv : Convex 
     (sc : StrongConvexOn Set.univ μ f) (smooth : LipschitzWith L (∇ f)) (he : 0 < ε)
     (ball : Bool) (cert : ball = true → R = r) {x₀ : E} (hx : x₀ ∈ C) :
     let H := (L : ℝ) / 2 * (Metric.diam C) ^ 2
-    let θ := share r R * (μ / L)
+    let θ := rateConstant r R * (μ / L)
     let n := iterationCount H ε θ
     let ans := projectedGradientRun O (∇ f) L r ball x₀ n
     ans.1 ∈ C ∧ ans.2.1 ≤ 1 + n * (if ball then 0 else 1) ∧ ans.2.2 ≤ 1 + n ∧
       ∀ w ∈ C, f ans.1 - f w ≤ ε := by
   dsimp only
   let H := (L : ℝ) / 2 * (Metric.diam C) ^ 2
-  let θ := share r R * (μ / L)
+  let θ := rateConstant r R * (μ / L)
   let n := iterationCount H ε θ
   obtain ⟨hm, oc, gc, rate⟩ :=
       joint_body_linear_upper hc cv hr hR innerBall outer O hμ df sc smooth ball cert hx n
@@ -60,7 +60,8 @@ theorem disclosed_joint_quadratic {C : Set E} (hc : IsCompact C) (cv : Convex �
     {x₀ : E} (hx : x₀ ∈ C) (n : ℕ) :
     let ans := disclosedJointRun O u L r ball x₀ n
     ans.1 ∈ C ∧ ans.2.1 ≤ 1 + n * (if ball then 0 else 1) ∧ ans.2.2 = 0 ∧
-    ∀ w ∈ C, iso L u ans.1 - iso L u w ≤ (1 - share r R) ^ n * (L / 2 * (Metric.diam C) ^ 2) := by
+    ∀ w ∈ C, iso L u ans.1 - iso L u w ≤
+      (1 - rateConstant r R) ^ n * (L / 2 * (Metric.diam C) ^ 2) := by
   obtain ⟨e, he⟩ := exists_ne (0 : E)
   have eq := parallel_of_normals hc cv ⟨_, hx⟩ hr (normals_of_inner hr.le innerBall) he
   have mdl : Models C (iso L u) (isoGrad L u) L := by

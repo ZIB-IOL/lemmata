@@ -14,11 +14,11 @@ omit [InnerProductSpace ℝ E] in
 theorem state_mem {K : Set E} {r : ℝ} {p : E × E} (hp : StateOK K r p) :
     p.2 ∈ Rounded K r := ⟨p.1, hp.1, hp.2⟩
 
-noncomputable def projected (r : ℝ) (u a : E) := (a, liftCore r u a)
+noncomputable def projected (r : ℝ) (u a : E) := (a, liftInner r u a)
 
 theorem projected_ok {K : Set E} {r : ℝ} (hr : 0 ≤ r) {a : E} (ha : a ∈ K) (u : E) :
     StateOK K r (projected r u a) :=
-  ⟨ha, by simpa [projected, liftCore] using norm_clip hr (u - a)⟩
+  ⟨ha, by simpa [projected, liftInner] using norm_clip hr (u - a)⟩
 
 /-- The boolean enables a projection-only optimization for a known ball.
 The remaining inputs are public or actually queried. The integer counts body calls. -/
@@ -43,7 +43,7 @@ theorem model_step_spec {K : Set E} (conv : Convex ℝ K) (O : LMO (Rounded K r)
   by_cases inside : ‖p.1 - u‖ ≤ r
   · simp only [modelStep, ite_eq_left inside]
     refine ⟨projected_ok hr.le hp.1 u, Nat.zero_le _, fun z _ => ?_⟩
-    change ‖liftCore r u p.1 - u‖ ^ 2 ≤ _
+    change ‖liftInner r u p.1 - u‖ ^ 2 ≤ _
     rw [lift_distance hr.le, max_eq_left (sub_nonpos.mpr inside), zero_pow (by decide : 2 ≠ 0)]
     positivity
   · have q0 : p.1 - u ≠ 0 := norm_pos_iff.mp (hr.trans (lt_of_not_ge inside))

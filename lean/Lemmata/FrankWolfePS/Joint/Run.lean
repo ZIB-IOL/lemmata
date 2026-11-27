@@ -7,8 +7,8 @@ open Upper
 open scoped RealInnerProductSpace Classical
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
-/-- Each loop step evaluates one gradient at the stored point and adds the
-actual number of body LMOs returned by modelStep. -/
+/-- The iterations of projected gradient with Frank–Wolfe projections: each evaluates one
+gradient at the current iterate and counts the LMO calls it makes (at most one). -/
 noncomputable def projectedGradientLoop {C : Set E} (O : LMO C) (g : E → E) (L r : ℝ) (ball : Bool)
     (p : E × E) : ℕ → (E × E) × ℕ × ℕ
   | 0 => (p, 0, 0)
@@ -48,6 +48,9 @@ theorem loop_bound {K : Set E} (conv : Convex ℝ K) (bodyConv : Convex ℝ (Rou
         rw [pow_succ]
         linarith only [mul_le_mul_of_nonneg_left (rate w hw) (factor_nonneg hμ hLμ hc1)])
 
+/-- **Projected gradient with Frank–Wolfe projections**, started at `x₀`: the gradient at `x₀`
+and, unless it vanishes, one LMO call give the initial points; then `n` iterations follow. It
+returns the final iterate, the number of LMO calls and the number of gradient evaluations. -/
 noncomputable def projectedGradientRun {C : Set E} (O : LMO C) (g : E → E) (L r : ℝ) (ball : Bool)
     (x₀ : E) (n : ℕ) : E × ℕ × ℕ :=
   let q := g x₀

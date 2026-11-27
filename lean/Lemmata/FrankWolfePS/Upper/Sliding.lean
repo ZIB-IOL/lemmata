@@ -97,14 +97,15 @@ theorem slideRun_bounds {K : Set E} (hK : Convex ℝ K) (O : LMO K)
       (fun j => ‖(S j).x - w‖ ^ 2) (fun _ => _root_.sq_nonneg _)
       (fun j => product_width width _ (mem j).1 _ hw) (fun j => (st j).2.2.2.2 w hw) hn
 
-/-- Numerical paired-oracle algorithm. Only O, grad and public inputs occur
-in the definition. The bound accounts for one initialization LMO call. -/
+/-- **Conditional gradient sliding on `K × B_r`.** It uses only the LMO `O`, the gradient `g` and
+the parameters. It returns the final point, the number of LMO calls (including one initial
+call) and the number of gradient evaluations. -/
 noncomputable def slidingRun {C : Set E} (O : LMO C) (g : E → E) (L r D : ℝ)
     (e : E) (n : ℕ) : E × ℕ × ℕ :=
   let p := unwrap O r e
   let δ := D - 2 * r
-  let core := fun q => if q = 0 then p else unwrap O r q
-  let s := slideRun core g (2 * L) (δ ^ 2 + 4 * r ^ 2) δ r p n
+  let inner := fun q => if q = 0 then p else unwrap O r q
+  let s := slideRun inner g (2 * L) (δ ^ 2 + 4 * r ^ 2) δ r p n
   (total s.y, 1 + s.slots, s.gradients)
 
 theorem sliding_parallel_upper {K : Set E} (hK : Convex ℝ K)

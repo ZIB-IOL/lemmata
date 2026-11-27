@@ -61,8 +61,8 @@ theorem core_move_model {K : Set E} (conv : Convex ℝ K) {r h c : ℝ}
   nlinarith only [step, dec, mul_le_mul_of_nonneg_left dual hc]
 
 theorem lift_distance {r : ℝ} (hr : 0 ≤ r) (u a : E) :
-    ‖liftCore r u a - u‖ = max 0 (‖a - u‖ - r) := by
-  unfold liftCore clip
+    ‖liftInner r u a - u‖ = max 0 (‖a - u‖ - r) := by
+  unfold liftInner clip
   rw [norm_sub_rev u a]
   split
   · next h =>
@@ -87,7 +87,7 @@ theorem radius_tangent {r t A B : ℝ} (hr : 0 ≤ r) (ht : r < t) (ha : 0 ≤ A
 theorem lift_contraction {r c : ℝ} (hr : 0 ≤ r) (hc : 0 ≤ c) (hc1 : c ≤ 1)
     {a v a' u x z : E} (hx : ‖x - a‖ ≤ r) (hz : ‖z - v‖ ≤ r)
     (step : ‖a' - u‖ ^ 2 ≤ (1 - c) * ‖a - u‖ ^ 2 + c * ‖v - u‖ ^ 2) :
-    ‖liftCore r u a' - u‖ ^ 2 ≤ (1 - c) * ‖x - u‖ ^ 2 + c * ‖z - u‖ ^ 2 := by
+    ‖liftInner r u a' - u‖ ^ 2 ≤ (1 - c) * ‖x - u‖ ^ 2 + c * ‖z - u‖ ^ 2 := by
   rw [lift_distance hr]
   let t := ‖a' - u‖
   by_cases h : t ≤ r

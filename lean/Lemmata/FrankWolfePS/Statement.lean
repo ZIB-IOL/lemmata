@@ -117,9 +117,9 @@ number of indices of `I` among them), summed over the index sets `I ∋ i₀` of
 def PosteriorIdentity : Prop :=
   ∀ {ι : Type} [Fintype ι] [LinearOrder ι] (T : ℕ) (i₀ : ι),
     Fintype.card ι = 256 * (T + 1) → ∀ (s : Method (Ambient ι) T) (R : ℝ),
-    ∑ S ∈ shells T i₀, (s.orders R i₀).compile.ratio (insert i₀ S)
+    ∑ S ∈ instanceSets T i₀, (s.orders R i₀).compile.ratio (insert i₀ S)
         (Finset.univ.erase i₀) (8 * (T + 1) - 1) =
-      (shells T i₀).card * (((8 * (T + 1) - 1 : ℕ) : ℝ) / ((256 * (T + 1) - 1 : ℕ) : ℝ))
+      (instanceSets T i₀).card * (((8 * (T + 1) - 1 : ℕ) : ℝ) / ((256 * (T + 1) - 1 : ℕ) : ℝ))
 
 /-- **Vertex LMO, methods with feasible outputs.** If the method returns a point of `C_I` on
 every hard body, some hard body gives primal gap at least `L (D - 2/β)² / (32 (T + 1))` with
@@ -218,8 +218,8 @@ def RollingBall : Prop :=
     Upper.LipschitzNormals C β →
       (∀ z ∈ C, ∀ n : E, ‖n‖ = 1 → Supports C z n →
         Metric.closedBall (z - (1 / β) • n) (1 / β) ⊆ C) ∧
-      C = Rounded (Upper.erosion C (1 / β)) (1 / β) ∧
-      Metric.diam C = 2 * (1 / β) + Metric.diam (Upper.erosion C (1 / β))
+      C = Rounded (Upper.innerParallelBody C (1 / β)) (1 / β) ∧
+      Metric.diam C = 2 * (1 / β) + Metric.diam (Upper.innerParallelBody C (1 / β))
 
 /-- **Upper bound for isotropic quadratics.** For `T ≥ 2`, Frank–Wolfe on the inner parallel
 body requires no more than `T` LMO calls and no gradient; on every compact convex `β`-smooth set
@@ -264,7 +264,7 @@ def TangentBallsLinearRate : Prop :=
     ∀ (ball : Bool), (ball = true → R = r) → ∀ {x₀ : E}, x₀ ∈ C → ∀ n : ℕ,
       let ans := Joint.projectedGradientRun O (gradient f) L r ball x₀ n
       ans.1 ∈ C ∧ ans.2.1 ≤ 1 + n * (if ball then 0 else 1) ∧ ans.2.2 ≤ 1 + n ∧
-        ∀ w ∈ C, f ans.1 - f w ≤ (1 - Joint.share r R * (μ / L)) ^ n *
+        ∀ w ∈ C, f ans.1 - f w ≤ (1 - Joint.rateConstant r R * (μ / L)) ^ n *
           ((L : ℝ) / 2 * (Metric.diam C) ^ 2)
 
 /-- **The bound of Grimmer and Liu at fixed parameters.** The quantity in their

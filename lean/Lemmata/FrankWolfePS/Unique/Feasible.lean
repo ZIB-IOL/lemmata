@@ -50,7 +50,7 @@ theorem unique_feasible_fixed_tape {A θ : ℝ} (hA : 0 < A) (a : ι) (T : ℕ)
   let η := jitter A T
   let b := step A ι T
   let s := smooth A ι T
-  let H := shells T a
+  let H := instanceSets T a
   let M := (Fintype.card (Draw ι T) : ℝ)
   let B := trouble (Q := alphabet ι T) A a b s (start A a) ask T {a} (fun _ => [])
   let E := fun (D : Draw ι T) (J : Finset ι) =>
@@ -113,17 +113,17 @@ theorem unique_feasible_lower_bound {A θ : ℝ} (hA : 0 < A) (a : ι) (T : ℕ)
     (hθ : θ + (A + 35) * (2 * A + 5) * (2 * jitter A T) ≤ A ^ 2 / (16 * ((T + 1 : ℕ) : ℝ)))
     (μ : Measure Ω) [IsProbabilityMeasure μ] (s : Ω → Method (Ambient ι) T)
     (hs : Method.IsMeasurable s)
-    (feas : ∀ D : Draw ι T, ∀ J ∈ shells T a, ∀ ω,
+    (feas : ∀ D : Draw ι T, ∀ J ∈ instanceSets T a, ∀ ω,
       (s ω).run (reply (instanceBody A a T D (insert a J)) (start A a)) ∈
         instanceBody A a T D (insert a J)) :
-    ∃ D : Draw ι T, ∃ J ∈ shells T a, 3 / 4 ≤ μ.real {ω |
+    ∃ D : Draw ι T, ∃ J ∈ instanceSets T a, 3 / 4 ≤ μ.real {ω |
       Bad (instanceBody A a T D (insert a J)) θ
         ((s ω).run (reply (instanceBody A a T D (insert a J)) (start A a)))} := by
   classical
   let H := ensemble ι a T
   let C := fun d : Draw ι T × Finset ι => instanceBody A a T d.1 (insert a d.2)
   let e := fun d : Draw ι T × Finset ι => {ω | Bad (C d) θ ((s ω).run (reply (C d) (start A a)))}
-  have sh : (shells T a).Nonempty := by
+  have sh : (instanceSets T a).Nonempty := by
     apply powersetCard_nonempty.mpr; simp [hN]; omega
   let : NeZero (alphabet ι T) := ⟨by unfold alphabet; omega⟩
   have ne : H.Nonempty := Finset.univ_nonempty.product sh
@@ -152,10 +152,10 @@ least `L (D - 2/β)² / (64 (T + 1))` with probability at least `3/4`, and expec
 theorem prescribed_unique_feasible (T : ℕ) (a : ι) (hN : Fintype.card ι = 256 * (T + 1))
     {L β D : ℝ} (hL : 0 < L) (hβ : 0 < β) (hD : 2 < β * D) (μ : Measure Ω)
     [IsProbabilityMeasure μ] (s : Ω → Method (Ambient ι) T) (hs : Method.IsMeasurable s)
-    (feas : ∀ Dt : Draw ι T, ∀ J ∈ shells T a, ∀ ω,
+    (feas : ∀ Dt : Draw ι T, ∀ J ∈ instanceSets T a, ∀ ω,
       (s ω).run (reply ((1 / β) • instanceBody (unitScale β D) a T Dt (insert a J))
         (hardStart β D a)) ∈ (1 / β) • instanceBody (unitScale β D) a T Dt (insert a J)) :
-    ∃ Dt : Draw ι T, ∃ J ∈ shells T a,
+    ∃ Dt : Draw ι T, ∃ J ∈ instanceSets T a,
       let C := (1 / β) • instanceBody (unitScale β D) a T Dt (insert a J)
       3 / 4 ≤ μ.real {ω | L * (D - 2 / β) ^ 2 / (64 * ((T + 1 : ℕ) : ℝ)) ≤
           hardObjective L (1 / β) ((s ω).run (reply C (hardStart β D a))) -
@@ -172,13 +172,13 @@ theorem prescribed_unique_feasible (T : ℕ) (a : ι) (hN : Fintype.card ι = 25
     convert h1 using 1
     funext ω
     exact Method.simulate_run_eq (s ω) (1 / β) O
-  have run (Dt : Draw ι T) (J : Finset ι) (hJ : J ∈ shells T a) (ω : Ω) :
+  have run (Dt : Draw ι T) (J : Finset ι) (hJ : J ∈ instanceSets T a) (ω : Ω) :
       (s' ω).run (reply (instanceBody (unitScale β D) a T Dt (insert a J))
           (start (unitScale β D) a)) =
         (1 / β)⁻¹ • (s ω).run (reply ((1 / β) • instanceBody (unitScale β D) a T Dt (insert a J))
           (hardStart β D a)) := by
     simp only [s', Method.simulate_run_eq, (scaled_instance hβ hD T a Dt hJ).2.2.2.2.2.2.2.1]
-  have feas' : ∀ Dt : Draw ι T, ∀ J ∈ shells T a, ∀ ω,
+  have feas' : ∀ Dt : Draw ι T, ∀ J ∈ instanceSets T a, ∀ ω,
       (s' ω).run (reply (instanceBody (unitScale β D) a T Dt (insert a J))
         (start (unitScale β D) a)) ∈ instanceBody (unitScale β D) a T Dt (insert a J) := by
     intro Dt J hJ ω

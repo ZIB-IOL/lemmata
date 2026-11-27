@@ -23,7 +23,7 @@ theorem fixed_smoothness_lower_bound {ι Ω : Type*} [Fintype ι] [LinearOrder �
     let r := 1 / β
     let a := (D - 2 / β) / Real.sqrt 2
     let run := fun I ω => (s ω).physicalRun a r anchor I
-    (∀ S ∈ shells T anchor, Measurable (run (insert anchor S))) →
+    (∀ S ∈ instanceSets T anchor, Measurable (run (insert anchor S))) →
     ∃ I : Finset ι, I.card = 8 * (T + 1) ∧ anchor ∈ I ∧
       IsCompact (physicalBody a r I) ∧ Convex ℝ (physicalBody a r I) ∧
       Metric.diam (physicalBody a r I) = D ∧
@@ -65,10 +65,10 @@ theorem fixed_smoothness_expected_lower_bound {ι Ω : Type*} [Fintype ι] [Line
     let r := 1 / β
     let a := (D - 2 / β) / Real.sqrt 2
     let run := fun I ω => (s ω).physicalRun a r anchor I
-    (∀ S ∈ shells T anchor, Measurable (run (insert anchor S))) →
-    (∀ S ∈ shells T anchor, ∀ ω, embed (run (insert anchor S) ω) ∈
+    (∀ S ∈ instanceSets T anchor, Measurable (run (insert anchor S))) →
+    (∀ S ∈ instanceSets T anchor, ∀ ω, embed (run (insert anchor S) ω) ∈
         physicalBody a r (insert anchor S)) →
-    ∃ S ∈ shells T anchor, let I := insert anchor S
+    ∃ S ∈ instanceSets T anchor, let I := insert anchor S
       Metric.diam (physicalBody a r I) = D ∧
       (3 / 4 ≤ μ.real {ω | L * (D - 2 / β) ^ 2 / (32 * ((T + 1 : ℕ) : ℝ)) ≤
         L * obj r (run I ω) - physicalOpt L a r I}) ∧

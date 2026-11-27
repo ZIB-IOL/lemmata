@@ -108,13 +108,14 @@ averaged over the uniform prior on the hidden sets, equals `(d - 1)/(N - 1)` wit
 `d = 8(T + 1)` and `N = 256(T + 1)`. -/
 theorem posterior_identity (T : ℕ) (a : ι) (hN : Fintype.card ι = 256 * (T + 1))
     (s : Method (Ambient ι) T) (R : ℝ) :
-    ∑ S ∈ shells T a, (s.orders R a).compile.ratio (insert a S) (univ.erase a) (8 * (T + 1) - 1) =
-      (shells T a).card * (((8 * (T + 1) - 1 : ℕ) : ℝ) / ((256 * (T + 1) - 1 : ℕ) : ℝ)) := by
+    ∑ S ∈ instanceSets T a,
+        (s.orders R a).compile.ratio (insert a S) (univ.erase a) (8 * (T + 1) - 1) =
+      (instanceSets T a).card * (((8 * (T + 1) - 1 : ℕ) : ℝ) / ((256 * (T + 1) - 1 : ℕ) : ℝ)) := by
   have hU : (univ.erase a).card = 256 * (T + 1) - 1 := by simp [hN]
   have H := ratio_sum (k := T + 1) (Nat.succ_pos T) (s.orders R a).compile {a} (univ.erase a)
     (8 * (T + 1) - 1) (by simp) (by simp; omega) (by simp; omega)
   simp only [singleton_union] at H
-  rw [shells, H, hU, card_powersetCard, hU]
+  rw [instanceSets, H, hU, card_powersetCard, hU]
   have mi := marginal_identity (n := 256 * (T + 1) - 1) (h := 8 * (T + 1) - 1) (by omega) (by omega)
   unfold W at mi
   have hpos : (0 : ℝ) < ((256 * (T + 1) - 1 : ℕ) : ℝ) := by

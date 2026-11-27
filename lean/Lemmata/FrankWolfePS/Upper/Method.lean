@@ -41,28 +41,31 @@ theorem fwFrom_eq_fwRun (g core : E → E) (cost : E → ℕ) (x : E) (m : ℕ) 
 
 /-- The core Frank–Wolfe loop as a method: each step asks the body oracle in the direction
 `g x` and converts the reply into a core point (`p` for the zero direction). -/
-noncomputable def coreMethod (g : E → E) (p : E) (r : ℝ) (finish : E → E) :
+noncomputable def innerMethod (g : E → E) (p : E) (r : ℝ) (finish : E → E) :
     ℕ → E → (m : ℕ) → Method E m
   | _, x, 0 => .ret (finish x)
-  | j, x, m + 1 => .ask (g x) fun y => coreMethod g p r finish (j + 1)
+  | j, x, m + 1 => .ask (g x) fun y => innerMethod g p r finish (j + 1)
       (blend (fwStepSize j) x (if g x = 0 then p else y + r • unit (g x))) m
 
-theorem coreMethod_run (g : E → E) (p : E) (r : ℝ) (finish : E → E) (O : E → E) (j : ℕ) (x : E)
-    (m : ℕ) : (coreMethod g p r finish j x m).run O =
+theorem innerMethod_run (g : E → E) (p : E) (r : ℝ) (finish : E → E) (O : E → E) (j : ℕ) (x : E)
+    (m : ℕ) : (innerMethod g p r finish j x m).run O =
       finish (fwFrom g (fun q => if q = 0 then p else O q + r • unit q) j x m) := by
   induction m generalizing j x with
   | zero => rfl
-  | succ m ih => simp only [coreMethod, Method.run, ih, fwFrom]
+  | succ m ih => simp only [innerMethod, Method.run, ih, fwFrom]
 
-/-- **The quadratic method.** For a disclosed isotropic quadratic `L ‖x - u‖² / 2`, it requires
-no more than `n + 2` linear minimization oracle calls and no gradient. -/
+/-- **Frank–Wolfe on the inner parallel body.** For the known isotropic quadratic
+`L ‖x - u‖² / 2`: one LMO call in the direction `e` gives a point of the inner parallel body,
+then `n + 1` Frank–Wolfe steps with step sizes `2/(j + 2)` run on it, one LMO call each; the
+output is `a + b` for the last iterate `a` and the point `b` of the ball closest to `u - a`. No
+more than `n + 2` LMO calls, no gradient. -/
 noncomputable def innerFrankWolfe (L r : ℝ) (u e : E) (n : ℕ) : Method E (n + 2) :=
-  .ask e fun z => coreMethod (envGrad L r u) (z + r • unit e) r (liftCore r u) 0
+  .ask e fun z => innerMethod (envGrad L r u) (z + r • unit e) r (liftInner r u) 0
     (z + r • unit e) (n + 1)
 
 theorem innerFrankWolfe_run {C : Set E} (O : LMO C) {L : ℝ} (hL : 0 < L) (r : ℝ) (u e : E)
     (n : ℕ) : (innerFrankWolfe L r u e n).run O.query = (disclosedRun O u L r e (n + 1)).1 := by
-  simp only [innerFrankWolfe, Method.run, coreMethod_run, disclosedRun, quadraticRun,
+  simp only [innerFrankWolfe, Method.run, innerMethod_run, disclosedRun, quadraticRun,
     recover_center hL, fwFrom_eq_fwRun _ _ realQueryCost]
   rfl
 

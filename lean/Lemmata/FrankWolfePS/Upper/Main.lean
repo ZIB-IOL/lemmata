@@ -8,6 +8,8 @@ namespace Lemmata.FrankWolfePS.Upper
 open scoped RealInnerProductSpace
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [ProperSpace E]
 
+/-- `C` is `β`-smooth: unit outer normals `n` at `z ∈ C` and `m` at `y ∈ C` satisfy
+`‖n - m‖ ≤ β ‖z - y‖`. -/
 def LipschitzNormals (C : Set E) (β : ℝ) : Prop :=
   ∀ z ∈ C, ∀ y ∈ C, ∀ n m : E, ‖n‖ = 1 → ‖m‖ = 1 → Supports C z n → Supports C y m →
     ‖n - m‖ ≤ β * ‖z - y‖

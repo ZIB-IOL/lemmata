@@ -115,7 +115,9 @@ theorem leaf_average {k : ℕ} (hk : 0 < k) (z : Pt ι) (P U : Finset ι) {h : �
     nlinarith [mul_le_mul_of_nonneg_left loc w0]
   exact exists_le_of_sum_le (powersetCard_nonempty.mpr hhU) total
 
-def shells (T : ℕ) (anchor : ι) : Finset (Finset ι) :=
+/-- The index sets `S` of size `8 (T + 1) - 1` not containing `anchor`; the instances of the lower
+bounds are the sets `insert anchor S`. -/
+def instanceSets (T : ℕ) (anchor : ι) : Finset (Finset ι) :=
   (univ.erase anchor).powersetCard (8 * (T + 1) - 1)
 
 noncomputable def flag (p : Prop) : ℝ := by classical exact if p then 1 else 0
@@ -128,7 +130,7 @@ theorem fixed_tape_mass (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 256 * (T
     (F : Finset ι → Pt ι → Prop)
     (hF : ∀ I z, I.card = 8 * (T + 1) → ∑ i ∈ I, guess (T + 1) z i ≤ 3 / 4 → F I z)
     (s : Orders ι (Pt ι) T) :
-    (↑(shells T anchor).card : ℝ) / 4 ≤ ∑ S ∈ shells T anchor,
+    (↑(instanceSets T anchor).card : ℝ) / 4 ≤ ∑ S ∈ instanceSets T anchor,
       flag (F (insert anchor S) (s.run (insert anchor S))) := by
   classical
   let k := T + 1
@@ -137,11 +139,11 @@ theorem fixed_tape_mass (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 256 * (T
   have hk : 0 < k := by dsimp [k]; omega
   have hn : U.card = 256 * k - 1 := by simp [U, hN, k]
   have hhc : 1 + h = 8 * k := by dsimp [h]; omega
-  have hsc : ((shells T anchor).card : ℝ) = W U.card h := by simp [shells, U, W, h, k]
+  have hsc : ((instanceSets T anchor).card : ℝ) = W U.card h := by simp [instanceSets, U, W, h, k]
   have H := adaptive_sum s.compile (fun z I => mass I (guess k z)) (leaf_mass hk)
     {anchor} U h (by simp [U]) (by simp [k]; omega) (by simpa using hhc)
   simp only [singleton_union, Orders.run_compile] at H
-  change (∑ S ∈ shells T anchor, mass (insert anchor S) (guess k (s.run (insert anchor S)))) ≤
+  change (∑ S ∈ instanceSets T anchor, mass (insert anchor S) (guess k (s.run (insert anchor S)))) ≤
       _ at H
   have hV : 32 * V U.card h ≤ W U.card h := by
     have a := marginal_identity (by omega : 0 < U.card) (by omega : 0 < h)
@@ -151,7 +153,7 @@ theorem fixed_tape_mass (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 256 * (T
     have hn' : 0 < (U.card : ℝ) := by exact_mod_cast (show 0 < U.card by omega)
     apply le_of_mul_le_mul_left (a := (U.card : ℝ)) _ hn'
     nlinarith [mul_le_mul_of_nonneg_left b' w0]
-  have single (S : Finset ι) (hs : S ∈ shells T anchor) :
+  have single (S : Finset ι) (hs : S ∈ instanceSets T anchor) :
       (3 / 4 : ℝ) * (1 - flag (F (insert anchor S) (s.run (insert anchor S)))) ≤
         mass (insert anchor S) (guess k (s.run (insert anchor S))) := by
     have hS := mem_powersetCard.mp hs
@@ -163,7 +165,7 @@ theorem fixed_tape_mass (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 256 * (T
       simpa [flag, bad, mass] using le_of_lt (lt_of_not_ge m)
   have Z := sum_le_sum single
   simp only [← mul_sum, sum_sub_distrib, sum_const, nsmul_eq_mul, mul_one] at Z
-  change _ ≤ ∑ S ∈ shells T anchor, flag (F (insert anchor S) (s.run (insert anchor S)))
+  change _ ≤ ∑ S ∈ instanceSets T anchor, flag (F (insert anchor S) (s.run (insert anchor S)))
   rw [hsc] at Z ⊢
   linarith
 
@@ -171,7 +173,7 @@ theorem fixed_tape_mass (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 256 * (T
 the hidden instance insert anchor S. The actual denominator is the shell cardinality. -/
 theorem fixed_tape_lower_bound (T : ℕ) (anchor : ι) (hN : Fintype.card ι = 256 * (T + 1))
     (R : ℝ) (hR : 0 < R) (s : Orders ι (Pt ι) T) :
-    (↑(shells T anchor).card : ℝ) / 4 ≤ ∑ S ∈ shells T anchor,
+    (↑(instanceSets T anchor).card : ℝ) / 4 ≤ ∑ S ∈ instanceSets T anchor,
       flag (failure R (T + 1) (insert anchor S) (s.run (insert anchor S))) :=
   fixed_tape_mass T anchor hN _ (fun _ _ hI hm => small_mass_failure hR (Nat.succ_pos T) hI hm) s
 
