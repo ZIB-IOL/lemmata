@@ -974,6 +974,83 @@ here. The note also contains a second proof of [](#thm-frank-wolfe-prescribed-sm
 by averaging support functions, and an earlier, weaker estimate with probability $5/42$; the
 formal proofs supersede both.
 
+## Finite optimal order and convergence on a fixed compact set
+
+```{prf:corollary} Optimal order for the disclosed quadratic
+:label: cor-frank-wolfe-prescribed-smoothness-optimal-order
+
+Let $T\ge2$, $L,\beta>0$ and $D>2/\beta$. One inner-parallel-body method with at most $T$ exact linear minimization calls guarantees primal gap at most $2L(D-2/\beta)^2/(T+1)$ for the disclosed quadratic on every body in the prescribed class. For each measurable randomized method with the same budget there is a body in that class on which its output is infeasible or has gap at least $L(D-2/\beta)^2/(64(T+1))$ with probability at least $1/5$.
+```
+
+The two bounds use the same objective. Completing its square removes an additive constant from the upper bound. The inner parallel body has nonnegative diameter, so the diameter identity and $\operatorname{diam} C\le D$ yield the stated uniform upper bound.
+
+```{prf:proposition} Little-o on a fixed norm-compact set
+:label: prop-frank-wolfe-prescribed-smoothness-compact-trial
+
+Let $C$ be norm compact and convex in a real Hilbert space. Let $f$ be differentiable and convex with $L$-Lipschitz gradient. Suppose $x^\star$ minimizes $f$ over $C$ and uniquely minimizes the linear functional of the nonzero vector $\nabla f(x^\star)$. For any exact LMO let $s_t=O(\nabla f(x_t))$. If $x_t\in C$ and, with $\gamma_t=2/(t+2)$,
+$$
+f(x_{t+1})\le f(x_t)+\gamma_t\langle\nabla f(x_t),s_t-x_t\rangle
+        +\tfrac{L}{2}\gamma_t^2\lVert s_t-x_t\rVert^2 ,
+$$
+then $t(f(x_t)-f(x^\star))\to0$.
+```
+
+The ordinary descent recurrence first gives convergence of the objective. On the compact complement of any neighborhood of $x^\star$, the limiting linear functional has a strictly larger minimum. This forces $x_t\to x^\star$ and, by continuity of the gradient and exact linear minimization, $s_t\to x^\star$. Multiplying the recurrence by $(t+1)(t+2)$ bounds $t(f(x_t)-f(x^\star))$ by a constant times the Cesàro mean of the squared step lengths, which tends to zero.
+
+## A fixed distribution for randomized Hilbert-space methods
+
+Work in the countable Hilbert sum of Euclidean blocks of dimensions $256\cdot2^j$, together with one real height coordinate. Grouping the scalar coordinates gives a linear isometry to $\ell_2(\mathbb N)\times\mathbb R$ and sends the target to $p=(0,-32)$. Write $f(w)=\lVert w-p\rVert^2/2$. At budget $T$, failure means that the reported vector lies outside $C$ or has objective gap at least
+$$
+ b(T)=\frac{7\cdot10^{-5}}{(T+2)\log(T+3)\,[\log\log(T+e^e)]^2}.
+$$
+
+:::{prf:theorem} One distribution and unique exact linear minimizers
+:label: thm-frank-wolfe-prescribed-smoothness-random-fixed
+
+One probability law gives weakly compact convex sets of diameter at most $15/4$ with $1$-Lipschitz supporting unit normals and a common feasible point $x_0$. Each nonzero direction has exactly one linear minimizer. The zero direction returns $x_0$. For every budget and every randomized method with jointly measurable query and output rules, failure has probability at least $1/5$ over the set and the seed. For every such anytime method there is a single set in the Hausdorff support of this law on which failure occurs at infinitely many budgets with probability at least $1/5$ over the seed.
+:::
+
+The method may query any Hilbert vector and return any Hilbert vector. For a history of length $n$, joint measurability means Borel measurability on the product of the seed space and the $n$ replies, for an arbitrary probability law on the seed space. This condition matters when the body itself is random. For example, let $C_\theta=[\theta,\theta+2]$, $0\le\theta\le1$. A single positive query returns $\theta$. A deterministic rule can return $5$ on a non-Lebesgue-measurable set of parameters and $1$ elsewhere. Every fixed-oracle output is measurable in a singleton seed. For uniform $\theta$, even the infeasibility event can fail to be measurable. The formal randomized Hilbert theorem uses joint rules; the finite results earlier on this page retain their stated measurability hypothesis.
+
+:::{prf:lemma} Estimation on one hidden block
+:label: lem-frank-wolfe-prescribed-smoothness-random-block
+
+Fix the seed and all other blocks. In block $j$ put $k=2^j$, take a uniform $8k$-subset containing the public index, and draw independent uniform grid jitters for the other indices. For $T\le k-1$, the squared distance from the rescaled output block to the hidden barycenter is at least $1/(128k)$ with conditional probability at least $6/25$.
+:::
+
+Write $e_j=1/\log(j+4)-1/\log(j+5)$ and $a_j=\sqrt{e_j}$. The energies telescope and sum to $1/\log 4$. A parameter selects a probability vector $\lambda_j$ on each hidden set. Its ball has center $((a_j\lambda_j)_j,1)$ and radius
+$$
+ 1+\sum_j\{\langle\zeta_j,\lambda_j\rangle+
+          \kappa_j(1-\lVert\lambda_j\rVert^2)\}.
+$$
+All jitters lie between $0$ and $\eta_j=e_j/(10^7k)$, with jitter zero at the public index. The positive $\kappa_j$ is one tenth of the grid spacing. The feasible body is the union of these balls. The summable tails control their centers and radii uniformly. Concavity gives convexity, removing one unit of radius gives the inner parallel body, and the parameter space times a weakly compact ball gives weak compactness. The strictly concave block support objectives give unique nonzero replies. Agreement on increasingly many initial blocks forces the Hausdorff distance to zero. Every finite data cylinder has positive prior mass.
+
+The finite posterior estimate bounds the probability of missing the hidden barycenter by at least $1/4$. In the simulator, a hypothetical prefix depends only on the jitters already revealed there. Conditional on the other coordinates, each ambiguous pair meets at most one grid value for an unrevealed coordinate. Summing over the finite decision tree costs at most $1/100$. Whenever that ambiguity is absent, the maximizer over the revealed indices is the maximizer over the true set, giving equality of the entire simulated and physical transcripts. The zero query is handled in the same coupling. For the actual metric projection, replacing one block by its barycenter bounds its rescaled displacement by $1/(64\sqrt{k})$. The Hilbert projection inequality then gives infeasibility or objective gap at least $e_j/(400k)$ on the miss event. Taking the least $j$ with $2^j\ge T+1$ and bounding the small scales separately proves $e_j/(400k)\ge b(T)$.
+
+:::{prf:lemma} Joint measurability of the squared distance
+:label: lem-frank-wolfe-prescribed-smoothness-random-measure
+
+The map $(d,z)\mapsto\frac12\operatorname{dist}(z,C_d)^2$ is measurable for the product data and the norm Borel structure on the Hilbert space.
+:::
+
+The optimizer of the strictly concave problem on a fixed finite simplex depends continuously on its scores. Truncating the selected blocks gives measurable finite sums converging in norm, so the full LMO is jointly measurable. Starting at the common point, open-loop Frank–Wolfe applied to $\lVert w-z\rVert^2/2$ therefore gives jointly measurable functions of $(d,z)$ whose objective values converge to half the squared distance. At $z=p$ this is the minimum in the failure event. At a general $z$ its zero set is exactly $z\in C_d$.
+
+:::{prf:theorem} Bounded-depth randomized methods
+:label: thm-frank-wolfe-prescribed-smoothness-random-budget
+
+A method may stop at any depth up to $T$. Under joint measurability of its padded query and output rules, its probability of failure under the same product prior and an independent seed is at least $6/25$, including $T=0$.
+:::
+
+Padding with zero directions leaves a terminated method's output unchanged. Resampling one coordinate preserves the prior, as can be checked on finite cylinders. Integrating the conditional block estimate gives the distributional probability.
+
+:::{prf:theorem} One body before the seed
+:label: thm-frank-wolfe-prescribed-smoothness-random-anytime
+
+For each jointly measurable randomized anytime method there is a single body on which the marginal failure probability is at least $1/5$ at arbitrarily late horizons. On the same body the probability that one seed yields infinitely many failures is at least $1/5$.
+:::
+
+On the dyadic budgets $2^j-1$, the mean over bodies of the conditional failure probability is at least $6/25$. Thus the set of bodies with conditional probability at least $1/5$ has measure at least $1/25$ at each such budget. Continuity of probability on decreasing tail unions gives a body in infinitely many of these sets. Applying the same argument to the seed sections proves the single-seed assertion. The prior, quadratic and starting point were fixed before either the method or the budget was chosen.
+
 ## The formal statements at a glance
 
 ```{literalinclude} ../../lean/Lemmata/FrankWolfePS/Main.lean

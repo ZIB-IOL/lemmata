@@ -1,5 +1,8 @@
 module
 
+public import Lemmata.FrankWolfePS.CompactTrial
+public import Lemmata.FrankWolfePS.OptimalOrder
+public import Lemmata.FrankWolfePS.RandomHilbert.Result
 public import Lemmata.FrankWolfePS.Proofs
 public import Lemmata.FrankWolfePS.HilbertAnytimeGeometry
 
