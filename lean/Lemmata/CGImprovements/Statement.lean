@@ -1,6 +1,7 @@
 module
 
 public import Lemmata.CGBasics.Statement
+public import Lemmata.AwayStepFW.Statement
 
 @[expose] public section
 
@@ -85,6 +86,49 @@ def LazyRate : Prop :=
     IsLCGRun C f L K x φ → ∀ xStar ∈ minimizers C f,
     (f (x 0) - f xStar) / 2 ≤ φ 0 → φ 0 ≤ L * Metric.diam C ^ 2 / 2 → ∀ ε : ℝ, 0 < ε →
     ∀ t : ℕ, ⌈Real.logb 2 (φ 0 / ε)⌉₊ + ⌈8 * K ^ 2 * L * Metric.diam C ^ 2 / ε⌉₊ ≤ t →
+      f (x t) - f xStar ≤ ε
+
+open Classical in
+/-- A run of the lazy away-step Frank–Wolfe algorithm (Algorithm 3.8) on `conv V` with accuracy `K`
+and short steps for `L`. In every iteration the weak separation oracle returns an away vertex
+`a ∈ S_t` with `f'(x_t)(a - x_t) > φ_t/K`, followed by an away step, or a vertex `v ∈ V` with
+`f'(x_t)(x_t - v) > φ_t/K`, followed by a Frank–Wolfe step, and `φ` stays; or it certifies
+`f'(x_t)(u - x_t) ≤ φ_t` for all `u ∈ S_t` and `f'(x_t)(x_t - u) ≤ φ_t` for all `u ∈ V`, and then
+the iterate stays and `φ` is halved. -/
+def IsLazyAFWRun {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ)
+    (L K : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) (φ : ℕ → ℝ) : Prop :=
+  x 0 ∈ V ∧ S 0 = {x 0} ∧ lam 0 = (fun u => if u = x 0 then 1 else 0) ∧ ∀ t : ℕ,
+    (∃ a ∈ S t, φ t / K < fderiv ℝ f (x t) (a - x t) ∧ ∃ γ : ℝ,
+      γ = min (fderiv ℝ f (x t) (a - x t) / (L * ‖a - x t‖ ^ 2)) (lam t a / (1 - lam t a)) ∧
+      x (t + 1) = x t - γ • (a - x t) ∧
+      lam (t + 1) = (fun u => (1 + γ) * lam t u - if u = a then γ else 0) ∧
+      S (t + 1) = (if γ = lam t a / (1 - lam t a) then (S t).erase a else S t) ∧ φ (t + 1) = φ t) ∨
+    (∃ v ∈ V, φ t / K < fderiv ℝ f (x t) (x t - v) ∧ ∃ γ : ℝ,
+      γ = min (fderiv ℝ f (x t) (x t - v) / (L * ‖x t - v‖ ^ 2)) 1 ∧
+      x (t + 1) = x t - γ • (x t - v) ∧
+      lam (t + 1) = (fun u => (1 - γ) * lam t u + if u = v then γ else 0) ∧
+      S (t + 1) = (if γ = 1 then {v} else insert v (S t)) ∧ φ (t + 1) = φ t) ∨
+    ((∀ u ∈ S t, fderiv ℝ f (x t) (u - x t) ≤ φ t) ∧ (∀ u ∈ V, fderiv ℝ f (x t) (x t - u) ≤ φ t) ∧
+      x (t + 1) = x t ∧ S (t + 1) = S t ∧ lam (t + 1) = lam t ∧ φ (t + 1) = φ t / 2)
+
+/-- **Theorem 3.16** (lazy away-step Frank–Wolfe), with a corrected count. Let `f` be convex,
+`L`-smooth and `μ`-strongly convex on `conv V`, let `δ > 0` have the scaling property of the
+pyramidal width, `K ≥ 1` and `h₀/2 ≤ φ₀ ≤ L D²/2`. Every run of Algorithm 3.8 has primal gap at most
+`ε > 0` after `⌈log₂ (φ₀/ε)⌉₊ + 1 + 2 ⌈4 K² L D²/φ₀⌉₊ + 2 ⌈(16 K² L D²/(μ δ²)) ln (h₀/ε)⌉₊`
+iterations. -/
+def LazyAwayRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ) (L : NNReal)
+    (μ δ K : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) (φ : ℕ → ℝ),
+    0 < (L : ℝ) → 0 < μ → 0 < δ → Lemmata.AwayStepFW.IsScaling V δ → ConvexOn ℝ Set.univ f →
+    IsSmooth f L → (∀ x ∈ convexHull ℝ (↑V : Set E), ∀ y ∈ convexHull ℝ (↑V : Set E),
+      f x + fderiv ℝ f x (y - x) + μ / 2 * ‖y - x‖ ^ 2 ≤ f y) →
+    1 ≤ K → IsLazyAFWRun V f L K x S lam φ →
+    ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f,
+    (f (x 0) - f xStar) / 2 ≤ φ 0 → φ 0 ≤ L * Metric.diam (↑V : Set E) ^ 2 / 2 →
+    ∀ ε : ℝ, 0 < ε → ∀ t : ℕ,
+      ⌈Real.logb 2 (φ 0 / ε)⌉₊ + 1 + 2 * ⌈4 * K ^ 2 * L * Metric.diam (↑V : Set E) ^ 2 / φ 0⌉₊ +
+        2 * ⌈16 * K ^ 2 * L * Metric.diam (↑V : Set E) ^ 2 / (μ * δ ^ 2) *
+          Real.log ((f (x 0) - f xStar) / ε)⌉₊ ≤ t →
       f (x t) - f xStar ≤ ε
 
 end Lemmata.CGImprovements

@@ -14,6 +14,25 @@ Karbasi, Aryan Mokhtari and Sebastian Pokutta [@braun2025conditional]. It formal
 Sections 3.1.2 and 3.1.3; numbers refer to the arXiv version [@braun2022conditional].
 :::
 
+:::{admonition} Errata
+:class: warning
+
+The formal statements correct three slips in the book:
+
+- **Algorithm 3.8.** The directions $d_t$ have the wrong sign: with $d_t = x_t - v_t$ for away
+  steps and $d_t = v_t - x_t$ for Frank–Wolfe steps, $\langle \nabla f(x_t), d_t\rangle < 0$, so the
+  step $\gamma_t$ is negative and the clipping at $\gamma_{\max}$ never applies. The formal run moves
+  away from the away vertex and toward the Frank–Wolfe vertex with nonnegative short steps.
+- **Theorem 3.16, positive answers before the first negative one.** The proof sketch obtains the
+  linear contraction from $2\phi_t \ge \sqrt{2\mu\delta^2 h_t}$, which a negative answer
+  certifies; before the first negative answer only a constant progress $\phi_0^2/(2K^2LD^2)$ per step
+  is available, and these steps are not counted. The formal count adds $2\lceil 4K^2LD^2/\phi_0\rceil$.
+- **Theorem 3.16, the constant.** At a negative answer $2\phi_t \ge \sqrt{2\mu\delta^2 h_t}$, but
+  $\phi$ is halved right after, so the following steps only have $4\phi_t \ge \sqrt{2\mu\delta^2 h_t}$.
+  The contraction factor is then $1 - \mu\delta^2/(16K^2LD^2)$, and the count has
+  $16K^2LD^2/(\mu\delta^2)$ in place of $4K^2LD^2/(\mu\delta^2)$.
+:::
+
 Chapter 3 of the book improves the Frank–Wolfe algorithm in several directions: step sizes that
 adapt to unknown smoothness, cheaper oracles, and faster rates under additional structure. This
 entry collects these variants; the objects are those of
@@ -80,7 +99,7 @@ the sign of $f'$ at the new point instead of function values, is analyzed in
 [The Frank–Wolfe algorithm: a short introduction](../frank-wolfe-introduction/index.md)
 (Lemmas 4.10 and 4.11).
 
-## Lazification (LazyFW)
+## Lazification (LazyFW and LazyAFW)
 
 A linear minimization oracle solves a linear program exactly in every iteration, although an
 improving vertex is all the algorithm needs. The weak separation oracle of @braun2016lazifying
@@ -113,10 +132,43 @@ gains at least $\phi_t^2/(2K^2LD^2) \ge h_t^2/(8K^2LD^2)$, so after $k$ positive
 $h_t \le 8K^2LD^2/(k+8)$; after $\lceil \log_2(\phi_0/\varepsilon) \rceil_+ + 1$ negative
 answers, the last one certifies $h_t \le \phi_t \le \varepsilon$.
 
+### Lazy away-step Frank–Wolfe (LazyAFW)
+
+Algorithm 3.8 makes both searches of away-step Frank–Wolfe lazy: the weak separation oracle looks
+for an away vertex in the active set or a Frank–Wolfe vertex in $V$, each improving by more than
+$\phi_t/K$, and halves $\phi$ when neither exists.
+
+```{prf:definition} Lazy away-step Frank–Wolfe run
+:label: def-conditional-gradient-improvements-lazy-afw-run
+:nonumber:
+
+A run starts at a vertex with active set $\{x_0\}$ and weight $1$. In every iteration the oracle
+returns $a \in S_t$ with $f'(x_t)(a - x_t) > \phi_t/K$, followed by an away step with the short step
+clipped at $\lambda_a/(1 - \lambda_a)$, or $v \in V$ with $f'(x_t)(x_t - v) > \phi_t/K$, followed by a
+Frank–Wolfe step with the short step clipped at $1$; or it certifies that no vertex of $S_t$ or $V$
+improves by more than $\phi_t$, and then $\phi$ is halved.
+```
+
+```{prf:theorem} Lazy away-step Frank–Wolfe
+:label: thm-conditional-gradient-improvements-lazy-afw
+:enumerator: 3.16
+
+Let $f$ be convex, $L$-smooth and $\mu$-strongly convex on $P = \operatorname{conv} V$, let
+$\delta > 0$ have the scaling property of the pyramidal width, $K \ge 1$ and
+$h_0/2 \le \phi_0 \le LD^2/2$. Every run has primal gap at most $\varepsilon > 0$ after
+$\lceil \log_2(\phi_0/\varepsilon) \rceil_+ + 1 + 2\lceil 4K^2LD^2/\phi_0 \rceil +
+2\lceil (16K^2LD^2/(\mu\delta^2)) \ln(h_0/\varepsilon) \rceil_+$ iterations.
+```
+
+A negative answer certifies $h_t \le \phi_t$ and, by geometric strong convexity,
+$\mu\delta^2 h_t \le 2\phi_t^2$; after the halving, $\mu\delta^2 h_t \le 8\phi_t^2$ for the following
+steps. Steps that do not drop a vertex gain at least $\phi_t^2/(2K^2LD^2)$, which before the first
+negative answer is the constant $\phi_0^2/(2K^2LD^2)$ and after it at least
+$\mu\delta^2 h_t/(16K^2LD^2)$. Drop steps are at most as many as the other positive steps.
+
 ## Not yet covered
 
-The lazy away-step Frank–Wolfe algorithm (LazyAFW, Theorem 3.16), sharpness (Section 3.1.5), the
-nearest extreme point oracle (NEP-FW, Section 3.1.6) and blended conditional gradients (BCG,
+Sharpness (Section 3.1.5), the nearest extreme point oracle (NEP-FW, Section 3.1.6) and blended conditional gradients (BCG,
 Section 3.2.2) are not formalized here yet.
 
 ## The formal statements at a glance
