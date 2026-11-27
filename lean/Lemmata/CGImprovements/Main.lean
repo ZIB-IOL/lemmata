@@ -5,6 +5,7 @@ public import Lemmata.CGImprovements.Lazy
 public import Lemmata.CGImprovements.LazyAway
 public import Lemmata.CGImprovements.Sharp
 public import Lemmata.CGImprovements.SharpAFW
+public import Lemmata.CGImprovements.NEP
 
 @[expose] public section
 
@@ -34,6 +35,9 @@ theorem geometric_sharpness : GeometricSharpness := Proof.geometric_sharpness
 
 /-- Corollary 3.33 for `θ = 1/2`: linear convergence of away-step Frank–Wolfe under sharpness. -/
 theorem sharp_away_linear : SharpAwayLinear := Proof.sharp_away_linear
+
+/-- Theorem 3.36: Frank–Wolfe with the nearest extreme point oracle. -/
+theorem nep_rate : NEPRate := Proof.nep_rate
 -- DOCS_END_MAIN
 
 end Lemmata.CGImprovements

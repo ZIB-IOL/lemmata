@@ -176,4 +176,33 @@ def SharpAwayLinear : Prop :=
         (1 - min (1 / 2) (δ ^ 2 / (8 * c ^ 2 * L * Metric.diam (↑V : Set E) ^ 2))) ^ ((t - 1) / 2) *
           (L * Metric.diam (↑V : Set E) ^ 2 / 2)
 
+/-- A run of Frank–Wolfe with the nearest extreme point oracle (Algorithm 3.12) on `conv V` in a
+real inner product space: with `γ_t = 2/(t + 2)`, the vertex `v_t ∈ V` minimizes
+`f'(x_t)(v) + L γ_t ‖x_t - v‖²/2` over `V`, and `x_{t+1} = x_t + γ_t (v_t - x_t)`. -/
+def IsNEPRun {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] (V : Finset E)
+    (f : E → ℝ) (L : ℝ) (x v : ℕ → E) : Prop :=
+  x 0 ∈ V ∧ ∀ t : ℕ, v t ∈ V ∧
+    (∀ u ∈ V, fderiv ℝ f (x t) (v t) + L * (2 / ((t : ℝ) + 2)) * ‖x t - v t‖ ^ 2 / 2 ≤
+      fderiv ℝ f (x t) u + L * (2 / ((t : ℝ) + 2)) * ‖x t - u‖ ^ 2 / 2) ∧
+    x (t + 1) = x t + (2 / ((t : ℝ) + 2)) • (v t - x t)
+
+/-- **Theorem 3.36** (Frank–Wolfe with the nearest extreme point oracle). In a real inner product
+space, let `f` be convex, `L`-smooth and `(c, θ)`-sharp over `conv V` with `0 < θ ≤ 1/2`, and let
+`S⋆ ⊆ V` be a set of vertices whose convex hull contains all minimizers; let `D` and `D₀` be the
+diameters of `V` and `S⋆`. Every run of Algorithm 3.12 satisfies, for `t ≥ 1`,
+`f(x_t) - f(x⋆) ≤ L D²/(t(t+1)) + 2 L D₀²/(t+2) + 2^{2θ+1} L^{2θ+1} c² D^{4θ}/(t(t+1)) · R_t` with
+`R_t = (t+2)^{1-2θ}/(1-2θ)` for `θ < 1/2` and `R_t = ln (t+2)` for `θ = 1/2`. -/
+def NEPRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] (V Sstar : Finset E) (f : E → ℝ)
+    (L : NNReal) (c θ : ℝ) (x v : ℕ → E),
+    ConvexOn ℝ Set.univ f → IsSmooth f L → 0 < c → 0 < θ → θ ≤ 1 / 2 →
+    IsSharp (convexHull ℝ (↑V : Set E)) f c θ → Sstar ⊆ V →
+    minimizers (convexHull ℝ (↑V : Set E)) f ⊆ convexHull ℝ (↑Sstar : Set E) →
+    IsNEPRun V f L x v → ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f, ∀ t : ℕ, 1 ≤ t →
+      f (x t) - f xStar ≤ L * Metric.diam (↑V : Set E) ^ 2 / (t * (t + 1)) +
+        2 * L * Metric.diam (↑Sstar : Set E) ^ 2 / (t + 2) +
+        2 ^ (2 * θ + 1) * (L : ℝ) ^ (2 * θ + 1) * c ^ 2 * Metric.diam (↑V : Set E) ^ (4 * θ) /
+          (t * (t + 1)) *
+          (if θ < 1 / 2 then ((t : ℝ) + 2) ^ (1 - 2 * θ) / (1 - 2 * θ) else Real.log ((t : ℝ) + 2))
+
 end Lemmata.CGImprovements

@@ -35,6 +35,7 @@ public import Lemmata.CGBasics.Wolfe
 public import Lemmata.CGImprovements.Lazy
 public import Lemmata.CGImprovements.LazyAway
 public import Lemmata.CGImprovements.Main
+public import Lemmata.CGImprovements.NEP
 public import Lemmata.CGImprovements.Proof
 public import Lemmata.CGImprovements.Sharp
 public import Lemmata.CGImprovements.SharpAFW

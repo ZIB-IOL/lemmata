@@ -11,7 +11,8 @@ numbering:
 This entry comes from the book *Conditional Gradient Methods: From Core Principles to AI
 Applications* by Gábor Braun, Alejandro Carderera, Cyrille W. Combettes, Hamed Hassani, Amin
 Karbasi, Aryan Mokhtari and Sebastian Pokutta [@braun2025conditional]. It formalizes results from
-Sections 3.1.2, 3.1.3 and 3.1.5; numbers refer to the arXiv version [@braun2022conditional].
+Sections 3.1.2, 3.1.3, 3.1.5 and 3.1.6; numbers refer to the arXiv version
+[@braun2022conditional].
 :::
 
 :::{admonition} Errata
@@ -230,12 +231,51 @@ gap. At a minimizer the left-hand side is $0^{1-\theta}/c$, which is $1/c$ for $
 right-hand side is not defined.
 :::
 
+## The nearest extreme point oracle (NEP-FW)
+
+When the minimizers lie on a low-dimensional face, the Frank–Wolfe vertices keep jumping across
+the polytope. The nearest extreme point oracle of @garber2021frank adds a proximity term: it
+minimizes $f'(x_t)(v) + L\gamma_t\|x_t - v\|^2/2$ over the vertices, which in the Euclidean norm
+keeps the steps short when the iterates are close to the optimal face.
+
+```{prf:definition} NEP-FW run
+:label: def-conditional-gradient-improvements-nep-run
+:nonumber:
+
+In a real inner product space, a run starts at a vertex; with $\gamma_t = 2/(t+2)$, the vertex
+$v_t \in V$ minimizes $f'(x_t)(v) + L\gamma_t\|x_t - v\|^2/2$ over $V$, and
+$x_{t+1} = x_t + \gamma_t(v_t - x_t)$ (Algorithm 3.12).
+```
+
+```{prf:theorem} Frank–Wolfe with the nearest extreme point oracle
+:label: thm-conditional-gradient-improvements-nep
+:enumerator: 3.36
+
+Let $f$ be convex, $L$-smooth and $(c, \theta)$-sharp over $P = \operatorname{conv} V$ with
+$0 < \theta \le 1/2$, and let $S^* \subseteq V$ be a set of vertices whose convex hull contains all
+minimizers; let $D$ and $D_0$ be the diameters of $V$ and $S^*$. For $t \ge 1$,
+
+$$
+f(x_t) - f(x^*) \le \frac{LD^2}{t(t+1)} + \frac{2LD_0^2}{t+2} +
+\frac{2^{2\theta+1} L^{2\theta+1} c^2 D^{4\theta}}{t(t+1)} \cdot
+\begin{cases} \frac{(t+2)^{1-2\theta}}{1-2\theta} & \theta < 1/2, \\ \ln(t+2) & \theta = 1/2. \end{cases}
+$$
+```
+
+The oracle's vertex is at least as good as any convex combination of vertices in the smoothness
+bound. Against a representation of the minimizer, this gives
+$h_{t+1} \le (1 - \gamma_t)h_t + \gamma_t^2 LD^2/2$, hence $h_t \le 2LD^2/(t+2)$; against a
+representation of the nearest minimizer $y$ over $S^*$, the identity
+$\sum_u \lambda_u\|u - x\|^2 = \|y - x\|^2 + \sum_u \lambda_u\|u - y\|^2$ gives
+$h_{t+1} \le (1 - \gamma_t)h_t + \gamma_t^2 L(\operatorname{dist}(x_t, \Omega^*)^2 + D_0^2)/2$
+(Lemma 3.37). Sharpness bounds the distance by $c\,h_t^\theta$, and summing the recursion with weights
+$t(t+1)$ gives the theorem.
+
 ## Not yet covered
 
-From Section 3.1.5, Corollary 3.33 for $\theta < 1/2$, the
-comparison with gradient domination (Lemma 3.35), the Hoffman bound (Lemma 3.27) and the
-Łojasiewicz-type Lemma 3.30 are not formalized here yet; nor are the nearest extreme point oracle
-(NEP-FW, Section 3.1.6) and blended conditional gradients (BCG, Section 3.2.2).
+From Section 3.1.5, Corollary 3.33 for $\theta < 1/2$, the comparison with gradient domination
+(Lemma 3.35), the Hoffman bound (Lemma 3.27) and the Łojasiewicz-type Lemma 3.30 are not
+formalized here yet; nor are blended conditional gradients (BCG, Section 3.2.2).
 
 ## The formal statements at a glance
 

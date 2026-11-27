@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding Frank–Wolfe with the nearest extreme point oracle (Theorem 3.36).
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding linear convergence of away-step Frank–Wolfe under sharpness (Corollary 3.33, θ = 1/2) with the constant of the proof and an erratum.
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding sharpness (Definition 3.25) with the primal gap bound (Lemma 3.31) and geometric sharpness (Lemma 3.32).
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding lazy away-step Frank–Wolfe (Theorem 3.16) with a corrected iteration count and an erratum.
