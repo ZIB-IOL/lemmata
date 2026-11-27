@@ -81,3 +81,11 @@ exports:
     kind: theorem
     page: index.md
     label: thm-lazifying-conditional-gradients-lpcg
+  - name: Lemmata.LazyCG.augObjective
+    kind: definition
+    page: index.md
+    label: def-lazifying-conditional-gradients-aug-objective
+  - name: Lemmata.LazyCG.aug_sep_correct
+    kind: theorem
+    page: index.md
+    label: prop-lazifying-conditional-gradients-augmentation

@@ -3,6 +3,7 @@ module
 public import Lemmata.LazyCG.Proof
 public import Lemmata.LazyCG.ParamFree
 public import Lemmata.LazyCG.LPCG
+public import Lemmata.LazyCG.Augment
 
 @[expose] public section
 
@@ -25,6 +26,9 @@ theorem param_free_negatives : ParamFreeNegatives := Proof.param_free_negatives
 
 /-- Theorem 3.2: lazy pairwise conditional gradients converge linearly on simplex-like polytopes. -/
 theorem lpcg_rate : LPCGRate := Proof.lpcg_rate
+
+/-- Proposition 6.1: weak separation through augmentation answers correctly. -/
+theorem aug_sep_correct : AugSepCorrect := Proof.aug_sep_correct
 -- DOCS_END_MAIN
 
 end Lemmata.LazyCG
