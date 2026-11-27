@@ -5,23 +5,17 @@ subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
 abstract: >-
-  For every $T$, smoothness $\beta > 0$ and diameter $D > 2/\beta$, every randomized method
-  requiring no more than $T$ calls to an exact linear minimization oracle, with arbitrary query
-  directions and full knowledge of the objective, fails on some compact convex body with
-  $\beta$-Lipschitz unit normals, diameter at most $D$ and a unique minimizer in every nonzero
-  direction: with probability at least $1/5$ it returns an infeasible point or a point with gap at
-  least $L(D-2/\beta)^2/(64(T+1))$ for an $L$-smooth and $L$-strongly convex quadratic. The
-  dimension grows with $T$. For methods that always return feasible points the probability is
-  $3/4$, with expected gap of the same order. A method requiring no more than $T$ oracle calls
-  reaches gap
-  $2L(D-2/\beta)^2/(T+1)$ on every such body, so the order $L(D-2/\beta)^2/T$ is attained. With a
-  fixed vertex tie rule the regular hard family gives the bound with diameter exactly $D$,
-  probability $1/4$ and constant $32$; it defeats deterministic methods already in dimension
-  $64(T+1)+1$, and a distance penalty gives the same order for arbitrary outputs. The family is
-  exactly $\beta$-smooth, not uniformly convex, and fails local dual sharpness at its optimum. For general smooth convex objectives a sliding
-  method needs $n$ gradients and $O(n + (D-2/\beta)^2 n^2/D^2)$ oracle calls for gap
-  $O(LD^2/n^2)$, and bodies with inner and outer tangent balls admit a linear rate with one oracle
-  call and one gradient per iteration.
+  For every $T \ge 0$, $\beta > 0$ and $D > 2/\beta$, and every randomized method requiring no
+  more than $T$ calls to a linear minimization oracle, there is a convex body with $\beta$-Lipschitz
+  unit normals, diameter at most $D$ and exactly one linear minimizer in every nonzero direction
+  on which, with probability at least $1/5$, the method returns an infeasible point or a point
+  with primal gap at least $L(D-2/\beta)^2/(64(T+1))$ for a known $L$-smooth and $L$-strongly
+  convex quadratic. For methods with feasible outputs the probability is $3/4$. Frank–Wolfe on
+  the inner parallel body reaches primal gap $2L(D-2/\beta)^2/(T+1)$ on every such body, so the
+  order $L(D-2/\beta)^2/T$ is optimal. The entry also proves lower bounds for an oracle that breaks
+  ties by index, including deterministic methods in dimension $64(T+1)+1$ and a penalty for
+  infeasible outputs, an upper bound for general smooth convex objectives by conditional gradient
+  sliding, and a linear rate for bodies with inner and outer tangent balls.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -80,7 +74,7 @@ exports:
     kind: definition
     page: index.md
     label: def-frank-wolfe-prescribed-smoothness-family
-  - name: Lemmata.FrankWolfePS.vertexOracle
+  - name: Lemmata.FrankWolfePS.vertexLMO
     kind: definition
     page: index.md
     label: def-frank-wolfe-prescribed-smoothness-vertex-oracle
@@ -88,14 +82,18 @@ exports:
     kind: theorem
     page: index.md
     label: prop-frank-wolfe-prescribed-smoothness-family
+  - name: Lemmata.FrankWolfePS.hard_body_optimum
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-prescribed-smoothness-optimum
+  - name: Lemmata.FrankWolfePS.lower_bound_vertex_lmo
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-vertex
   - name: Lemmata.FrankWolfePS.posterior_ratio_identity
     kind: theorem
     page: index.md
     label: lem-frank-wolfe-prescribed-smoothness-posterior
-  - name: Lemmata.FrankWolfePS.lower_bound_vertex_rule
-    kind: theorem
-    page: index.md
-    label: thm-frank-wolfe-prescribed-smoothness-vertex
   - name: Lemmata.FrankWolfePS.lower_bound_feasible
     kind: theorem
     page: index.md
@@ -112,11 +110,7 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-prescribed-smoothness-penalty
-  - name: Lemmata.FrankWolfePS.hard_body_optimum
-    kind: theorem
-    page: index.md
-    label: prop-frank-wolfe-prescribed-smoothness-optimum
-  - name: Lemmata.FrankWolfePS.symmetric_bulge_reveals
+  - name: Lemmata.FrankWolfePS.symmetric_thickening_reveals
     kind: theorem
     page: index.md
     label: prop-frank-wolfe-prescribed-smoothness-symmetric
@@ -124,7 +118,7 @@ exports:
     kind: theorem
     page: index.md
     label: lem-frank-wolfe-prescribed-smoothness-rolling
-  - name: Lemmata.FrankWolfePS.Upper.quadraticMethod
+  - name: Lemmata.FrankWolfePS.Upper.innerFrankWolfe
     kind: definition
     page: index.md
     label: def-frank-wolfe-prescribed-smoothness-quadratic-method
@@ -140,11 +134,11 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-prescribed-smoothness-sliding
-  - name: Lemmata.FrankWolfePS.Joint.jointRun
+  - name: Lemmata.FrankWolfePS.Joint.projectedGradientRun
     kind: definition
     page: index.md
     label: def-frank-wolfe-prescribed-smoothness-joint
-  - name: Lemmata.FrankWolfePS.joint_linear_rate
+  - name: Lemmata.FrankWolfePS.tangent_balls_linear_rate
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-prescribed-smoothness-linear

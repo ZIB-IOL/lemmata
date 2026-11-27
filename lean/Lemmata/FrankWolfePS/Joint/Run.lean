@@ -9,10 +9,10 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- Each loop step evaluates one gradient at the stored point and adds the
 actual number of body LMOs returned by modelStep. -/
-noncomputable def jointLoop {C : Set E} (O : LMO C) (g : E → E) (L r : ℝ) (ball : Bool)
+noncomputable def projectedGradientLoop {C : Set E} (O : LMO C) (g : E → E) (L r : ℝ) (ball : Bool)
     (p : E × E) : ℕ → (E × E) × ℕ × ℕ
   | 0 => (p, 0, 0)
-  | n + 1 => let prev := jointLoop O g L r ball p n
+  | n + 1 => let prev := projectedGradientLoop O g L r ball p n
            let x := prev.1.2
            let v := modelStep O ball r (target L (g x) x) prev.1.1
            (v.1, prev.2.1 + v.2, prev.2.2 + 1)
@@ -28,19 +28,19 @@ theorem loop_bound {K : Set E} (conv : Convex ℝ K) (bodyConv : Convex ℝ (Rou
     (mdl : Models (Rounded K r) f g L) (strong : StrongLower (Rounded K r) f g μ)
     (hr : 0 < r) (hμ : 0 < μ) (hLμ : μ ≤ L) (hc : 0 ≤ c) (hc1 : c ≤ 1) (reg : Regime K r c ball)
     {p : E × E} (hp : StateOK K r p) (n : ℕ) :
-    let ans := jointLoop O g L r ball p n
+    let ans := projectedGradientLoop O g L r ball p n
     StateOK K r ans.1 ∧ ans.2.1 ≤ n * (if ball then 0 else 1) ∧ ans.2.2 = n ∧
     ∀ w ∈ Rounded K r, f ans.1.2 - f w ≤ (1 - c * (μ / L)) ^ n * (f p.2 - f w) := by
   induction n with
-  | zero => simp [jointLoop, hp]
+  | zero => simp [projectedGradientLoop, hp]
   | succ n ih =>
     obtain ⟨mem, calls, grads, rate⟩ := ih
-    let prev := jointLoop O g L r ball p n
+    let prev := projectedGradientLoop O g L r ball p n
     let u := target L (g prev.1.2) prev.1.2
     let v := modelStep O ball r u prev.1.1
     obtain ⟨hm, hc', hmul⟩ := model_step_spec conv O hr hc hc1 reg u mem
     have next := objective_step bodyConv mdl strong hμ hLμ hc (state_mem mem) (state_mem hm) hmul
-    refine ⟨hm, ?_, by simp only [jointLoop, grads], fun w hw => ?_⟩
+    refine ⟨hm, ?_, by simp only [projectedGradientLoop, grads], fun w hw => ?_⟩
     · change prev.2.1 + v.2 ≤ (n + 1) * _
       rw [Nat.add_mul, Nat.one_mul]; exact Nat.add_le_add calls hc'
     · change f v.1.2 - f w ≤ _
@@ -48,13 +48,13 @@ theorem loop_bound {K : Set E} (conv : Convex ℝ K) (bodyConv : Convex ℝ (Rou
         rw [pow_succ]
         linarith only [mul_le_mul_of_nonneg_left (rate w hw) (factor_nonneg hμ hLμ hc1)])
 
-noncomputable def jointRun {C : Set E} (O : LMO C) (g : E → E) (L r : ℝ) (ball : Bool)
+noncomputable def projectedGradientRun {C : Set E} (O : LMO C) (g : E → E) (L r : ℝ) (ball : Bool)
     (x₀ : E) (n : ℕ) : E × ℕ × ℕ :=
   let q := g x₀
   if q = 0 then (x₀, 0, 1)
   else let s := O.query q
        let a := s + r • unit q
-       let v := jointLoop O g L r ball (a, s) n
+       let v := projectedGradientLoop O g L r ball (a, s) n
        (v.1.2, 1 + v.2.1, 1 + v.2.2)
 
 theorem initialization {C : Set E} {f : E → ℝ} {g : E → E} {L D : ℝ}
@@ -78,13 +78,13 @@ theorem parallel_linear_upper {K : Set E} (conv : Convex ℝ K) (bodyConv : Conv
     (mdl : Models (Rounded K r) f g L) (strong : StrongLower (Rounded K r) f g μ)
     (hr : 0 < r) (hμ : 0 < μ) (hLμ : μ ≤ L) (hc : 0 ≤ c) (hc1 : c ≤ 1) (reg : Regime K r c ball)
     {x₀ : E} (hx : x₀ ∈ Rounded K r) (width : ∀ y ∈ Rounded K r, ‖y - x₀‖ ≤ D) (n : ℕ) :
-    let ans := jointRun O g L r ball x₀ n
+    let ans := projectedGradientRun O g L r ball x₀ n
     ans.1 ∈ Rounded K r ∧ ans.2.1 ≤ 1 + n * (if ball then 0 else 1) ∧ ans.2.2 ≤ 1 + n ∧
     ∀ w ∈ Rounded K r, f ans.1 - f w ≤ (1 - c * (μ / L)) ^ n * (L / 2 * D ^ 2) := by
   have hL := hμ.trans_le hLμ
   have factor := factor_nonneg hμ hLμ hc1
   by_cases zero : g x₀ = 0
-  · simp only [jointRun, zero, ite_true]
+  · simp only [projectedGradientRun, zero, ite_true]
     refine ⟨hx, Nat.zero_le _, by omega, fun w hw => ?_⟩
     have B := mdl.lower x₀ hx w hw
     rw [zero, inner_zero_left, add_zero] at B
@@ -94,7 +94,7 @@ theorem parallel_linear_upper {K : Set E} (conv : Convex ℝ K) (bodyConv : Conv
     let s := O.query q
     have init : StateOK K r (a, s) := initial_state hr O zero
     obtain ⟨mem, oc, gc, rate⟩ := loop_bound conv bodyConv O mdl strong hr hμ hLμ hc hc1 reg init n
-    simp only [jointRun, zero, ite_false]
+    simp only [projectedGradientRun, zero, ite_false]
     refine ⟨state_mem mem, Nat.add_le_add_left oc _, Nat.add_le_add_left gc.le 1, fun w hw => ?_⟩
     have warm := initialization mdl hL.le O hx width w hw
     exact (rate w hw).trans (mul_le_mul_of_nonneg_left warm (pow_nonneg factor n))

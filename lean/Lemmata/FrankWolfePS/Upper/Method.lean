@@ -56,13 +56,13 @@ theorem coreMethod_run (g : E → E) (p : E) (r : ℝ) (finish : E → E) (O : E
 
 /-- **The quadratic method.** For a disclosed isotropic quadratic `L ‖x - u‖² / 2`, it requires
 no more than `n + 2` linear minimization oracle calls and no gradient. -/
-noncomputable def quadraticMethod (L r : ℝ) (u e : E) (n : ℕ) : Method E (n + 2) :=
+noncomputable def innerFrankWolfe (L r : ℝ) (u e : E) (n : ℕ) : Method E (n + 2) :=
   .ask e fun z => coreMethod (envGrad L r u) (z + r • unit e) r (liftCore r u) 0
     (z + r • unit e) (n + 1)
 
-theorem quadraticMethod_run {C : Set E} (O : LMO C) {L : ℝ} (hL : 0 < L) (r : ℝ) (u e : E)
-    (n : ℕ) : (quadraticMethod L r u e n).run O.query = (disclosedRun O u L r e (n + 1)).1 := by
-  simp only [quadraticMethod, Method.run, coreMethod_run, disclosedRun, quadraticRun,
+theorem innerFrankWolfe_run {C : Set E} (O : LMO C) {L : ℝ} (hL : 0 < L) (r : ℝ) (u e : E)
+    (n : ℕ) : (innerFrankWolfe L r u e n).run O.query = (disclosedRun O u L r e (n + 1)).1 := by
+  simp only [innerFrankWolfe, Method.run, coreMethod_run, disclosedRun, quadraticRun,
     recover_center hL, fwFrom_eq_fwRun _ _ realQueryCost]
   rfl
 
@@ -71,13 +71,13 @@ variable [ProperSpace E]
 /-- **The matching upper bound, as a method.** On every compact convex body with `β`-Lipschitz
 unit normals and every exact linear minimization oracle, the quadratic method (no more than
 `n + 2` calls) returns a feasible point whose gap is at most `2L(diam C - 2/β)² / (n + 3)`. -/
-theorem quadratic_method_upper {C : Set E} (hc : IsCompact C) (hv : Convex ℝ C) {β L : ℝ}
+theorem inner_frank_wolfe_upper {C : Set E} (hc : IsCompact C) (hv : Convex ℝ C) {β L : ℝ}
     (hβ : 0 < β) (hL : 0 < L) (regular : LipschitzNormals C β) (hD : 2 * (1 / β) ≤ Metric.diam C)
     (O : LMO C) (u e : E) (he : e ≠ 0) (n : ℕ) :
-    (quadraticMethod L (1 / β) u e n).run O.query ∈ C ∧
-      ∀ w ∈ C, iso L u ((quadraticMethod L (1 / β) u e n).run O.query) - iso L u w ≤
+    (innerFrankWolfe L (1 / β) u e n).run O.query ∈ C ∧
+      ∀ w ∈ C, iso L u ((innerFrankWolfe L (1 / β) u e n).run O.query) - iso L u w ≤
         2 * L * (Metric.diam C - 2 * (1 / β)) ^ 2 / ((n : ℝ) + 3) := by
-  rw [quadraticMethod_run O hL]
+  rw [innerFrankWolfe_run O hL]
   obtain ⟨hm, -, -, hg⟩ := disclosed_quadratic_upper hc hv hβ hL regular hD O u e he n
   exact ⟨hm, hg⟩
 

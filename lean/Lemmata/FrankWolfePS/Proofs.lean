@@ -12,7 +12,7 @@ public import Lemmata.FrankWolfePS.Lower.Penalized
 # Proofs of the statements
 
 Each proposition of `Statement.lean` follows from the developed results by unfolding the
-user-facing names (`hardBody`, `vertexOracle`, `uniqueLMO`) and converting between ambient
+user-facing names (`hardBody`, `vertexLMO`, `uniqueLMO`) and converting between ambient
 points and coordinates.
 -/
 
@@ -58,7 +58,7 @@ theorem lower_bound_unique_feasible_proof : LowerBoundUniqueFeasible := by
         3 / 4 * (L * (D - 2 / β) ^ 2 / (64 * ((T : ℝ) + 1))) := by field_simp; ring
       _ ≤ _ := he
 
-theorem lower_bound_vertex_rule_proof : LowerBoundVertexRule := by
+theorem lower_bound_vertex_lmo_proof : LowerBoundVertexLMO := by
   intro ι Ω _ _ _ T anchor hN L β D hL hβ hD μ _ s hs
   have meas : ∀ S ∈ shells T anchor, Measurable fun ω =>
       (s ω).physicalRun ((D - 2 / β) / Real.sqrt 2) (1 / β) anchor (insert anchor S) :=
@@ -72,7 +72,7 @@ theorem lower_bound_vertex_rule_proof : LowerBoundVertexRule := by
     exact physical_oracle_correct hapos hr anchor ha q
   · rw [cast_succ] at h5
     simpa only [Method.physicalRun, embed_coords, ← hardObjective_coords, physicalOpt_eq_sInf,
-      hardBody, vertexOracle] using h5
+      hardBody, vertexLMO] using h5
 
 theorem lower_bound_feasible_proof : LowerBoundFeasible := by
   intro ι Ω _ _ _ T anchor hN L β D hL hβ hD μ _ s hs hfeas
@@ -83,7 +83,7 @@ theorem lower_bound_feasible_proof : LowerBoundFeasible := by
       (1 / β) anchor (insert anchor S)) ∈
         physicalBody ((D - 2 / β) / Real.sqrt 2) (1 / β) (insert anchor S) := by
     intro S _ ω
-    simpa only [Method.physicalRun, embed_coords, hardBody, vertexOracle] using
+    simpa only [Method.physicalRun, embed_coords, hardBody, vertexLMO] using
       hfeas (insert anchor S) (mem_insert_self _ _) ω
   obtain ⟨S, hS, h1, h2, h3⟩ :=
     fixed_smoothness_expected_lower_bound μ T anchor hN hL hβ hD s meas feas
@@ -91,10 +91,10 @@ theorem lower_bound_feasible_proof : LowerBoundFeasible := by
   refine ⟨insert anchor S, hc, ha, h1, ?_, ?_⟩
   · rw [cast_succ] at h2
     simpa only [Method.physicalRun, ← hardObjective_coords, physicalOpt_eq_sInf, hardBody,
-      vertexOracle] using h2
+      vertexLMO] using h2
   · rw [cast_succ] at h3
     simpa only [Method.physicalRun, ← hardObjective_coords, physicalOpt_eq_sInf, hardBody,
-      vertexOracle] using h3
+      vertexLMO] using h3
 
 theorem lower_bound_deterministic_proof : LowerBoundDeterministic := by
   intro ι _ _ T anchor hN L β D hL hβ hD s
@@ -102,7 +102,7 @@ theorem lower_bound_deterministic_proof : LowerBoundDeterministic := by
   refine ⟨I, hc, hI, hdiam, ?_⟩
   rw [cast_succ] at f
   simpa only [Method.physicalRun, embed_coords, ← hardObjective_coords, physicalOpt_eq_sInf,
-    hardBody, vertexOracle] using f
+    hardBody, vertexLMO] using f
 
 theorem lower_bound_penalized_proof : LowerBoundPenalized := by
   intro ι Ω _ _ _ T anchor hN L β D ρ hL hβ hD hρ μ _ s hs
@@ -132,7 +132,7 @@ theorem lower_bound_penalized_proof : LowerBoundPenalized := by
         _ = (L * (D - 2 / β) ^ 2 / (32 * k)) / 8 := by rw [hcut]
         _ = _ := by ring
     rw [e] at hp
-    simpa only [penalizedError, physicalPenalized, hardBody, vertexOracle] using hp
+    simpa only [penalizedError, physicalPenalized, hardBody, vertexLMO] using hp
   · have e : L * ((D - 2 / β) / Real.sqrt 2) ^ 2 / (512 * ((T + 1 : ℕ) : ℝ)) =
         L * (D - 2 / β) ^ 2 / (1024 * ((T : ℝ) + 1)) := by
       rw [← cast_succ]
@@ -141,7 +141,7 @@ theorem lower_bound_penalized_proof : LowerBoundPenalized := by
         _ = (L * (D - 2 / β) ^ 2 / (32 * k)) / 32 := by rw [hcut]
         _ = _ := by ring
     rw [e] at he
-    simpa only [penalizedError, physicalPenalized, hardBody, vertexOracle] using he
+    simpa only [penalizedError, physicalPenalized, hardBody, vertexLMO] using he
 
 theorem posterior_identity_proof : PosteriorIdentity := by
   intro ι _ _ T anchor hN s R
@@ -176,7 +176,7 @@ theorem hard_body_optimum_proof : HardBodyOptimum := by
   obtain ⟨hm, hmin⟩ := hardMinimizer_spec hL hapos hr hne
   exact ⟨hm, hmin, fun M hM A q hA => not_localDualSharpness hapos hr hI M hM hA⟩
 
-theorem symmetric_bulge_reveals_proof : SymmetricBulgeReveals := by
+theorem symmetric_thickening_reveals_proof : SymmetricThickeningReveals := by
   intro ι _ _ A s hs I hne x hx i
   exact Unique.symmetric_lowest_point hs hne hx i
 
@@ -199,9 +199,9 @@ theorem rolling_ball_proof : RollingBall := by
 theorem quadratic_upper_bound_proof : QuadraticUpperBound := by
   intro E _ _ _ T hT L β hL hβ u e he
   obtain ⟨n, rfl⟩ : ∃ n, T = n + 2 := ⟨T - 2, by omega⟩
-  refine ⟨Upper.quadraticMethod L (1 / β) u e n, fun C hc hv regular hD O => ?_⟩
+  refine ⟨Upper.innerFrankWolfe L (1 / β) u e n, fun C hc hv regular hD O => ?_⟩
   have hD' : 2 * (1 / β) ≤ Metric.diam C := by rwa [mul_one_div]
-  obtain ⟨hm, hg⟩ := Upper.quadratic_method_upper hc hv hβ hL regular hD' O u e he n
+  obtain ⟨hm, hg⟩ := Upper.inner_frank_wolfe_upper hc hv hβ hL regular hD' O u e he n
   refine ⟨hm, fun w hw => (hg w hw).trans (le_of_eq ?_)⟩
   rw [mul_one_div]; push_cast; ring
 
@@ -209,7 +209,7 @@ theorem sliding_upper_bound_proof : SlidingUpperBound := by
   intro E _ _ _ C hc hv β hβ regular hD O f L hL hf hconv hLip e he n hn
   exact Upper.smooth_body_sliding_upper hc hv hβ regular hD O hL hf hconv hLip e he hn
 
-theorem joint_linear_rate_proof : JointLinearRate := by
+theorem tangent_balls_linear_rate_proof : TangentBallsLinearRate := by
   intro E _ _ _ _ C hc cv r R μ hr hR inner outer O f L hμ df sc smooth ball cert x₀ hx n
   exact Joint.joint_body_linear_upper hc cv hr hR inner outer O hμ df sc smooth ball cert hx n
 
