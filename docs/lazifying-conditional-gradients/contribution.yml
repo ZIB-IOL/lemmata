@@ -1,0 +1,71 @@
+schema_version: 1
+id: lazifying-conditional-gradients
+lean_namespace: Lemmata.LazyCG
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "1610.05120"
+abstract: >-
+  Lazy conditional gradient algorithms replace the linear optimization oracle of the Frank–Wolfe
+  algorithm by a weak separation oracle, which only has to return a point that improves the linear
+  objective by a fraction $\Phi/K$ of a target value, or certify that no point improves it by more
+  than $\Phi$. Such an oracle can be built from a linear optimization oracle with a cache. With a
+  convex objective of curvature $C$, the lazy conditional gradient algorithm converges at the rate
+  $2\max\{C, \Phi_0\}(K^2 + 1)/(t + K^2 + 2)$, and its parameter-free variant, which halves $\Phi$
+  after every negative answer, reaches primal gap $\varepsilon$ within
+  $\lceil \log_2(\Phi_0/\varepsilon) \rceil + 1 + 4K\lceil \log_2(\Phi_0/(KC)) \rceil +
+  16K^2C/\varepsilon$ iterations, at most $\lceil \log_2(\Phi_0/\varepsilon) \rceil + 1$ of
+  them with a negative answer. The statements hold in real normed spaces, for every behaviour of
+  the oracle.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.LazyCG.IsWeakSepAnswer
+    kind: definition
+    page: index.md
+    label: def-lazifying-conditional-gradients-weak-sep
+  - name: Lemmata.LazyCG.IsLPSepViaLP
+    kind: definition
+    page: index.md
+    label: def-lazifying-conditional-gradients-lp-sep
+  - name: Lemmata.LazyCG.lp_sep_via_lp_correct
+    kind: theorem
+    page: index.md
+    label: prop-lazifying-conditional-gradients-lp-sep
+  - name: Lemmata.LazyCG.HasCurvature
+    kind: definition
+    page: index.md
+    label: def-lazifying-conditional-gradients-curvature
+  - name: Lemmata.LazyCG.IsLCGRun
+    kind: definition
+    page: index.md
+    label: def-lazifying-conditional-gradients-lcg
+  - name: Lemmata.LazyCG.lcg_rate
+    kind: theorem
+    page: index.md
+    label: thm-lazifying-conditional-gradients-lcg
+  - name: Lemmata.LazyCG.IsParamFreeLCGRun
+    kind: definition
+    page: index.md
+    label: def-lazifying-conditional-gradients-param-free
+  - name: Lemmata.LazyCG.param_free_rate
+    kind: theorem
+    page: index.md
+    label: thm-lazifying-conditional-gradients-param-free
+  - name: Lemmata.LazyCG.param_free_negatives
+    kind: theorem
+    page: index.md
+    label: cor-lazifying-conditional-gradients-negatives
