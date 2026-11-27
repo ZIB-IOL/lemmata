@@ -11,7 +11,7 @@ numbering:
 This entry comes from the book *Conditional Gradient Methods: From Core Principles to AI
 Applications* by Gábor Braun, Alejandro Carderera, Cyrille W. Combettes, Hamed Hassani, Amin
 Karbasi, Aryan Mokhtari and Sebastian Pokutta [@braun2025conditional]. It formalizes results from
-Sections 3.1.2 and 3.1.3; numbers refer to the arXiv version [@braun2022conditional].
+Sections 3.1.2, 3.1.3 and 3.1.5; numbers refer to the arXiv version [@braun2022conditional].
 :::
 
 :::{admonition} Errata
@@ -166,10 +166,56 @@ steps. Steps that do not drop a vertex gain at least $\phi_t^2/(2K^2LD^2)$, whic
 negative answer is the constant $\phi_0^2/(2K^2LD^2)$ and after it at least
 $\mu\delta^2 h_t/(16K^2LD^2)$. Drop steps are at most as many as the other positive steps.
 
+## Sharpness
+
+Strong convexity bounds the distance to the minimizer by the square root of the primal gap.
+Sharpness, also called the Hölder error bound, relaxes the exponent $1/2$ to any $\theta \in (0, 1]$
+and allows a set of minimizers $\Omega^*$.
+
+```{prf:definition} Sharpness
+:label: def-conditional-gradient-improvements-sharp
+:enumerator: 3.25
+
+A function $f$ is $(c, \theta)$-sharp over $C$ if
+$\operatorname{dist}(x, \Omega^*) \le c\,(f(x) - f(x^*))^\theta$ for all $x \in C$ and all minimizers
+$x^*$ of $f$ over $C$.
+```
+
+```{prf:lemma} Primal gap bound from sharpness
+:label: lem-conditional-gradient-improvements-sharp-gap
+:enumerator: 3.31
+
+Let $C$ be compact and $f$ convex, differentiable and $(c, \theta)$-sharp over $C$. For every $x \in C$
+with positive primal gap $h$ there is a minimizer $y$ with
+$h^{1-\theta}/c \le f'(x)(x - y)/\|x - y\|$.
+```
+
+```{prf:lemma} Geometric sharpness
+:label: lem-conditional-gradient-improvements-geometric-sharpness
+:enumerator: 3.32
+
+Let $f$ be convex, differentiable and $(c, \theta)$-sharp over $P = \operatorname{conv} V$, and let
+$\delta > 0$ have the scaling property of the pyramidal width. If $x \in \operatorname{conv} S$ with
+$S \subseteq V$, $a$ is an away vertex of $S$, $v$ a Frank–Wolfe vertex and the primal gap $h$ at $x$
+is positive, then $h^{1-\theta}/c \le f'(x)(a - v)/\delta$.
+```
+
+The nearest minimizer $y$ exists because the set of minimizers is compact; sharpness bounds
+$\|x - y\|$ by $c\,h^\theta$ and convexity gives $h \le f'(x)(x - y)$. The scaling property then
+replaces $f'(x)(x - y)/\|x - y\|$ by $f'(x)(a - v)/\delta$.
+
+:::{note}
+**Differences from the book.** Lemmas 3.31 and 3.32 are stated for points with positive primal
+gap. At a minimizer the left-hand side is $0^{1-\theta}/c$, which is $1/c$ for $\theta = 1$, while the
+right-hand side is not defined.
+:::
+
 ## Not yet covered
 
-Sharpness (Section 3.1.5), the nearest extreme point oracle (NEP-FW, Section 3.1.6) and blended conditional gradients (BCG,
-Section 3.2.2) are not formalized here yet.
+From Section 3.1.5, the convergence of away-step Frank–Wolfe under sharpness (Corollary 3.33), the
+comparison with gradient domination (Lemma 3.35), the Hoffman bound (Lemma 3.27) and the
+Łojasiewicz-type Lemma 3.30 are not formalized here yet; nor are the nearest extreme point oracle
+(NEP-FW, Section 3.1.6) and blended conditional gradients (BCG, Section 3.2.2).
 
 ## The formal statements at a glance
 

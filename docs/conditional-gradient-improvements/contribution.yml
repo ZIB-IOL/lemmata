@@ -66,3 +66,15 @@ exports:
     kind: theorem
     page: index.md
     label: thm-conditional-gradient-improvements-lazy-afw
+  - name: Lemmata.CGImprovements.IsSharp
+    kind: definition
+    page: index.md
+    label: def-conditional-gradient-improvements-sharp
+  - name: Lemmata.CGImprovements.sharp_primal_gap
+    kind: theorem
+    page: index.md
+    label: lem-conditional-gradient-improvements-sharp-gap
+  - name: Lemmata.CGImprovements.geometric_sharpness
+    kind: theorem
+    page: index.md
+    label: lem-conditional-gradient-improvements-geometric-sharpness
