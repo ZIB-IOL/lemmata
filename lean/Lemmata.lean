@@ -37,6 +37,7 @@ public import Lemmata.CGImprovements.LazyAway
 public import Lemmata.CGImprovements.Main
 public import Lemmata.CGImprovements.Proof
 public import Lemmata.CGImprovements.Sharp
+public import Lemmata.CGImprovements.SharpAFW
 public import Lemmata.CGImprovements.Statement
 public import Lemmata.Centroid.Def.Bounds
 public import Lemmata.Centroid.Def.Rank

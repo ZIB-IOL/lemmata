@@ -161,4 +161,19 @@ def GeometricSharpness : Prop :=
     ∀ v ∈ V, (∀ w ∈ V, fderiv ℝ f x v ≤ fderiv ℝ f x w) →
       (f x - f xStar) ^ (1 - θ) / c ≤ fderiv ℝ f x (a - v) / δ
 
+/-- **Corollary 3.33** for `θ = 1/2` (away-step Frank–Wolfe under sharpness), with the constant
+that the proof gives. If `f` is convex, `L`-smooth and `(c, 1/2)`-sharp over `conv V`, and `δ > 0`
+has the scaling property of the pyramidal width, every run of away-step Frank–Wolfe satisfies
+`f(x_t) - f(x⋆) ≤ (1 - min {1/2, δ²/(8 c² L D²)})^⌊(t-1)/2⌋ L D²/2` for `t ≥ 1`. -/
+def SharpAwayLinear : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ) (L : NNReal)
+    (c δ : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ),
+    0 < (L : ℝ) → 0 < c → 0 < δ → Lemmata.AwayStepFW.IsScaling V δ → ConvexOn ℝ Set.univ f →
+    IsSmooth f L → IsSharp (convexHull ℝ (↑V : Set E)) f c (1 / 2) →
+    Lemmata.AwayStepFW.IsAFWRun V f L x S lam →
+    ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f, ∀ t : ℕ, 1 ≤ t →
+      f (x t) - f xStar ≤
+        (1 - min (1 / 2) (δ ^ 2 / (8 * c ^ 2 * L * Metric.diam (↑V : Set E) ^ 2))) ^ ((t - 1) / 2) *
+          (L * Metric.diam (↑V : Set E) ^ 2 / 2)
+
 end Lemmata.CGImprovements

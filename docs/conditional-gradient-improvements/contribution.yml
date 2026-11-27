@@ -78,3 +78,7 @@ exports:
     kind: theorem
     page: index.md
     label: lem-conditional-gradient-improvements-geometric-sharpness
+  - name: Lemmata.CGImprovements.sharp_away_linear
+    kind: theorem
+    page: index.md
+    label: cor-conditional-gradient-improvements-sharp-afw

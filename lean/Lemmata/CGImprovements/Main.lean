@@ -4,6 +4,7 @@ public import Lemmata.CGImprovements.Proof
 public import Lemmata.CGImprovements.Lazy
 public import Lemmata.CGImprovements.LazyAway
 public import Lemmata.CGImprovements.Sharp
+public import Lemmata.CGImprovements.SharpAFW
 
 @[expose] public section
 
@@ -30,6 +31,9 @@ theorem sharp_primal_gap : SharpPrimalGap := Proof.sharp_primal_gap
 
 /-- Lemma 3.32: geometric sharpness. -/
 theorem geometric_sharpness : GeometricSharpness := Proof.geometric_sharpness
+
+/-- Corollary 3.33 for `θ = 1/2`: linear convergence of away-step Frank–Wolfe under sharpness. -/
+theorem sharp_away_linear : SharpAwayLinear := Proof.sharp_away_linear
 -- DOCS_END_MAIN
 
 end Lemmata.CGImprovements

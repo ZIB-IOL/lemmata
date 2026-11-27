@@ -17,7 +17,7 @@ Sections 3.1.2, 3.1.3 and 3.1.5; numbers refer to the arXiv version [@braun2022c
 :::{admonition} Errata
 :class: warning
 
-The formal statements correct three slips in the book:
+The formal statements correct four slips in the book:
 
 - **Algorithm 3.8.** The directions $d_t$ have the wrong sign: with $d_t = x_t - v_t$ for away
   steps and $d_t = v_t - x_t$ for Frank–Wolfe steps, $\langle \nabla f(x_t), d_t\rangle < 0$, so the
@@ -31,6 +31,11 @@ The formal statements correct three slips in the book:
   $\phi$ is halved right after, so the following steps only have $4\phi_t \ge \sqrt{2\mu\delta^2 h_t}$.
   The contraction factor is then $1 - \mu\delta^2/(16K^2LD^2)$, and the count has
   $16K^2LD^2/(\mu\delta^2)$ in place of $4K^2LD^2/(\mu\delta^2)$.
+- **Corollary 3.33, the constant.** The step chosen by away-step Frank–Wolfe has gap at least half
+  of $f'(x)(a - v)$, so geometric sharpness (Lemma 3.32) gives the contraction factor
+  $1 - \min\{1/2, \delta^2/(8c^2LD^2)\}$ for $\theta = 1/2$, not $1 - \delta^2/(2c^2LD^2)$; for
+  $\theta < 1/2$ the same factor $4$ appears inside $(c^2LD^2/\delta^2)^{1/(1-2\theta)}$. The formal
+  statement uses the constant of the proof.
 :::
 
 Chapter 3 of the book improves the Frank–Wolfe algorithm in several directions: step sizes that
@@ -204,6 +209,21 @@ The nearest minimizer $y$ exists because the set of minimizers is compact; sharp
 $\|x - y\|$ by $c\,h^\theta$ and convexity gives $h \le f'(x)(x - y)$. The scaling property then
 replaces $f'(x)(x - y)/\|x - y\|$ by $f'(x)(a - v)/\delta$.
 
+```{prf:corollary} Away-step Frank–Wolfe under sharpness, $\theta = 1/2$
+:label: cor-conditional-gradient-improvements-sharp-afw
+:enumerator: 3.33
+
+Let $f$ be convex, $L$-smooth and $(c, 1/2)$-sharp over $P = \operatorname{conv} V$, and let
+$\delta > 0$ have the scaling property of the pyramidal width. Every run of away-step Frank–Wolfe
+satisfies $f(x_t) - f(x^*) \le (1 - \min\{1/2, \delta^2/(8c^2LD^2)\})^{\lfloor (t-1)/2 \rfloor}
+LD^2/2$ for $t \ge 1$.
+```
+
+A step of away-step Frank–Wolfe that does not drop a vertex gains at least
+$\min\{h/2, f'(x)(a - v)^2/(8LD^2)\}$, and Lemma 3.32 bounds $f'(x)(a - v)^2$ below by
+$\delta^2 h/c^2$. As in Theorem 2.29, the exponent is $\lfloor (t-1)/2 \rfloor$ instead of the book's
+$\lceil (t-1)/2 \rceil$.
+
 :::{note}
 **Differences from the book.** Lemmas 3.31 and 3.32 are stated for points with positive primal
 gap. At a minimizer the left-hand side is $0^{1-\theta}/c$, which is $1/c$ for $\theta = 1$, while the
@@ -212,7 +232,7 @@ right-hand side is not defined.
 
 ## Not yet covered
 
-From Section 3.1.5, the convergence of away-step Frank–Wolfe under sharpness (Corollary 3.33), the
+From Section 3.1.5, Corollary 3.33 for $\theta < 1/2$, the
 comparison with gradient domination (Lemma 3.35), the Hoffman bound (Lemma 3.27) and the
 Łojasiewicz-type Lemma 3.30 are not formalized here yet; nor are the nearest extreme point oracle
 (NEP-FW, Section 3.1.6) and blended conditional gradients (BCG, Section 3.2.2).
