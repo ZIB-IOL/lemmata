@@ -5,6 +5,7 @@ public import Lemmata.GrothendieckLowerBounds.Rotation
 public import Lemmata.GrothendieckLowerBounds.Sphere
 public import Lemmata.GrothendieckLowerBounds.Witness3
 public import Lemmata.GrothendieckLowerBounds.Witness3Split
+public import Lemmata.GrothendieckLowerBounds.Witness3Orbit
 public import Lemmata.GrothendieckLowerBounds.Witness5
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Tactic.Linarith
@@ -125,6 +126,76 @@ theorem score_attained {n m : ℕ} (M : Fin n → Fin m → ℤ) (s : Fin n → 
     rfl
 
 -- DOCS_BEGIN_MAIN
+/-- A row transport with absolute column sums bounded by `s` increases the one-norm
+by at most a factor of `s`. Apply this with `u = K b` to transfer the sign cutoff. -/
+theorem transport_one_norm {n k : ℕ} (V : BellMatrix n k) (u : Fin k → ℝ) (s : ℝ)
+    (hs : ∀ j, ∑ i, |V i j| ≤ s) :
+    ∑ i, |∑ j, V i j * u j| ≤ s * ∑ j, |u j| := by
+  calc
+    _ ≤ ∑ i, ∑ j, |V i j| * |u j| := by
+      apply Finset.sum_le_sum
+      intro i _
+      simpa only [abs_mul] using Finset.abs_sum_le_sum_abs (fun j => V i j * u j) Finset.univ
+    _ = ∑ j, (∑ i, |V i j|) * |u j| := by rw [Finset.sum_comm]; simp only [Finset.sum_mul]
+    _ ≤ ∑ j, s * |u j| := Finset.sum_le_sum fun j _ => mul_le_mul_of_nonneg_right (hs j) (abs_nonneg _)
+    _ = _ := by rw [Finset.mul_sum]
+
+/-- An upper bound obtained by enumerating Bob's signs bounds the same classical
+value in the row-sign convention of `GrothendieckLowerBound`. -/
+theorem classicalUpper_of_transpose {n m : ℕ} (M : BellMatrix n m) (C : ℝ)
+    (hC : ClassicalUpper (fun j i => M i j) C) : ClassicalUpper M C := by
+  intro a ha
+  let y (j : Fin m) := ∑ i, a i * M i j
+  let b (j : Fin m) : ℝ := if 0 ≤ y j then 1 else -1
+  have hb : IsSign b := by
+    intro j
+    dsimp only [b]
+    split <;> norm_num
+  have choose_sign (j : Fin m) : |y j| = b j * y j := by
+    by_cases h : 0 ≤ y j
+    · simp [b, h, abs_of_nonneg h]
+    · simp [b, h, abs_of_neg (lt_of_not_ge h)]
+  calc
+    score M a = ∑ j, b j * y j := Finset.sum_congr rfl fun j _ => choose_sign j
+    _ = ∑ i, a i * ∑ j, b j * M i j := by
+      dsimp only [y]
+      simp_rw [Finset.mul_sum]
+      rw [Finset.sum_comm]
+      exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => by ring
+    _ ≤ score (fun j i => M i j) b := by
+      apply Finset.sum_le_sum
+      intro i _
+      calc
+        _ ≤ |a i * ∑ j, b j * M i j| := le_abs_self _
+        _ = _ := by rw [abs_mul, ha i, one_mul]
+    _ ≤ C := hC b hb
+
+/-- The archived Bob assignment attains the stated classical score on the 301-row matrix. -/
+theorem orbit_attained :
+    ∃ b, IsSign b ∧ score (fun j i => mOrbit i j) b = 641951269303647081416258863417 :=
+  score_attained (fun j i => mOrbitZ i j) sOrbitZ sOrbit_signs _ attainedOrbit
+
+/-- **Order three, 301 rows.** The classical upper bound is the exhaustive column-sign
+computation in the supplement. The exact rank-three vector score is checked in Lean. -/
+theorem order_three_orbit
+    (hC : ClassicalUpper (fun j i => mOrbit i j) 641951269303647081416258863417) :
+    GrothendieckLowerBound 3 (14397098471655953 / 10 ^ 16) := by
+  have ha := ball_scaled_den aOrbitZ (10 ^ 40) (by norm_num) (by
+    intro i
+    convert aOrbit_ball i using 1
+    norm_num)
+  have hb := ball_scaled_den bOrbitZ (10 ^ 40) (by norm_num) (by
+    intro j
+    convert bOrbit_ball j using 1
+    norm_num)
+  simp only [Int.cast_pow, Int.cast_ofNat] at ha hb
+  obtain ⟨u, v, hu, hv, hge⟩ := exists_unit_ge (by norm_num) mOrbit _ _ ha hb
+  refine ⟨301, 321, mOrbit, 641951269303647081416258863417, by norm_num,
+    classicalUpper_of_transpose mOrbit _ hC, u, v, hu, hv, lt_of_lt_of_le ?_ hge⟩
+  have hobj := vectorObj_scaled mOrbitZ aOrbitZ bOrbitZ (10 ^ 40) (by norm_num)
+  rw [show mOrbit = fun i j => (mOrbitZ i j : ℝ) from rfl, hobj, objectiveOrbit]
+  norm_num
+
 /-- **Order three.** If the explicit 81 × 321 matrix `m3` has classical value at most
 `320975296`, then `K_G(3) > 1.43888070193021`. The vectors are checked in `Witness3.lean`;
 the classical bound is the exhaustive search of `certificate-k3`. -/

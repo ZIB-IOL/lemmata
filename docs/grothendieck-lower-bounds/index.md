@@ -5,11 +5,11 @@ title: Bounds for finite-order Grothendieck constants
 ```{include} ../_generated/provenance/grothendieck-lower-bounds.md
 ```
 
-An explicit $141\times321$ integer matrix and a rotation argument for the
+An explicit $301\times321$ integer matrix and a rotation argument for the
 406-direction local model of Designolle et al. give
 
 $$
-1.4396139030752404 < K_G(3) < 1.451263576 .
+1.4397098471655953 < K_G(3) < 1.451263576 .
 $$ (eq-grothendieck-lower-bounds-bound)
 
 The lower witness uses rational vectors and an exhaustive classical search.
@@ -39,6 +39,120 @@ different quantities.
 
 In Lean, $K_G(d)>x$ is stated without the supremum: some matrix with a classical upper bound
 $B>0$ has unit vectors in $\mathbb R^d$ whose value exceeds $xB$.
+
+## The 301-row lower witness
+
+Let $W$ be the matrix in `Data3Orbit.lean`. Starting from the 141 reference
+directions, add two neighbors to each direction in a 15-element orbit and to
+each direction in a 30-element orbit. Three further orbits, of sizes 10, 30
+and 30, place directions at centers of gaps in the intermediate configuration
+on the sphere. The search optimizes the matrix coefficients and both players'
+vector directions. The resulting integer matrix has 301 Alice settings and
+321 Bob settings.
+
+```{prf:lemma} Transport of the sign cutoff
+:label: lem-grothendieck-lower-bounds-orbit-transport
+
+If each column of $V$ has absolute sum at most $s$, then
+$\|Vu\|_1\le s\|u\|_1$ for every real vector $u$.
+```
+
+```{prf:proof} of [](#lem-grothendieck-lower-bounds-orbit-transport)
+:nonumber:
+
+The triangle inequality bounds $\sum_i|\sum_k V_{ik}u_k|$ by
+$\sum_k |u_k|\sum_i |V_{ik}|\le s\sum_k|u_k|$.
+```
+
+Write $C_*=641951269303647081416258863417$.
+
+```{prf:proposition} An attaining column signing
+:label: prop-grothendieck-lower-bounds-orbit-attained
+
+There is a Bob signing $b_*$ with $\|Wb_*\|_1=C_*$.
+```
+
+```{prf:proof} of [](#prop-grothendieck-lower-bounds-orbit-attained)
+:nonumber:
+
+Take the 321 signs in `sOrbitRow`. Integer evaluation of the 301 row sums,
+followed by summation of their absolute values, gives $C_*$.
+```
+
+```{prf:theorem} A strict order-three bound from 301 settings
+:label: thm-grothendieck-lower-bounds-order-three-orbit
+
+For the given $W$, the bound $\|Wb\|_1\le C_*$ for every Bob signing $b$
+implies $K_G(3)>1.4397098471655953$.
+```
+
+```{prf:proof} of [](#thm-grothendieck-lower-bounds-order-three-orbit)
+:nonumber:
+
+The 622 archived triples have integer numerators and common denominator
+$D=10^{40}$. Each squared numerator norm is at most $D^2$. The exact vector
+score divided by $C_*$ begins $1.4397098471655953648981198686680622\ldots$.
+Lean evaluates the integer numerator and proves the strict decimal comparison.
+Choosing unit vectors successively in the direction of each player's linear
+objective can only increase the score. Since $C(W)=\max_b\|Wb\|_1$, the
+hypothesis gives the claimed Grothendieck lower bound.
+```
+
+**Classical upper bound.** Let $K$ be the 141-row reference matrix and
+$T=641519292$. For any Bob signing with $\|Kb\|_1>T$, take Alice signs $a$
+attaining that score. Then $\|K^{\mathsf T}a\|_1\ge a^{\mathsf T}Kb>T$,
+so a signed symmetry takes $a$ to one of the 4,309 archived Alice records.
+For a listed $a$, put $h=K^{\mathsf T}a$. Starting with the signs of $h$,
+flipping signs on a set $J$ costs exactly $2\sum_{j\in J}|h_j|$, including
+free flips at zeros. Enumerating every set that leaves the score above $T$
+gives exactly 625,968 Bob representatives under the signed symmetries and
+global sign reversal.
+
+The new reference is $H=VK$, where the largest absolute column sum of the
+integer transport $V$ is $s=984625626$. By
+[](#lem-grothendieck-lower-bounds-orbit-transport), every $b$ with
+$\|Hb\|_1>sT$ occurs in the preceding list up to symmetry. Exactly 101,967
+representatives pass this test. The verifier checks the signed symmetries of
+$W$ and evaluates $\|Wb\|_1$ on every retained representative. The largest
+value is $C_*$.
+
+For the complement, the reconstruction writes $W=qH+pF$ with
+$q=10^{12}$ and $p=999999444607$. It bounds the classical value of $F$ by
+$U$, using nonnegative combinations of certified games, signed relabelings,
+an integer Gram factor for the perturbation, and the sum of absolute
+rounding errors. The resulting exact inequality is
+
+$$
+ \|Wb\|_1\le qsT+pU
+ = C_*-\frac{3331653634016345743803}{40000000}<C_* .
+$$ (eq-grothendieck-lower-bounds-orbit-complement)
+
+This establishes the classical hypothesis of
+[](#thm-grothendieck-lower-bounds-order-three-orbit). Together with
+[](#prop-grothendieck-lower-bounds-orbit-attained) it gives $C(W)=C_*$.
+A separate Gram certificate bounds the gain from changing both sets of
+vectors on this particular matrix, even in arbitrary real dimension, by
+$7.2\times10^{-35}$ in the ratio. With the displayed directions fixed, the
+certificate gives a ceiling of $1.4397119$ for the search using arbitrary
+row transports, the specified perturbation bound, 24 comparison groups and
+128 listed embeddings. Bhattiprolu and Heinävaara conjecture that
+$K_G(3)=1/\ln 2$. The new lower bound is about $0.00298519$ below that
+value. See @heinavaara2023research, §3.15.
+
+**Reproduction.** The [computation archive](certificate-k3-301/computation.zip)
+contains the proof, matrix, triples, sign lists, solver checkpoints and
+independent checkers. In a repository checkout the
+[replay script](certificate-k3-301/reproduce.py) first compares the Lean
+inputs with the archive, then regenerates both new sign lists and checks
+the classical maximum. Run it with Python 3 and a C++17 compiler with OpenMP.
+
+```bash
+python3 -B docs/grothendieck-lower-bounds/certificate-k3-301/reproduce.py
+```
+
+Add `--from-scratch` to regenerate the 4,309 parent records from the 81-row
+base as well. From the extracted archive, the corresponding standalone
+command is `python3 -B certificate.py --from-scratch`.
 
 ## The 141-row lower witness
 
@@ -293,12 +407,12 @@ python3 docs/grothendieck-lower-bounds/rotation-upper/verify.py
 Márton et al. report the stronger global upper bound $K_G(3)\le1.44705$,
 attributed to unpublished work of L. E. Porto et al. communicated by
 Sébastien Designolle. Their preprint states the bound without its proof.
-Taken with the 141-row lower witness, it leaves a gap of about $0.00743610$.
+Taken with the 301-row lower witness, it leaves a gap of about $0.00734015$.
 The grid-rotation proof above uses only the older published finite model.
 See @marton2026exact and @designolle2023improved.
 
-A global local model reaching the 141-row witness would need visibility
-$C(M_*)/q_*=0.6946306908149772\ldots$. The finite model used here has
+A global local model reaching the 301-row witness ratio would need visibility
+$0.6945843997446660\ldots$. The finite model used here has
 $w_{\rm D}=0.6919401772871383\ldots$ even before extending it to all directions.
 Improving only the geometric extension factor up to one would therefore
 still leave a gap at this witness.
@@ -558,7 +672,7 @@ published local-model estimate for order three.
 
 | Order | Previously reported ratio | New rigorous lower bound |
 | --- | --- | --- |
-| $3$ | $\approx1.438746$ | $>1.4396139030752404$ |
+| $3$ | $\approx1.438746$ | $>1.4397098471655953$ |
 | $5$ | $\approx1.498904$ | $>1.49936483533988$ |
 | $6$ | $\approx1.498904$, by monotonicity | $>1.49936483533988$ |
 
@@ -581,15 +695,17 @@ computation remains a cited input to this result.
 ## Formal scope
 
 Each order-three lower-bound theorem in Lean takes the classical upper bound for its explicit matrix
-as its single hypothesis. The data are in `Data3.lean` and `Data3Split.lean`. For
-orders five and six the hypothesis is the bound
+as its single hypothesis. The data are in `Data3.lean`, `Data3Split.lean` and
+`Data3Orbit.lean`. For the 301-row witness the hypothesis ranges over Bob
+signings, as in the exhaustive computation. Lean proves the change of signing
+convention and the one-norm transport inequality. For orders five and six the hypothesis is the bound
 cited from @marton2026exact for the matrix of `Data5.lean`. Lean checks by computation
 (`native_decide`, declared in the manifest) that every vector lies in the unit ball, that
 the value is the stated rational number, and that the signs attain the classical values;
 it proves the passage to unit vectors, the passage from order five to six, the
-perturbation lemma and the certificate-reuse theorem. The exhaustive C++ search for order
-three, its compiler and runtime, and the classical value of @marton2026exact remain outside
-Lean. For the upper bound, Lean proves the averaging lemma and derives the uniform
+perturbation lemma and the certificate-reuse theorem. The exhaustive classical computations
+for order three use Python and C++. For order five the classical bound comes from
+@marton2026exact. For the upper bound, Lean proves the averaging lemma and derives the uniform
 numerical ratio from the finite-model score bound, the mixed moments and the two
 deviation bounds. The written spherical argument supplies the latter geometric
 inputs. The Python checker verifies the radius and visibility against the published
