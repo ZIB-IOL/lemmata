@@ -308,7 +308,7 @@ private theorem oneEnd (old C r : ℤ) (o : Bool)
 private theorem posInduction (n : ℕ) :
     ∀ gs : List Bool, gs.length = n → ∀ r : ℤ, posScore r gs ≤ cap (hasOdd r gs) := by
   induction n using Nat.strong_induction_on with
-  | h n ih =>
+  | ind n ih =>
     intro gs hlen r
     cases gs with
     | nil => exact small r [] (by decide)

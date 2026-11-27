@@ -55,7 +55,7 @@ theorem exists_terminal (w : List α) :
       ∃ v, Reduces w v ∧ Terminal v ∧ v.length ≤ w.length := by
     intro n
     induction n using Nat.strong_induction_on with
-    | h n ih =>
+    | ind n ih =>
       intro w hw
       rcases step_or_terminal w with ⟨v, hv⟩ | ht
       · have hlen := hv.length_lt

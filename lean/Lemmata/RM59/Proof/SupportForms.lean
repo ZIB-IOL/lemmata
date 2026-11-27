@@ -27,11 +27,11 @@ def evaluation (x : Point 9) : Point 9 →ₗ[Field] Field where
     evaluation x (Pi.single i 1) = x i := by
   simp [evaluation, Pi.single_apply]
 
-def pointForm (x : Point 9) : MultilinearMap Field (fun _ : Fin 3 => Point 9) Field :=
+def pointForm (x : Point 9) : MultilinearMap (RingHom.id Field) (fun _ : Fin 3 => Point 9) Field :=
   (MultilinearMap.mkPiAlgebra Field (Fin 3) Field).compLinearMap fun _ => evaluation x
 
 def supportForm (P : Finset (Point 9)) :
-    MultilinearMap Field (fun _ : Fin 3 => Point 9) Field := ∑ x ∈ P, pointForm x
+    MultilinearMap (RingHom.id Field) (fun _ : Fin 3 => Point 9) Field := ∑ x ∈ P, pointForm x
 
 theorem field_mul_repeat (a b : Field) : a * (a * b) = a * b := by
   rw [← mul_assoc, field_mul_self]
@@ -81,7 +81,7 @@ theorem matchSupportMoments_of_supportForm_eq {P Q : Finset (Point 9)}
   intro s hs
   have hcoeff (v : Fin 3 → Fin 9) :
       supportMoment P {v 0, v 1, v 2} = supportMoment Q {v 0, v 1, v 2} := by
-    have heq := congrArg (fun f : MultilinearMap Field (fun _ : Fin 3 => Point 9) Field =>
+    have heq := congrArg (fun f : MultilinearMap (RingHom.id Field) (fun _ : Fin 3 => Point 9) Field =>
       f fun r => Pi.single (v r) 1) h
     simpa only [supportForm_basis] using heq
   have hc : s.card = 0 ∨ s.card = 1 ∨ s.card = 2 ∨ s.card = 3 := by omega

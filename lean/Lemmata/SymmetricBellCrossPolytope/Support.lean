@@ -238,7 +238,7 @@ lemma extra_extreme_of_separation {E : Type*} [AddCommGroup E] [Module ℝ E] [T
   by_contra! h
   have hsub : (convexHull ℝ T).extremePoints ℝ ⊆ V := h; have hh := convexHull_mono (𝕜 := ℝ) hsub; rw [finite_hull_extremes T hT] at hh; exact hout (hh hp)
 private lemma unique_max_on_hull {E : Type*} [AddCommGroup E] [Module ℝ E] (T : Set E) (l : E →ₗ[ℝ] ℝ) (c : ℝ) (v : E) (hb : ∀ x ∈ T,l x ≤ c ∧ (l x=c → x=v)) : ∀ x ∈ convexHull ℝ T,l x ≤ c ∧ (l x=c → x=v) := by
-  change convexHull ℝ T ⊆ {x | l x≤c ∧ (l x=c → x=v)}; apply convexHull_min hb; intro x hx y hy a b ha hb hab; change l x≤c ∧ (l x=c → x=v) at hx; change l y≤c ∧ (l y=c → y=v) at hy
+  change convexHull ℝ T ⊆ {x | l x≤c ∧ (l x=c → x=v)}; refine convexHull_min (fun x hx => hb x hx) ?_; intro x hx y hy a b ha hb hab; change l x≤c ∧ (l x=c → x=v) at hx; change l y≤c ∧ (l y=c → y=v) at hy
   change l (a • x + b • y)≤c ∧ (l (a • x + b • y)=c → a • x + b • y=v); rw [map_add,map_smul,map_smul]; simp only [smul_eq_mul,RingHom.id_apply]; have hxle := hx.1; have hyle := hy.1; have habc : (a+b)*c=c := by rw [hab,one_mul]
   have hleft := mul_nonneg ha (sub_nonneg.mpr hxle); have hright := mul_nonneg hb (sub_nonneg.mpr hyle); constructor
   · nlinarith
