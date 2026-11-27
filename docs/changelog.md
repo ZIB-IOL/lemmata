@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **Updated entry:** [Conditional gradient methods: away-step, fully-corrective and pairwise Frank–Wolfe](away-step-frank-wolfe/index.md), adding decomposition-invariant pairwise Frank–Wolfe on simplex-like polytopes (Theorem 3.8 with the rate of its proof, and two errata).
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding away-step Frank–Wolfe under sharpness for θ < 1/2 (Corollary 3.33) and the gradient dominated property of sharp functions (Lemma 3.35).
 - **Updated entry:** [Frank–Wolfe oracle complexity with prescribed set smoothness](frank-wolfe-prescribed-smoothness/index.md): the exposition is rewritten in standard terms, and six exported Lean declarations are renamed to match: `lower_bound_vertex_lmo`, `symmetric_thickening_reveals`, `tangent_balls_linear_rate`, `vertexLMO`, `Upper.innerFrankWolfe` and `Joint.projectedGradientRun` (formerly `lower_bound_vertex_rule`, `symmetric_bulge_reveals`, `joint_linear_rate`, `vertexOracle`, `Upper.quadraticMethod` and `Joint.jointRun`). The statements are unchanged.
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding the simplex descent step (Lemma 3.45).

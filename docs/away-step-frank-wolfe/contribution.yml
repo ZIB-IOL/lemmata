@@ -85,3 +85,23 @@ exports:
     kind: theorem
     page: index.md
     label: thm-away-step-frank-wolfe-pairwise
+  - name: Lemmata.AwayStepFW.IsSimplexLike
+    kind: definition
+    page: index.md
+    label: def-away-step-frank-wolfe-simplex-like
+  - name: Lemmata.AwayStepFW.IsDIPFWRun
+    kind: definition
+    page: index.md
+    label: def-away-step-frank-wolfe-dipfw
+  - name: Lemmata.AwayStepFW.sparsity_scaling
+    kind: theorem
+    page: index.md
+    label: lem-away-step-frank-wolfe-sparsity-scaling
+  - name: Lemmata.AwayStepFW.dipfw_feasible
+    kind: theorem
+    page: index.md
+    label: lem-away-step-frank-wolfe-dipfw-feasible
+  - name: Lemmata.AwayStepFW.dipfw_rate
+    kind: theorem
+    page: index.md
+    label: thm-away-step-frank-wolfe-dipfw

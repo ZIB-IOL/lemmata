@@ -7,6 +7,7 @@ public import Lemmata.AwayStepFW.FacialDistance
 public import Lemmata.AwayStepFW.PyramidalEq
 public import Lemmata.AwayStepFW.LowerBound
 public import Lemmata.AwayStepFW.PairwiseRate
+public import Lemmata.AwayStepFW.DIPFW
 
 @[expose] public section
 
@@ -44,6 +45,15 @@ theorem pyramidal_width_lower_bound : PyramidalWidthLowerBound := by
 
 /-- Theorem 3.2: linear convergence of pairwise Frank–Wolfe. -/
 theorem pairwise_convergence : PairwiseConvergence := Proof.pairwise_convergence
+
+/-- Sparsity scaling (Garber and Meshi, Lemma 2) on simplex-like polytopes. -/
+theorem sparsity_scaling : SparsityScaling := Proof.sparsity_scaling
+
+/-- Feasibility of decomposition-invariant pairwise Frank–Wolfe (Garber and Meshi, Lemma 1). -/
+theorem dipfw_feasible : DIPFWFeasible := Proof.dipfw_feasible
+
+/-- Theorem 3.8 with the rate of the proof: decomposition-invariant pairwise Frank–Wolfe. -/
+theorem dipfw_rate : DIPFWRate := Proof.dipfw_rate
 -- DOCS_END_MAIN
 
 end Lemmata.AwayStepFW
