@@ -246,4 +246,26 @@ def BCGRate : Prop :=
           2 * ⌈max (8 * K ^ 2 * L * Metric.diam (↑V : Set E) ^ 2) (4 * LS * k) / ε⌉₊ ≤ t →
         f (x t) - f xStar ≤ ε
 
+/-- **Theorem 3.42**, strongly convex case with explicit constants. Under the assumptions of
+`BCGRate`, let `f` moreover be `μ`-strongly convex on `conv V` and let `δ > 0` have the scaling
+property of the pyramidal width. With `Q = max {8 K² L D², 4 L_S k}`, every run of Algorithm 3.44
+has primal gap at most `ε > 0` after
+`⌈log₂ (φ₀/ε)⌉₊ + 1 + 2 ⌈Q/(2 φ₀)⌉₊ + 2 ⌈(2 Q/(μ δ²)) ln (h₀/ε)⌉₊` iterations. -/
+def BCGLinearRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ) (L : NNReal)
+    (μ δ LS K : ℝ) (k : ℕ) (x : ℕ → E) (S : ℕ → Finset E) (φ : ℕ → ℝ),
+    0 < μ → 0 < δ → Lemmata.AwayStepFW.IsScaling V δ → ConvexOn ℝ Set.univ f → IsSmooth f L →
+    (∀ x ∈ convexHull ℝ (↑V : Set E), ∀ y ∈ convexHull ℝ (↑V : Set E),
+      f x + fderiv ℝ f x (y - x) + μ / 2 * ‖y - x‖ ^ 2 ≤ f y) →
+    1 ≤ K → 0 < LS → IsBCGRun V f L LS K x S φ → (∀ t, (S t).card ≤ k) →
+    ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f,
+    (f (x 0) - f xStar) / 2 ≤ φ 0 → φ 0 ≤ L * Metric.diam (↑V : Set E) ^ 2 / 2 →
+    ∀ ε : ℝ, 0 < ε → ∀ t : ℕ,
+      ⌈Real.logb 2 (φ 0 / ε)⌉₊ + 1 +
+          2 * ⌈max (8 * K ^ 2 * L * Metric.diam (↑V : Set E) ^ 2) (4 * LS * k) / (2 * φ 0)⌉₊ +
+          2 * ⌈2 * max (8 * K ^ 2 * L * Metric.diam (↑V : Set E) ^ 2) (4 * LS * k) /
+              (μ * δ ^ 2) *
+            Real.log ((f (x 0) - f xStar) / ε)⌉₊ ≤ t →
+        f (x t) - f xStar ≤ ε
+
 end Lemmata.CGImprovements

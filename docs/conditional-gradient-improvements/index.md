@@ -305,21 +305,36 @@ As for lazy conditional gradients, $\phi_t \ge h_t/2$ throughout. A simplex desc
 least $\phi_t^2/(L_S k)$ and a Frank–Wolfe step at least $\phi_t^2/(2K^2LD^2)$, so every step that does
 not drop a vertex gains at least $h_t^2/Q$, and drop steps are at most as many as Frank–Wolfe steps.
 
+```{prf:theorem} Blended conditional gradients, strongly convex objectives
+:label: thm-conditional-gradient-improvements-bcg-linear
+:enumerator: 3.42
+
+If moreover $f$ is $\mu$-strongly convex on $P$ and $\delta > 0$ has the scaling property of the
+pyramidal width, every run has primal gap at most $\varepsilon > 0$ after
+$\lceil \log_2(\phi_0/\varepsilon) \rceil_+ + 1 + 2\lceil Q/(2\phi_0) \rceil +
+2\lceil (2Q/(\mu\delta^2)) \ln(h_0/\varepsilon) \rceil_+$ iterations.
+```
+
+At a negative answer of the weak separation oracle the simplex descent criterion failed as well, so
+$f'(x_t)(a - w) < 2\phi_t$ for the away vertex $a$ and the Frank–Wolfe vertex $w$, and geometric
+strong convexity gives $\mu\delta^2 h_t \le 2\phi_t^2$; after $\phi$ is halved,
+$\mu\delta^2 h_t \le 8\phi_t^2$, and the steps that do not drop a vertex contract the primal gap by
+$1 - \mu\delta^2/(2Q)$.
+
 :::{note}
 **Differences from the book.** Theorem 3.42 is stated in the book as
 $\mathcal{O}(LD^2 \dim P/\varepsilon)$, without proof; the formal statement gives explicit constants,
 with the bound $k$ on the active sets in place of $\mathcal{O}(\dim P)$. The constant $L_S$ of the
 simplex descent oracle is the smoothness constant in the weights of the active set, of order
 $LD^2$ for the simplex descent of Lemma 3.45, which gives the book's $\mathcal{O}(LD^2 k/\varepsilon)$.
-The strongly convex half of Theorem 3.42 and Lemma 3.45 are not formalized here.
+Lemma 3.45 is not formalized here.
 :::
 
 ## Not yet covered
 
 From Section 3.1.5, Corollary 3.33 for $\theta < 1/2$, the comparison with gradient domination
 (Lemma 3.35), the Hoffman bound (Lemma 3.27) and the Łojasiewicz-type Lemma 3.30 are not
-formalized here; from Section 3.2.2, the strongly convex half of Theorem 3.42 and the simplex
-descent step of Lemma 3.45.
+formalized here; from Section 3.2.2, the simplex descent step of Lemma 3.45.
 
 ## The formal statements at a glance
 
