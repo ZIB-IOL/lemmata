@@ -98,3 +98,7 @@ exports:
     kind: theorem
     page: index.md
     label: thm-conditional-gradient-improvements-bcg
+  - name: Lemmata.CGImprovements.bcg_linear_rate
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-improvements-bcg-linear

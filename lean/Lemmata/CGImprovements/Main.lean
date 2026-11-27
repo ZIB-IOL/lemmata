@@ -7,6 +7,7 @@ public import Lemmata.CGImprovements.Sharp
 public import Lemmata.CGImprovements.SharpAFW
 public import Lemmata.CGImprovements.NEP
 public import Lemmata.CGImprovements.BCG
+public import Lemmata.CGImprovements.BCGLinear
 
 @[expose] public section
 
@@ -42,6 +43,9 @@ theorem nep_rate : NEPRate := Proof.nep_rate
 
 /-- Theorem 3.42, convex case with explicit constants: blended conditional gradients. -/
 theorem bcg_rate : BCGRate := Proof.bcg_rate
+
+/-- Theorem 3.42, strongly convex case with explicit constants: blended conditional gradients. -/
+theorem bcg_linear_rate : BCGLinearRate := Proof.bcg_linear_rate
 -- DOCS_END_MAIN
 
 end Lemmata.CGImprovements
