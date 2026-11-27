@@ -179,7 +179,7 @@ private theorem rank_even_aux (n : ℕ) :
       (B : BilinForm K V), B.IsAlt → finrank K (LinearMap.range B) ≤ n →
         Even (finrank K (LinearMap.range B)) := by
   induction n using Nat.strong_induction_on with
-  | ind n ih =>
+  | h n ih =>
     intro V _ _ _ B hB hn
     by_cases hzero : B = 0
     · refine ⟨0, ?_⟩

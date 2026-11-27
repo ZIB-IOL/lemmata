@@ -50,7 +50,7 @@ theorem Regular.neg {f : RatFunc F} (hf : Regular f) : Regular (-f) := by
   simpa using h
 
 def regularSubring (F : Type*) [Field F] : Subring (RatFunc F) where
-  carrier := {f | Regular f}
+  carrier := Regular
   zero_mem' := regular_zero
   one_mem' := regular_one
   add_mem' := Regular.add

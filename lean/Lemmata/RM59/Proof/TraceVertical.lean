@@ -108,7 +108,7 @@ theorem support53_image_moments (g : Point 9 →ₗ[Field] Point 9)
       _ = (TraceData.traceForm + supportForm verticalSupport).compLinearMap
           (fun _ => pullback g) := by
         simpa only [verticalSupport] using congrArg
-          (fun f : MultilinearMap (RingHom.id Field) (fun _ : Fin 3 => Point 9) Field =>
+          (fun f : MultilinearMap Field (fun _ : Fin 3 => Point 9) Field =>
             f.compLinearMap (fun _ => pullback g))
           TraceData.support53_form_eq_traceForm_add_vertical
       _ = TraceData.traceForm.compLinearMap (fun _ => pullback g) +

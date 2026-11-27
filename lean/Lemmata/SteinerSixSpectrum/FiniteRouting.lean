@@ -4,7 +4,6 @@ public import Lemmata.SteinerSixSpectrum.Reduction
 public meta import Lemmata.SteinerSixSpectrum.Reduction
 import Mathlib.Tactic.Eval
 import Lean.Elab.Deriving.ToExpr
-import Lean.ToExpr
 
 public section
 

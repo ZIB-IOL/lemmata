@@ -110,7 +110,7 @@ theorem triangle_bound (a b : ℕ) (hb : b < a)
       (H.cliqueFinset 3).card ≤ triangleBoundAt a b := by
     intro E
     induction E using Nat.strong_induction_on with
-    | ind E ih =>
+    | h E ih =>
       intro H _ a b hb hcount hrepr
       by_cases hH : H = ⊥
       · subst H

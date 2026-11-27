@@ -73,5 +73,5 @@ entry's namespace, two entries can never clash, so the partial check is equivale
 full one for the entries it covers. It switches to the full check by itself when a change
 can affect every entry (the Lake configuration, the toolchain, `checker/`, `tools/`).
 
-Pinned: Lean `v4.36.0`, Mathlib `v4.36.0`, mystmd `1.11.0`, book theme
+Pinned: Lean `v4.35.0`, Mathlib `v4.35.0`, mystmd `1.11.0`, book theme
 `23f2df5493e23dfb1d9433c8aa64c87beb4232a3`.

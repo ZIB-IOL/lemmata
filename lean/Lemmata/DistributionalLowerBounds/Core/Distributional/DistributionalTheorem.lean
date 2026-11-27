@@ -157,9 +157,7 @@ theorem distributional_stopping_tail
       (scaledConcreteOracle (linearProofDimension T) (hardRho T) L alpha) π} := by
   apply distributional_stopping_tail_returned μ T L alpha hL ha s r hs hFeas eta
   intro π
-  refine (measureReal_mono ?_).trans (hFailure π)
-  intro _ h
-  exact h.2
+  exact (measureReal_mono (fun _ h => h.2)).trans (hFailure π)
 
 lemma finalGap_measurable {Seed : Type} [MeasurableSpace Seed] {d : ℕ}
     (s : Seed → FamilyStrategy d) (r : Seed → StopRule (PairedAnswer d))

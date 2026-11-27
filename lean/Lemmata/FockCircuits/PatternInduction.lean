@@ -42,7 +42,7 @@ theorem pattern_hasCircuit (s : ℕ)
         HasCircuit (pattern (R := R) (C := C) w) (s + 1 + k * stepCost) := by
     intro k
     induction k using Nat.strong_induction_on with
-    | ind k ih =>
+    | h k ih =>
       intro B _ _ w hk hlen hrows
       have hkfive : k ≤ 5 := by omega
       rcases labelled_cases w with ⟨u, ⟨a, p⟩, v, rfl, hsingle⟩ |

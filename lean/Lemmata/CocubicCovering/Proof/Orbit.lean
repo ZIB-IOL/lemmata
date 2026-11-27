@@ -37,7 +37,7 @@ theorem reach_root_of_checks {P : Type*} {n g : ℕ} (forest : Forest n g)
       ∃ q, allowed q ∧ projection q ∈ forest.roots := by
     intro d
     induction d using Nat.strong_induction_on with
-    | ind d ih =>
+    | h d ih =>
         intro p hd hp
         have hedge := of_decide_eq_true (accepted (projection p))
         rcases hedge with hroot | ⟨hnext, hdist⟩

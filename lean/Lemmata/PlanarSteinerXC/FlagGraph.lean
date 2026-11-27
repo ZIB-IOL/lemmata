@@ -354,7 +354,7 @@ theorem edg_surj : Function.Surjective S.edg := by
   · obtain ⟨f, hf⟩ := S.exists_face_of_edge (J.mem_edgeSet.mpr d.adj)
     refine ⟨⟨f, s(d.fst, d.snd), d.fst, false, false, hf, Sym2.mem_mk_left _ _⟩, ?_⟩
     simp only [edg, Bool.false_eq_true, ite_false, Sum.inl.injEq]
-    ext <;> simp [otherEnd_mk, -SimpleGraph.Dart.sym2Mk_fst_snd]
+    ext <;> simp [otherEnd_mk]
   · obtain ⟨e, he, hue⟩ := hu
     exact ⟨⟨f, e, u, false, true, he, hue⟩, rfl⟩
 
