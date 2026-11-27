@@ -54,3 +54,23 @@ exports:
     kind: theorem
     page: index.md
     label: cor-information-diffusion-fano-continuous
+  - name: Lemmata.FanoDiffusion.hellingerInt
+    kind: definition
+    page: index.md
+    label: def-information-diffusion-fano-hellinger
+  - name: Lemmata.FanoDiffusion.renyiDiv
+    kind: definition
+    page: index.md
+    label: def-information-diffusion-fano-renyi
+  - name: Lemmata.FanoDiffusion.binRenyiEntropy
+    kind: definition
+    page: index.md
+    label: def-information-diffusion-fano-renyi-entropy
+  - name: Lemmata.FanoDiffusion.info_diffusion_fano_renyi
+    kind: theorem
+    page: index.md
+    label: prop-information-diffusion-fano-renyi
+  - name: Lemmata.FanoDiffusion.info_diffusion_fano_renyi_gt_one
+    kind: theorem
+    page: index.md
+    label: prop-information-diffusion-fano-renyi-gt-one

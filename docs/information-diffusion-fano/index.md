@@ -12,6 +12,18 @@ This entry formalizes the note *An information diffusion Fano inequality* by Gá
 Sebastian Pokutta [@braun2015information]; numbers refer to the arXiv version.
 :::
 
+:::{admonition} Errata
+:class: warning
+
+**Proposition 2.1 for $\alpha < 1$.** Inequality (2) fails for orders $\alpha < 1$. For the
+two-point distributions $P = \mathrm{Bern}(1/2)$ and $Q = \mathrm{Bern}(1/4)$, the event
+$R = \{1\}$, $p_{\min} = p_{\max} = 1/4$ and $\alpha = 1/2$, the bracket in (2) equals $1/2$, so (2)
+claims $P(R) \le (1/2)^2 = 1/4$, while $P(R) = 1/2$. The last step of the proof, marked "by Eq.
+(4)", needs $P(R)^\alpha + (1 - P(R))^\alpha \le 1$, which holds only for $\alpha \ge 1$. The
+corrected statement below divides $P(R)^\alpha$ by $P(R)^\alpha + (1 - P(R))^\alpha$; for
+$\alpha > 1$ it implies (2), which is formalized as stated.
+:::
+
 Fano's inequality is a standard tool for lower bounds in statistics and optimization: a hidden
 random variable $X$ can be reconstructed from observations $Y$ only if $Y$ carries enough
 information about $X$. The setup is a Markov chain $X \to Y \to \hat X$, where the reconstruction
@@ -59,6 +71,61 @@ $p\log(p/q) + q - p$, where $p$ and $q$ are the masses of the part under $P$ and
 the data processing bound $d(P(R) \| Q(R)) \le D(P \| Q)$ for the binary relative entropy $d$, and
 $d(p \| q) + H(p) = p\log(1/q) + (1 - p)\log(1/(1 - q))$ is at least
 $p\log(1/p_{\max}) + (1 - p)\log(1/(1 - p_{\min}))$.
+
+## Rényi divergences
+
+```{prf:definition} Hellinger integral and Rényi divergence
+:label: def-information-diffusion-fano-hellinger
+:nonumber:
+
+For $\alpha > 0$, the Hellinger integral of order $\alpha$ is $\int (dP/dQ)^\alpha\, dQ$; for
+$\alpha < 1$ the part of $P$ that is singular to $Q$ does not contribute, and for $\alpha > 1$ it is
+used with $P \ll Q$.
+```
+
+```{prf:definition} Rényi divergence
+:label: def-information-diffusion-fano-renyi
+:nonumber:
+
+For $\alpha \ne 1$, $D_\alpha(P \| Q) = \log\bigl(\int (dP/dQ)^\alpha\, dQ\bigr)/(\alpha - 1)$.
+```
+
+```{prf:definition} Binary Rényi entropy
+:label: def-information-diffusion-fano-renyi-entropy
+:nonumber:
+
+For $\alpha \ne 1$, $H_\alpha(p) = \log(p^\alpha + (1 - p)^\alpha)/(1 - \alpha)$.
+```
+
+```{prf:proposition} Information diffusion Fano inequality, $\alpha \ne 1$, corrected
+:label: prop-information-diffusion-fano-renyi
+:enumerator: 2.1
+
+Under the assumptions of Proposition 2.1, let $0 < \alpha \ne 1$, with $P \ll Q$ if $\alpha > 1$,
+and let the Hellinger integral of order $\alpha$ be positive and finite. With $p = P(R)$,
+$A = D_\alpha(P \| Q) + H_\alpha(p) + \log(1 - p_{\min})$ and $B = (1 - p_{\min})/p_{\max}$,
+$$
+\frac{p^\alpha}{p^\alpha + (1 - p)^\alpha} \le \frac{e^{(\alpha - 1)A} - 1}{B^{\alpha - 1} - 1}.
+$$
+```
+
+```{prf:proposition} Information diffusion Fano inequality, $\alpha > 1$
+:label: prop-information-diffusion-fano-renyi-gt-one
+:enumerator: 2.1
+
+Under the assumptions of Proposition 2.1, let $\alpha > 1$, $P \ll Q$, and let the Hellinger
+integral of order $\alpha$ be finite. Then
+$P(R) \le \bigl((e^{(\alpha - 1)A} - 1)/(B^{\alpha - 1} - 1)\bigr)^{1/\alpha}$.
+```
+
+Hölder's inequality on $R$ and on its complement compares the Hellinger integral with its
+two-point version $q^{1-\alpha}p^\alpha + (1 - q)^{1-\alpha}(1 - p)^\alpha$, where $q = Q(R)$: it is
+at least that for $\alpha > 1$ and at most that for $\alpha < 1$, so $D_\alpha(P \| Q) \ge
+d_\alpha(P(R) \| Q(R))$ in both cases. Since $e^{(\alpha - 1)A}$ is the Hellinger integral times
+$(1 - p_{\min})^{\alpha - 1}/(p^\alpha + (1 - p)^\alpha)$, both cases reduce to comparing
+$p^\alpha B^{\alpha - 1} + (1 - p)^\alpha$ with the Hellinger integral times
+$(1 - p_{\min})^{\alpha - 1}$. For $\alpha > 1$, $p^\alpha + (1 - p)^\alpha \le 1$ gives the form of
+the paper.
 
 ## Fano inequality for arbitrary relations
 
@@ -123,9 +190,8 @@ take any bound $N$ or $V$ in place of the maximum or supremum.
 
 ## Not yet covered
 
-Proposition 2.1 for Rényi divergences of order $\alpha \ne 1$, the entropy versions
-(Corollaries 2.3 and 2.5) and the version for independent samples (Corollary 2.4) are not yet
-covered.
+The entropy versions (Corollaries 2.3 and 2.5) and the version for independent samples
+(Corollary 2.4) are not yet covered.
 
 ## The formal statements at a glance
 

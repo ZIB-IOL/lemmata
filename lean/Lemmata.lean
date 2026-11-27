@@ -351,6 +351,7 @@ public import Lemmata.EnergyShellCrossings.Statement
 public import Lemmata.FanoDiffusion.Corollaries
 public import Lemmata.FanoDiffusion.Main
 public import Lemmata.FanoDiffusion.Proof
+public import Lemmata.FanoDiffusion.Renyi
 public import Lemmata.FanoDiffusion.Statement
 public import Lemmata.FishburnReedsClassicalBound.Blocks
 public import Lemmata.FishburnReedsClassicalBound.Comparison
