@@ -89,3 +89,19 @@ exports:
     kind: theorem
     page: index.md
     label: thm-conditional-gradient-basics-nonconvex
+  - name: Lemmata.CGBasics.uniformly_convex_scaling
+    kind: theorem
+    page: index.md
+    label: prop-conditional-gradient-basics-uc-scaling
+  - name: Lemmata.CGBasics.uniformly_convex_linear
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-basics-uc-linear
+  - name: Lemmata.CGBasics.uniformly_convex_power
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-basics-uc-power
+  - name: Lemmata.CGBasics.gradient_dominated_rate
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-basics-gradient-dominated
