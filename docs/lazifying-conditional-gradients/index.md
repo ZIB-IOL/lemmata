@@ -202,6 +202,40 @@ $f(x_t) - f(x^*) \le \|x^*\|_0\Phi_t^2/(2S\Delta_t^2) \le \Phi_t$. A positive an
 $\tilde\eta_t\Phi_t/(K\Delta_t) \ge \eta_t\Phi_t/(2K\Delta_t)$, which the definition of $\Phi_t$
 accounts for, and $\Phi_t = \Phi_{t-1}(1 + \kappa^2C/2)/(1 + \kappa M_1/K)$.
 
+## Weak separation through augmentation
+
+An augmentation oracle only returns a vertex that improves a linear objective, or reports that
+there is none (Oracle 2). On $0/1$ polytopes with $\ell_1$-diameter $k$, Algorithm 9 builds weak
+separation from at most $N = \lceil \log(1 - 1/K)/\log(1 - 1/k) \rceil$ augmentation calls. It
+starts from a vertex $x_0$ with $cx_0 \le cx$ and returns $x_{i-1}$ as soon as
+$c(x - x_{i-1}) \ge \Phi$. Otherwise it asks for a vertex improving the objective below at
+$x_{i-1}$, answers *false* when there is none, and returns $x_N$ after $N$ improvements.
+
+```{prf:definition} The objective of line 7
+:label: def-lazifying-conditional-gradients-aug-objective
+:nonumber:
+
+At the vertex $y$, the augmentation oracle is called for
+$z \mapsto cz + \lambda \sum_j (1 - 2y_j) z_j$ with $\lambda = (\Phi - c(x - y))/k$. For $0/1$
+vectors, $\sum_j (1 - 2y_j)(z_j - y_j) = \|z - y\|_1$.
+```
+
+```{prf:proposition} Weak separation through augmentation
+:label: prop-lazifying-conditional-gradients-augmentation
+:enumerator: 6.1
+
+Let $V \subseteq \{0, 1\}^n$ have $\ell_1$-diameter at most $k \ge 1$, and let $\Phi > 0$ and
+$K > 1$. Every return of Algorithm 9 is a valid answer of the weak separation oracle for
+$\operatorname{conv} V$: a vertex returned in line 5 has $c(x - x_{i-1}) \ge \Phi > \Phi/K$; the
+answer *false* of line 9 certifies $c(x - z) \le \Phi$ for all $z \in \operatorname{conv} V$; and
+the vertex $x_N$ of line 12 has $c(x - x_N) > \Phi/K$ whenever $(1 - 1/k)^N \le 1 - 1/K$.
+```
+
+A vertex $y$ that cannot be improved gives $cy \le cz + \lambda\|z - y\|_1 \le cz + \lambda k$
+for every vertex $z$, which is $c(x - z) \le \Phi$. An improving vertex $x_i$ differs from
+$x_{i-1}$, so $\|x_i - x_{i-1}\|_1 \ge 1$ and $e_i = \Phi - c(x - x_i)$ satisfies
+$e_i < (1 - 1/k)\,e_{i-1}$; after $N$ improvements $e_N < (1 - 1/K)\Phi$.
+
 :::{note}
 **Differences from the paper.** Iterates are indexed from $x_1$ as in the paper. Theorem 4.2 is
 stated for every $\Phi_0$ with $f(x_1) - f(x^*) \le 2\Phi_0$, as Remark 4.1 allows, and its
@@ -211,10 +245,9 @@ oracle on $P \times P$ for the objective $(\nabla f(x_t), -\widetilde\nabla f(x_
 where $\widetilde\nabla f(x_t)_i = -\infty$ outside the support of $x_t$, are spelled out.
 :::
 
-## Not yet covered
+## Coverage
 
-Weak separation through augmentation (Proposition 6.1) is not yet covered. The lazy local variant
-(Section 3.3) and the online variant (Section 5) are out of scope.
+The lazy local variant (Section 3.3) and the online variant (Section 5) are out of scope.
 
 ## The formal statements at a glance
 

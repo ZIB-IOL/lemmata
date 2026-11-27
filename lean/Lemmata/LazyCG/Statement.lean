@@ -177,4 +177,36 @@ def LPCGRate : Prop :=
       Φ t ≤ Φ 0 * ((1 + min (√(S / (8 * α)) / (K * C)) (1 / √(Φ 0)) * √(S / (8 * α)) / (2 * K)) /
         (1 + 2 * (min (√(S / (8 * α)) / (K * C)) (1 / √(Φ 0)) * √(S / (8 * α)) / (2 * K)))) ^ t
 
+/-- The linear objective in line 7 of Algorithm 9 at the iterate `y`:
+`z ↦ c z + λ Σ_j (1 - 2 y_j) z_j` with `λ = (Φ - c(x - y))/k`. For `0/1` vectors,
+`Σ_j (1 - 2 y_j)(z_j - y_j) = ‖z - y‖₁`. -/
+noncomputable def augObjective {n : ℕ} (c : StrongDual ℝ (EuclideanSpace ℝ (Fin n)))
+    (x y : EuclideanSpace ℝ (Fin n)) (Φ k : ℝ) (z : EuclideanSpace ℝ (Fin n)) : ℝ :=
+  c z + (Φ - c (x - y)) / k * ∑ j, (1 - 2 * y j) * z j
+
+/-- **Proposition 6.1** (weak separation through augmentation). Let `V ⊆ {0,1}ⁿ` have
+`ℓ₁`-diameter at most `k ≥ 1`, and let `Φ > 0` and `K > 1`. Each return of Algorithm 9 is a valid
+answer of the weak separation oracle for `conv V`:
+* line 5: if `c(x - y) ≥ Φ`, then `c(x - y) > Φ/K`;
+* line 9: if `c(x - y) < Φ` for `y ∈ V` and the augmentation oracle finds no vertex improving the
+  objective of line 7, then `c(x - z) ≤ Φ` for all `z ∈ conv V`;
+* line 12: if `x₀ ∈ V` with `c x₀ ≤ c x`, and for `i = 1, …, N` we have `c(x - x_{i-1}) < Φ` and
+  the oracle returns a vertex `x_i` improving the objective of line 7 at `x_{i-1}`, then
+  `c(x - x_N) > Φ/K`, for every `N` with `(1 - 1/k)^N ≤ 1 - 1/K`, such as
+  `N = ⌈log (1 - 1/K)/log (1 - 1/k)⌉`. -/
+def AugSepCorrect : Prop :=
+  ∀ (n : ℕ) (V : Finset (EuclideanSpace ℝ (Fin n))) (c : StrongDual ℝ (EuclideanSpace ℝ (Fin n)))
+    (x : EuclideanSpace ℝ (Fin n)) (Φ K k : ℝ),
+    (∀ v ∈ V, ∀ i, v i = 0 ∨ v i = 1) → (∀ y ∈ V, ∀ z ∈ V, ∑ i, |y i - z i| ≤ k) → 1 ≤ k →
+    0 < Φ → 1 < K →
+    (∀ y : EuclideanSpace ℝ (Fin n), Φ ≤ c (x - y) → Φ / K < c (x - y)) ∧
+    (∀ y ∈ V, c (x - y) < Φ →
+      (∀ z ∈ V, augObjective c x y Φ k y ≤ augObjective c x y Φ k z) →
+      ∀ z ∈ convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n))), c (x - z) ≤ Φ) ∧
+    (∀ (N : ℕ) (xs : ℕ → EuclideanSpace ℝ (Fin n)), (1 - 1 / k) ^ N ≤ 1 - 1 / K →
+      xs 0 ∈ V → c (xs 0) ≤ c x →
+      (∀ i, 1 ≤ i → i ≤ N → xs i ∈ V ∧ c (x - xs (i - 1)) < Φ ∧
+        augObjective c x (xs (i - 1)) Φ k (xs i) < augObjective c x (xs (i - 1)) Φ k (xs (i - 1))) →
+      Φ / K < c (x - xs N))
+
 end Lemmata.LazyCG
