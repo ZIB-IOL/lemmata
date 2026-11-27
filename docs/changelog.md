@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **Updated entry:** [Lazifying conditional gradient algorithms: LCG, LPCG and parameter-free LCG](lazifying-conditional-gradients/index.md), adding lazy pairwise conditional gradients on simplex-like polytopes (Theorem 3.2, with two errata).
 - **New entry:** [Lazifying conditional gradient algorithms: LCG, LPCG and parameter-free LCG](lazifying-conditional-gradients/index.md), formalizing the paper by Braun, Pokutta and Zink: weak separation, lazy conditional gradients (Theorem 3.1) and the parameter-free variant (Theorem 4.2, Corollary 4.3).
 - **Updated entry:** [Conditional gradient methods: away-step, fully-corrective and pairwise Frank–Wolfe](away-step-frank-wolfe/index.md), adding decomposition-invariant pairwise Frank–Wolfe on simplex-like polytopes (Theorem 3.8 with the rate of its proof, and two errata).
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding away-step Frank–Wolfe under sharpness for θ < 1/2 (Corollary 3.33) and the gradient dominated property of sharp functions (Lemma 3.35).

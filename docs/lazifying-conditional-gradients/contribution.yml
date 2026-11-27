@@ -69,3 +69,15 @@ exports:
     kind: theorem
     page: index.md
     label: cor-lazifying-conditional-gradients-negatives
+  - name: Lemmata.LazyCG.HasPairwiseCurvature
+    kind: definition
+    page: index.md
+    label: def-lazifying-conditional-gradients-pairwise-curvature
+  - name: Lemmata.LazyCG.IsLPCGRun
+    kind: definition
+    page: index.md
+    label: def-lazifying-conditional-gradients-lpcg
+  - name: Lemmata.LazyCG.lpcg_rate
+    kind: theorem
+    page: index.md
+    label: thm-lazifying-conditional-gradients-lpcg
