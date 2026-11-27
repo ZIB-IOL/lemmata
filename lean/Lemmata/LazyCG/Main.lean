@@ -2,6 +2,7 @@ module
 
 public import Lemmata.LazyCG.Proof
 public import Lemmata.LazyCG.ParamFree
+public import Lemmata.LazyCG.LPCG
 
 @[expose] public section
 
@@ -21,6 +22,9 @@ theorem param_free_rate : ParamFreeRate := Proof.param_free_rate
 
 /-- Corollary 4.3: parameter-free lazy conditional gradients receive few negative answers. -/
 theorem param_free_negatives : ParamFreeNegatives := Proof.param_free_negatives
+
+/-- Theorem 3.2: lazy pairwise conditional gradients converge linearly on simplex-like polytopes. -/
+theorem lpcg_rate : LPCGRate := Proof.lpcg_rate
 -- DOCS_END_MAIN
 
 end Lemmata.LazyCG

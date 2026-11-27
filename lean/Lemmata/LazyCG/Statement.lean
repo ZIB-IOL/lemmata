@@ -1,6 +1,7 @@
 module
 
 public import Lemmata.FrankWolfe.Statement
+public import Lemmata.AwayStepFW.Statement
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
 
 @[expose] public section
@@ -117,5 +118,63 @@ def ParamFreeNegatives : Prop :=
     ∀ xStar ∈ minimizers P f, f (x 1) - f xStar ≤ 2 * Φ 0 →
     ∀ ε : ℝ, 0 < ε → ∀ N : ℕ, ε < f (x (N + 1)) - f xStar →
       ((Finset.Icc 1 N).filter (fun t => Φ t ≠ Φ (t - 1))).card ≤ ⌈Real.logb 2 (Φ 0 / ε)⌉₊
+
+/-- `f` has **pairwise curvature** at most `C` on `conv V`: for `x ∈ conv V`, `u, w ∈ V` and
+`η ∈ [0, 1]` with `x + η(u - w) ∈ conv V`,
+`f(x + η(u - w)) ≤ f(x) + η f'(x)(u - w) + C η²/2`. -/
+def HasPairwiseCurvature {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Set E)
+    (f : E → ℝ) (C : ℝ) : Prop :=
+  ∀ x ∈ convexHull ℝ V, ∀ u ∈ V, ∀ w ∈ V, ∀ η ∈ Set.Icc (0 : ℝ) 1,
+    x + η • (u - w) ∈ convexHull ℝ V →
+      f (x + η • (u - w)) ≤ f x + η * fderiv ℝ f x (u - w) + C / 2 * η ^ 2
+
+/-- A run of **lazy pairwise conditional gradients** (Algorithm 4) on a simplex-like polytope
+`conv V`, with accuracy `K`, curvature `C`, strong convexity `S` and sparsity bound `α`. Put
+`M₁ = √(S/(8α))`, `κ = min {M₁/(K C), 1/√Φ₀}`, and for `t ≥ 1` `η_t = κ √Φ_{t-1}` and
+`Δ_t = √(2 α Φ_{t-1}/S)`. The run starts at a vertex `x₁`, sets
+`Φ_t = (Φ_{t-1} + η_t² C/2)/(1 + η_t/(2 K Δ_t))`, and `η̃_t` is the largest power of `1/2` below
+`η_t`. The weak separation oracle on `P × P` either returns vertices `u, w`, where the support of
+`w` lies in that of `x_t`, with `f'(x_t)(w - u) > Φ_t/(K Δ_t)`, and then
+`x_{t+1} = x_t + η̃_t (u - w)`;
+or it certifies `f'(x_t)(z₂ - z₁) ≤ Φ_t/Δ_t` for all `z₁, z₂ ∈ P` with the support of `z₂` in that
+of `x_t`, and then `x_{t+1} = x_t`. -/
+def IsLPCGRun {n : ℕ} (V : Finset (EuclideanSpace ℝ (Fin n))) (f : EuclideanSpace ℝ (Fin n) → ℝ)
+    (K C S α : ℝ) (x : ℕ → EuclideanSpace ℝ (Fin n)) (Φ η' : ℕ → ℝ) : Prop :=
+  x 1 ∈ V ∧ ∀ t, 1 ≤ t →
+    Φ t = (Φ (t - 1) +
+        (min (√(S / (8 * α)) / (K * C)) (1 / √(Φ 0)) * √(Φ (t - 1))) ^ 2 * C / 2) /
+      (1 + min (√(S / (8 * α)) / (K * C)) (1 / √(Φ 0)) * √(Φ (t - 1)) /
+        (2 * K * √(2 * α * Φ (t - 1) / S))) ∧
+    (∃ δ : ℕ, η' t = (1 / 2) ^ δ) ∧
+    η' t ≤ min (√(S / (8 * α)) / (K * C)) (1 / √(Φ 0)) * √(Φ (t - 1)) ∧
+    min (√(S / (8 * α)) / (K * C)) (1 / √(Φ 0)) * √(Φ (t - 1)) < 2 * η' t ∧
+    ((∃ u ∈ V, ∃ w ∈ V, (∀ i, x t i = 0 → w i = 0) ∧
+        Φ t / (K * √(2 * α * Φ (t - 1) / S)) < fderiv ℝ f (x t) (w - u) ∧
+        x (t + 1) = x t + η' t • (u - w)) ∨
+      ((∀ z₁ ∈ convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n))),
+          ∀ z₂ ∈ convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n))),
+          (∀ i, x t i = 0 → z₂ i = 0) →
+            fderiv ℝ f (x t) (z₂ - z₁) ≤ Φ t / √(2 * α * Φ (t - 1) / S)) ∧
+        x (t + 1) = x t))
+
+/-- **Theorem 3.2** (lazy pairwise conditional gradients), on simplex-like polytopes and from a
+vertex. Let `f` have pairwise curvature `C > 0` and be `S`-strongly convex on `conv V` with
+minimizer `x⋆`, let `‖x⋆‖₀ ≤ α`, `K ≥ 1` and `f(x₁) - f(x⋆) ≤ Φ₀`, and put
+`B = κ M₁/(2K)`. Every run of Algorithm 4 satisfies
+`f(x_{t+1}) - f(x⋆) ≤ Φ_t ≤ Φ₀ ((1 + B)/(1 + 2B))^t`. -/
+def LPCGRate : Prop :=
+  ∀ (n : ℕ) (V : Finset (EuclideanSpace ℝ (Fin n))) (f : EuclideanSpace ℝ (Fin n) → ℝ)
+    (K C S α : ℝ) (x : ℕ → EuclideanSpace ℝ (Fin n)) (Φ η' : ℕ → ℝ),
+    Lemmata.AwayStepFW.IsSimplexLike V → HasPairwiseCurvature (↑V : Set _) f C →
+    (∀ x ∈ convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n))),
+      ∀ y ∈ convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n))),
+      f x + fderiv ℝ f x (y - x) + S / 2 * ‖y - x‖ ^ 2 ≤ f y) →
+    0 < S → 0 < C → 1 ≤ K → 0 < α → 0 < Φ 0 →
+    ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n)))) f,
+    ((Finset.univ.filter fun i => xStar i ≠ 0).card : ℝ) ≤ α → f (x 1) - f xStar ≤ Φ 0 →
+    IsLPCGRun V f K C S α x Φ η' →
+    ∀ t : ℕ, f (x (t + 1)) - f xStar ≤ Φ t ∧
+      Φ t ≤ Φ 0 * ((1 + min (√(S / (8 * α)) / (K * C)) (1 / √(Φ 0)) * √(S / (8 * α)) / (2 * K)) /
+        (1 + 2 * (min (√(S / (8 * α)) / (K * C)) (1 / √(Φ 0)) * √(S / (8 * α)) / (2 * K)))) ^ t
 
 end Lemmata.LazyCG
