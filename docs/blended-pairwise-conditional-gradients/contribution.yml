@@ -48,3 +48,11 @@ exports:
     kind: theorem
     page: index.md
     label: thm-blended-pairwise-conditional-gradients-linear
+  - name: Lemmata.BPCG.IsLazyBPCGStep
+    kind: definition
+    page: index.md
+    label: def-blended-pairwise-conditional-gradients-lazy-step
+  - name: Lemmata.BPCG.lazy_convex_rate
+    kind: theorem
+    page: index.md
+    label: thm-blended-pairwise-conditional-gradients-lazy

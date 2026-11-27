@@ -80,10 +80,40 @@ make the active set inconsistent. Theorem 3.2 is stated for any constant $\delta
 scaling property, in particular the pyramidal width.
 :::
 
+## Lazified BPCG
+
+The lazified variant (Algorithm 2 of the paper) calls the linear minimization oracle only when the
+active set offers too little: with a gap estimate $\Phi_t$ and an accuracy $J \ge 1$, it takes a local
+pairwise step if $f'(x_t)(a_t - s_t) \ge \Phi_t$, a Frank–Wolfe step toward the Frank–Wolfe vertex
+$w_t$ if $f'(x_t)(x_t - w_t) \ge \Phi_t/J$, and otherwise a gap step that halves $\Phi$.
+
+```{prf:definition} Lazified BPCG step
+:label: def-blended-pairwise-conditional-gradients-lazy-step
+:nonumber:
+
+If $f'(x)(a - s) \ge \Phi$, the step is the local pairwise step of BPCG and $\Phi$ stays. Otherwise,
+with a Frank–Wolfe vertex $w$, it is a Frank–Wolfe step with exact line search if
+$f'(x)(x - w) \ge \Phi/J$, and $\Phi$ stays; if not, the iterate stays and $\Phi$ is halved.
+```
+
+```{prf:theorem} Lazified BPCG, convex objectives
+:label: thm-blended-pairwise-conditional-gradients-lazy
+:enumerator: 3.6
+
+Let $f$ be convex and $L$-smooth, $J \ge 1$ and $h_0/2 \le \Phi_0 \le LD^2/2$. Every run of lazified
+BPCG has primal gap at most $\varepsilon > 0$ after
+$\lceil \log_2(\Phi_0/\varepsilon) \rceil_+ + 1 + 2\lceil 8J^2LD^2/\varepsilon \rceil$ iterations.
+```
+
+A gap step certifies $h_t \le f'(x_t)(x_t - w_t) < \Phi_t/J \le \Phi_t$, so $\Phi_t \ge h_t/2$
+throughout. A local pairwise step that does not drop a vertex gains at least $\Phi_t^2/(2LD^2)$ and a
+Frank–Wolfe step at least $\Phi_t^2/(2J^2LD^2)$; drop steps are at most as many as Frank–Wolfe steps.
+The paper states case (B) as $\mathcal{O}(1/T)$; the formal statement gives explicit constants.
+
 ## Not yet covered
 
-The lazified variant LazyBPCG (Theorem 3.6) is not formalized here yet; the application to kernel
-herding is out of scope.
+Case (A) of Theorem 3.6, linear convergence of lazified BPCG for strongly convex objectives over
+polytopes, is not formalized here yet; the application to kernel herding is out of scope.
 
 ## The formal statements at a glance
 

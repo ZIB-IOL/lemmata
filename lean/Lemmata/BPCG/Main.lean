@@ -1,6 +1,7 @@
 module
 
 public import Lemmata.BPCG.Proof
+public import Lemmata.BPCG.Lazy
 
 @[expose] public section
 
@@ -12,6 +13,9 @@ theorem convex_rate : ConvexRate := Proof.bpcg_convex_rate
 
 /-- Theorem 3.2: BPCG converges linearly over polytopes for strongly convex objectives. -/
 theorem linear_rate : LinearRate := Proof.bpcg_linear_rate
+
+/-- Theorem 3.6, case (B), with explicit constants: lazified BPCG for convex objectives. -/
+theorem lazy_convex_rate : LazyConvexRate := Proof.lazy_convex_rate
 -- DOCS_END_MAIN
 
 end Lemmata.BPCG
