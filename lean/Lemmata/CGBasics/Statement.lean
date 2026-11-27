@@ -261,4 +261,34 @@ def SimplexLowerBound : Prop :=
     ∀ x ∈ convexHull ℝ ((fun i : Fin n => EuclideanSpace.single i (1 : ℝ)) '' (S : Set (Fin n))),
       1 / (S.card : ℝ) - 1 / n ≤ ‖x‖ ^ 2 - ‖xStar‖ ^ 2
 
+/-- **Lemma 2.10** (square sums with fast tails). Let `γ_i ≥ 0` with `∑ γ_i²` convergent, and let
+`δ > 0` and `t₀` be such that `∑_{i ≥ t} γ_i² ≤ C/(t log^{2+δ} t)` for `t ≥ t₀`. Then `∑ γ_i`
+converges. -/
+def SquareTailSummable : Prop :=
+  ∀ (γ : ℕ → ℝ) (C δ : ℝ) (t₀ : ℕ), (∀ i, 0 ≤ γ i) → 0 < δ → Summable (fun i => γ i ^ 2) →
+    (∀ t : ℕ, t₀ ≤ t → ∑' i, γ (t + i) ^ 2 ≤ C / (t * Real.log t ^ (2 + δ))) →
+    Summable γ
+
+/-- **Theorem 2.8** (Frank–Wolfe is slow when the minimizers lie on a face). Let `P = conv V` for a
+finite `V`, let `F` be an exposed face of `P` containing all minimizers of a convex `L`-smooth `f`
+over `P`, and take a Frank–Wolfe run with vertices `v_t ∈ V` whose steps satisfy
+`γ_t ≤ ν g_t/‖x_t - v_t‖²` and `f(x_t) - f(x_{t+1}) ≥ g_t²/(2 L ‖x_t - v_t‖²)`, where
+`g_t = f'(x_t)(x_t - v_t)`. If some iterate `x_{t₀}` lies outside `F` with `f(x_{t₀}) < f(w)` for
+every vertex `w` of `F`, then for every `δ > 0`, `f(x_t) - f(x⋆) ≥ L D²/(t log^{2+δ} t)` for
+infinitely many `t`. -/
+def WolfeLowerBound : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (ψ : StrongDual ℝ E)
+    (f : E → ℝ) (L : NNReal) (ν : ℝ) (x v : ℕ → E) (γ : ℕ → ℝ) (t₀ : ℕ),
+    0 < (L : ℝ) → ConvexOn ℝ Set.univ f → IsSmooth f L →
+    minimizers (convexHull ℝ (↑V : Set E)) f ⊆ convexHull ℝ (↑(exposedFace V ψ) : Set E) →
+    x 0 ∈ convexHull ℝ (↑V : Set E) →
+    (∀ t : ℕ, v t ∈ V ∧ (∀ w ∈ V, fderiv ℝ f (x t) (v t) ≤ fderiv ℝ f (x t) w) ∧
+      γ t ∈ Set.Icc (0 : ℝ) 1 ∧ x (t + 1) = x t + γ t • (v t - x t) ∧
+      γ t ≤ ν * fderiv ℝ f (x t) (x t - v t) / ‖x t - v t‖ ^ 2 ∧
+      fderiv ℝ f (x t) (x t - v t) ^ 2 / (2 * L * ‖x t - v t‖ ^ 2) ≤ f (x t) - f (x (t + 1))) →
+    x t₀ ∉ convexHull ℝ (↑(exposedFace V ψ) : Set E) → (∀ w ∈ exposedFace V ψ, f (x t₀) < f w) →
+    ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f, ∀ δ : ℝ, 0 < δ →
+      ∃ᶠ t : ℕ in Filter.atTop,
+        L * Metric.diam (↑V : Set E) ^ 2 / ((t : ℝ) * Real.log t ^ (2 + δ)) ≤ f (x t) - f xStar
+
 end Lemmata.CGBasics
