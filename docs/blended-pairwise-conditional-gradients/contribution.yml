@@ -1,0 +1,50 @@
+schema_version: 1
+id: blended-pairwise-conditional-gradients
+lean_namespace: Lemmata.BPCG
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "2110.12650"
+abstract: >-
+  Blended pairwise conditional gradients (BPCG) combine pairwise steps inside the active set with
+  Frank–Wolfe steps: a step moves weight from the away vertex to the best vertex of the active set
+  when this local gap is at least the Frank–Wolfe gap, and otherwise takes a Frank–Wolfe step. Since
+  only Frank–Wolfe steps add vertices, drop steps are at most as many as Frank–Wolfe steps, and there
+  are no swap steps. For a convex $L$-smooth objective on a polytope $P = \operatorname{conv} V$ of
+  diameter $D$, every run with exact line search satisfies $f(x_T) - f(x^*) \le 4LD^2/T$, and for a
+  $\mu$-strongly convex objective with pyramidal width $\delta$,
+  $f(x_T) - f(x^*) \le (f(x_0) - f(x^*)) \exp(-cT)$ with
+  $c = \frac{1}{2}\min\{1/2, \mu\delta^2/(4LD^2)\}$. The statements hold in real normed spaces, for
+  every tie-breaking of the oracles.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.BPCG.IsBPCGStep
+    kind: definition
+    page: index.md
+    label: def-blended-pairwise-conditional-gradients-step
+  - name: Lemmata.BPCG.IsBPCGRun
+    kind: definition
+    page: index.md
+    label: def-blended-pairwise-conditional-gradients-run
+  - name: Lemmata.BPCG.convex_rate
+    kind: theorem
+    page: index.md
+    label: thm-blended-pairwise-conditional-gradients-convex
+  - name: Lemmata.BPCG.linear_rate
+    kind: theorem
+    page: index.md
+    label: thm-blended-pairwise-conditional-gradients-linear
