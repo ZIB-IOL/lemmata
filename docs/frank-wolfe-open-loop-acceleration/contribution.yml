@@ -1,0 +1,73 @@
+schema_version: 1
+id: frank-wolfe-open-loop-acceleration
+lean_namespace: Lemmata.FWOpenLoop
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "2205.12838"
+abstract: >-
+  The Frank–Wolfe algorithm with the open-loop step sizes $\eta_t = 4/(t + 4)$ converges at the
+  rate $8L\delta^2/(t + 3)$, and faster when the primal gaps obey the recursion
+  $h_{t+1} \le (1 - \eta_t/2) h_t - \eta_t A C_t h_t^{1-\psi} + \eta_t^2 B C_t$: a sequence lemma
+  then gives rates up to $O(1/t^2)$. Scaling inequalities, lower bounds on the Frank–Wolfe gap in
+  terms of the primal gap, give such recursions when the minimizers lie in the relative interior and
+  a Hölderian error bound holds, when the gradients are bounded away from zero on a uniformly convex
+  set, and under a Hölderian error bound on a uniformly convex set. The statements hold in real
+  normed spaces, for every Frank–Wolfe run; the scaling inequality in the relative interior is
+  corrected for feasible regions that are not full-dimensional.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.FWOpenLoop.eta
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-open-loop-acceleration-eta
+  - name: Lemmata.FWOpenLoop.baseline_rate
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-open-loop-acceleration-baseline
+  - name: Lemmata.FWOpenLoop.guelat_marcotte_scaling
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-open-loop-acceleration-gm
+  - name: Lemmata.FWOpenLoop.iterates_near_optimum
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-open-loop-acceleration-near
+  - name: Lemmata.FWOpenLoop.scaling_heb
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-open-loop-acceleration-scaling-heb
+  - name: Lemmata.FWOpenLoop.sequence_lemma
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-open-loop-acceleration-sequence
+  - name: Lemmata.FWOpenLoop.interior_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-open-loop-acceleration-interior
+  - name: Lemmata.FWOpenLoop.scaling_unif
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-open-loop-acceleration-scaling-unif
+  - name: Lemmata.FWOpenLoop.exterior_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-open-loop-acceleration-exterior
+  - name: Lemmata.FWOpenLoop.unrestricted_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-open-loop-acceleration-unrestricted
