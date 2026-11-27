@@ -182,4 +182,31 @@ def DistanceFanoEntropy : Prop :=
       condEntropy ν ≤ binEntropy (ν.real {p | t < ρ p.1 p.2}) +
         ν.real {p | t < ρ p.1 p.2} * log ((Fintype.card α - Nmin) / Nmax) + log Nmax
 
+/-- **Corollary 2.4** (Fano inequality for independent samples), with left-hand side `P[R]`. Let `X`
+take finitely many values with law `μ_X`, and let `Y = (Y_1, …, Y_n)` be samples with finitely
+many values that are i.i.d. with law `η(x)` given `X = x`: the joint laws `μ` of `(X, Y)` and `μ₁`
+of `(X, Y_1)` satisfy `μ(x, y) = μ_X(x) ∏ η(x)(y_i)` and `μ₁(x, c) = μ_X(x) η(x)(c)`. Let `X̂` be
+drawn from `κ(Y)`, let `R`, `p_min` and `p_max` be as in Proposition 2.2, and let `η(x) ≪ η(x')`
+and `D(η(x) ‖ η(x')) ≤ β` for all `x, x'`. Then
+`P[R] ≤ (n I(X; Y_1) + H(P[R]) + log (1 - p_min))/log ((1 - p_min)/p_max)`, and the right-hand side
+is at most the same expression with `n β` in place of `n I(X; Y_1)`. -/
+def IndependentSamplesFano : Prop :=
+  ∀ {α β γ : Type u} [Fintype α] [MeasurableSpace α] [MeasurableSingletonClass α] [Fintype β]
+    [MeasurableSpace β] [MeasurableSingletonClass β] [MeasurableSpace γ] (n : ℕ)
+    (μX : Measure α) [IsProbabilityMeasure μX] (η : α → Measure β)
+    (μ : Measure (α × (Fin n → β))) [IsProbabilityMeasure μ] (μ₁ : Measure (α × β))
+    [IsProbabilityMeasure μ₁] (κ : Kernel (Fin n → β) γ) [IsMarkovKernel κ] (R : Set (α × γ))
+    (pmin pmax b : ℝ),
+    (∀ x, IsProbabilityMeasure (η x)) →
+    (∀ x y, μ.real {(x, y)} = μX.real {x} * ∏ i, (η x).real {y i}) →
+    (∀ x c, μ₁.real {(x, c)} = μX.real {x} * (η x).real {c}) →
+    (∀ x x', η x ≪ η x') → (∀ x x', (klDiv (η x) (η x')).toReal ≤ b) →
+    MeasurableSet R → 0 ≤ pmin → 0 < pmax → pmin + pmax < 1 →
+    (∀ z, pmin ≤ μ.fst.real {x | (x, z) ∈ R} ∧ μ.fst.real {x | (x, z) ∈ R} ≤ pmax) →
+      (chainLaw μ κ).real R ≤ (n * (mutualInfo μ₁).toReal + binEntropy ((chainLaw μ κ).real R) +
+          log (1 - pmin)) / log ((1 - pmin) / pmax) ∧
+      (n * (mutualInfo μ₁).toReal + binEntropy ((chainLaw μ κ).real R) + log (1 - pmin)) /
+          log ((1 - pmin) / pmax) ≤
+        (n * b + binEntropy ((chainLaw μ κ).real R) + log (1 - pmin)) / log ((1 - pmin) / pmax)
+
 end Lemmata.FanoDiffusion

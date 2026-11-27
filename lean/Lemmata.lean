@@ -353,6 +353,7 @@ public import Lemmata.FanoDiffusion.Entropy
 public import Lemmata.FanoDiffusion.Main
 public import Lemmata.FanoDiffusion.Proof
 public import Lemmata.FanoDiffusion.Renyi
+public import Lemmata.FanoDiffusion.Samples
 public import Lemmata.FanoDiffusion.Statement
 public import Lemmata.FishburnReedsClassicalBound.Blocks
 public import Lemmata.FishburnReedsClassicalBound.Comparison

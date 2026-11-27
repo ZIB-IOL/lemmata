@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **Updated entry:** [An information diffusion Fano inequality](information-diffusion-fano/index.md), adding the Fano inequality for independent samples (Corollary 2.4, with an erratum), which completes the entry.
 - **Updated entry:** [An information diffusion Fano inequality](information-diffusion-fano/index.md), adding entropy for finite random variables, `I(X; X̂) = H(X) - H(X | X̂)` and the entropy versions of the Fano inequality (Corollaries 2.3 and 2.5).
 - **Updated entry:** [An information diffusion Fano inequality](information-diffusion-fano/index.md), adding Rényi divergences and Proposition 2.1 for orders α ≠ 1, with an erratum for α < 1.
 - **New entry:** [An information diffusion Fano inequality](information-diffusion-fano/index.md), formalizing the note by Braun and Pokutta: the information diffusion inequality for relative entropy (Proposition 2.1), the Fano inequality for arbitrary relations (Proposition 2.2) and the distance-based and continuous Fano inequalities (Corollaries 2.6 and 2.7).
