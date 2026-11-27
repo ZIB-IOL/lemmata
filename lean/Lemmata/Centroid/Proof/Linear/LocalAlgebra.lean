@@ -42,7 +42,7 @@ theorem localExponent_pos : 0 < localExponent A := Nat.zero_lt_succ _
 theorem nilradical_pow_localExponent [IsArtinianRing A] :
     nilradical A ^ localExponent A = ⊥ := by
   change nilradical A ^ (nilpotencyClass (nilradical A) + 1) = 0
-  rw [pow_succ, pow_nilpotencyClass (IsArtinianRing.isNilpotent_nilradical A),
+  rw [pow_succ, pow_nilpotencyClass IsArtinianRing.isNilpotent_nilradical,
     zero_mul]
 
 def LocalComponent (A : Type*) [CommRing A] (m : MaximalSpectrum A) :=

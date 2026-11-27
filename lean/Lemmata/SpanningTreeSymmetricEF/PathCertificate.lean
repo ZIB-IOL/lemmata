@@ -9,7 +9,6 @@ membership claim is made here.
 -/
 public import Lemmata.SpanningTreeSymmetricEF.Approximation
 public import Mathlib.Combinatorics.SimpleGraph.CycleGraph
-import Mathlib.Combinatorics.SimpleGraph.Hasse
 
 @[expose] public section
 

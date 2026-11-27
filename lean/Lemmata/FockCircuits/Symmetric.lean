@@ -77,7 +77,7 @@ theorem coeff_word (v w : List X) :
     simpa only [FreeMonoid.toList_ofList] using wordBasis_apply (R := R) (FreeMonoid.ofList v)
   rw [← hb]
   change (wordBasis R X).repr (wordBasis R X (FreeMonoid.ofList v)) (FreeMonoid.ofList w) = _
-  simp only [Module.Basis.repr_self, Finsupp.single_apply, FreeMonoid.ofList.injEq]
+  simp only [Module.Basis.repr_self, Finsupp.single_apply, FreeMonoid.ofList.injective.eq_iff]
 
 theorem coeff_ext {p q : FreeAlgebra R X} (h : ∀ w : List X, coeff p w = coeff q w) : p = q := by
   apply (wordBasis R X).repr.injective

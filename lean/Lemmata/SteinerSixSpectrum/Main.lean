@@ -10,7 +10,7 @@ namespace Lemmata.SteinerSixSpectrum
 private theorem exists_nat (n : ℕ) (h : constructible n) :
     Nonempty (SteinerSystem (Fin n)) := by
   induction n using Nat.strong_induction_on with
-  | ind n ih =>
+  | h n ih =>
     rcases constructionCases h with ⟨p, hp⟩ | ⟨p, hp⟩ | checked
     · exact realizeStep hp ih
     · exact realizeProduct hp ih

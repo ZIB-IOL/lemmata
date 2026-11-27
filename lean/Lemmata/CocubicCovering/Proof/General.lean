@@ -33,7 +33,7 @@ theorem hasWitness_add_three {m : ℕ} (hm : 4 ≤ m) (hw : HasWitness m) :
 theorem hasWitness_of_ge_nine : ∀ m : ℕ, 9 ≤ m → HasWitness m := by
   intro m
   induction m using Nat.strong_induction_on with
-  | ind m ih =>
+  | h m ih =>
     intro hm
     by_cases hsmall : m < 12
     · have hcases : m = 9 ∨ m = 10 ∨ m = 11 := by omega

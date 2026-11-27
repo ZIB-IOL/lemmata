@@ -61,7 +61,7 @@ theorem coefficient_prod_eq_sum (p : I → Polynomial R) (D e : ℕ)
         Fintype.prod_sum _
       _ = _ := Finset.sum_congr rfl (fun d _ => product_monomial _ _)
   rw [hx, Polynomial.finsetSum_coeff]
-  exact Finset.sum_congr rfl (fun d _ => Polynomial.coeff_monomial_apply)
+  exact Finset.sum_congr rfl (fun d _ => Polynomial.coeff_monomial)
 
 private theorem coeff_product_leading {m e : ℕ} (p : Fin m → Polynomial R)
     (h : ∀ i j, j < e → (p i).coeff j = 0) :

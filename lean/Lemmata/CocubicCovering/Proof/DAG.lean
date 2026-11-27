@@ -24,7 +24,7 @@ theorem check_sound {State : Type*} {n : ℕ} (state : Fin n → State)
   have hgood : ∀ k (hk : k < n), ¬bad (state ⟨k, hk⟩) := by
     intro k
     induction k using Nat.strong_induction_on with
-    | ind k ih =>
+    | h k ih =>
         intro hk hbad
         have hnode := hall ⟨k, hk⟩ (List.mem_finRange _)
         obtain ⟨hvalid, hchildren⟩ := Bool.and_eq_true_iff.mp hnode

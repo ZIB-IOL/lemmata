@@ -287,7 +287,7 @@ theorem pyramidalWidth_eq_facialDistance [FiniteDimensional ℝ E] (V : Finset E
       linarith
     have hfd : facialDistance V = 0 := by
       unfold facialDistance
-      convert Real.sInf_empty using 2
+      convert Real.sInf_empty
       ext r
       simp only [Set.mem_ofPred_eq, Set.mem_empty_iff_false, iff_false]
       rintro ⟨ψ, hψ, -⟩

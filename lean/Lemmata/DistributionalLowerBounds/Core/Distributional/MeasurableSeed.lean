@@ -26,7 +26,7 @@ lemma integral_expect (P : FinitePMF Ω) (μ : Measure S) (X : S → Ω → ℝ)
     (hX : ∀ ω, Integrable (fun s => X s ω) μ) :
     (∫ s, P.expect (X s) ∂μ) = P.expect (fun ω => ∫ s, X s ω ∂μ) := by
   unfold expect
-  rw [integral_finsetSum _ (fun ω _ => (hX ω).const_mul (P.weight ω))]
+  rw [integral_finset_sum _ (fun ω _ => (hX ω).const_mul (P.weight ω))]
   apply Finset.sum_congr rfl
   intro ω _
   exact integral_const_mul _ _
@@ -38,7 +38,7 @@ theorem integrate_seedwise_lower_bound (P : FinitePMF Ω)
     (hbound : ∀ s, c ≤ P.expect (X s)) :
     c ≤ P.expect (fun ω => ∫ s, X s ω ∂μ) := by
   have hi : Integrable (fun s => P.expect (X s)) μ := by
-    exact integrable_finsetSum _ (fun ω _ => (hX ω).const_mul (P.weight ω))
+    exact integrable_finset_sum _ (fun ω _ => (hX ω).const_mul (P.weight ω))
   calc
     c = ∫ _ : S, c ∂μ := by simp
     _ ≤ ∫ s, P.expect (X s) ∂μ := integral_mono (integrable_const _) hi hbound

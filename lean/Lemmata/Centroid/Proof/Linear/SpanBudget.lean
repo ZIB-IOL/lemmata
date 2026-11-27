@@ -27,7 +27,7 @@ theorem exists_small_submodule_cover (S : α → Submodule F L)
       E ⊔ s.sup S = ⨆ a, S a := by
   generalize hd : Module.finrank F (⨆ a, S a : Submodule F L) - Module.finrank F E = d
   induction d using Nat.strong_induction_on generalizing E with
-  | ind d ih =>
+  | h d ih =>
     by_cases he : E = ⨆ a, S a
     · refine ⟨∅, ?_, ?_⟩
       · simpa only [Finset.card_empty, zero_add] using Submodule.finrank_mono hE

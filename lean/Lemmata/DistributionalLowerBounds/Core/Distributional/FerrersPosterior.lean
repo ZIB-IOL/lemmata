@@ -220,10 +220,13 @@ def FerrersPerm {m : ℕ} (D : FerrersData m) :=
 
 noncomputable instance {m : ℕ} (D : FerrersData m) : Fintype (FerrersPerm D) := by
   classical
-  exact Fintype.subtype
+  apply Fintype.ofFinset
     ((Finset.univ : Finset (Equiv.Perm (Fin m))).filter
       (fun sigma => ∀ i, D.lower i ≤ (sigma i).val))
-    (fun sigma => by simp only [Finset.mem_filter, Finset.mem_univ, true_and])
+  intro sigma
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+  change (∀ i, D.lower i ≤ (sigma i).val) ↔ ∀ i, D.lower i ≤ (sigma i).val
+  rfl
 
 namespace FerrersPerm
 
@@ -298,11 +301,7 @@ noncomputable def decompose {n : ℕ} (D : FerrersData (n + 1)) :
 /-- Product formula for nested compatible permutations. -/
 theorem card_eq_prod_choices : ∀ {m : ℕ} (D : FerrersData m),
     Fintype.card (FerrersPerm D) = ∏ i, D.choices i
-  | 0, D => by
-      rw [Fin.prod_univ_zero, Fintype.card_eq_one_iff]
-      refine ⟨(⟨1, fun i => i.elim0⟩ : {sigma : Equiv.Perm (Fin 0) // ∀ i, D.lower i ≤ (sigma i).val}),
-        fun x => ?_⟩
-      exact Subtype.ext (Equiv.ext fun i => i.elim0)
+  | 0, D => by simp [FerrersPerm]
   | n + 1, D => by
       rw [← Fintype.card_congr (decompose D), Fintype.card_prod,
         FerrersData.card_allowedLast, card_eq_prod_choices D.dropLast,

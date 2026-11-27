@@ -14,7 +14,7 @@ namespace Lemmata.RM59.TraceData
 open scoped BigOperators Matrix
 open Lemmata.RM59.SupportForms
 
-def traceForm : MultilinearMap (RingHom.id Field) (fun _ : Fin 3 => Point 9) Field :=
+def traceForm : MultilinearMap Field (fun _ : Fin 3 => Point 9) Field :=
   TraceGeometry.tau.toMultilinearMap.compLinearMap fun _ => FieldCoordinates.covectorLinear
 
 /-- Ordered triples include repetitions, so the encoded mask uses a set. -/

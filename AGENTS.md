@@ -58,28 +58,6 @@ lean/.lake/packages`.
 Never run `lake update`. The dependency set in `lean/lake-manifest.json` is pinned, and the
 cluster rejects any commit whose manifest differs from its cache in any package.
 
-### When the pinned Lean and Mathlib change
-
-The archive moved to Lean and Mathlib `v4.36.0` on 2026-11-27 (from `v4.35.0`). After
-pulling such a change, fetch the new Mathlib once with `( cd lean && lake exe cache get )`;
-elan installs the new Lean by itself. A branch started before the change must be rebased
-onto `main` and built again. What broke most often in the move to `v4.36.0`:
-
-- `induction n using Nat.strong_induction_on with | h n ih => ...`: the case is now `ind`.
-- `Set` is a structure, no longer a function type. A predicate is not a set: write
-  `{x | p x}`, not `p`. A proof of `∀ x ∈ s, p x` passes as `s ⊆ {x | p x}` only once the
-  expected type is known (`refine` rather than `apply`, or `fun x hx => h x hx`), and
-  `convert` now goes into a set equality (`convert ... using 2` stops before it).
-- `Polynomial.coeff_monomial` now says `(monomial n r).coeff = Finsupp.single n r`; the
-  pointwise form is `Polynomial.coeff_monomial_apply`, and `simp` needs `Finsupp.single_apply`.
-- `MultilinearMap` is semilinear: `MultilinearMap (RingHom.id R) M N`, not `MultilinearMap R M N`.
-- Renamed or moved: `FreeMonoid.ofList` is a constructor (`FreeMonoid.ofList.injEq`);
-  `SimpleGraph.pathGraph_le_cycleGraph` needs `Mathlib.Combinatorics.SimpleGraph.Hasse`;
-  `integral_finset_sum` and `integrable_finset_sum` are `integral_finsetSum` and
-  `integrable_finsetSum`; `IsArtinianRing.isNilpotent_nilradical` takes the ring; the
-  second half of `Tuple.eq_sort_iff` is `IsStable` (`≤`, implicit indices).
-- Deriving `Lean.ToExpr` needs `import Lean.ToExpr` in the module.
-
 ### If the repository gets large
 
 Today a full clone is small (1.6 MB, measured 2026-10-26); the large download is Mathlib's

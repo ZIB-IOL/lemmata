@@ -129,10 +129,7 @@ lemma rowEnum_tie (hS : Nonempty S.Realizations) (i j : Fin S.remaining) (hij : 
     (he : S.reducedLower hS i = S.reducedLower hS j) :
     (S.rowEnum i).val < (S.rowEnum j).val := by
   simp only [reducedLower_eq_baseLower] at he
-  have ht : Tuple.sort S.baseLower i < Tuple.sort S.baseLower j :=
-    lt_of_le_of_ne
-      ((Tuple.eq_sort_iff.mp (rfl : Tuple.sort S.baseLower = Tuple.sort S.baseLower)).2 hij.le he)
-      ((Tuple.sort S.baseLower).injective.ne hij.ne)
+  have ht := (Tuple.eq_sort_iff.mp (rfl : Tuple.sort S.baseLower = Tuple.sort S.baseLower)).2 i j hij he
   exact S.rowOrder.strictMono ht
 
 /-- Restriction with both the row sort and the gapped rank enumeration. -/
