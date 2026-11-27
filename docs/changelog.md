@@ -10,6 +10,10 @@ entry shows its own last change and links to the exact commit.
 
 Newest first. Add an item in the same pull request as the change it describes.
 
+## 2026-11-27
+
+- [Bounds for finite-order Grothendieck constants](grothendieck-lower-bounds/index.md) adds a 141-row witness for $K_G(3)>1.4396139030752404$ and a rotation proof of $K_G(3)<1.451263576$ from the published finite local model of Designolle et al.
+
 ## 2026-11-26
 
 - **New entry:** [Blended pairwise conditional gradients: BPCG and LazyBPCG](blended-pairwise-conditional-gradients/index.md), formalizing BPCG from Tsuji, Tanaka and Pokutta: the rate 4LD²/T for convex objectives and linear convergence over polytopes for strongly convex objectives, without swap steps.

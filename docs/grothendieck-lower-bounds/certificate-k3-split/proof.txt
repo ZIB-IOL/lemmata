@@ -1,0 +1,107 @@
+# Proof of the order-three lower bound
+
+For an integer matrix with rows \(r_i\), its classical maximum is \(C(R)=\max_{a_i=\pm1}\|\sum_i a_i r_i\|_1\). Each column sign can be chosen independently after the row signs. A feasible three-dimensional vector score divided by this maximum bounds the real \(K_G(3)\) from below.
+
+Unit-ball vectors suffice even when the definition uses unit vectors. With one player's vectors fixed, the objective is linear in each of the other player's triples. Choosing a maximizing unit triple in every slot can only increase the score. Applying this to the two players successively gives a feasible unit-vector score at least as large as the recorded rational score.
+
+## Splitting both orbits
+
+The base has 81 rows and 321 columns. Its first 21 rows form a protected set. The remaining two orbits of 30 rows each have integer displacements \(d_i\). The endpoint matrix uses rows \(r_i+d_i,r_i-d_i\) on these orbits and \(2r_i\) on the protected set. Dividing scores by two, a strategy selects either \(\pm r_i\) or \(\pm d_i\) on each split slot. Write its column sum as \(x+e\), with \(x\) the sum of its signed original rows and \(e\) the sum of the signed displacements on the other slots. Let \(C=C(R)\). Every partial original sum has norm at most \(C\), by convexity or by filling the missing signs.
+
+The checker verifies each supplied signed row and column permutation on the actual base matrix and each transformed displacement up to sign. A negative displacement sign exchanges the two settings in a pair. The base checker verifies that images of the retained prefixes, together with global sign reversal, cover all normalized prefixes. We may therefore put a full enlarged strategy into a retained prefix **before** filling its missing original rows. Their indices are disjoint from the prefix.
+
+## A bound on the signed displacement in each prefix
+
+Fix a retained prefix \(P\). In an auxiliary game use \(\tau d_i\) for the alternative, with \(\tau>1\). Suppose \(U(P)\) bounds its reduced classical score in this prefix. Set
+
+\[
+ L(P)=\max\left(0,\left\lceil\frac{U(P)-C}{\tau-1}\right\rceil\right).
+\]
+
+For any endpoint strategy with score above \(C\), choose maximizing Bob signs \(b\). The same choices and the same \(b\) give \((x+e)b+(\tau-1)eb\) in the auxiliary game. It follows that \(eb\le L(P)\) and \(\|x\|_1>C-L(P)\). This argument only needs an upper bound on a signed contribution in an improving strategy.
+
+To compute \(U(P)\), the certificate gives a small weighted subset of rows. The checker verifies that averaging its images under the supplied signed maps gives total weight one to every row. Thus, for any fixed enlarged strategy and any Bob signs, its amplified score equals the average of its signed scores on those weighted images. An upper bound is the average of the maximum norms of the individual weighted blocks. The prefix fixes the signs of every sampled protected row in every image. The variable rows within each image offer the four signed options. The verifier computes the exact block maximum for every local protected sign pattern, with one global sign fixed. It also accounts for rounding the rational block coefficients to integers by adding the sum, over slots, of the larger of the two row-wise one-norm errors. All averaging, ceilings, and error bounds use integers.
+
+The block checker bounds a suffix by its already computed maximum, proceeding from the shortest suffix upwards. Convexity permits the initial lower bound from the next suffix. The triangle inequality justifies pruning a branch when its current norm plus the suffix bound cannot beat the incumbent.
+
+## Exhausting the improving endpoint strategies
+
+The base checker proves each proposed suffix bound and enumerates every full base signing above the supplied cutoff in the retained prefixes. The cutoff is at most \(C-L(P)\) for each prefix. Starting from the partial sum \(x\) of an improving strategy, fill its missing rows in reverse order of the split list, choosing a sign maximizing the one-norm after each addition. Each step preserves or increases the norm, by convexity. This constructs an enumerated base signing in the same prefix.
+
+The second search walks those chains backwards. It tries removals in increasing order and admits a removal if the old sign could have attained the two-sign maximum. The residual norms decrease along the reverse chain. At every ancestor of an improving endpoint, its residual norm plus \(L(P)\) exceeds \(C\), since the endpoint's signed displacement against its maximizing Bob sign is at most \(L(P)\). There is also a triangle-inequality bound on the norm of the available displacements. For this bound the checker tabulates all subsets and signs within blocks of eight displacements, then adds the block maxima. Enlarging a set of available rows cannot lower its maximum norm, by convexity. These two bounds justify the subtree and endpoint pruning rules.
+
+Before trying every sign on the removed slots, the checker uses a sharper endpoint bound. With \(b_j=\operatorname{sgn}(x_j)\) and \(|e_j|\le s_j\), one has \(|x_j+e_j|\le |x_j|+b_j e_j+2(s_j-|x_j|)_+\). Summing the linear parts over independent displacement signs gives at most \(\sum_{i\in S}|d_i b|\). The checker may use \(|S|\max_i|d_{ij}|\) for \(s_j\). All remaining combinations are evaluated exactly. Every retained endpoint signing whose reduced score exceeds \(C\) is written to a file. The incumbent in this step stays at \(C\), so finding one violation cannot hide another.
+
+## Enlarging the second list to a neighborhood of the classical maximum
+
+A second integer endpoint uses the same 81 original rows and a new pair of 30-row displacement orbits. Its recipe combines the preceding integer displacements with the new equivariant direction and rounds the result by an odd nearest-integer map. The verifier reconstructs every row and checks the signed permutations.
+
+Write \(b_0=216{,}000\) and let \(C=320{,}975{,}646\) as before. For each protected prefix the same 25-row weighted cover bounds the new amplified score by \(U(P)\). The gain for a signing above \(C-b_0\) in reduced units is at most \(\lceil(U(P)-C+b_0)/(\tau-1)\rceil\). The computation uses the slightly looser sum of the original ceiling and \(\lceil b_0/(\tau-1)\rceil\). It completes the monotone removal search at this lower threshold, retaining matched as well as opposite-sign strategies. On a tie it fills a missing row with the positive sign. Every original partial can use this deterministic completion. Its reverse chain is among the ones searched.
+
+Denote this second endpoint in the original, doubled units by \(K\). The resulting list covers every Alice signing with \(\|a^\top K\|_1>2(C-b_0)\), up to the checked signed symmetries. The final perturbations respect the listed symmetries, so a single representative suffices.
+
+## Changes to the full matrix
+
+For a new matrix \(tK+E\) with \(t\ge0\), the triangle inequality bounds every omitted row signing by \(2t(C-b_0)+U\) when \(U\ge\max_{a,b}|a^\top E b|\). On each listed signing the verifier evaluates the new matrix directly. The larger of the two bounds controls the full classical maximum. The verifier also evaluates a signing that attains the largest listed value.
+
+A variant admits row displacement scales \(s_i\in(0,1]\) before adding \(E\). In a maximizing pair, an opposite slot has signed contribution \(V=2ts_i\epsilon d_i b+e\ge0\), where \(e=\epsilon((E_i-E_{i'})b)\) and \(i'\) is its second row. Restoring that slot to the comparison endpoint gives at least \(V-|e|/s_i\). The analogous cost for a matched pair or a protected row is bounded by the sum of the absolute perturbations to its rows. Summing over all slots gives a complementary upper bound \(2t(C-b_0)+U/\min_i s_i\). With all scales equal to one this reduces to the triangle inequality. The same reasoning allows splitting a column. An opposite pair of column signs sets the original coefficient to zero and selects the new displacement instead. Restoring a zero to its best original sign can only increase the endpoint score.
+
+For the integer matrix of changes \(E_0=dE\), the verifier reads positive integer column weights \(v_j\), proposed row diagonals \(A_i\), and a lower triangular integer factor \(L\). Put \(G=E_0\operatorname{diag}(v)E_0^\top\), and let \(R=\operatorname{diag}(A)-G-LL^\top\). For \(u_i=\sum_j|R_{ij}|\), diagonal dominance gives \(G\preceq\operatorname{diag}(A+u)\). Weighted Cauchy–Schwarz now yields
+\[
+ \max_{a_i=\pm1}\|E^\top a\|_1^2
+ \le \frac{(\sum_i A_i+\sum_{ij}|R_{ij}|)\sum_j1/v_j}{d^2}.
+\]
+The verifier rounds the square root of the right hand side upward. The same right hand side bounds the square of the vector-valued optimum for \(E\). Indeed, for any Gram matrix \(X\) of unit-ball row vectors,
+\(\operatorname{tr}(GX)\le\sum_i(A_i+u_i)\), and the Cauchy–Schwarz argument applies to column vector lengths. The factor that certifies the bound is distributed as integers. Producing it with a numerical solver introduces no assumption in its verification.
+
+## Allowing a linear change of the comparison columns
+
+Let \(W\) be any matrix of column coefficients, let \(t=\max_i\sum_j |W_{ij}|\), and consider \(M=KW+E\). For a row signing \(a\) outside the reference list,
+\[
+ \|a^\top KW\|_1\le t\|a^\top K\|_1\le 2t(C-b_0).
+\]
+Thus the same complementary upper bound applies. The witness verifier reconstructs the product, computes \(t\) from the integer coefficients, and checks invariance of the final matrix. Choosing \(W=tI\) recovers the scalar comparison.
+
+## An upper bound for the optimization with fixed vector directions
+
+This section concerns the objective and classical certificate used for the second reference matrix. Let \(G_{ij}=x_i\cdot y_j\) for the stored vectors, \(T=2(C-b_0)\), and let \(\nu(E)\) be the maximum of the vector objective of \(E\) over real unit-ball vectors in arbitrary dimension. For each eligible invariant choice \(M=KW+E\), the denominator used by this method is at least the classical maximum of \(M\) and at least \(tT+\nu(E)\). A scalar comparison restricts \(W=tI\). The column comparison permits equivariant \(W\) with maximum absolute row sum \(t\).
+
+Take nonnegative rational weights \(w_\ell\) on actual sign pairs and put \(R=G-\sum_\ell w_\ell a_\ell b_\ell^\top\). On invariant matrices, pairing with \(R\) equals pairing with its signed-orbit average \(\overline R\). In the scalar comparison \(\langle R,tK\rangle=t\langle R,K\rangle\). In the column comparison,
+\[
+ \langle R,KW\rangle\le t\sum_i\max_j\bigl|(K^\top\overline R)_{ij}\bigr|.
+\]
+The verifier averages coefficients over each signed orbit and sets coefficients on sign-conflicting orbits to zero.
+
+The dual certificate gives rational row and column factors \(f_i,g_j\). Their Gram form pairs with \(E\) by at most \(\max_i\|f_i\|_2\max_j\|g_j\|_2\,\nu(E)\). Subtract this form from \(R\) and average the difference over the signed orbits. If its largest entry has magnitude \(e\), it factors as coordinate unit vectors paired with column vectors of norm at most \(\sqrt{141}\,e\). The verifier uses the integer upper bound 12 for this square root. Therefore \(\langle R,E\rangle\le z\nu(E)\) for the sum of these two norm estimates. Increase \(z\), if necessary, so that it also bounds the comparison term divided by \(tT\). Then the ratio certified by this method is at most \(\sum_\ell w_\ell+z\). Every sign pair, integer factor, orbit average, and inequality in this argument is checked with rational arithmetic. This upper bound applies to the stated certificate and the stored vectors.
+
+## Adding signed copies of four-entry games
+
+A CHSH matrix has two row settings, two column settings and signs \((+,+,+,-)\) up to relabeling. Its exact classical maximum is 2. Each small game used here is embedded into the large matrix, with repetitions and sign changes allowed, and summed over all 60 verified symmetry images. Its contribution to a complementary upper bound is at most 60 times its individual classical maximum times the absolute coefficient. The verifier reconstructs each term and exhausts all signings on its smaller index set. It then adds the exact integer matrices and the separate bounds. The second reference list can be reused for the resulting matrix.
+
+For the upper bound on the fixed-vector search, every relabeling of CHSH can be priced directly. If \(r_i\) and \(r_k\) are two rows of the averaged residual, the largest value over both column choices and their signs, divided by the classical maximum, is
+\[
+ \tfrac12\bigl(\|r_i+r_k\|_\infty+\|r_i-r_k\|_\infty\bigr).
+\]
+Taking the largest over the row pairs also bounds the price of every symmetry average. Increasing the residual coefficient \(z\) to this quantity extends the preceding upper bound to the cone generated by all such games.
+
+A further family of terms starts with the 81-by-321 base, whose exact classical maximum is already verified. Assign each original row to one of the 141 row settings with a sign, and each original column to one of the 321 column settings with a sign. A classical signing of the embedded game induces a signing of the original game, so its value is at most \(C\). The symmetry average has the same upper bound. After rounding the average to an integer matrix, the verifier adds back the sum of the absolute entrywise rounding errors and rounds the resulting bound upward. The archive also supports small integer games with at most twelve settings on the shorter side, for which it evaluates every signing on that side. Each retained matrix term and its complementary bound are multiplied by the same nonnegative integer coefficient. In the fixed-vector upper bound, the verifier prices each listed additional term by its pairing with the averaged residual divided by the proved classical upper.
+
+The same construction embeds the 141-by-321 reference matrix. Its exact classical maximum, 641,978,254, follows from the complete reference list and the bound for its complement. This value replaces the base maximum when bounding a relabeled reference game. In either case the numerical search only proposes the relabeling. The verifier reconstructs its signed symmetry average, rounding error and classical bound from the integer inputs.
+
+## Optimizing one player's vectors
+
+For fixed rational column vectors \(y_j\), the best unit-ball row vector in slot \(i\) points along \(h_i=\sum_j M_{ij}y_j\) whenever this field is nonzero. Hence the maximum vector score with these columns is exactly \(\sum_i\|h_i\|_2\). Transposition gives the corresponding formula for fixed rows. The verifier uses integer square roots to enclose each length, sums the upper endpoints, divides by the certified classical denominator and subtracts the stored witness ratio. This gives a rigorous bound on either one-player improvement.
+
+## Optimizing both players in arbitrary dimension for the final matrix
+
+The certificate in `second/matrix_upper.json` applies the Gram bound to the entire integer matrix \(M\). Write \(v_j>0\) for its integer column weights. The stored factor and its exact residual give
+\[
+ M\operatorname{diag}(v)M^\top\preceq\operatorname{diag}(A+u)
+\]
+as in the residual Gram argument above. For any real unit-ball row vectors in any dimension, form their Gram matrix \(X\). It is positive semidefinite and \(X_{ii}\le1\). Maximizing over all column vectors and then applying weighted Cauchy–Schwarz yields
+\[
+ \left(\sum_j\left\|\sum_i M_{ij}x_i\right\|_2\right)^2
+ \le \left(\sum_j v_j^{-1}\right)\operatorname{tr}\bigl(M\operatorname{diag}(v)M^\top X\bigr)
+ \le \left(\sum_j v_j^{-1}\right)\sum_i(A_i+u_i).
+\]
+The verifier takes a rational upper bound for this square root and divides by the attained classical maximum. This bounds every choice of both players' vectors on this matrix. The refined lower bound uses integer block-coordinate updates on triples with common denominator \(10^{36}\). Rounding each triple toward zero after division by a ceiling on its length keeps it in the unit ball.
