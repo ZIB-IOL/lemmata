@@ -743,30 +743,6 @@ The inner-ball and parallel-body descriptions of smooth sets are classical
 gauge or normal information instead of a global LMO, and @garber2015faster relate the progress
 of Frank–Wolfe to strong convexity of the set.
 
-## Interactive illustration
-
-The widget runs three methods on a planar smooth body $K + B_r$, where $K$ is a point, a
-segment, a triangle or an ellipse, for the objective $\frac12\|x - c\|^2$; drag the point $c$.
-*Frank–Wolfe* uses the LMO of the body. *Frank–Wolfe on $K$* is the method of
-[](#thm-frank-wolfe-prescribed-smoothness-upper). *Projected gradient* is the method of
-[](#thm-frank-wolfe-prescribed-smoothness-linear). The chart shows the primal gap against the
-number of oracle calls on logarithmic axes. The dashed lines are the bound $2\delta^2/(t + 1)$
-of [](#thm-frank-wolfe-prescribed-smoothness-upper) and, for the disk and the rounded ellipse,
-which also have outer tangent balls, the linear rate.
-
-The button *hard body* draws an instance of the hard bodies with $a = r = 1$ in dimension
-$256k + 1$. It offers three LMOs: the vertex LMO; an LMO that answers the vertical direction with
-the barycenter of the bottom face; and the LMO of a body with perturbed vertices and unique
-minimizers. With the barycenter answer, a method that reads $I$ off the answer solves the
-instance after one call. With the other two LMOs each call reveals at most one index of $I$. The
-dashed horizontal line is the threshold $1/(16k)$ of
-[](#thm-frank-wolfe-prescribed-smoothness-vertex) for $T = k - 1$ calls.
-
-```{anywidget} ./widgets/fs.mjs
-:css: ./widgets/fs.css
-{"body": "segment", "cx": 0.25, "cy": -1.55, "k": 2, "rule": "vertex"}
-```
-
 ## A fixed Hilbert-space example
 
 The finite-dimensional lower bounds above allow the body to depend on the budget and the method.
@@ -951,6 +927,43 @@ The telescoping identity $\sum_{i<k}c_i^2=1-1/(k+1)$ gives convergence of $h$ in
 For a captured horizontal vector $x$ at budget $t$, put $k=t+1$. Then $\langle x,h\rangle=\langle x,m_k\rangle$ and $\langle x,e_i\rangle=0$ for all $i\ge k$. Using the known coefficients for $i<k$ and zeros afterward determines the unique support parameter. It has total mass one on the first $k+1$ labels, hence $h+\sum_i u_i e_i=\sum_{i\le k}u_i a_i$. That center and the support displacement use only directions selected through $d_k$. A zero query returns the public start. This defines the next answer recursively using a finite history. In the final frame each such response solves the same physical support problem, and a deterministic strategy against this single oracle has a unique reply stream.
 
 Finally, $\sum_{i<k}a_i=(k+1)m_k$, so $h-\sum_{i<k}e_i=(k+1)(h-m_k)$. The output at budget $t$ annihilates this witness by construction, and the preceding projection bound applies. The proof includes the budget-zero output before the first reply. The claim about strategies here is deterministic.
+
+## Interactive illustration
+
+The widget runs the methods of this entry on three examples; the slider sets the number $t$ of
+oracle calls. The curves show, on logarithmic axes, the smallest primal gap among the points
+computed with at most $t$ oracle calls.
+
+- *Smooth planar body.* A planar body $K + B_r$, where $K$ is a point, a segment, a triangle or
+  an ellipse, and the objective $\frac12\|x - c\|^2$; drag the point $c$. *Frank–Wolfe* uses the
+  LMO of the body, *Frank–Wolfe on $K$* is the method of
+  [](#thm-frank-wolfe-prescribed-smoothness-upper), and *projected gradient* is the method of
+  [](#thm-frank-wolfe-prescribed-smoothness-linear). The dashed lines are the bound
+  $2\delta^2/(t + 1)$ of [](#thm-frank-wolfe-prescribed-smoothness-upper) and, for the disk and
+  the rounded ellipse, which also have outer tangent balls, the linear rate.
+- *Hard body.* An instance of the hard bodies with $a = r = 1$ in dimension $256k + 1$, with the
+  vertex LMO, an LMO that answers the vertical direction with the barycenter of the bottom face,
+  or the LMO of a body with perturbed vertices. The left panel shows the indices of $I$ that the
+  answers to Frank–Wolfe on $K$ have revealed. With the barycenter answer, a method that reads $I$
+  off the answer solves the instance after one call. With the vertex LMO each answer reveals one
+  index of $I$; with perturbed vertices the same holds until the iterates come close to the
+  minimizer, where the weights of several vertices tie. The dotted segment is the threshold
+  $1/(16k)$ of [](#thm-frank-wolfe-prescribed-smoothness-vertex) for $k - 1$ calls.
+- *Fixed Hilbert body.* The body of [](#thm-frank-wolfe-prescribed-smoothness-hilbert-gradient),
+  computed exactly on the coordinates in use. Frank–Wolfe from the exposed start, with step
+  sizes $2/(t + 2)$ and with exact line search, stays between the bounds $31/(256(t + 1))$ and
+  $2(15/4)^2/(t + 2)$ of [](#thm-frank-wolfe-prescribed-smoothness-hilbert-rate) and
+  [](#thm-frank-wolfe-prescribed-smoothness-hilbert-trial), while a single call in the vertical
+  direction returns the minimizer ([](#lem-frank-wolfe-prescribed-smoothness-hilbert-escape)).
+  The left panel shows the coordinates $x_i$ of the horizontal part $\sum_i x_i d_i$ of the
+  Frank–Wolfe iterate: each call adds at most one coordinate and $\sum_i x_i \ge 1/2$, so
+  $\sum_i x_i^2 \ge (\sum_i x_i)^2/(t + 1)$ and the primal gap cannot decrease faster than
+  $1/t$.
+
+```{anywidget} ./widgets/fs.mjs
+:css: ./widgets/fs.css
+{"body": "segment", "cx": 0.37, "cy": -1.62, "k": 2, "rule": "vertex"}
+```
 
 ## Not formalized here
 

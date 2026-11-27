@@ -1,11 +1,34 @@
-.lemmata-fs { border: 1px solid #8884; border-radius: 6px; padding: 0.75rem 1rem; }
-.lemmata-fs .fs-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-bottom: 0.35rem; }
-.lemmata-fs .fs-label { font-size: 0.85rem; opacity: 0.75; min-width: 6rem; }
-.lemmata-fs .fs-btn { font: inherit; font-size: 0.85rem; padding: 0.15rem 0.6rem; border-radius: 4px;
-  border: 1px solid #8886; background: transparent; color: inherit; cursor: pointer; }
+.lemmata-fs {
+  border: 1px solid #8884; border-radius: 6px; padding: 0.75rem 1rem;
+  margin: 1rem 0 2rem;
+}
+.lemmata-fs .fs-group {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-bottom: 0.35rem;
+}
+.lemmata-fs .fs-group[hidden] { display: none; }
+.lemmata-fs .fs-label { font-size: 0.85rem; opacity: 0.75; min-width: 6.5rem; }
+.lemmata-fs .fs-btn {
+  font: inherit; font-size: 0.85rem; padding: 0.15rem 0.6rem; border-radius: 4px;
+  border: 1px solid #8886; background: transparent; color: inherit; cursor: pointer;
+}
 .lemmata-fs .fs-btn[aria-pressed="true"] { background: #8883; border-color: #888c; font-weight: 600; }
-.lemmata-fs .fs-panes { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.4rem; }
+.lemmata-fs .fs-slider { flex: 1 1 12rem; max-width: 22rem; accent-color: #2e86ab; }
+.lemmata-fs .fs-t { font-size: 0.85rem; font-variant-numeric: tabular-nums; min-width: 4.5rem; }
+.lemmata-fs .fs-panes { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
 .lemmata-fs canvas { max-width: 100%; height: auto; border-radius: 4px; }
-.lemmata-fs .fs-geo { width: 300px; aspect-ratio: 1; cursor: crosshair; touch-action: none; }
-.lemmata-fs .fs-chart { width: 380px; aspect-ratio: 380 / 300; }
-.lemmata-fs .fs-stats { margin: 0.5rem 0 0; font-family: ui-monospace, monospace; font-size: 0.85rem; }
+.lemmata-fs .fs-geo { width: 300px; aspect-ratio: 1; touch-action: none; }
+.lemmata-fs .fs-chartbox { display: flex; flex-direction: column; gap: 0.35rem; }
+.lemmata-fs .fs-chart { width: 380px; aspect-ratio: 380 / 280; }
+.lemmata-fs .fs-legend {
+  list-style: none; margin: 0; padding: 0 0 0 0.25rem; font-size: 0.8rem; max-width: 380px;
+}
+.lemmata-fs .fs-legend li { display: flex; align-items: center; gap: 0.45rem; line-height: 1.5; }
+.lemmata-fs .fs-swatch { display: inline-block; width: 1.4rem; height: 3px; border-radius: 2px; flex: none; }
+.lemmata-fs .fs-dash {
+  height: 0; border-top: 2px dashed currentColor; opacity: 0.7; border-radius: 0;
+}
+.lemmata-fs .fs-dot { border-top-style: dotted; border-top-width: 3px; }
+.lemmata-fs .fs-name { flex: 1; }
+.lemmata-fs .fs-val { font-variant-numeric: tabular-nums; opacity: 0.85; }
+.lemmata-fs .fs-guide .fs-name { opacity: 0.8; }
+.lemmata-fs .fs-caption { margin: 0.6rem 0 0; font-size: 0.85rem; opacity: 0.85; }

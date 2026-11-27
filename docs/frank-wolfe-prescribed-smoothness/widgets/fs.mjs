@@ -1,11 +1,14 @@
-// Oracle methods on smooth bodies C = K + B_r, for f(x) = ½‖x − c‖² (L = 1).
-// Panel "planar": a planar core K (point, segment, triangle, ellipse) rounded by a disk; drag the
-// target c. Frank–Wolfe uses the LMO of C; Frank–Wolfe on K (the upper bound for isotropic
-// quadratics) runs on the inner parallel body K and adds the closest point of the ball; projected
-// gradient with Frank–Wolfe projections (the linear rate) uses exact line search on K. Panel
-// "hard": an instance of the hard bodies in dimension 256k+1, with the vertex LMO, an LMO that
-// answers the vertical direction with the barycenter, or the LMO of a body with perturbed vertices.
-// Everything runs in the browser; it uses only model.get/set/on (no kernel).
+// Three examples of the entry, computed in the browser (the widget uses only model.get/set/on).
+//  - planar: smooth planar bodies K + B_r (K a point, a segment, a triangle or an ellipse) and
+//    f(x) = ½‖x − c‖²; drag c. Frank–Wolfe with the LMO of the body, Frank–Wolfe on the inner
+//    parallel body K (the upper bound for isotropic quadratics), and projected gradient with
+//    Frank–Wolfe projections (the linear rate with inner and outer tangent balls).
+//  - hard: an instance of the hard bodies C_I in dimension 256k + 1, with the vertex LMO, an LMO
+//    that answers the vertical direction with the barycenter of the bottom face, or the LMO of a
+//    body with perturbed vertices.
+//  - hilbert: the fixed body in a Hilbert space with f(v, x) = ((v + 4)² + ‖x‖²)/2, simulated
+//    exactly on the coordinates in use: Frank–Wolfe from the exposed start (open loop and exact
+//    line search) between the two bounds, and a single call in the vertical direction.
 
 const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
@@ -67,7 +70,7 @@ export const CORES = {
 };
 CORES.point.diam = 0;
 
-/** Gaps after t oracle calls, t = 0..T, for the three methods on K + B_r, target c. */
+/** Primal gaps after t oracle calls, t = 0..T, for the three methods on K + B_r, target c. */
 export function simulatePlanar(coreKey, c, T) {
   const K = CORES[coreKey], r = R_BALL;
   const lmoC = (q) => { const n = norm(q); return n === 0 ? add(K.lmo([0, 1]), [0, -r])
@@ -76,7 +79,7 @@ export function simulatePlanar(coreKey, c, T) {
   const gap = (x) => Math.max(0, 0.5 * dot(sub(x, c), sub(x, c)) - fstar);
   const lift = (a) => add(a, clip(sub(c, a), r));
   const e = [0, 1];
-  // vanilla Frank–Wolfe with short steps, started at the body's oracle answer for e
+  // Frank–Wolfe with short steps, started at the body's answer for e
   const fw = [], fwPath = [];
   let x = lmoC(e);
   fw.push(gap(x)); fwPath.push(x);
@@ -96,19 +99,20 @@ export function simulatePlanar(coreKey, c, T) {
     qm.push(gap(lift(a))); qmPath.push(lift(a));
   }
   // projected gradient with Frank–Wolfe projections: exact line search on K for ½‖a − c‖²
-  const jm = [], jmPath = [];
+  const jm = [], jmPath = [], jmCalls = [];
   const x0 = lmoC(e), q0 = sub(x0, c);
   a = norm(q0) === 0 ? x0 : add(lmoC(q0), mul(q0, r / norm(q0)));
   const first = norm(q0) === 0 ? x0 : lmoC(q0);
-  jm.push(gap(first)); jmPath.push(first);
+  let used = norm(q0) === 0 ? 1 : 2;
+  jm.push(gap(first)); jmPath.push(first); jmCalls.push(used);
   for (let t = 1; t <= T; t++) {
     const q = sub(a, c);
     if (norm(q) > r) {
       const s = K.lmo(q), G = dot(q, sub(a, s)), H = dot(sub(s, a), sub(s, a));
       const lam = H > 0 ? Math.min(1, Math.max(0, G / H)) : 1;
-      a = add(a, mul(sub(s, a), lam));
+      a = add(a, mul(sub(s, a), lam)); used++;
     }
-    jm.push(gap(lift(a))); jmPath.push(lift(a));
+    jm.push(gap(lift(a))); jmPath.push(lift(a)); jmCalls.push(used);
   }
   const D = K.diam + 2 * r;
   let rate = null;
@@ -116,69 +120,92 @@ export function simulatePlanar(coreKey, c, T) {
     const R = r + K.outer, cc = R === r ? 1 : 0.5 * Math.min(1, r / (2 * (R - r)));
     rate = (t) => (1 - cc) ** t * D * D / 2;
   }
-  return { fw, qm, jm, fwPath, qmPath, jmPath, delta: K.diam, D, rate, xstar: lift(pk), lmoC };
+  const calls = { fw: fw.map((_, t) => t + 1), qm: qm.map((_, j) => j + 1), jm: jmCalls };
+  return { fw, qm, jm, fwPath, qmPath, jmPath, calls, delta: K.diam, D, rate, xstar: lift(pk), lmoC };
 }
 
 function mulberry(seed) {
-  return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  return () => {
+    seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 function projSimplex(v) {
   const u = [...v].sort((p, q) => q - p);
   let css = 0, th = 0;
-  for (let i = 0; i < u.length; i++) { css += u[i]; const t = (css - 1) / (i + 1); if (u[i] - t > 0) th = t; }
+  for (let i = 0; i < u.length; i++) {
+    css += u[i]; const t = (css - 1) / (i + 1); if (u[i] - t > 0) th = t;
+  }
   return v.map((x) => Math.max(0, x - th));
 }
 
-/** The hard bodies with a = r = 1: primal gaps after t calls for Frank–Wolfe, Frank–Wolfe on K and
- * a method that reads I off the answer, with the vertex LMO, the barycenter answer or the LMO of a
- * body with perturbed vertices. */
+/** The hard bodies with a = r = 1 (zero-based indices; index 0 is the index 1 of the text):
+ * primal gaps after t calls for Frank–Wolfe, Frank–Wolfe on K and a method that reads I off the
+ * answer, with the vertex LMO, the barycenter answer or the LMO of a body with perturbed vertices.
+ * `found[t]` lists the indices of I that appear in the t-th answer to Frank–Wolfe on K. */
 export function simulateHard(k, rule, T, seed = 7) {
   const N = 256 * k, d = 8 * k, rnd = mulberry(seed);
   const indexSet = [0], pool = Array.from({ length: N - 1 }, (_, i) => i + 1);
   for (let i = 0; i < d - 1; i++) indexSet.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
   indexSet.sort((p, q) => p - q);
-  const xi = indexSet.map(() => 0.02 * (2 * rnd() - 1)), zeta = indexSet.map(() => 0.02 * (2 * rnd() - 1));
-  const s = 1e-4;
+  const xi = indexSet.map(() => 0.02 * (2 * rnd() - 1));
+  const zeta = indexSet.map(() => 0.02 * (2 * rnd() - 1));
+  const s = 1e-6; // thickening; small enough that early answers have one index of positive weight
+  // returns [horizontal part, height, indices of I with positive weight]
   const oracle = (qx, qy) => {
     const nq = Math.hypot(qy, Math.hypot(...qx));
     const x = new Float64Array(N);
-    if (nq === 0) { x[0] = 1; return [x, 0]; }
+    if (nq === 0) { x[0] = 1; return [x, 0, []]; }
     if (rule === "unique") {
       const g = indexSet.map((j, m) => (qx[j] * (1 + xi[m]) + qy * (1 + zeta[m])) / nq);
       const u = projSimplex(g.map((v) => -v / (2 * s)));
-      let hy = 0, uu = 0;
-      indexSet.forEach((j, m) => { x[j] += u[m] * (1 + xi[m]); hy += u[m] * (1 + zeta[m]); uu += u[m] * u[m]; });
+      let hy = 0, uu = 0; const hit = [];
+      indexSet.forEach((j, m) => {
+        x[j] += u[m] * (1 + xi[m]); hy += u[m] * (1 + zeta[m]); uu += u[m] * u[m];
+        if (u[m] > 0) hit.push(j);
+      });
       const rad = s * (1 - uu) + 1;
       for (let i = 0; i < N; i++) x[i] -= rad * qx[i] / nq;
-      return [x, hy - rad * qy / nq];
+      return [x, hy - rad * qy / nq, hit];
     }
     let mn = Infinity;
     for (const j of indexSet) mn = Math.min(mn, qx[j]);
-    const J = rule === "barycenter" ? indexSet.filter((j) => qx[j] === mn) : [indexSet.find((j) => qx[j] === mn)];
+    const J = rule === "barycenter" ? indexSet.filter((j) => qx[j] === mn)
+      : [indexSet.find((j) => qx[j] === mn)];
     for (const j of J) x[j] += 1 / J.length;
     for (let i = 0; i < N; i++) x[i] -= qx[i] / nq;
-    return [x, 1 - qy / nq];
+    return [x, 1 - qy / nq, J];
   };
   let H = Math.sqrt(1 / d + 33 * 33);
   if (rule === "unique") {
-    // distance from c = (0, -32) to the perturbed inner body: minimize a convex function of the weights
-    const phi = (u) => { let q = 0, h = 32, uu = 0;
+    // distance from c = (0, -32) to the perturbed inner body: minimize the convex function
+    // ‖Σ u_m v_m − c‖ − s (1 − ‖u‖²) over the simplex, by projected gradient with backtracking
+    const phi = (u) => {
+      let q = 0, h = 32, uu = 0;
       indexSet.forEach((_, m) => { q += (u[m] * (1 + xi[m])) ** 2; h += u[m] * (1 + zeta[m]); uu += u[m] ** 2; });
-      return [Math.sqrt(q + h * h), h, uu]; };
-    let u = indexSet.map(() => 1 / d);
-    for (let it = 1; it <= 4000; it++) {
-      const [nrm, h] = phi(u);
+      return [Math.sqrt(q + h * h) - s * (1 - uu), Math.sqrt(q + h * h), h];
+    };
+    let u = indexSet.map(() => 1 / d), [val] = phi(u), step = 30;
+    for (let it = 0; it < 5000; it++) {
+      const [, nrm, h] = phi(u);
       const grad = indexSet.map((_, m) => (u[m] * (1 + xi[m]) ** 2 + h * (1 + zeta[m])) / nrm + 2 * s * u[m]);
-      u = projSimplex(u.map((v, m) => v - (0.5 / Math.sqrt(it)) * grad[m]));
+      let moved = false;
+      while (step > 1e-9) {
+        const v = projSimplex(u.map((x, m) => x - step * grad[m]));
+        const [fv] = phi(v); let dd = 0; v.forEach((x, m) => { dd += (x - u[m]) ** 2; });
+        if (fv <= val - dd / (2 * step)) { moved = dd > 0 && val - fv > 1e-17; u = v; val = fv; step *= 1.5; break; }
+        step /= 2;
+      }
+      if (!moved) break;
     }
-    const [nrm, , uu] = phi(u);
-    H = nrm - s * (1 - uu);
+    H = val;
   }
   const fstar = 0.5 * (H - 1) ** 2 - 0.5 * 32 * 32;
   const f = (x, y) => { let q = y * y; for (let i = 0; i < N; i++) q += x[i] * x[i]; return 0.5 * q + 32 * y; };
-  const gap = (x, y) => Math.max(1e-14, f(x, y) - fstar);
-  // vanilla Frank–Wolfe with short steps from the start point (e_1, 0)
+  const gap = (x, y) => Math.max(0, f(x, y) - fstar);
+  // Frank–Wolfe with short steps from the start point (e_1, 0)
   const fw = [];
   let x = new Float64Array(N), y = 0; x[0] = 1; fw.push(gap(x, y));
   for (let t = 1; t <= T; t++) {
@@ -196,22 +223,111 @@ export function simulateHard(k, rule, T, seed = 7) {
     const sc = n <= 1 ? 1 : 1 / n;
     return [ax.map((v, i) => v + sc * dx[i]), ay + sc * dy];
   };
-  const qm = [], probe = [];
-  let [ax, ay] = oracle(new Float64Array(N), 1); ay += 1;
+  const qm = [], probe = [], found = [[0]];
+  let [ax, ay, hit0] = oracle(new Float64Array(N), 1); ay += 1;
   const revealed = rule === "barycenter";
   let [lx, ly] = lift(ax, ay);
-  qm.push(gap(lx, ly)); probe.push(gap(lx, ly));
+  qm.push(gap(lx, ly)); probe.push(gap(lx, ly)); found.push(hit0);
   for (let j = 0; j < T; j++) {
     const gx = lx, gy = ly + 32;
-    let [vx, vy] = oracle(gx, gy);
+    const [vx, vy0, hit] = oracle(gx, gy);
+    let vy = vy0;
     const ng = Math.hypot(gy, Math.hypot(...gx));
     if (ng > 0) { for (let i = 0; i < N; i++) vx[i] += gx[i] / ng; vy += gy / ng; }
     const gam = 2 / (j + 2);
     ax = ax.map((v, i) => (1 - gam) * v + gam * vx[i]); ay = (1 - gam) * ay + gam * vy;
     [lx, ly] = lift(ax, ay);
-    qm.push(gap(lx, ly)); probe.push(revealed ? 1e-14 : gap(lx, ly));
+    qm.push(gap(lx, ly)); probe.push(revealed ? 0 : gap(lx, ly));
+    if (j + 2 <= T) found.push(hit);
   }
-  return { fw, qm, probe, k, d, N, lower: 1 / (16 * k), delta: Math.SQRT2 };
+  const calls = { fw: fw.map((_, t) => t), qm: qm.map((_, j) => j + 1) };
+  return { fw, qm, probe, found, calls, indexSet, k, d, N, lower: 1 / (16 * k), delta: Math.SQRT2 };
+}
+
+/** The fixed Hilbert-space body (zero-based indices): w_i = 2^{-i}/64, Gram matrix
+ * B_ij = [i = j] - w_max(i,j), f(v, x) = ((v + 4)² + ‖x‖²)/2 with minimizer z⋆ = (-1, 0).
+ * A point is (v, x) with x the coordinates of its horizontal part Σ x_i d_i. Each answer uses at
+ * most one new coordinate, so T + margin coordinates make the simulation exact. Runs Frank–Wolfe
+ * from the exposed start with step sizes 2/(t+2) ("open") and with exact line search ("line"). */
+export function simulateHilbert(T, margin = 40) {
+  const n = T + margin, w = new Float64Array(n), w2 = new Float64Array(n);
+  for (let i = 0; i < n; i++) { w[i] = 2 ** -i / 64; w2[i] = w[i] * w[i]; }
+  const Bx = (x) => { // (Bx)_i = x_i - w_i Σ_{j≤i} x_j - Σ_{j>i} w_j x_j
+    const out = new Float64Array(n), suf = new Float64Array(n + 1);
+    for (let i = n - 1; i >= 0; i--) suf[i] = suf[i + 1] + w[i] * x[i];
+    let pre = 0;
+    for (let i = 0; i < n; i++) { pre += x[i]; out[i] = x[i] - (w[i] * pre + suf[i + 1]); }
+    return out;
+  };
+  const dotB = (x, y) => { const b = Bx(y); let s = 0; for (let i = 0; i < n; i++) s += x[i] * b[i]; return s; };
+  // LMO for the direction (G, Σ x_i d_i): the parameter u of the answer maximizes
+  // Σ α_i u_i − β_i u_i² over u ≥ 0, Σ u_i ≤ 1; the answer is c(u) − r(u) q/‖q‖.
+  const lmo = (G, x) => {
+    const bx = Bx(x);
+    let q2 = G * G; for (let i = 0; i < n; i++) q2 += x[i] * bx[i];
+    const Q = Math.sqrt(q2);
+    const alpha = new Float64Array(n), beta = new Float64Array(n), u = new Float64Array(n);
+    for (let i = 0; i < n; i++) { beta[i] = Q * w2[i] / 100; alpha[i] = -bx[i] - G * w2[i] + beta[i]; }
+    let free = 0; for (let i = 0; i < n; i++) if (alpha[i] > 0) free += alpha[i] / (2 * beta[i]);
+    if (free <= 1) { for (let i = 0; i < n; i++) if (alpha[i] > 0) u[i] = alpha[i] / (2 * beta[i]); }
+    else { // the mass constraint is active: water-filling, written relative to the largest α
+      const ord = [...Array(n).keys()].filter((i) => alpha[i] > 0).sort((p, q) => alpha[q] - alpha[p]);
+      const top = alpha[ord[0]];
+      let num = 1, den = 0, last = 0, delta = 0;
+      for (last = 0; last < ord.length; last++) {
+        const i = ord[last];
+        num += (top - alpha[i]) / (2 * beta[i]); den += 1 / (2 * beta[i]); delta = num / den;
+        if (last + 1 === ord.length || top - delta >= alpha[ord[last + 1]]) break;
+      }
+      for (let m = 0; m <= last; m++) {
+        const i = ord[m]; u[i] = Math.max(0, (delta - (top - alpha[i])) / (2 * beta[i]));
+      }
+    }
+    let a = 0, rad = 1;
+    for (let i = 0; i < n; i++) { a += w2[i] * u[i]; rad += w2[i] * (u[i] - u[i] * u[i]) / 100; }
+    const y = new Float64Array(n);
+    for (let i = 0; i < n; i++) y[i] = u[i] - (rad / Q) * x[i];
+    return [a - rad * G / Q, y];
+  };
+  const f = (v, x) => ((v + 4) ** 2 + dotB(x, x)) / 2, fstar = 4.5;
+  const q0 = new Float64Array(n); q0[0] = -1 / 8; // the start is the minimizer for -(−1, d_0/8)
+  const [sv, sx] = lmo(1, q0);
+  const runs = {};
+  for (const rule of ["open", "line"]) {
+    let v = sv; const x = Float64Array.from(sx);
+    const gap = [f(v, x) - fstar], charts = [Float64Array.from(x)];
+    for (let t = 0; t < T; t++) {
+      const [yv, yx] = lmo(v + 4, x);
+      let gam = 2 / (t + 2);
+      if (rule === "line") {
+        const dv = v - yv, dx = x.map((xi, i) => xi - yx[i]);
+        const num = (v + 4) * dv + dotB(x, dx), den = dv * dv + dotB(dx, dx);
+        gam = den > 0 ? Math.min(1, Math.max(0, num / den)) : 0;
+      }
+      v += gam * (yv - v);
+      for (let i = 0; i < n; i++) x[i] += gam * (yx[i] - x[i]);
+      gap.push(Math.max(0, f(v, x) - fstar)); charts.push(Float64Array.from(x));
+    }
+    runs[rule] = { gap, charts };
+  }
+  const [zv, zx] = lmo(1, new Float64Array(n)); // one call in the vertical direction
+  const vertical = [f(sv, sx) - fstar];
+  for (let t = 1; t <= T; t++) vertical.push(Math.max(0, f(zv, zx) - fstar));
+  return {
+    open: runs.open.gap, line: runs.line.gap, charts: runs.open.charts, vertical,
+    lower: (t) => 31 / (256 * (t + 1)), upper: (t) => 2 * (15 / 4) ** 2 / (t + 2),
+  };
+}
+
+/** The smallest primal gap among the points computed with at most s oracle calls, s = 0..T
+ * (NaN before the first point). `vals[i]` is computed with `calls[i]` calls. */
+export function byCalls(vals, calls, T) {
+  const out = new Array(T + 1).fill(NaN); let best = Infinity, i = 0;
+  for (let s = 0; s <= T; s++) {
+    while (i < vals.length && calls[i] <= s) { best = Math.min(best, vals[i]); i++; }
+    if (best < Infinity) out[s] = best;
+  }
+  return out;
 }
 
 function elt(tag, cls, text) {
@@ -226,135 +342,274 @@ function setupCanvas(canvas, w, h) {
   const ctx = canvas.getContext("2d"); ctx.setTransform(r, 0, 0, r, 0, 0);
   return ctx;
 }
-const COLORS = { fw: "#d1495b", qm: "#2e86ab", jm: "#3c9d5d", probe: "#e07a1f" };
+const COLORS = { a: "#d1495b", b: "#2e86ab", c: "#3c9d5d", d: "#e07a1f" };
+// values below 1e-12 are rounding, except for curves that are exact by construction
+const fmt = (y, exact) => (exact && y === 0 ? "0" : y < 1e-12 ? "< 1e−12" : y.toExponential(1).replace("-", "−"));
+const PLANAR = Object.keys(CORES);
+const HORIZON = { planar: 1000, hard: 300, hilbert: 300 };
 
 function render({ model, el: root }) {
   const box = elt("div", "lemmata-fs");
-  const rows = [elt("div", "fs-group"), elt("div", "fs-group"), elt("div", "fs-group")];
-  const buttons = {};
-  const button = (row, key, value, label) => {
+  const buttons = [];
+  const button = (row, label, pressed, act) => {
     const b = elt("button", "fs-btn", label); b.type = "button";
-    b.addEventListener("click", () => model.set(key, value));
-    buttons[key + ":" + value] = b; row.append(b);
+    b.addEventListener("click", act); buttons.push([b, pressed]); row.append(b);
   };
-  rows[0].append(elt("span", "fs-label", "Body"));
-  for (const [kk, K] of Object.entries(CORES)) button(rows[0], "body", kk, K.name);
-  button(rows[0], "body", "hard", "hard body");
-  rows[1].append(elt("span", "fs-label", "Hard body"));
-  for (const kk of [1, 2, 4, 8]) button(rows[1], "k", kk, `k = ${kk}`);
-  rows[2].append(elt("span", "fs-label", "LMO"));
-  for (const [kk, lab] of [["vertex", "vertex LMO"], ["barycenter", "barycenter answer"],
-    ["unique", "perturbed vertices"]]) button(rows[2], "rule", kk, lab);
+  const group = (label) => { const g = elt("div", "fs-group"); g.append(elt("span", "fs-label", label)); return g; };
+  const modeOf = () => { const b = model.get("body") || "segment"; return PLANAR.includes(b) ? "planar" : b; };
+  let lastPlanar = PLANAR.includes(model.get("body")) ? model.get("body") : "segment";
+
+  const rowEx = group("Example");
+  button(rowEx, "smooth planar body", () => modeOf() === "planar", () => model.set("body", lastPlanar));
+  button(rowEx, "hard body", () => modeOf() === "hard", () => model.set("body", "hard"));
+  button(rowEx, "fixed Hilbert body", () => modeOf() === "hilbert", () => model.set("body", "hilbert"));
+  const rowBody = group("Body");
+  for (const key of PLANAR) {
+    button(rowBody, CORES[key].name, () => model.get("body") === key,
+      () => { lastPlanar = key; model.set("body", key); });
+  }
+  const rowK = group("Dimension");
+  for (const kk of [1, 2, 4, 8]) {
+    button(rowK, `256·${kk} + 1`, () => Number(model.get("k") || 2) === kk, () => model.set("k", kk));
+  }
+  const rowLMO = group("LMO");
+  for (const [key, lab] of [["vertex", "vertex LMO"], ["barycenter", "barycenter answer"],
+    ["unique", "perturbed vertices"]]) {
+    button(rowLMO, lab, () => (model.get("rule") || "vertex") === key, () => model.set("rule", key));
+  }
+  const rowT = group("Oracle calls");
+  const slider = elt("input", "fs-slider"); slider.type = "range"; slider.min = "0"; slider.max = "100";
+  slider.step = "1"; slider.setAttribute("aria-label", "Number of oracle calls");
+  const tOut = elt("span", "fs-t");
+  slider.addEventListener("input", () => model.set("t", Number(slider.value)));
+  rowT.append(slider, tOut);
+
   const panes = elt("div", "fs-panes");
-  const geo = elt("canvas", "fs-geo"), chart = elt("canvas", "fs-chart");
+  const geo = elt("canvas", "fs-geo"), chartBox = elt("div", "fs-chartbox"), chart = elt("canvas", "fs-chart");
+  const legend = elt("ul", "fs-legend");
   geo.setAttribute("role", "img"); chart.setAttribute("role", "img");
-  geo.setAttribute("aria-label", "The body, the target c and the iterates; drag to move c");
-  chart.setAttribute("aria-label", "Primal gap against the number of oracle calls, logarithmic axes");
-  panes.append(geo, chart);
-  const stats = elt("p", "fs-stats");
-  box.append(...rows, panes, stats);
+  chart.setAttribute("aria-label", "Smallest primal gap so far against the number of oracle calls, logarithmic axes");
+  chartBox.append(chart, legend);
+  panes.append(geo, chartBox);
+  const caption = elt("p", "fs-caption");
+  box.append(rowEx, rowBody, rowK, rowLMO, rowT, panes, caption);
   root.append(box);
-  const W = 300, H = 300, CW = 380, CH = 300, VIEW = 1.9;
+
+  const W = 300, H = 300, CW = 380, CH = 280, VIEW = 1.9;
   const g = setupCanvas(geo, W, H), k = setupCanvas(chart, CW, CH);
   const toPx = (p) => [((p[0] + VIEW) / (2 * VIEW)) * W, ((VIEW - p[1]) / (2 * VIEW)) * H];
   const ink = () => getComputedStyle(box).color || "#333";
+  const font = (px) => `${px}px ${getComputedStyle(box).fontFamily || "sans-serif"}`;
+  const cache = new Map();
+  const memo = (key, fn) => { if (!cache.has(key)) cache.set(key, fn()); return cache.get(key); };
 
-  function chartCurves(curves, guides, T) {
-    const col = ink(), L = 46, R = 10, Tp = 12, B = 34, pw = CW - L - R, ph = CH - Tp - B;
+  function drawChart(curves, guides, T, t, yrange) {
+    const col = ink(), L = 58, R = 12, Tp = 10, B = 34, pw = CW - L - R, ph = CH - Tp - B;
     k.clearRect(0, 0, CW, CH);
-    const lx = (t) => L + (Math.log10(t + 1) / Math.log10(T + 1)) * pw;
-    const ymax = 1, ymin = -9;
+    const lx = (s) => L + (Math.log10(s + 1) / Math.log10(T + 1)) * pw;
+    const [ymin, ymax] = yrange;
     const ly = (y) => Tp + ((ymax - Math.log10(Math.max(y, 10 ** ymin))) / (ymax - ymin)) * ph;
-    k.strokeStyle = col; k.fillStyle = col; k.font = "11px sans-serif"; k.lineWidth = 1;
-    for (let e = ymin; e <= ymax; e += 2) {
-      const y = ly(10 ** e); k.globalAlpha = 0.15; k.beginPath(); k.moveTo(L, y); k.lineTo(L + pw, y); k.stroke();
-      k.globalAlpha = 0.8; k.fillText(`1e${e}`, 4, y + 4);
+    k.strokeStyle = col; k.fillStyle = col; k.font = font(11); k.lineWidth = 1;
+    const step = ymax - ymin > 6 ? 2 : 1;
+    for (let e = ymin; e <= ymax; e += step) {
+      const y = ly(10 ** e);
+      k.globalAlpha = 0.15; k.beginPath(); k.moveTo(L, y); k.lineTo(L + pw, y); k.stroke();
+      k.globalAlpha = 0.8; k.textAlign = "right"; k.fillText(e === 0 ? "1" : `1e${e}`.replace("-", "−"), L - 6, y + 4);
     }
-    for (const t of [1, 10, 100, 1000].filter((t) => t <= T)) {
-      const x = lx(t); k.globalAlpha = 0.15; k.beginPath(); k.moveTo(x, Tp); k.lineTo(x, Tp + ph); k.stroke();
-      k.globalAlpha = 0.8; k.textAlign = "center"; k.fillText(String(t), Math.min(x, L + pw - 12), Tp + ph + 14);
-      k.textAlign = "left";
+    k.textAlign = "center";
+    for (const s of [1, 10, 100, 1000].filter((s) => s <= T)) {
+      const x = lx(s);
+      k.globalAlpha = 0.15; k.beginPath(); k.moveTo(x, Tp); k.lineTo(x, Tp + ph); k.stroke();
+      k.globalAlpha = 0.8; k.fillText(String(s), Math.min(x, L + pw - 12), Tp + ph + 14);
     }
-    k.globalAlpha = 0.9; k.fillText("oracle calls", L + pw - 64, Tp + ph + 28); k.fillText("gap", L + 4, Tp + 12);
-    for (const [fn, label] of guides) {
-      k.save(); k.setLineDash([6, 4]); k.globalAlpha = 0.6; k.beginPath();
-      for (let t = 1; t <= T; t++) { const X = lx(t), Y = ly(fn(t)); t > 1 ? k.lineTo(X, Y) : k.moveTo(X, Y); }
-      k.stroke(); k.restore();
-      k.globalAlpha = 0.7; k.fillText(label, L + 8, ly(fn(1)) + 14);
+    k.globalAlpha = 0.9; k.fillText("oracle calls", L + pw / 2, Tp + ph + 29);
+    k.save(); k.translate(10, Tp + ph / 2); k.rotate(-Math.PI / 2); k.fillText("primal gap", 0, 0); k.restore();
+    k.textAlign = "left";
+    k.save(); k.beginPath(); k.rect(L, Tp, pw, ph); k.clip();
+    for (const [fn, , opt = {}] of guides) {
+      k.setLineDash(opt.dot ? [2, 3] : [6, 4]); k.globalAlpha = 0.75; k.strokeStyle = col; k.lineWidth = 1.3;
+      k.beginPath();
+      const from = opt.from ?? 1, to = Math.min(T, opt.to ?? T);
+      for (let s = from; s <= Math.max(to, from); s++) {
+        const X = lx(s), Y = ly(fn(s)); s > from ? k.lineTo(X, Y) : k.moveTo(X, Y);
+      }
+      if (to <= from) k.lineTo(lx(from) + 6, ly(fn(from)));
+      k.stroke();
+      if (opt.to != null) { k.setLineDash([]); k.beginPath(); k.arc(lx(to), ly(fn(to)), 3, 0, 2 * Math.PI); k.stroke(); }
     }
-    let yl = Tp + 26;
-    for (const [ys, color, label] of curves) {
+    k.setLineDash([]);
+    for (const [ys, color] of curves) {
       k.strokeStyle = color; k.lineWidth = 2; k.globalAlpha = 1; k.beginPath();
-      ys.forEach((y, t) => { const X = lx(t), Y = ly(y); t ? k.lineTo(X, Y) : k.moveTo(X, Y); });
-      k.stroke(); k.fillStyle = color; k.fillText(label, L + pw - 150, yl); yl += 14;
+      let started = false;
+      ys.forEach((y, s) => {
+        if (!Number.isFinite(y)) return;
+        const X = lx(s), Y = ly(y); started ? k.lineTo(X, Y) : k.moveTo(X, Y); started = true;
+      });
+      k.stroke();
+      if (Number.isFinite(ys[t])) { k.fillStyle = color; k.beginPath(); k.arc(lx(t), ly(ys[t]), 3.5, 0, 2 * Math.PI); k.fill(); }
     }
-    k.strokeStyle = col; k.fillStyle = col;
+    k.strokeStyle = col; k.globalAlpha = 0.45; k.setLineDash([2, 3]); k.beginPath();
+    k.moveTo(lx(t), Tp); k.lineTo(lx(t), Tp + ph); k.stroke();
+    k.restore();
+    k.globalAlpha = 1; k.strokeStyle = col; k.fillStyle = col;
+    legend.replaceChildren();
+    for (const [ys, color, label, exact] of curves) {
+      const li = elt("li"); const sw = elt("span", "fs-swatch"); sw.style.background = color;
+      li.append(sw, elt("span", "fs-name", label),
+        elt("span", "fs-val", Number.isFinite(ys[t]) ? fmt(ys[t], exact) : "–"));
+      legend.append(li);
+    }
+    for (const [, label, opt = {}] of guides) {
+      const li = elt("li", "fs-guide");
+      li.append(elt("span", opt.dot ? "fs-swatch fs-dash fs-dot" : "fs-swatch fs-dash"), elt("span", "fs-name", label));
+      legend.append(li);
+    }
   }
 
-  function draw() {
-    for (const [kk, b] of Object.entries(buttons)) {
-      const [key, v] = kk.split(":");
-      b.setAttribute("aria-pressed", String(String(model.get(key)) === v));
-    }
-    const body = model.get("body") || "segment";
-    const col = ink();
-    g.clearRect(0, 0, W, H);
-    if (body === "hard") {
-      const kk = Number(model.get("k")) || 4, rule = model.get("rule") || "vertex", T = 300;
-      const S = simulateHard(kk, rule, T);
-      chartCurves([[S.fw, COLORS.fw, "Frank–Wolfe"], [S.qm, COLORS.qm, "Frank–Wolfe on K"],
-        [S.probe, COLORS.probe, "reads I off the answer"]],
-        [[(t) => 2 * S.delta ** 2 / (t + 1), "2δ²/(t+1)"], [() => S.lower, `threshold 1/(16k)`]], T);
-      g.fillStyle = col; g.font = "13px sans-serif";
-      const lines = [`index set I: ${S.d} of ${S.N} indices`, `dimension ${S.N + 1}`, ""].concat(
-        rule === "barycenter"
-          ? ["the vertical query returns the", "barycenter of the bottom face:", "the instance is read off",
-            "after one call"]
-          : ["each call reveals at most one", "index of I"]);
-      lines.forEach((l, i) => g.fillText(l, 12, 30 + 20 * i));
-      stats.textContent = `after ${T} calls: Frank–Wolfe ${S.fw[T].toExponential(1)}, Frank–Wolfe ` +
-        `on K ${S.qm[T].toExponential(1)}, reads I off ${S.probe[T].toExponential(1)}`;
-      return;
-    }
-    const c = [Number(model.get("cx")), Number(model.get("cy"))], T = 1000;
-    const S = simulatePlanar(body, c, T);
-    // the body, sampled through its oracle
+  function drawPlanar(t) {
+    const col = ink(), body = model.get("body"), c = [Number(model.get("cx")), Number(model.get("cy"))];
+    const T = HORIZON.planar;
+    const S = memo(`p:${body}:${c}`, () => simulatePlanar(body, c, T));
     g.beginPath();
     for (let i = 0; i <= 180; i++) {
       const th = (2 * Math.PI * i) / 180, p = toPx(S.lmoC([-Math.cos(th), -Math.sin(th)]));
       i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]);
     }
     g.closePath(); g.fillStyle = "#2e86ab22"; g.fill(); g.strokeStyle = "#2e86ab"; g.lineWidth = 2; g.stroke();
-    for (const [path, color] of [[S.fwPath, COLORS.fw], [S.qmPath, COLORS.qm]]) {
-      g.strokeStyle = color; g.globalAlpha = 0.6; g.lineWidth = 1.2; g.beginPath();
-      path.slice(0, 60).forEach((p, i) => { const q = toPx(p); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); });
+    for (const [path, calls, color] of [[S.fwPath, S.calls.fw, COLORS.a], [S.qmPath, S.calls.qm, COLORS.b],
+      [S.jmPath, S.calls.jm, COLORS.c]]) {
+      let last = -1; while (last + 1 < path.length && calls[last + 1] <= t) last++;
+      if (last < 0) continue;
+      g.strokeStyle = color; g.globalAlpha = 0.55; g.lineWidth = 1.2; g.beginPath();
+      path.slice(Math.max(0, last - 200), last + 1).forEach((p, i) => {
+        const q = toPx(p); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]);
+      });
       g.stroke(); g.globalAlpha = 1;
+      const q = toPx(path[last]); g.fillStyle = color; g.beginPath(); g.arc(q[0], q[1], 3.5, 0, 2 * Math.PI); g.fill();
     }
     const xs = toPx(S.xstar), cp = toPx(c);
-    g.strokeStyle = col; g.beginPath(); g.arc(xs[0], xs[1], 5, 0, 2 * Math.PI); g.stroke();
-    g.strokeStyle = "#e07a1f"; g.lineWidth = 2; g.beginPath(); g.arc(cp[0], cp[1], 7, 0, 2 * Math.PI); g.stroke();
-    g.fillStyle = col; g.font = "13px sans-serif"; g.fillText("x⋆", xs[0] + 8, xs[1] - 6);
-    g.fillStyle = "#e07a1f"; g.fillText("c", cp[0] + 9, cp[1] + 15);
-    const guides = [[(t) => 2 * S.delta ** 2 / (t + 1), "2δ²/(t+1)"]];
-    if (S.rate) guides.push([S.rate, "linear rate"]);
-    chartCurves([[S.fw, COLORS.fw, "Frank–Wolfe"], [S.qm, COLORS.qm, "Frank–Wolfe on K"],
-      [S.jm, COLORS.jm, "projected gradient"]], S.delta > 0 ? guides : guides.slice(1), T);
-    stats.textContent = `after ${T} calls: Frank–Wolfe ${S.fw[T].toExponential(1)}, Frank–Wolfe ` +
-      `on K ${S.qm[T].toExponential(1)}, projected gradient ${S.jm[T].toExponential(1)}`;
+    g.strokeStyle = col; g.lineWidth = 1.5; g.beginPath(); g.arc(xs[0], xs[1], 5, 0, 2 * Math.PI); g.stroke();
+    g.strokeStyle = COLORS.d; g.lineWidth = 2; g.beginPath(); g.arc(cp[0], cp[1], 7, 0, 2 * Math.PI); g.stroke();
+    g.fillStyle = col; g.font = font(13); g.fillText("x⋆", xs[0] + 8, xs[1] - 6);
+    g.fillStyle = COLORS.d; g.fillText("c", cp[0] + 9, cp[1] + 15);
+    const guides = [];
+    if (S.delta > 0) guides.push([(s) => 2 * S.delta ** 2 / (s + 1), "bound 2δ²/(t + 1), Frank–Wolfe on K"]);
+    if (S.rate) guides.push([S.rate, "linear rate (inner and outer tangent balls)"]);
+    drawChart([[byCalls(S.fw, S.calls.fw, T), COLORS.a, "Frank–Wolfe"],
+      [byCalls(S.qm, S.calls.qm, T), COLORS.b, "Frank–Wolfe on K"],
+      [byCalls(S.jm, S.calls.jm, T), COLORS.c, "projected gradient"]], guides, T, t, [-9, 1]);
+    geo.setAttribute("aria-label", "The body, the target c, the minimizer and the iterates; drag to move c");
+    caption.textContent = "Drag c. The curves show the smallest primal gap reached so far.";
+    return T;
+  }
+
+  function drawHard(t) {
+    const col = ink(), kk = Number(model.get("k")) || 2, rule = model.get("rule") || "vertex";
+    const T = HORIZON.hard;
+    const S = memo(`h:${kk}:${rule}`, () => simulateHard(kk, rule, T));
+    const inI = new Set(S.indexSet), found = new Set();
+    for (let s = 0; s <= t && s < S.found.length; s++) for (const j of S.found[s]) found.add(j);
+    const cols = 2 ** Math.ceil(Math.log2(Math.sqrt(S.N))), rows = S.N / cols;
+    const cell = Math.floor(256 / cols), x0 = (W - cols * cell) / 2, y0 = 12;
+    for (let i = 0; i < S.N; i++) {
+      const cx = x0 + (i % cols) * cell, cy = y0 + Math.floor(i / cols) * cell;
+      if (found.has(i)) { g.fillStyle = COLORS.d; g.globalAlpha = 1; }
+      else if (inI.has(i)) { g.fillStyle = col; g.globalAlpha = 0.55; }
+      else { g.fillStyle = col; g.globalAlpha = 0.08; }
+      g.fillRect(cx + 0.5, cy + 0.5, cell - 1, cell - 1);
+    }
+    g.globalAlpha = 1; g.fillStyle = col; g.font = font(12);
+    const yt = y0 + rows * cell + 22;
+    g.fillText(`${S.N} indices; I contains ${S.d} of them.`, 12, yt);
+    const key = (color, alpha, text, y) => {
+      g.globalAlpha = alpha; g.fillStyle = color; g.fillRect(12, y - 9, 10, 10);
+      g.globalAlpha = 1; g.fillStyle = col; g.fillText(text, 28, y);
+    };
+    key(COLORS.d, 1, `in I and found after ${t} calls: ${found.size}`, yt + 20);
+    key(col, 0.55, "in I, not yet found", yt + 38);
+    drawChart([[byCalls(S.fw, S.calls.fw, T), COLORS.a, "Frank–Wolfe"],
+      [byCalls(S.qm, S.calls.qm, T), COLORS.b, "Frank–Wolfe on K"],
+      [byCalls(S.probe, S.calls.qm, T), COLORS.d, "reads I off the answer", rule === "barycenter"]],
+      [[(s) => 2 * S.delta ** 2 / (s + 1), "bound 2δ²/(t + 1) of Frank–Wolfe on K"],
+        [() => S.lower, `threshold 1/(16k) for k − 1 = ${kk - 1} call${kk === 2 ? "" : "s"}`,
+          { dot: true, from: 0, to: kk - 1 }]], T, t, [-9, 1]);
+    geo.setAttribute("aria-label", "The indices; filled: indices of I found by Frank–Wolfe on K so far");
+    caption.textContent = {
+      vertex: "Each answer of the vertex LMO reveals one index of I: the first in the order of the query.",
+      barycenter: "The answer to the vertical call is the barycenter of the bottom face; it reveals all of I at once.",
+      unique: "With perturbed vertices every minimizer is unique; the indices of I with positive weight in an " +
+        "answer are revealed, one per answer until the iterates approach the minimizer.",
+    }[rule];
+    return T;
+  }
+
+  function drawHilbert(t) {
+    const col = ink(), T = HORIZON.hilbert;
+    const S = memo("hilbert", () => simulateHilbert(T));
+    const x = S.charts[t];
+    let last = 0; for (let i = 0; i < x.length; i++) if (Math.abs(x[i]) > 1e-15) last = i;
+    const used = last + 1;
+    let hi = 0, lo = 0, mass = 0, sq = 0;
+    for (let i = 0; i < used; i++) { hi = Math.max(hi, x[i]); lo = Math.min(lo, x[i]); mass += x[i]; sq += x[i] * x[i]; }
+    const left = 36, right = W - 12, top = 18, bottom = 210, span = hi - lo || 1;
+    const yv = (v) => top + ((hi - v) / span) * (bottom - top);
+    g.strokeStyle = col; g.globalAlpha = 0.3; g.lineWidth = 1; g.beginPath();
+    g.moveTo(left, yv(0)); g.lineTo(right, yv(0)); g.stroke(); g.globalAlpha = 1;
+    const bw = (right - left) / used;
+    g.fillStyle = COLORS.a;
+    for (let i = 0; i < used; i++) {
+      const y1 = yv(Math.max(0, x[i])), y2 = yv(Math.min(0, x[i]));
+      g.fillRect(left + i * bw, y1, Math.max(bw - (bw > 3 ? 1 : 0), 0.6), Math.max(y2 - y1, 0.5));
+    }
+    g.fillStyle = col; g.font = font(11); g.textAlign = "right";
+    g.fillText(hi.toFixed(hi < 0.1 ? 3 : 2), left - 4, top + 4); g.fillText("0", left - 4, yv(0) + 4);
+    g.textAlign = "center"; g.fillText(`coordinate i = 0, …, ${used - 1}`, (left + right) / 2, bottom + 16);
+    g.textAlign = "left"; g.font = font(12);
+    const e2 = (v) => v.toExponential(2).replace("-", "−");
+    g.fillText(`Frank–Wolfe iterate after ${t} call${t === 1 ? "" : "s"}:`, 12, bottom + 40);
+    g.fillText(`Σ xᵢ = ${mass.toFixed(3)},   Σ xᵢ² = ${e2(sq)}`, 12, bottom + 58);
+    g.fillText(`(Σ xᵢ)²/(t + 1) = ${e2(mass * mass / (t + 1))}`, 12, bottom + 76);
+    const steps = S.open.map((_, s) => s);
+    drawChart([[byCalls(S.open, steps, T), COLORS.a, "Frank–Wolfe, step 2/(t + 2)"],
+      [byCalls(S.line, steps, T), COLORS.b, "Frank–Wolfe, line search"],
+      [byCalls(S.vertical, steps, T), COLORS.d, "one call in the vertical direction", true]],
+      [[S.upper, "upper bound 2(15/4)²/(t + 2)"], [S.lower, "lower bound 31/(256(t + 1))", { dot: true }]],
+      T, t, [-4, 1]);
+    geo.setAttribute("aria-label", "The coordinates of the horizontal part of the Frank–Wolfe iterate");
+    caption.textContent = "The bars show the coordinates xᵢ of the Frank–Wolfe iterate. Each call adds at most one " +
+      "coordinate and Σ xᵢ stays at least 1/2, so Σ xᵢ² ≥ (Σ xᵢ)²/(t + 1): the primal gap stays above " +
+      "31/(256(t + 1)). A single call in the vertical direction returns the minimizer.";
+    return T;
+  }
+
+  function draw() {
+    const mode = modeOf();
+    for (const [b, pressed] of buttons) b.setAttribute("aria-pressed", String(pressed()));
+    rowBody.hidden = mode !== "planar"; rowK.hidden = rowLMO.hidden = mode !== "hard";
+    geo.style.cursor = mode === "planar" ? "crosshair" : "default";
+    const sv = model.get("t") == null ? 100 : Number(model.get("t"));
+    slider.value = String(sv);
+    const T = HORIZON[mode], t = Math.max(1, Math.min(T, Math.round(T ** (sv / 100))));
+    tOut.textContent = `t = ${t}`;
+    g.clearRect(0, 0, W, H);
+    if (mode === "hard") drawHard(t); else if (mode === "hilbert") drawHilbert(t); else drawPlanar(t);
   }
 
   let dragging = false;
   const moveTo = (ev) => {
-    if ((model.get("body") || "segment") === "hard") return;
+    if (modeOf() !== "planar") return;
     const r = geo.getBoundingClientRect();
     const px = ((ev.clientX - r.left) / r.width) * W, py = ((ev.clientY - r.top) / r.height) * H;
     model.set("cx", Math.round(((px / W) * 2 * VIEW - VIEW) * 1000) / 1000);
     model.set("cy", Math.round((VIEW - (py / H) * 2 * VIEW) * 1000) / 1000);
   };
-  geo.addEventListener("pointerdown", (ev) => { dragging = true; geo.setPointerCapture(ev.pointerId); moveTo(ev); });
+  geo.addEventListener("pointerdown", (ev) => {
+    if (modeOf() !== "planar") return;
+    dragging = true; geo.setPointerCapture(ev.pointerId); moveTo(ev);
+  });
   geo.addEventListener("pointermove", (ev) => { if (dragging) moveTo(ev); });
   geo.addEventListener("pointerup", () => { dragging = false; });
-  for (const key of ["body", "cx", "cy", "k", "rule"]) model.on(`change:${key}`, draw);
+  for (const key of ["body", "cx", "cy", "k", "rule", "t"]) model.on(`change:${key}`, draw);
   draw();
 }
 
