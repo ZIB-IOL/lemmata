@@ -121,6 +121,25 @@ $(2/(t+3))^2 LD^2\delta$, not half of it. The formal statement uses half the err
 original normalization of @jaggi2013revisiting. The book's bound on the running minimum of the
 Frank–Wolfe gaps under approximation is not formalized here.
 
+## A lower bound from sparsity
+
+An algorithm that accesses the feasible region only through linear minimization knows at most one
+new vertex per call, and its iterates are convex combinations of the vertices seen so far. On the
+simplex this costs a primal gap of order $1/t$, so the rate of Theorem 2.2 cannot be improved
+in general.
+
+```{prf:example} A primal gap lower bound
+:label: ex-conditional-gradient-basics-simplex
+:enumerator: 2.7
+
+Minimize $f(x) = \|x\|_2^2$ over the probability simplex $\Delta_n \subseteq \mathbb{R}^n$. Every
+convex combination $x$ of the coordinate vectors $e_i$ with $i \in S$ satisfies
+$f(x) - f(x^*) \ge 1/|S| - 1/n$.
+```
+
+The coordinates of such an $x$ sum to $1$ on $S$ and vanish outside $S$, so $\|x\|^2 \ge 1/|S|$ by
+Cauchy–Schwarz, while the barycenter of the simplex has $\|x\|^2 = 1/n$.
+
 ## Fixed step sizes
 
 The open-loop rule cannot converge faster than $1/t^2$ when the minimizer is not where the run
@@ -358,7 +377,7 @@ asks only for unit directions, a weaker assumption.
 
 ## Not yet covered
 
-The lower bounds of Example 2.7 and Theorem 2.8 in Section 2.1.2 are not formalized here. Rates over
+The lower bound of Theorem 2.8, with Lemma 2.10, in Section 2.1.2 is not formalized here. Rates over
 uniformly convex sets under local dual sharpness are in
 [Frank–Wolfe beyond 1/t under local dual sharpness](../frank-wolfe-local-dual-sharpness/index.md).
 The away-step, fully-corrective and pairwise variants of Sections 2.2.4, 2.2.5 and 3.1.1 are in

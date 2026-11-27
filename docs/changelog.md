@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-26
 
+- **Updated entry:** [Conditional gradient methods: smoothness, scaling and linear rates](conditional-gradient-basics/index.md), adding Example 2.7 (a primal gap lower bound on the simplex).
 - **Updated entry:** [Conditional gradient methods: smoothness, scaling and linear rates](conditional-gradient-basics/index.md), adding Definition 2.12, Proposition 2.19 (scaling for uniformly convex sets), Theorem 2.20 (rates over uniformly convex sets) and Theorem 2.24 (gradient-dominated objectives, with scale-invariant constants).
 - **Updated entry:** [Conditional gradient methods: smoothness, scaling and linear rates](conditional-gradient-basics/index.md), adding Theorem 2.2 (vanilla Frank–Wolfe: primal and Frank–Wolfe gap rates), Proposition 2.9 (iterates under fixed step sizes) and Theorem 2.11 (nonconvex objectives).
 - **Updated entry:** [Conditional gradient methods: away-step, fully-corrective and pairwise Frank–Wolfe](away-step-frank-wolfe/index.md), adding pairwise Frank–Wolfe (Theorem 3.2): a linear rate with fewer than |V|! consecutive swap steps, proved by a permutation argument.

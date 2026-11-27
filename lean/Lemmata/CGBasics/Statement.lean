@@ -2,6 +2,7 @@ module
 
 public import Lemmata.FrankWolfe.Statement
 public import Lemmata.FrankWolfeIntro.Statement
+public import Mathlib.Analysis.InnerProductSpace.PiL2
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
 
 @[expose] public section
@@ -247,5 +248,17 @@ def GradientDominatedRate : Prop :=
       (∀ t : ℕ, 1 ≤ t → (t : ℤ) < t₀ → f (x t) - f xStar ≤ L * Metric.diam C ^ 2 / 2 ^ t) ∧
       (∀ t : ℕ, t₀ ≤ (t : ℤ) → f (x t) - f xStar ≤
         L * K / (1 + 1 / 2 * (1 - 1 / q) * ((t : ℝ) - t₀)) ^ (q / (q - 1)))
+
+/-- **Example 2.7** (a primal gap lower bound). Minimize `‖x‖²` over the probability simplex in
+`ℝⁿ` with the Euclidean norm. Every convex combination `x` of the coordinate vectors `e_i` with
+`i ∈ S` has primal gap at least `1/|S| - 1/n`, so an algorithm that has seen at most `k` vertices
+has primal gap at least `1/k - 1/n`. -/
+def SimplexLowerBound : Prop :=
+  ∀ (n : ℕ) (S : Finset (Fin n)), S.Nonempty →
+    ∀ xStar ∈ minimizers
+        (convexHull ℝ (Set.range fun i : Fin n => EuclideanSpace.single i (1 : ℝ)))
+        (fun y : EuclideanSpace ℝ (Fin n) => ‖y‖ ^ 2),
+    ∀ x ∈ convexHull ℝ ((fun i : Fin n => EuclideanSpace.single i (1 : ℝ)) '' (S : Set (Fin n))),
+      1 / (S.card : ℝ) - 1 / n ≤ ‖x‖ ^ 2 - ‖xStar‖ ^ 2
 
 end Lemmata.CGBasics

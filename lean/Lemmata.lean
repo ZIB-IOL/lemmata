@@ -21,6 +21,7 @@ public import Lemmata.C19IsotropicSymbol.Statement
 public import Lemmata.CGBasics.Approx
 public import Lemmata.CGBasics.FixedStep
 public import Lemmata.CGBasics.Interior
+public import Lemmata.CGBasics.LowerBound
 public import Lemmata.CGBasics.Main
 public import Lemmata.CGBasics.Rates
 public import Lemmata.CGBasics.Smoothness
