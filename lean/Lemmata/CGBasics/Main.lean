@@ -6,6 +6,7 @@ public import Lemmata.CGBasics.Rates
 public import Lemmata.CGBasics.Approx
 public import Lemmata.CGBasics.FixedStep
 public import Lemmata.CGBasics.UniformlyConvex
+public import Lemmata.CGBasics.LowerBound
 public import Lemmata.FrankWolfeIntro.Main
 
 @[expose] public section
@@ -70,6 +71,9 @@ theorem uniformly_convex_power : UniformlyConvexPower := Proof.uniformly_convex_
 
 /-- Theorem 2.24: rates for gradient-dominated objectives over uniformly convex sets. -/
 theorem gradient_dominated_rate : GradientDominatedRate := Proof.gradient_dominated_rate
+
+/-- Example 2.7: a primal gap lower bound from the number of vertices seen. -/
+theorem simplex_lower_bound : SimplexLowerBound := Proof.simplex_lower_bound
 -- DOCS_END_MAIN
 
 end Lemmata.CGBasics
