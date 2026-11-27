@@ -176,6 +176,35 @@ def SharpAwayLinear : Prop :=
         (1 - min (1 / 2) (δ ^ 2 / (8 * c ^ 2 * L * Metric.diam (↑V : Set E) ^ 2))) ^ ((t - 1) / 2) *
           (L * Metric.diam (↑V : Set E) ^ 2 / 2)
 
+/-- **Corollary 3.33** for `θ < 1/2` (away-step Frank–Wolfe under sharpness), with the constant
+that the proof gives. Under the assumptions of `SharpAwayLinear` with `(c, θ)`-sharpness for some
+`0 ≤ θ < 1/2`, let `K = (4 c² L D²/δ²)^{1/(1-2θ)}` and `t₀ = max {⌊log₂ (L D²/K)⌋ + 1, 1}`, and for
+`t ≥ 1` let `T = ⌊(t-1)/2⌋ + 1`. Then `f(x_t) - f(x⋆) ≤ L D²/2^T` if `T < t₀`, and
+`f(x_t) - f(x⋆) ≤ K/(1 + (1/2 - θ)(T - t₀))^{1/(1-2θ)}` if `T ≥ t₀`. -/
+def SharpAwaySublinear : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ) (L : NNReal)
+    (c δ θ : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ),
+    0 < (L : ℝ) → 0 < c → 0 < δ → 0 ≤ θ → θ < 1 / 2 → Lemmata.AwayStepFW.IsScaling V δ →
+    ConvexOn ℝ Set.univ f → IsSmooth f L → IsSharp (convexHull ℝ (↑V : Set E)) f c θ →
+    Lemmata.AwayStepFW.IsAFWRun V f L x S lam →
+    ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f,
+      let K := (4 * c ^ 2 * L * Metric.diam (↑V : Set E) ^ 2 / δ ^ 2) ^ (1 / (1 - 2 * θ))
+      let t₀ : ℤ := max (⌊Real.logb 2 (L * Metric.diam (↑V : Set E) ^ 2 / K)⌋ + 1) 1
+      ∀ t : ℕ, 1 ≤ t →
+        (((t - 1) / 2 + 1 : ℕ) < t₀ →
+          f (x t) - f xStar ≤ L * Metric.diam (↑V : Set E) ^ 2 / 2 ^ ((t - 1) / 2 + 1)) ∧
+        (t₀ ≤ ((t - 1) / 2 + 1 : ℕ) → f (x t) - f xStar ≤
+          K / (1 + (1 / 2 - θ) * ((((t - 1) / 2 + 1 : ℕ) : ℝ) - t₀)) ^ (1 / (1 - 2 * θ)))
+
+/-- **Lemma 3.35**, first half (sharp functions are gradient dominated). Let `C` be compact and `f`
+convex, differentiable and `(c, θ)`-sharp over `C` with `θ < 1`. Then
+`(f(x) - f(x⋆))^{1-θ}/c ≤ ‖f'(x)‖` for every `x ∈ C`. -/
+def SharpGradientDominated : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (c θ : ℝ),
+    IsCompact C → ConvexOn ℝ Set.univ f → Differentiable ℝ f → 0 < c → θ < 1 →
+    IsSharp C f c θ → ∀ xStar ∈ minimizers C f, ∀ x ∈ C,
+      (f x - f xStar) ^ (1 - θ) / c ≤ ‖fderiv ℝ f x‖
+
 /-- A run of Frank–Wolfe with the nearest extreme point oracle (Algorithm 3.12) on `conv V` in a
 real inner product space: with `γ_t = 2/(t + 2)`, the vertex `v_t ∈ V` minimizes
 `f'(x_t)(v) + L γ_t ‖x_t - v‖²/2` over `V`, and `x_{t+1} = x_t + γ_t (v_t - x_t)`. -/
