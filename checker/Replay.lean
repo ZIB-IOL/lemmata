@@ -10,6 +10,7 @@ through Lean's kernel again, read from their compiled files.
 
     lemmata-replay <file with one module name per line>
     lemmata-replay --per-module <file with one module name per line>
+    lemmata-replay --imports <file with one module name per line>     (checks nothing)
 
 Exits 0 only if every constant of every listed module is accepted. A listed module without an
 olean is an error. (`leanchecker <names>` selects every module that has a name as a *prefix*, so
@@ -43,6 +44,14 @@ contain is refused by the kernel as a duplicate.
 `replayFromImports` from Lean's `leanchecker`, copied unchanged: each module on top of its own
 imports, one task per module, with LEAN_NUM_THREADS bounding the pool. What the cluster's
 verify step runs; each thread loads Mathlib for every module it checks.
+
+## Imports (`--imports`)
+
+For each listed module, the files a replay of it reads (its olean parts, found as
+`replayFromImports` finds them) and the imports in its compiled header, with their flags, as
+JSON. The verify step keys each module by these files and its imports' keys
+(job/approvals.mjs), and replays only the modules whose key it has not seen pass before.
+The header's imports, not the source's: they are what the replay loads.
 -/
 
 -- From LeanChecker.lean (Lean v4.35.0), unchanged.
@@ -70,9 +79,9 @@ unsafe def replayFromImports (module : Name) : IO Unit := do
   discard <| env.toKernelEnv.replay newConstants
   env.freeRegions
 
-/-- A module's imports and its constants, read from all parts of its olean (exported, server,
-private) as `replayFromImports` reads them: the last ("most private") part subsumes the others. -/
-unsafe def readModule (module : Name) : IO (Array Import × ModuleData) := do
+/-- The files of a module's olean, found as `replayFromImports` finds them: the exported part,
+and the server and private parts where they exist. -/
+def oleanFiles (module : Name) : IO (Array System.FilePath) := do
   let mFile ← findOLean module
   unless (← mFile.pathExists) do
     throw <| IO.userError s!"object file '{mFile}' of module {module} does not exist"
@@ -83,9 +92,27 @@ unsafe def readModule (module : Name) : IO (Array Import × ModuleData) := do
     let pFile := OLeanLevel.private.adjustFileName mFile
     if (← pFile.pathExists) then
       fnames := fnames.push pFile
-  let parts ← readModuleDataParts fnames
+  return fnames
+
+/-- A module's imports and its constants, read from all parts of its olean (exported, server,
+private) as `replayFromImports` reads them: the last ("most private") part subsumes the others. -/
+unsafe def readModule (module : Name) : IO (Array Import × ModuleData) := do
+  let parts ← readModuleDataParts (← oleanFiles module)
   if h : parts.size = 0 then throw <| IO.userError s!"failed to read the module data of {module}" else
   return (parts[0].1.imports, parts[parts.size - 1].1)
+
+/-- `--imports`: for each listed module, the files a replay of it reads and the imports in its
+header (the ones `replayFromImports` loads, with their flags), as JSON. job/approvals.mjs keys
+each module by these files and the keys of these imports. Nothing is checked here. -/
+unsafe def moduleImports (modules : Array Name) : IO Json := do
+  let mut out : Array (String × Json) := #[]
+  for m in modules do
+    let files ← oleanFiles m
+    let parts ← readModuleDataParts files
+    if h : parts.size = 0 then throw <| IO.userError s!"failed to read the module data of {m}" else
+    out := out.push (m.toString, Json.mkObj [("files", toJson (files.map (·.toString))),
+      ("imports", toJson parts[0].1.imports)])
+  return Json.mkObj out.toList
 
 structure OnePass where
   constants : Nat
@@ -140,11 +167,13 @@ unsafe def replayOnePass (modules : Array Name) : IO OnePass := do
   return { constants := newConstants.size, copies := copies.size }
 
 unsafe def main (args : List String) : IO UInt32 := do
-  let (perModule, rest) := match args with
-    | "--per-module" :: r => (true, r)
-    | r => (false, r)
+  let (mode, rest) := match args with
+    | "--per-module" :: r => ("per-module", r)
+    | "--imports" :: r => ("imports", r)
+    | r => ("one-pass", r)
+  let perModule := mode == "per-module"
   let [listPath] := rest
-    | IO.eprintln "usage: lemmata-replay [--per-module] <file with one module name per line>"; return 2
+    | IO.eprintln "usage: lemmata-replay [--per-module | --imports] <file with one module name per line>"; return 2
   initSearchPath (← findSysroot)
   let names := (← IO.FS.readFile listPath).splitOn "\n" |>.map (·.trimAscii.toString) |>.filter (· ≠ "")
   let mut modules : Array Name := #[]
@@ -155,6 +184,12 @@ unsafe def main (args : List String) : IO UInt32 := do
     unless modules.contains m do modules := modules.push m
   if modules.isEmpty then
     IO.eprintln "no modules listed: nothing would be checked"; return 1
+  if mode == "imports" then
+    try
+      IO.println (← moduleImports modules).compress
+      return 0
+    catch e =>
+      IO.eprintln s!"cannot read the imports: {e}"; return 1
   if perModule then
     let mut tasks := #[]
     for m in modules do

@@ -185,6 +185,7 @@ def main (args : List String) : IO UInt32 := do
   let [reqPath, outPath] := args
     | IO.eprintln "usage: lemmata-check <request.json> <report.json>"; return 2
   let req ← IO.ofExcept <| (Json.parse (← IO.FS.readFile reqPath)) >>= parseRequest
+  let t0 ← IO.monoMsNow                -- the time of each phase goes into the report
   initSearchPath (← findSysroot)
   let mut failures : Array String := #[]
   let mut ownMods : Array Name := #[]
@@ -207,6 +208,21 @@ def main (args : List String) : IO UInt32 := do
   let env ← importModules (ownMods.map ({ module := · })) {} (loadExts := false)
   let allowed : NameSet := req.allowedAxioms.foldl (·.insert ·) {}
   let cache ← IO.mkRef ({} : NameMap NameSet)
+  -- The constants of the archive's modules (under the root), module by module from each
+  -- module's own list, keeping exactly those the environment attributes to that module -- the
+  -- same constants as going through all of `env.constants` and asking each for its module,
+  -- without touching every name of Mathlib in the mapped oleans (that took a minute, 2026-11-26).
+  let archiveConsts : Array (Name × ConstantInfo × Name) := Id.run do
+    let mut out := #[]
+    for h : i in [0:env.header.moduleNames.size] do
+      let m := env.header.moduleNames[i]
+      unless req.root.isPrefixOf m do continue
+      let some data := env.header.moduleData[i]? | continue
+      for c in data.constNames do
+        if moduleOf env c == some m then
+          if let some ci := env.find? c then out := out.push (c, ci, m)
+    return out
+  let tImport ← IO.monoMsNow
 
   -- 0. Computation axioms: every axiom defined in the archive whose name has the shape of a
   --    computation claim is examined here; the accepted ones become allowed for the audit
@@ -215,9 +231,7 @@ def main (args : List String) : IO UInt32 := do
   let mut computations : NameSet := {}
   let mut computationsJson : Array Json := #[]
   let mut computationModule : NameMap Name := {}
-  for (c, ci) in env.constants.map₁.toList do
-    let some m := moduleOf env c | continue
-    unless req.root.isPrefixOf m do continue
+  for (c, ci, m) in archiveConsts do
     let .axiomInfo v := ci | continue
     let some (decl, tac) := nativeAxiomParts c | continue
     let file := modulePath m
@@ -242,6 +256,7 @@ def main (args : List String) : IO UInt32 := do
       failures := failures.push s!"{c} (in {m}) is not an accepted computation: it {", ".intercalate why.toList}"
   let mut allowed := allowed
   for c in computations do allowed := allowed.insert c
+  let tComputations ← IO.monoMsNow
 
   -- 1. Every constant defined anywhere in the archive's own modules, not only the exported
   --    ones: an admitted helper must fail the build even if nothing displays it.
@@ -249,8 +264,7 @@ def main (args : List String) : IO UInt32 := do
   let mut audited := 0
   let mut archiveAxioms : NameSet := {}
   let mut outside : Array (Name × Name × Name) := #[]
-  for (c, _) in env.constants.map₁.toList do
-    let some m := moduleOf env c | continue
+  for (c, _, m) in archiveConsts do
     unless own.contains m do continue
     audited := audited + 1
     for a in (← axiomsOf env c cache) do
@@ -264,6 +278,7 @@ def main (args : List String) : IO UInt32 := do
   for (c, m, ns) in outside.qsort (fun a b => a.1.lt b.1) do
     failures := failures.push (s!"{c} (in {m}) is declared outside {ns}: put it inside `namespace {ns}` " ++
       "or make it private, so that no two entries can declare the same name")
+  let tAudit ← IO.monoMsNow
 
   -- 2. Declarations bound in the manifests.
   let mut exportsJson : Array Json := #[]
@@ -299,6 +314,14 @@ def main (args : List String) : IO UInt32 := do
       ("computations", Json.arr uses),
       ("status", if problems.isEmpty then "checked" else "failed"),
       ("problems", toJson problems)]
+  let tExports ← IO.monoMsNow
+  -- What the axiom walk visited, in the archive and outside it (Mathlib, Lean, ...).
+  let mut walkedArchive : Nat := 0
+  let mut walkedOther : Nat := 0
+  for (c, _) in (← cache.get).toList do
+    if (moduleOf env c).any (req.root.isPrefixOf ·) then walkedArchive := walkedArchive + 1
+    else walkedOther := walkedOther + 1
+  let secs (a b : Nat) : Json := toJson ((b - a).toFloat / 1000)
 
   let report := Json.mkObj <| ([
     ("tool", "lemmata-check"), ("lean_version", Lean.versionString),
@@ -310,7 +333,10 @@ def main (args : List String) : IO UInt32 := do
     ("archive_axioms", toJson ((sortedNames archiveAxioms).filter (!computations.contains ·) |>.map toString)),
     ("computations", Json.arr computationsJson),
     ("exports", Json.arr exportsJson),
-    ("failures", toJson failures)] : List (String × Json)) ++
+    ("failures", toJson failures),
+    ("seconds", Json.mkObj [("import", secs t0 tImport), ("computations", secs tImport tComputations),
+      ("audit", secs tComputations tAudit), ("exports", secs tAudit tExports)]),
+    ("walked", Json.mkObj [("archive", toJson walkedArchive), ("other", toJson walkedOther)])] : List (String × Json)) ++
     -- Only in a partial local check: the entries it covered (the others were not checked).
     (match req.scope with | some s => [("scope", toJson s)] | none => [])
   IO.FS.writeFile outPath (report.pretty ++ "\n")
