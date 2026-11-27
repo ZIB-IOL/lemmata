@@ -110,10 +110,25 @@ throughout. A local pairwise step that does not drop a vertex gains at least $\P
 Frank–Wolfe step at least $\Phi_t^2/(2J^2LD^2)$; drop steps are at most as many as Frank–Wolfe steps.
 The paper states case (B) as $\mathcal{O}(1/T)$; the formal statement gives explicit constants.
 
+```{prf:theorem} Lazified BPCG, strongly convex objectives
+:label: thm-blended-pairwise-conditional-gradients-lazy-linear
+:enumerator: 3.6
+
+If moreover $f$ is $\mu$-strongly convex on $P$ and $\delta > 0$ has the scaling property of the
+pyramidal width, every run has primal gap at most $\varepsilon > 0$ after
+$\lceil \log_2(\Phi_0/\varepsilon) \rceil_+ + 1 + 2\lceil 4J^2LD^2/\Phi_0 \rceil +
+2\lceil (16J^2LD^2/(\mu\delta^2)) \ln(h_0/\varepsilon) \rceil_+$ iterations.
+```
+
+At a gap step $f'(x_t)(a_t - w_t) < 2\Phi_t$, so geometric strong convexity gives
+$\mu\delta^2 h_t \le 2\Phi_t^2$, and $\mu\delta^2 h_t \le 8\Phi_t^2$ after $\Phi$ is halved. Steps
+that do not drop a vertex then contract the primal gap by $1 - \mu\delta^2/(16J^2LD^2)$; before the
+first gap step they gain the constant $\Phi_0^2/(2J^2LD^2)$. The paper states case (A) as
+$\mathcal{O}(\exp(-cT))$.
+
 ## Not yet covered
 
-Case (A) of Theorem 3.6, linear convergence of lazified BPCG for strongly convex objectives over
-polytopes, is not formalized here yet; the application to kernel herding is out of scope.
+The application to kernel herding is out of scope.
 
 ## The formal statements at a glance
 
