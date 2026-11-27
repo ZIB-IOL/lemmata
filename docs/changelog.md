@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **Updated entry:** [Frank–Wolfe oracle complexity with prescribed set smoothness](frank-wolfe-prescribed-smoothness/index.md) now checks the finite optimal-order corollary, the little-o rate on a fixed norm-compact set, and a fixed-distribution lower bound with unique Hilbert-space oracle replies. For each jointly measurable randomized anytime method, one body gives infinitely many failures with probability at least $1/5$.
 - **Updated entry:** [Frank–Wolfe oracle complexity with prescribed set smoothness](frank-wolfe-prescribed-smoothness/index.md): the widget also covers the fixed Hilbert-space example (Frank–Wolfe between the bounds $31/(256(t+1))$ and $2(15/4)^2/(t+2)$, and the single vertical call), plots every method against the number of oracle calls, and computes the optimal value of the body with perturbed vertices accurately; the widget section moves below the Hilbert-space section.
 - **Updated entry:** [An information diffusion Fano inequality](information-diffusion-fano/index.md), adding the Fano inequality for independent samples (Corollary 2.4, with an erratum), which completes the entry.
 - **Updated entry:** [An information diffusion Fano inequality](information-diffusion-fano/index.md), adding entropy for finite random variables, `I(X; X̂) = H(X) - H(X | X̂)` and the entropy versions of the Fano inequality (Corollaries 2.3 and 2.5).

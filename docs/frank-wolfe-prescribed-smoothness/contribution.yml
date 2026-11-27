@@ -18,6 +18,9 @@ abstract: >-
   sliding, and a linear rate for bodies with inner and outer tangent balls. In Hilbert space,
   a fixed example has matching inverse-time bounds for gradient-directed Frank–Wolfe. A separate
   fixed body gives an all-budget lower bound for each deterministic arbitrary-query method.
+  For randomized methods with jointly measurable rules, one distribution gives a near-inverse-time
+  lower bound, and each anytime method has one fixed body with infinitely many failures with
+  probability at least $1/5$.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -229,3 +232,31 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-strategy
+  - name: Lemmata.FrankWolfePS.optimal_order
+    kind: theorem
+    page: index.md
+    label: cor-frank-wolfe-prescribed-smoothness-optimal-order
+  - name: Lemmata.FrankWolfePS.compact_trial_little_o
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-prescribed-smoothness-compact-trial
+  - name: Lemmata.FrankWolfePS.RandomHilbert.randomized_fixed_hilbert
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-random-fixed
+  - name: Lemmata.FrankWolfePS.RandomHilbert.conditional_bound
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-prescribed-smoothness-random-block
+  - name: Lemmata.FrankWolfePS.RandomHilbert.squaredDistance_measurable
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-prescribed-smoothness-random-measure
+  - name: Lemmata.FrankWolfePS.RandomHilbert.random_bounded
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-random-budget
+  - name: Lemmata.FrankWolfePS.RandomHilbert.random_anytime
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-prescribed-smoothness-random-anytime
