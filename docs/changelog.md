@@ -12,8 +12,8 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **New entry:** [An information diffusion Fano inequality](information-diffusion-fano/index.md), formalizing the note by Braun and Pokutta: the information diffusion inequality for relative entropy (Proposition 2.1), the Fano inequality for arbitrary relations (Proposition 2.2) and the distance-based and continuous Fano inequalities (Corollaries 2.6 and 2.7).
 - **Updated entry:** [Frank–Wolfe oracle complexity with prescribed set smoothness](frank-wolfe-prescribed-smoothness/index.md) adds two kernel-checked Hilbert-space results. One fixed body gives sharp inverse-time error for gradient queries. Each deterministic arbitrary-query strategy also has a single smooth, unique-oracle body that is hard at every budget.
-
 - **Updated entry:** [Lazifying conditional gradient algorithms: LCG, LPCG and parameter-free LCG](lazifying-conditional-gradients/index.md), adding weak separation through augmentation (Proposition 6.1).
 - **Updated entry:** [Lazifying conditional gradient algorithms: LCG, LPCG and parameter-free LCG](lazifying-conditional-gradients/index.md), adding lazy pairwise conditional gradients on simplex-like polytopes (Theorem 3.2, with two errata).
 - **New entry:** [Lazifying conditional gradient algorithms: LCG, LPCG and parameter-free LCG](lazifying-conditional-gradients/index.md), formalizing the paper by Braun, Pokutta and Zink: weak separation, lazy conditional gradients (Theorem 3.1) and the parameter-free variant (Theorem 4.2, Corollary 4.3).
@@ -27,7 +27,6 @@ Newest first. Add an item in the same pull request as the change it describes.
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding blended conditional gradients (Theorem 3.42, convex case, with explicit constants).
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding Frank–Wolfe with the nearest extreme point oracle (Theorem 3.36).
 - [Bounds for finite-order Grothendieck constants](grothendieck-lower-bounds/index.md) adds a 301-row witness for $K_G(3)>1.4397098471655953$, its Lean vector and signing proofs, and a reproducible certificate for the exact classical maximum.
-
 - **New entry:** [Frank–Wolfe oracle complexity with prescribed set smoothness](frank-wolfe-prescribed-smoothness/index.md): on convex bodies with $\beta$-Lipschitz unit normals and diameter $D$, every randomized method requiring no more than $T$ linear minimization oracle calls has gap of order $L(D-2/\beta)^2/T$ on some body with unique linear minimizers, even for a known quadratic, and a matching method attains this order; with bounds for feasible and for deterministic methods, a distance penalty, sliding for smooth objectives and a linear rate under inner and outer tangent balls.
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding linear convergence of away-step Frank–Wolfe under sharpness (Corollary 3.33, θ = 1/2) with the constant of the proof and an erratum.
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding sharpness (Definition 3.25) with the primal gap bound (Lemma 3.31) and geometric sharpness (Lemma 3.32).

@@ -40,3 +40,6 @@
 - id: combinatorial-designs
   title: Combinatorial designs
   description: Steiner systems, block designs and their existence spectra.
+- id: information-theoretic-lower-bounds
+  title: Information-theoretic lower bounds
+  description: Fano-type inequalities, divergences and entropy as tools for lower bounds.
