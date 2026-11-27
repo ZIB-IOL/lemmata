@@ -767,6 +767,191 @@ dashed horizontal line is the threshold $1/(16k)$ of
 {"body": "segment", "cx": 0.25, "cy": -1.55, "k": 2, "rule": "vertex"}
 ```
 
+## A fixed Hilbert-space example
+
+The finite-dimensional lower bounds above allow the body to depend on the budget and the method.
+For gradient queries, the same smooth body in a separable Hilbert space works for every budget and every choice of points on the stored hull. The proof uses zero-based indices. Put
+$$
+  w_i=2^{-i}/64,\qquad B_{ij}=\mathbf1_{\{i=j\}}-w_{\max(i,j)},\qquad
+  \Delta=\{u_i\ge0:\ \sum_i u_i\le1\}.
+$$
+Take Hilbert vectors $d_i$ with $\langle d_i,d_j\rangle=B_{ij}$, and write
+$Sx=\sum_i x_i d_i$. On signed finite sequences,
+$$
+  \frac{31}{32}\sum_i x_i^2\le\|Sx\|^2\le\frac{33}{32}\sum_i x_i^2.
+$$
+Indeed, $2|x_ix_j|\le x_i^2+x_j^2$, $w_{\max(i,j)}\le\min(w_i,w_j)$ and $\sum_iw_i=1/32$. In Lean the horizontal space is the real reproducing-kernel Hilbert space of $B$. Positivity of the infinite kernel follows by testing finitely supported coefficients. Its kernel vectors give $d_i$; thus the existence of the Hilbert configuration is part of the proof. Equivalently one can use $B^{1/2}e_i$ on $\ell_2$. The countable axes span a dense subspace. The horizontal space is separable and infinite-dimensional. In finite dimension their weak convergence to zero would force a norm-null subsequence, whereas their squared norms equal $1-w_i$.
+
+For $u\in\Delta$, define the height, center and radius by
+$$
+ a(u)=\sum_i w_i^2 u_i,\qquad c(u)=(a(u),Su),\qquad
+ r(u)=1+\tfrac1{100}\sum_i w_i^2(u_i-u_i^2).
+$$
+Let $C=\bigcup_{u\in\Delta}\overline B(c(u),r(u))$ in the Hilbert direct sum of $\mathbb R$ and the horizontal space. Take $f(v,x)=((v+4)^2+\|x\|^2)/2$. Its gradient is $(v+4,x)$; its minimizer on $C$ is $z^*=(-1,0)$. In fact $v\ge-1$ throughout $C$, and $f(v,x)-f(z^*)\ge\|x\|^2/2$.
+
+```{prf:theorem} Convexity of the fixed body
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-convex
+
+The set $C$ is convex. The center is affine in $u$, and each $u_i-u_i^2$ is concave. Thus a convex combination of points from two parameter balls belongs to the ball at the corresponding mixture.
+```
+
+```{prf:theorem} Weak compactness
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-compact
+
+The set $C$ is compact in the weak topology. The finite partial-sum inequalities make $\Delta$ compact for coordinatewise convergence. For any fixed $q$, the coefficients $\langle q,d_i\rangle$ tend to zero by the upper Gram bound. Truncating at a common index therefore gives uniform convergence of the scalar support series on $\Delta$. The center is weakly continuous and the radius is continuous. The unit ball is weakly compact by Banach–Alaoglu and Riesz representation, so the map $(u,s)\mapsto c(u)+r(u)s$ has weakly compact image.
+```
+
+```{prf:lemma} Width
+:label: lem-frank-wolfe-prescribed-smoothness-hilbert-width
+
+Every pair of points of $C$ has distance at most $15/4<4$. Two centers have distance at most $3/2$: their horizontal norms are at most one and their mutual inner product is at least $-1/64$. The height lies in $[0,1/4096]$, and $r(u)\le1+a(u)/100$.
+```
+
+```{prf:theorem} Lipschitz normals
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-normals
+
+For supporting unit normals $n,m$ at $z,y\in C$, $\|n-m\|\le\|z-y\|$. Replacing $r(u)$ with $r(u)-1$ gives a core $K$ satisfying $C=K+\mathbb B$. The two supporting inequalities at $z-n$ and $y-m$ give $\|n-m\|^2\le\langle n-m,z-y\rangle$.
+```
+
+```{prf:theorem} Unique oracle in all directions
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-unique
+
+Every nonzero $q$ exposes exactly one point of $C$. Its parameter maximizes $\langle q,c(u)\rangle+\|q\|r(u)$ over $\Delta$. Compactness and continuity give attainment. The positive diagonal quadratic penalties give strict midpoint concavity at a coordinate where two parameters differ. The selected ball has just one support point, $c(u)+r(u)q/\|q\|$. Negating $q$ gives the minimizing oracle.
+```
+
+```{prf:lemma} The exposed start
+:label: lem-frank-wolfe-prescribed-smoothness-hilbert-seed
+
+The start $s$ is the support point in direction $q_0=(-1,d_0/8)$. Its parameter is the unit mass at zero. Indeed the first marginal stays positive and every later initial marginal is negative. Its horizontal chart is $(1+1/(8\|q_0\|))e_0$.
+```
+
+```{prf:theorem} One fixed body for every gradient-directed hull method
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-gradient
+
+Before round $t$, let $P_t=\operatorname{conv}(\{s\}\cup\{y_j:j<t\})$. The method may choose any $z_t\in P_t$; the reply $y_t$ minimizes $\langle\nabla f(z_t),\cdot\rangle$ on $C$. For every realization of such choices, every integer $t\ge0$, and every $z\in P_t$,
+$$
+                 f(z)- f(z^*)\ \ge\ \frac{31}{256(t+1)}.
+$$
+```
+
+**Proof.** Suppose a horizontal query has chart $x$ supported in $0,\ldots,n-1$, with signed mass $m=\sum x_i\in[1/2,5/4]$. For $j\ge n$ its Gram row equals $-mw_j$. Write $G=v+4$ and $Q=\|\nabla f(v,Sx)\|$. The parameter of the minimizing reply maximizes
+$$
+ \sum_i\left[\left(-(Bx)_i-Gw_i^2+Qw_i^2/100\right)u_i
+                   -(Qw_i^2/100)u_i^2\right].
+$$
+The body bounds imply $3\le G\le6$, $G\le Q\le7$, and $0\le r/Q\le2/5$. For $j>n$, its initial marginal is at most $mw_j\le mw_n/2$; the marginal at $n$, even at mass one, is at least $mw_n-(G+Q/100)w_n^2>mw_n/2$. Filling slack or transferring any later mass to $n$ gives a strict improvement, by the exact one-coordinate difference formula for the infinite sum. The maximizing parameter has total mass one and vanishes beyond $n$. The returned chart is $u-(r/Q)x$. It has mass $1-(r/Q)m\in[1/2,5/4]$. These conditions are convex even for signed charts, so they propagate to the entire stored hull with at most $t+1$ coordinates. The energy inequality and finite Cauchy–Schwarz give the claimed bound.
+
+```{prf:theorem} Matching open-loop rate
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-rate
+
+Let $z_t$ be ordinary Frank–Wolfe on this body with the exposed start and step $2/(t+2)$ in round $t$. For every total exact LMO and each $t\ge1$,
+$$
+ \frac{31}{256(t+1)}\ \le\ f(z_t)-f(z^*)\
+ \le\ \frac{2(15/4)^2}{t+2}.
+$$
+The upper estimate uses the exact quadratic expansion, the width estimate, and the archive's open-loop recurrence.
+```
+
+```{prf:theorem} Segment trials and full correction
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-trial
+
+The same two bounds apply whenever the query points stay in the accumulated hull and the next objective value is at most the value of the open-loop trial on the segment to the gradient reply. Exact line search can choose that trial, as can exact minimization over the enlarged hull. Along this quadratic the clipped short-step model equals the objective. Lean checks the theorem under the displayed trial comparison; the implementations of these three variants are not separate Lean programs here.
+```
+
+```{prf:lemma} A single arbitrary query
+:label: lem-frank-wolfe-prescribed-smoothness-hilbert-escape
+
+The point $z^*$ minimizes the vertical linear functional. By uniqueness of the nonzero-direction LMO, the arbitrary query $(1,0)$ returns $z^*$ immediately.
+```
+
+```{prf:theorem} Unique support without strong exposure
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-exposure
+
+The points $p_j=(w_j^2-1,d_j)$ belong to $C$. Their vertical deficits tend to zero, while $\|p_j-z^*\|\ge9/10$ for every $j$. In particular the vertical functional does not strongly expose its unique minimizer.
+```
+
+### Deterministic arbitrary directions
+
+The following construction concerns the model with arbitrary query directions and arbitrary ambient outputs. For a real Hilbert space with orthonormal $e_i$, take a unit $h\perp e_i$. Put $a_i=h+e_i$, $b_i=w_i/8$, $p=(-32,0)$, and $F(y)=\|y-p\|^2/2$. Form the union of balls with
+$$
+ c(u)=(1,h+\sum_i u_i e_i),\qquad
+ R(u)=1+\sum_i b_i(u_i-u_i^2/8),\qquad u\in\Delta .
+$$
+Fix the image of $a_0$ for the public start $(0,a_0)$.
+
+```{prf:theorem} Weak compactness in every frame
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-compact
+
+The union is weakly compact. Each horizontal test functional has vanishing coefficients on the orthonormal sequence. Its center evaluations and the radius are continuous in the coordinate topology on $\Delta$, so the compact-image argument above applies.
+```
+
+```{prf:theorem} Width of the arbitrary-query instance
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-width
+
+Every pair of points has distance at most $15/4$. The squared horizontal distance between two centers is at most two, by orthogonality, nonnegativity and the mass constraints. Every radius is at most $1+1/256$.
+```
+
+```{prf:theorem} Normals in every frame
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-normals
+
+The supporting unit normals of this convex body are 1-Lipschitz. Subtracting one from every radius gives a core whose unit parallel body is the original union.
+```
+
+```{prf:theorem} Exact maximum inner rolling radius
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-rolling
+
+The largest uniform inner rolling radius is exactly one. Let $b=-2\sum_i b_i e_i$ and $q_\pm=(\pm\sqrt{1-\|b\|^2},b)$. Both directions support the ball at the zero parameter, at $c(0)+q_\pm$. For each $r>1$ the radius-$r$ ball tangent at the first point, with center $c(0)+(1-r)q_+$, reaches past the other supporting hyperplane by $(r-1)(1-\langle q_-,q_+\rangle)>0$.
+```
+
+```{prf:theorem} Unique replies in a fixed orthonormal frame
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-unique
+
+In every such frame the ball union has exactly one support point in every nonzero direction $q$. The linear coefficients $\langle q_H,e_i\rangle$ tend to zero by Bessel's inequality, and the quadratic penalties $\|q\|b_i/8$ are strictly positive.
+```
+
+```{prf:lemma} A nonzero query with unseen directions
+:label: lem-frank-wolfe-prescribed-smoothness-hilbert-any-prefix
+
+If $\langle q_H,e_i\rangle=0$ for $i\ge k$, its exact maximizing parameter has full mass and vanishes for $i>k$. The receiving marginal at $k$ is at least $3\|q\|b_k/4$, and every subsequent initial marginal is at most $\|q\|b_k/2$.
+```
+
+```{prf:lemma} Mass of the closest ball
+:label: lem-frank-wolfe-prescribed-smoothness-hilbert-any-mass
+
+Let $A(u)=\sqrt{1090+\sum u_i^2}$. A minimizer $u$ of $A-R$ has $\sum_i u_i\le34/256$. For $u_j>34b_j$, decrease that coordinate by $d=(u_j-34b_j)/2$. The radius drops by at most $db_j$, while $A(u)^2-A(u-de_j)^2=d(2u_j-d)>68db_j$ and both square roots are at most $34$. This contradicts optimality.
+```
+
+```{prf:theorem} All-budget projection gap for encoded outputs
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-gap
+
+Fix one frame and let $z$ be an optimizer on its ball union. At budget $T$, put $k=T+1$. If the horizontal component of a feasible output $y$ belongs to the span of $a_0,\ldots,a_{k-1}$ and vectors orthogonal to $v_k=h-\sum_{i<k}e_i$, then
+$$
+                      F(y)-F(z)\ \ge\ \frac1{4(T+2)} .
+$$
+The same optimizer serves all budgets. A minimizing parameter exists by lower semicontinuity on the compact simplex, and gives $z_H=\theta(h+\sum_i u_i e_i)$, with $\theta=1-R(u)/A(u)>24/25$. The witness $v_k$ has squared norm $k+1$ and inner product $\theta(1-\sum_{i<k}u_i)$ with $z_H$. The variational inequality for projection turns the squared horizontal distance into the objective lower bound.
+```
+
+```{prf:theorem} One fixed body against each deterministic anytime strategy
+:label: thm-frank-wolfe-prescribed-smoothness-hilbert-any-strategy
+
+Let the horizontal Hilbert space be infinite-dimensional and fix a public unit vector $v$. For every deterministic method that chooses queries and outputs from its finite reply history, there exist a single frame, a single total exact LMO on its body, and an optimizer $z^*$. The public start is $(0,\sqrt2\,v)$ and is the zero-query reply. Every nonzero direction has a unique minimizing point. The method may choose arbitrary directions and arbitrary outputs. On the resulting run, for every $T\ge0$, the output is infeasible or
+$$
+                    F(y_T)-F(z^*)\ \ge\ \frac1{4(T+2)}.
+$$
+The body can depend on the strategy; it is fixed for all budgets of that strategy. The objective and start are disclosed in advance. The method receives no other description of the body.
+```
+
+**Proof of the common transcript.** The construction uses an explicit orthonormal sequence $d_i$ in the target space. Put $d_0=v$. Having seen the output and query at budget $t$, choose the unit $d_{t+1}$ perpendicular to the previous directions and to the horizontal components of all outputs and queries through $t$. This is possible because their span is finite-dimensional. Write
+$$
+ c_i=\frac1{\sqrt{(i+1)(i+2)}},\quad m_k=\sum_{i<k}c_i d_i,\quad
+ h=\sum_{i\ge0}c_i d_i,\quad a_i=m_i+(i+2)c_i d_i,\quad e_i=a_i-h .
+$$
+The telescoping identity $\sum_{i<k}c_i^2=1-1/(k+1)$ gives convergence of $h$ in norm, $\|h\|=1$, $\langle h,a_i\rangle=1$, and $\langle a_i,a_j\rangle=1+\mathbf1_{\{i=j\}}$. Hence $h,e_0,e_1,\ldots$ is an orthonormal system and $a_0=\sqrt2\,v$.
+
+For a captured horizontal vector $x$ at budget $t$, put $k=t+1$. Then $\langle x,h\rangle=\langle x,m_k\rangle$ and $\langle x,e_i\rangle=0$ for all $i\ge k$. Using the known coefficients for $i<k$ and zeros afterward determines the unique support parameter. It has total mass one on the first $k+1$ labels, hence $h+\sum_i u_i e_i=\sum_{i\le k}u_i a_i$. That center and the support displacement use only directions selected through $d_k$. A zero query returns the public start. This defines the next answer recursively using a finite history. In the final frame each such response solves the same physical support problem, and a deterministic strategy against this single oracle has a unique reply stream.
+
+Finally, $\sum_{i<k}a_i=(k+1)m_k$, so $h-\sum_{i<k}e_i=(k+1)(h-m_k)$. The output at budget $t$ annihilates this witness by construction, and the preceding projection bound applies. The proof includes the budget-zero output before the first reply. The claim about strategies here is deterministic.
+
 ## Not formalized here
 
 The minimax rate for general smooth convex objectives has two terms, $LD^2/T^2$ and

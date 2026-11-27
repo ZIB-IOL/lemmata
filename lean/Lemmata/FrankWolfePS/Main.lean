@@ -1,6 +1,7 @@
 module
 
 public import Lemmata.FrankWolfePS.Proofs
+public import Lemmata.FrankWolfePS.HilbertAnytimeGeometry
 
 @[expose] public section
 
