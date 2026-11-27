@@ -1,6 +1,6 @@
 .lemmata-fs {
   border: 1px solid #8884; border-radius: 6px; padding: 0.75rem 1rem;
-  margin: 1rem 0 2rem;
+  margin: 1rem 0 2rem; container-type: inline-size;
 }
 .lemmata-fs .fs-group {
   display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-bottom: 0.35rem;
@@ -14,11 +14,18 @@
 .lemmata-fs .fs-btn[aria-pressed="true"] { background: #8883; border-color: #888c; font-weight: 600; }
 .lemmata-fs .fs-slider { flex: 1 1 12rem; max-width: 22rem; accent-color: #2e86ab; }
 .lemmata-fs .fs-t { font-size: 0.85rem; font-variant-numeric: tabular-nums; min-width: 4.5rem; }
-.lemmata-fs .fs-panes { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
-.lemmata-fs canvas { max-width: 100%; height: auto; border-radius: 4px; }
-.lemmata-fs .fs-geo { width: 300px; aspect-ratio: 1; touch-action: none; }
-.lemmata-fs .fs-chartbox { display: flex; flex-direction: column; gap: 0.35rem; }
-.lemmata-fs .fs-chart { width: 380px; aspect-ratio: 380 / 280; }
+/* drawing and chart side by side, both scaled in proportion; stacked only in narrow widgets */
+.lemmata-fs .fs-panes {
+  display: grid; grid-template-columns: minmax(0, 300fr) minmax(0, 380fr); gap: 0.75rem;
+  align-items: start; margin-top: 0.5rem;
+}
+.lemmata-fs canvas { display: block; height: auto; border-radius: 4px; }
+.lemmata-fs .fs-geo { width: 100%; max-width: 300px; aspect-ratio: 1; touch-action: none; }
+.lemmata-fs .fs-chartbox { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.lemmata-fs .fs-chart { width: 100%; max-width: 380px; aspect-ratio: 380 / 280; }
+@container (max-width: 34rem) {
+  .lemmata-fs .fs-panes { grid-template-columns: minmax(0, 1fr); }
+}
 .lemmata-fs .fs-legend {
   list-style: none; margin: 0; padding: 0 0 0 0.25rem; font-size: 0.8rem; max-width: 380px;
 }
