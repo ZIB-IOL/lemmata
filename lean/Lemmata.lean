@@ -4,6 +4,7 @@ module
 -- Imports every module under Lemmata/, for downstream users. Contributions import the
 -- specific modules they need instead, which keeps the import graph acyclic.
 public import Lemmata.AwayStepFW.Convergence
+public import Lemmata.AwayStepFW.DIPFW
 public import Lemmata.AwayStepFW.Defs
 public import Lemmata.AwayStepFW.FCFW
 public import Lemmata.AwayStepFW.FacialDistance
@@ -15,6 +16,7 @@ public import Lemmata.AwayStepFW.Pairwise
 public import Lemmata.AwayStepFW.PairwiseRate
 public import Lemmata.AwayStepFW.Progress
 public import Lemmata.AwayStepFW.PyramidalEq
+public import Lemmata.AwayStepFW.SimplexLike
 public import Lemmata.AwayStepFW.Statement
 public import Lemmata.BPCG.Lazy
 public import Lemmata.BPCG.LazyLinear

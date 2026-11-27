@@ -25,6 +25,20 @@ $-y \le 0$, $-x \le 0$, $x + y \le 1$, the face $\{(0,0)\}$ gives the fraction $
 vertices, while its distance to the opposite edge is $1/\sqrt{2}$. The corrected statement below
 sums the tight rows; it is exact in this example and implies the book's bound up to a factor
 $\sqrt{|I|}$.
+
+**Theorem 3.8, the first step.** Algorithm 3.3 starts the pairwise steps at a vertex $x_0$, but
+specifies step sizes only for $t \ge 1$, and without a first Frank–Wolfe step with step size $1$
+the primal gap $h_1$ is not bounded by $LD^2/2$. On $\operatorname{conv}\{e_1, e_2\}$ with
+$f(x) = (\mu/2)\|x\|^2 + 10\mu x_1$, starting at $e_1$ with the step size $1/8$ that the formula of
+Theorem 3.8 gives for $t = 0$ yields $h_1 \approx 8.64\mu > \mu = LD^2/2$. As in Garber and Meshi,
+the formal run takes $x_1$ to be a Frank–Wolfe vertex for $f'(x_0)$.
+
+**Theorem 3.8, the rate.** Following Garber and Meshi [@garber2016linear, Theorem 1], the book
+states $f(x_t) - f(x^*) \le (LD^2/2)\exp(-\mu t/(8LD^2\|x^*\|_0))$. Their induction gives
+$(LD^2/2)(1 - c)^{t-1}$ with $c = \mu/(16LD^2\|x^*\|_0)$, and the stated bound fails already for
+$t = 1$: on $\operatorname{conv}\{e_1, e_2\}$ with $f(x) = (L/2)\|x - x^*\|^2$, $x^* = (0.99, 0.01)$
+and $x_0 = e_1$, the Frank–Wolfe vertex is $x_1 = e_2$ and
+$h_1 = 0.9801L > Le^{-1/32} \approx 0.9692L$. The formal statement uses the rate of the proof.
 :::
 
 Over a polytope, the Frank–Wolfe algorithm converges only at the rate $O(1/t)$ when the minimizer
@@ -231,6 +245,75 @@ active, and a swap step otherwise. Drop steps shrink the active set, so they can
 steps by more than one. A swap step moves the whole weight of one vertex to a new vertex: the
 weights are permuted while $f$ strictly decreases, so no weight vector repeats, and fewer than
 $|V|!$ swap steps can follow each other.
+
+## Decomposition-invariant pairwise Frank–Wolfe
+
+Away-step and pairwise Frank–Wolfe maintain an explicit convex decomposition of the iterate. The
+decomposition-invariant variant of Garber and Meshi [@garber2016linear], in the form of Bashiri and
+Zhang [@bashiri2017decomposition], instead takes the away vertex from the minimal face of the
+iterate. On simplex-like polytopes this face is read off from the support of the iterate, and step
+sizes that are powers of $1/2$ keep the iterates feasible.
+
+```{prf:definition} Simplex-like polytope
+:label: def-away-step-frank-wolfe-simplex-like
+:nonumber:
+
+A polytope $P = \operatorname{conv} V \subseteq \mathbb{R}^n$ is simplex-like if
+$V \subseteq \{0, 1\}^n$ and $P = \{x \in \mathbb{R}^n \mid x \ge 0,\ Ax = b\}$.
+```
+
+```{prf:definition} Decomposition-invariant pairwise Frank–Wolfe run
+:label: def-away-step-frank-wolfe-dipfw
+:nonumber:
+
+A run starts at some $x_0 \in P$, and $x_1$ is a Frank–Wolfe vertex for $f'(x_0)$. For $t \ge 1$,
+$x_{t+1} = x_t + \gamma_t (v_t - a_t)$, where $v_t$ is a Frank–Wolfe vertex and $a_t$ maximizes
+$f'(x_t)$ over the vertices whose support lies in that of $x_t$, as in Algorithm 3.3.
+```
+
+```{prf:lemma} Sparsity scaling
+:label: lem-away-step-frank-wolfe-sparsity-scaling
+:nonumber:
+
+Let $P$ be simplex-like, $x, y \in P$, $\psi$ a direction, $a$ a vertex maximizing $\psi$ over the
+vertices whose support lies in that of $x$, and $v$ a Frank–Wolfe vertex. Then
+$\psi(x - y) \le \sqrt{\|y\|_0}\, \|x - y\|\, \psi(a - v)$, where $\|y\|_0$ is the number of
+nonzero coordinates of $y$.
+```
+
+The proof follows Garber and Meshi [@garber2016linear, Lemma 2], with the decomposition of Garber
+and Hazan [@garber2016linearly, Lemma 5.3]. Write $y = \sum_u \gamma_u u$ and, among all ways to
+write $x = \sum_u (\gamma_u - \Delta_u) u + (\sum_u \Delta_u) z$ with $z \in P$, take one with
+minimal $\sum_u \Delta_u$. Then every $u$ with $\Delta_u > 0$ has a coordinate $j$ with
+$z_j = 0 < y_j$, since otherwise weight could move from $z$ back to $u$ without leaving $P$, and
+Cauchy–Schwarz on these coordinates bounds $\sum_u \Delta_u$ by $\sqrt{\|y\|_0}\, \|x - y\|$.
+
+```{prf:lemma} Feasibility of DI-PFW
+:label: lem-away-step-frank-wolfe-dipfw-feasible
+:nonumber:
+
+If $P$ is simplex-like and the step sizes $\gamma_t$, $t \ge 1$, are nonincreasing powers of $1/2$,
+every run stays in $P$.
+```
+
+The coordinates of $x_t$ are integer multiples of $\gamma_t$, and $a_t$ vanishes wherever $x_t$
+does, so a coordinate that the step decreases is at least $\gamma_t$.
+
+```{prf:theorem} Decomposition-invariant pairwise Frank–Wolfe
+:label: thm-away-step-frank-wolfe-dipfw
+:enumerator: 3.8
+
+Let $P$ be simplex-like, let $f$ be $L$-smooth and $\mu$-strongly convex on $P$ with minimizer
+$x^*$, and let $c = \mu/(16LD^2\|x^*\|_0)$. If the step sizes $\gamma_t$, $t \ge 1$, are
+nonincreasing powers of $1/2$ in $[\eta_t/2, \eta_t]$ with $\eta_t = \sqrt{c}\,(1 - c)^{(t-1)/2}$,
+every run satisfies $f(x_t) - f(x^*) \le (LD^2/2)(1 - c)^{t-1}$ for $t \ge 1$.
+```
+
+The step sizes of the book, the largest power of $1/2$ below $\eta_t$, satisfy these assumptions.
+Sparsity scaling and strong convexity at $x_t$ give $\|x^*\|_0\, f'(x_t)(a_t - v_t)^2 \ge
+2\mu h_t$, so as long as $h_t \le (LD^2/2)(1 - c)^{t-1}$ the step gains at least $4ch_t$, while the
+quadratic term costs at most $c\,(LD^2/2)(1 - c)^{t-1}$. Here $c \le 1/16$, because two distinct
+$0/1$ vertices give $D \ge 1$ and $\mu \le L$.
 
 :::{note}
 **Differences from the book.** The theorems are stated for any constant $\delta > 0$ with the
