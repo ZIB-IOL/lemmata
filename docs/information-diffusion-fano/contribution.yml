@@ -1,0 +1,56 @@
+schema_version: 1
+id: information-diffusion-fano
+lean_namespace: Lemmata.FanoDiffusion
+subject: cs.IT
+topics: [information-theoretic-lower-bounds]
+arxiv: "1504.05492"
+abstract: >-
+  Fano's inequality bounds the probability of reconstructing a hidden random variable from
+  observations by their mutual information. The information diffusion inequality behind it holds
+  for any two probability distributions $P$ and $Q$ and any event $R$: if
+  $p_{\min} \le Q(R) \le p_{\max}$ with $p_{\min} + p_{\max} < 1$, then
+  $P(R) \le (D(P \| Q) + H(P(R)) + \log(1 - p_{\min}))/\log((1 - p_{\min})/p_{\max})$, where
+  $H$ is the binary entropy. For a Markov chain $X \to Y \to \hat X$ and an arbitrary relation $R$
+  of acceptable reconstructions, this gives a Fano inequality in terms of $I(X; \hat X) \le
+  I(X; Y)$, which contains the distance-based and continuous Fano inequalities of Duchi and
+  Wainwright as special cases. The statements hold for arbitrary measurable spaces.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of Mathlib's Kullback–Leibler divergence.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.FanoDiffusion.mutualInfo
+    kind: definition
+    page: index.md
+    label: def-information-diffusion-fano-mutual-info
+  - name: Lemmata.FanoDiffusion.chainLaw
+    kind: definition
+    page: index.md
+    label: def-information-diffusion-fano-chain
+  - name: Lemmata.FanoDiffusion.info_diffusion_fano_kl
+    kind: theorem
+    page: index.md
+    label: prop-information-diffusion-fano-kl
+  - name: Lemmata.FanoDiffusion.fano_arbitrary_relation
+    kind: theorem
+    page: index.md
+    label: prop-information-diffusion-fano-relation
+  - name: Lemmata.FanoDiffusion.distance_fano
+    kind: theorem
+    page: index.md
+    label: cor-information-diffusion-fano-distance
+  - name: Lemmata.FanoDiffusion.continuous_fano
+    kind: theorem
+    page: index.md
+    label: cor-information-diffusion-fano-continuous

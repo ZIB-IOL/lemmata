@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **New entry:** [An information diffusion Fano inequality](information-diffusion-fano/index.md), formalizing the note by Braun and Pokutta: the information diffusion inequality for relative entropy (Proposition 2.1), the Fano inequality for arbitrary relations (Proposition 2.2) and the distance-based and continuous Fano inequalities (Corollaries 2.6 and 2.7).
 - **Updated entry:** [Lazifying conditional gradient algorithms: LCG, LPCG and parameter-free LCG](lazifying-conditional-gradients/index.md), adding weak separation through augmentation (Proposition 6.1).
 - **Updated entry:** [Lazifying conditional gradient algorithms: LCG, LPCG and parameter-free LCG](lazifying-conditional-gradients/index.md), adding lazy pairwise conditional gradients on simplex-like polytopes (Theorem 3.2, with two errata).
 - **New entry:** [Lazifying conditional gradient algorithms: LCG, LPCG and parameter-free LCG](lazifying-conditional-gradients/index.md), formalizing the paper by Braun, Pokutta and Zink: weak separation, lazy conditional gradients (Theorem 3.1) and the parameter-free variant (Theorem 4.2, Corollary 4.3).
