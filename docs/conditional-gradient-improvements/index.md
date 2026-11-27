@@ -11,8 +11,8 @@ numbering:
 This entry comes from the book *Conditional Gradient Methods: From Core Principles to AI
 Applications* by Gábor Braun, Alejandro Carderera, Cyrille W. Combettes, Hamed Hassani, Amin
 Karbasi, Aryan Mokhtari and Sebastian Pokutta [@braun2025conditional]. It formalizes results from
-Sections 3.1.2, 3.1.3, 3.1.5 and 3.1.6; numbers refer to the arXiv version
-[@braun2022conditional].
+Sections 3.1.2, 3.1.3, 3.1.5, 3.1.6 and 3.2.2; numbers refer to the arXiv
+version [@braun2022conditional].
 :::
 
 :::{admonition} Errata
@@ -271,11 +271,55 @@ $h_{t+1} \le (1 - \gamma_t)h_t + \gamma_t^2 L(\operatorname{dist}(x_t, \Omega^*)
 (Lemma 3.37). Sharpness bounds the distance by $c\,h_t^\theta$, and summing the recursion with weights
 $t(t+1)$ gives the theorem.
 
+## Blended conditional gradients (BCG)
+
+Blended conditional gradients [@braun2018blended] avoid calling the linear minimization oracle as
+long as the active set offers enough progress: if the away vertex and the local Frank–Wolfe vertex of
+the active set differ by at least $\phi_t$ in $f'(x_t)$, a simplex descent step (Oracle 3.43)
+optimizes over the active set; otherwise the weak separation oracle provides a Frank–Wolfe step or
+halves $\phi$ (Algorithm 3.44).
+
+```{prf:definition} BCG run
+:label: def-conditional-gradient-improvements-bcg-run
+:nonumber:
+
+Every iterate lies in the convex hull of its active set $S_t \subseteq V$. If $f'(x_t)(a - s) \ge \phi_t$
+for some $a, s \in S_t$, the simplex descent oracle returns $x_{t+1} \in \operatorname{conv} S_{t+1}$
+with $S_{t+1} \subseteq S_t$, and either drops a vertex without increasing $f$ or decreases $f$ by at
+least $\max_{u, w \in S_t} f'(x_t)(u - w)^2/(L_S |S_t|)$. Otherwise the weak separation oracle
+returns a vertex improving by more than $\phi_t/K$, followed by a Frank–Wolfe step, or certifies that
+none improves by more than $\phi_t$, and $\phi$ is halved.
+```
+
+```{prf:theorem} Blended conditional gradients
+:label: thm-conditional-gradient-improvements-bcg
+:enumerator: 3.42
+
+Let $f$ be convex and $L$-smooth on $P = \operatorname{conv} V$ with diameter $D$, $K \ge 1$,
+$h_0/2 \le \phi_0 \le LD^2/2$, and let all active sets have at most $k$ vertices. With
+$Q = \max\{8K^2LD^2, 4L_S k\}$, every run has primal gap at most $\varepsilon > 0$ after
+$\lceil \log_2(\phi_0/\varepsilon) \rceil_+ + 1 + 2\lceil Q/\varepsilon \rceil$ iterations.
+```
+
+As for lazy conditional gradients, $\phi_t \ge h_t/2$ throughout. A simplex descent step gains at
+least $\phi_t^2/(L_S k)$ and a Frank–Wolfe step at least $\phi_t^2/(2K^2LD^2)$, so every step that does
+not drop a vertex gains at least $h_t^2/Q$, and drop steps are at most as many as Frank–Wolfe steps.
+
+:::{note}
+**Differences from the book.** Theorem 3.42 is stated in the book as
+$\mathcal{O}(LD^2 \dim P/\varepsilon)$, without proof; the formal statement gives explicit constants,
+with the bound $k$ on the active sets in place of $\mathcal{O}(\dim P)$. The constant $L_S$ of the
+simplex descent oracle is the smoothness constant in the weights of the active set, of order
+$LD^2$ for the simplex descent of Lemma 3.45, which gives the book's $\mathcal{O}(LD^2 k/\varepsilon)$.
+The strongly convex half of Theorem 3.42 and Lemma 3.45 are not formalized here.
+:::
+
 ## Not yet covered
 
 From Section 3.1.5, Corollary 3.33 for $\theta < 1/2$, the comparison with gradient domination
 (Lemma 3.35), the Hoffman bound (Lemma 3.27) and the Łojasiewicz-type Lemma 3.30 are not
-formalized here yet; nor are blended conditional gradients (BCG, Section 3.2.2).
+formalized here; from Section 3.2.2, the strongly convex half of Theorem 3.42 and the simplex
+descent step of Lemma 3.45.
 
 ## The formal statements at a glance
 

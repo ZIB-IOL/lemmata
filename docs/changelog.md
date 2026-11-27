@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding blended conditional gradients (Theorem 3.42, convex case, with explicit constants).
 - **Updated entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), adding Frank–Wolfe with the nearest extreme point oracle (Theorem 3.36).
 - [Bounds for finite-order Grothendieck constants](grothendieck-lower-bounds/index.md) adds a 301-row witness for $K_G(3)>1.4397098471655953$, its Lean vector and signing proofs, and a reproducible certificate for the exact classical maximum.
 

@@ -6,6 +6,7 @@ public import Lemmata.CGImprovements.LazyAway
 public import Lemmata.CGImprovements.Sharp
 public import Lemmata.CGImprovements.SharpAFW
 public import Lemmata.CGImprovements.NEP
+public import Lemmata.CGImprovements.BCG
 
 @[expose] public section
 
@@ -38,6 +39,9 @@ theorem sharp_away_linear : SharpAwayLinear := Proof.sharp_away_linear
 
 /-- Theorem 3.36: Frank–Wolfe with the nearest extreme point oracle. -/
 theorem nep_rate : NEPRate := Proof.nep_rate
+
+/-- Theorem 3.42, convex case with explicit constants: blended conditional gradients. -/
+theorem bcg_rate : BCGRate := Proof.bcg_rate
 -- DOCS_END_MAIN
 
 end Lemmata.CGImprovements

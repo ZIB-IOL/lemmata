@@ -90,3 +90,11 @@ exports:
     kind: theorem
     page: index.md
     label: thm-conditional-gradient-improvements-nep
+  - name: Lemmata.CGImprovements.IsBCGRun
+    kind: definition
+    page: index.md
+    label: def-conditional-gradient-improvements-bcg-run
+  - name: Lemmata.CGImprovements.bcg_rate
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-improvements-bcg

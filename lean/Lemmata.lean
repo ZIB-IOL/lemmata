@@ -32,6 +32,7 @@ public import Lemmata.CGBasics.Statement
 public import Lemmata.CGBasics.UniformlyConvex
 public import Lemmata.CGBasics.Vanilla
 public import Lemmata.CGBasics.Wolfe
+public import Lemmata.CGImprovements.BCG
 public import Lemmata.CGImprovements.Lazy
 public import Lemmata.CGImprovements.LazyAway
 public import Lemmata.CGImprovements.Main
