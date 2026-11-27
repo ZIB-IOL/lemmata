@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-26
 
+- **New entry:** [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and BCG](conditional-gradient-improvements/index.md), starting with adaptive step sizes (AdaFW, Section 3.1.2 of the book): the backtracking search terminates with an estimate at most max{M₀, τL}, and Frank–Wolfe with these steps keeps the vanilla rates.
 - **Updated entry:** [Conditional gradient methods: smoothness, scaling and linear rates](conditional-gradient-basics/index.md), adding Theorem 2.8 (Frank–Wolfe is slow when the minimizers lie on a face) and Lemma 2.10, completing Chapter 2.
 - **Updated entry:** [Conditional gradient methods: smoothness, scaling and linear rates](conditional-gradient-basics/index.md), adding Example 2.7 (a primal gap lower bound on the simplex).
 - **Updated entry:** [Conditional gradient methods: smoothness, scaling and linear rates](conditional-gradient-basics/index.md), adding Definition 2.12, Proposition 2.19 (scaling for uniformly convex sets), Theorem 2.20 (rates over uniformly convex sets) and Theorem 2.24 (gradient-dominated objectives, with scale-invariant constants).
