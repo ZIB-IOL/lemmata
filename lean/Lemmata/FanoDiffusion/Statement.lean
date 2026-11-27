@@ -136,4 +136,50 @@ def InfoDiffusionFanoRenyiGtOne : Prop :=
         ((exp ((α - 1) * (renyiDiv α P Q + binRenyiEntropy α (P.real R) + log (1 - pmin))) - 1) /
           (((1 - pmin) / pmax) ^ (α - 1) - 1)) ^ (1 / α)
 
+/-- The **Shannon entropy** `H(X) = -Σ_a P(a) log P(a)` of a law on a finite type. -/
+noncomputable def entropy {α : Type*} [Fintype α] [MeasurableSpace α] (ν : Measure α) : ℝ :=
+  ∑ a, negMulLog (ν.real {a})
+
+/-- The **conditional entropy** `H(X | X̂) = H(X, X̂) - H(X̂)` of a joint law on finite types. -/
+noncomputable def condEntropy {α γ : Type*} [Fintype α] [Fintype γ] [MeasurableSpace α]
+    [MeasurableSpace γ] (ν : Measure (α × γ)) : ℝ :=
+  entropy ν - entropy ν.snd
+
+/-- **Mutual information and entropy.** For a joint law of `(X, X̂)` on finite sets, `I(X; X̂)` is
+finite and equals `H(X) - H(X | X̂)`. -/
+def MutualInfoEntropy : Prop :=
+  ∀ {α γ : Type u} [Fintype α] [MeasurableSpace α] [MeasurableSingletonClass α] [Fintype γ]
+    [MeasurableSpace γ] [MeasurableSingletonClass γ] (ν : Measure (α × γ)) [IsProbabilityMeasure ν],
+    mutualInfo ν ≠ ∞ ∧ (mutualInfo ν).toReal = entropy ν.fst - condEntropy ν
+
+/-- **The entropy of the uniform law** on a finite set `α` is `log |α|`. -/
+def EntropyUniform : Prop :=
+  ∀ {α : Type u} [Fintype α] [MeasurableSpace α] (ν : Measure α),
+    (∀ a, ν {a} = (Fintype.card α : ℝ≥0∞)⁻¹) → entropy ν = log (Fintype.card α)
+
+/-- **Corollary 2.3** (entropy version of the Fano inequality). Let `ν` be the joint law of
+`(X, X̂)` on finite sets and `R` a relation with `p_min ≤ P[(X, x̂) ∈ R] ≤ p_max` for every `x̂`,
+where `0 ≤ p_min < 1` and `0 < p_max`. Then
+`H(X | X̂) ≤ H(X) + log p_max + H(P[¬R]) + P[¬R] log ((1 - p_min)/p_max)`. -/
+def EntropyFano : Prop :=
+  ∀ {α γ : Type u} [Fintype α] [MeasurableSpace α] [MeasurableSingletonClass α] [Fintype γ]
+    [MeasurableSpace γ] [MeasurableSingletonClass γ] (ν : Measure (α × γ)) [IsProbabilityMeasure ν]
+    (R : Set (α × γ)) (pmin pmax : ℝ), 0 ≤ pmin → pmin < 1 → 0 < pmax →
+    (∀ z, pmin ≤ ν.fst.real {x | (x, z) ∈ R} ∧ ν.fst.real {x | (x, z) ∈ R} ≤ pmax) →
+      condEntropy ν ≤ entropy ν.fst + log pmax + binEntropy (ν.real Rᶜ) +
+        ν.real Rᶜ * log ((1 - pmin) / pmax)
+
+/-- **Corollary 2.5** (distance-based Fano inequality). Let `ν` be the joint law of `(X, X̂)` with
+`X` uniform on a finite set `α` and `X̂ ∈ α`, let `ρ : α → α → ℝ` and `t ∈ ℝ`, and let
+`N_min ≤ |{x | ρ(x, x̂) ≤ t}| ≤ N_max` for every `x̂`, with `0 < N_max` and `N_min < |α|`. With
+`P_t = P[ρ(X, X̂) > t]`, `H(X | X̂) ≤ H(P_t) + P_t log ((|α| - N_min)/N_max) + log N_max`. -/
+def DistanceFanoEntropy : Prop :=
+  ∀ {α : Type u} [Fintype α] [MeasurableSpace α] [MeasurableSingletonClass α]
+    (ν : Measure (α × α)) [IsProbabilityMeasure ν] (ρ : α → α → ℝ) (t : ℝ) (Nmin Nmax : ℕ),
+    (∀ x, ν.fst {x} = (Fintype.card α : ℝ≥0∞)⁻¹) → 0 < Nmax → Nmin < Fintype.card α →
+    (∀ z, Nmin ≤ (Finset.univ.filter fun x => ρ x z ≤ t).card ∧
+      (Finset.univ.filter fun x => ρ x z ≤ t).card ≤ Nmax) →
+      condEntropy ν ≤ binEntropy (ν.real {p | t < ρ p.1 p.2}) +
+        ν.real {p | t < ρ p.1 p.2} * log ((Fintype.card α - Nmin) / Nmax) + log Nmax
+
 end Lemmata.FanoDiffusion

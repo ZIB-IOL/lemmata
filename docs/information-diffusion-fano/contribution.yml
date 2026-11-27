@@ -74,3 +74,27 @@ exports:
     kind: theorem
     page: index.md
     label: prop-information-diffusion-fano-renyi-gt-one
+  - name: Lemmata.FanoDiffusion.entropy
+    kind: definition
+    page: index.md
+    label: def-information-diffusion-fano-entropy
+  - name: Lemmata.FanoDiffusion.condEntropy
+    kind: definition
+    page: index.md
+    label: def-information-diffusion-fano-cond-entropy
+  - name: Lemmata.FanoDiffusion.mutual_info_entropy
+    kind: theorem
+    page: index.md
+    label: thm-information-diffusion-fano-mutual-info-entropy
+  - name: Lemmata.FanoDiffusion.entropy_uniform
+    kind: theorem
+    page: index.md
+    label: prop-information-diffusion-fano-entropy-uniform
+  - name: Lemmata.FanoDiffusion.entropy_fano
+    kind: theorem
+    page: index.md
+    label: cor-information-diffusion-fano-entropy
+  - name: Lemmata.FanoDiffusion.distance_fano_entropy
+    kind: theorem
+    page: index.md
+    label: cor-information-diffusion-fano-distance-entropy
