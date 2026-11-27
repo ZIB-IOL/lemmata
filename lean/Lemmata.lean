@@ -16,6 +16,7 @@ public import Lemmata.AwayStepFW.PairwiseRate
 public import Lemmata.AwayStepFW.Progress
 public import Lemmata.AwayStepFW.PyramidalEq
 public import Lemmata.AwayStepFW.Statement
+public import Lemmata.BPCG.Lazy
 public import Lemmata.BPCG.Main
 public import Lemmata.BPCG.Proof
 public import Lemmata.BPCG.Statement
