@@ -140,6 +140,48 @@ $f(x) - f(x^*) \ge 1/|S| - 1/n$.
 The coordinates of such an $x$ sum to $1$ on $S$ and vanish outside $S$, so $\|x\|^2 \ge 1/|S|$ by
 Cauchy–Schwarz, while the barycenter of the simplex has $\|x\|^2 = 1/n$.
 
+## Slow convergence near a face
+
+Over a polytope, short steps and line search do not converge faster than $1/t$ by more than a
+logarithmic factor when the minimizers lie on a face that the iterates have not reached: the
+Frank–Wolfe vertices keep pulling the iterates off the face.
+
+```{prf:theorem} Frank–Wolfe is slow when the minimizers lie on a face
+:label: thm-conditional-gradient-basics-wolfe
+:enumerator: 2.8
+
+Let $P = \operatorname{conv} V$ for a finite set $V$, let $F$ be an exposed face of $P$ containing all
+minimizers of a convex $L$-smooth $f$ over $P$, and take a Frank–Wolfe run with vertices
+$v_t \in V$ whose steps satisfy $\gamma_t \le \nu g_t/\|x_t - v_t\|^2$ and
+$f(x_t) - f(x_{t+1}) \ge g_t^2/(2L\|x_t - v_t\|^2)$. If some iterate $x_{t_0}$ lies outside $F$
+with $f(x_{t_0}) < f(w)$ for every vertex $w$ of $F$, then for every $\delta > 0$,
+$f(x_t) - f(x^*) \ge LD^2/(t \log^{2+\delta} t)$ for infinitely many $t$.
+```
+
+Short steps satisfy both conditions with $\nu = 1/L$. From $x_{t_0}$ on, the iterates never reach
+the face, since that takes a full step to a vertex of $F$, whose value is too high; they still
+converge to the minimizers, so they approach the face and stay away from all vertices. Then
+$\gamma_t^2$ is at most a constant times $h_t - h_{t+1}$. If the primal gap were eventually below
+$LD^2/(t \log^{2+\delta} t)$, the step sizes would be summable by the following lemma, and the
+iterates would keep a positive share of the weight of $x_{t_0}$, which lies off the face.
+
+```{prf:lemma} Square sums with fast tails
+:label: lem-conditional-gradient-basics-square-tail
+:enumerator: 2.10
+
+Let $\gamma_i \ge 0$ and $\delta > 0$ with $\sum_{i \ge t} \gamma_i^2 \le C/(t \log^{2+\delta} t)$ for
+all large $t$. Then $\sum_i \gamma_i$ converges.
+```
+
+On the dyadic block $[2^k, 2^{k+1})$, Cauchy–Schwarz bounds the sum of the $\gamma_i$ by a constant
+times $k^{-(1+\delta/2)}$.
+
+:::{note}
+**Differences from the book.** Theorem 2.8 asks that the face contain all minimizers; the book
+asks that they lie in the relative interior of a face of dimension at least $1$, which the proof
+does not need. Lemma 2.10 allows $\gamma_i \ge 0$ instead of $\gamma_i > 0$.
+:::
+
 ## Fixed step sizes
 
 The open-loop rule cannot converge faster than $1/t^2$ when the minimizer is not where the run
@@ -375,10 +417,11 @@ the proof, are. Definition 2.18 asks for all directions $\|z\| \le 1$; the forma
 asks only for unit directions, a weaker assumption.
 :::
 
-## Not yet covered
+## Coverage and related entries
 
-The lower bound of Theorem 2.8, with Lemma 2.10, in Section 2.1.2 is not formalized here. Rates over
-uniformly convex sets under local dual sharpness are in
+All theorems, propositions, lemmas and definitions of Chapter 2 are formalized, here or in the
+entries below; of the examples only Example 2.7 is, and the remarks are not. Rates over uniformly
+convex sets under local dual sharpness are in
 [Frank–Wolfe beyond 1/t under local dual sharpness](../frank-wolfe-local-dual-sharpness/index.md).
 The away-step, fully-corrective and pairwise variants of Sections 2.2.4, 2.2.5 and 3.1.1 are in
 [Conditional gradient methods: away-step, fully-corrective and pairwise Frank–Wolfe](../away-step-frank-wolfe/index.md).

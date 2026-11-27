@@ -7,6 +7,7 @@ public import Lemmata.CGBasics.Approx
 public import Lemmata.CGBasics.FixedStep
 public import Lemmata.CGBasics.UniformlyConvex
 public import Lemmata.CGBasics.LowerBound
+public import Lemmata.CGBasics.Wolfe
 public import Lemmata.FrankWolfeIntro.Main
 
 @[expose] public section
@@ -74,6 +75,12 @@ theorem gradient_dominated_rate : GradientDominatedRate := Proof.gradient_domina
 
 /-- Example 2.7: a primal gap lower bound from the number of vertices seen. -/
 theorem simplex_lower_bound : SimplexLowerBound := Proof.simplex_lower_bound
+
+/-- Theorem 2.8: Frank–Wolfe is slow when the minimizers lie on a face. -/
+theorem wolfe_lower_bound : WolfeLowerBound := Proof.wolfe_lower_bound
+
+/-- Lemma 2.10: square sums with fast tails give convergent sums. -/
+theorem square_tail_summable : SquareTailSummable := Proof.square_tail_summable
 -- DOCS_END_MAIN
 
 end Lemmata.CGBasics

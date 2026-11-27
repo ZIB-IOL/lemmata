@@ -109,3 +109,11 @@ exports:
     kind: theorem
     page: index.md
     label: ex-conditional-gradient-basics-simplex
+  - name: Lemmata.CGBasics.wolfe_lower_bound
+    kind: theorem
+    page: index.md
+    label: thm-conditional-gradient-basics-wolfe
+  - name: Lemmata.CGBasics.square_tail_summable
+    kind: theorem
+    page: index.md
+    label: lem-conditional-gradient-basics-square-tail
