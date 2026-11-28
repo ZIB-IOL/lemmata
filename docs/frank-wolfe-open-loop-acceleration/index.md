@@ -10,7 +10,7 @@ numbering:
 :::{note}
 This entry formalizes the paper *Acceleration of Frank–Wolfe Algorithms with Open-Loop Step-Sizes*
 by Elias Wirth, Thomas Kerdreux and Sebastian Pokutta [@wirth2022acceleration], currently its
-Sections 3 and 5; numbers refer to the arXiv version.
+Sections 3 to 5; numbers refer to the arXiv version.
 :::
 
 :::{admonition} Errata
@@ -231,6 +231,107 @@ $$
 Here the error bound replaces the lower bound on the gradient: $\|f'(x)\| \ge h^{1-\theta}/\mu$, and
 $\psi = 2\theta/q \le 1/2$.
 
+## Minimizers in the relative interior of a face
+
+When $C$ is a polytope and the minimizer lies in the relative interior of a face $C^\star$ of
+dimension at least one, Frank–Wolfe with line search or short steps converges no faster than
+$\Omega(1/t^{1+\varepsilon})$ by the lower bound of Wolfe, while the open-loop step sizes reach
+$O(1/t^2)$. Write $C = \operatorname{conv} V$ and $C^\star = \operatorname{conv} F$ for a set
+$F \subseteq V$ of vertices. *Strict complementarity* asks for $\kappa > 0$ with
+$\langle \nabla f(x^\star), p - x^\star \rangle \ge \kappa$ for $p \in V \setminus F$ and
+$\langle \nabla f(x^\star), p - x^\star \rangle = 0$ for $p \in F$. The minimizer lies in the
+relative interior of the face: $x^\star \in \operatorname{aff}(F)$, and every point of
+$\operatorname{aff}(F)$ within distance $\beta > 0$ of $x^\star$ lies in $C$. Besides smoothness
+over $C$, the results of this section use that the gradient is $L$-Lipschitz on $C$.
+
+```{prf:lemma} Active set identification
+:label: lem-frank-wolfe-open-loop-acceleration-active-set
+:enumerator: 4.1
+
+Let $f$ be $L$-smooth over $C$ with $L$-Lipschitz gradient on $C$, $L > 0$ and $\delta > 0$, with
+unique minimizer $x^\star$, a $(\mu, \theta)$-Hölderian error bound with $\mu > 0$ and
+$\theta \in (0, 1/2]$, and strict complementarity. Every Frank–Wolfe run with $\eta_t = 4/(t + 4)$
+has its atoms in $C^\star$ for all
+$t \ge \lceil 8L\delta^2 (2\mu L\delta/\kappa)^{1/\theta} \rceil$.
+```
+
+From then on, $\mu L\delta h_t^\theta < \kappa/2$ by Proposition 3.1, so the gradient at $x_t$
+differs from the one at $x^\star$ by less than $\kappa/2$ on every $p - x_t$. Every vertex outside
+$F$ is then worse than every vertex in $F$, and the atom, a convex combination of minimizing
+vertices, lies in $\operatorname{conv} F$.
+
+```{prf:lemma} Scaling at the boundary
+:label: lem-frank-wolfe-open-loop-acceleration-scaling-boundary
+:enumerator: 4.2
+
+Let $x^\star$ be a minimizer in the relative interior of the face as above. For $x \in C$,
+$p \in \operatorname{argmin}_{v \in C} f'(x)(v)$ and every direction $u$ of $\operatorname{aff}(F)$
+with $\|u\| \le 1$, $\beta f'(x)(u) \le f'(x)(x - p)$.
+```
+
+In a Euclidean space, the supremum over such $u$ is $\|\Pi \nabla f(x)\|_2$ for the orthogonal
+projection $\Pi$ onto the directions of $\operatorname{aff}(F)$, the form of the paper, which goes
+back to Bach.
+
+```{prf:lemma} Distance to the optimal face
+:label: lem-frank-wolfe-open-loop-acceleration-distance-face
+:enumerator: 4.3
+
+Under the assumptions of Lemma 4.1, with $x^\star \in \operatorname{aff}(F)$ and $\beta > 0$, let
+$S$ be the larger of $\lceil 8L\delta^2 (\mu/\beta)^{1/\theta} \rceil$ and
+$\lceil 8L\delta^2 (2\mu L\delta/\kappa)^{1/\theta} \rceil$. For all $t \ge S$, the iterates are
+within distance $(\eta_t/\eta_S)^4 \beta$ of $\operatorname{aff}(F)$.
+```
+
+Once the atoms lie in the face, every step contracts the distance to its affine hull by
+$1 - \eta_t$, and $t (t + 5)^4 \le (t + 4)^5$ turns the product of these factors into
+$(\eta_t/\eta_S)^4$. Lemma 3.3 starts the induction.
+
+```{prf:lemma} Scaling from strong convexity
+:label: lem-frank-wolfe-open-loop-acceleration-scaling-cvx
+:enumerator: 4.4
+
+In a real inner product space, let $f$ be $\alpha$-strongly convex on $C$ with $\alpha > 0$,
+$L$-smooth over $C$ with $L$-Lipschitz gradient on $C$, $L > 0$, $\delta > 0$, with unique minimizer
+$x^\star$ in the relative interior of the face and strict complementarity, and let
+$M = \max_{y \in C} \|\nabla f(y)\|$ and $S$ the larger of
+$\lceil 16L\delta^2/(\alpha\beta^2) \rceil$ and $\lceil 64L^3\delta^4/(\alpha\kappa^2) \rceil$. For
+$t \ge S$, either $h_t \le (\eta_t/\eta_S)^4 \beta M$, or a direction $u$ of $\operatorname{aff}(F)$
+with $\|u\| \le 1$ satisfies
+
+$$
+f'(x_t)(u) \ge \sqrt{\alpha/2}\,\sqrt{h_t} - \left(\frac{\eta_t}{\eta_S}\right)^2 \sqrt{\alpha\beta
+M/2} -
+\left(\frac{\eta_t}{\eta_S}\right)^4 L\beta.
+$$
+```
+
+The orthogonal projection $y_t$ of $x_t$ onto $\operatorname{aff}(F)$ lies within $\beta$ of
+$x^\star$, hence in $C$, and within $(\eta_t/\eta_S)^4 \beta$ of $x_t$. Strong convexity at $y_t$,
+compared with $x^\star$, bounds the derivative in the direction of $y_t - x^\star$ below by
+$\sqrt{\alpha/2}\,\sqrt{f(y_t) - f(x^\star)}$, and the Lipschitz gradient carries the bound back to
+$x_t$. Strong convexity provides the error bound with $\mu = \sqrt{2/\alpha}$ and $\theta = 1/2$,
+for which $S$ is the threshold of Lemmas 3.3 and 4.1.
+
+```{prf:theorem} Minimizer in the relative interior of a face
+:label: thm-frank-wolfe-open-loop-acceleration-face
+:enumerator: 4.5
+
+Under the assumptions of Lemma 4.4, let $A = \sqrt{\alpha}\,\beta/(2\sqrt{2})$,
+$B = L\delta^2/2 + \beta\sqrt{\alpha\beta M}/(2\sqrt{2}\,\eta_S) + L\beta^2/(2\eta_S)$,
+$D = \beta M$ and $E = L\delta^2/2$. Every Frank–Wolfe run with $\eta_t = 4/(t + 4)$ satisfies, for
+all $t \ge S$,
+
+$$
+h_t \le \eta_{t-2}^2 \max\left\{ \frac{h_S}{\eta_{S-1}^2},\ \frac{B^2}{A^2} + B,\ \frac{D}{\eta_S^2}
++ E \right\}.
+$$
+```
+
+As long as $h_t > (\eta_t/\eta_S)^4 \beta M$, Lemmas 4.2 and 4.4 give the recursion of Lemma 3.5
+with $\psi = 1/2$. The induction carries a third term, $\eta_{t-2}\eta_{t-1}(D/\eta_S^2 + E)$, for
+the other iterates.
+
 ## Decomposition-invariant pairwise Frank–Wolfe
 
 Section 5 carries the blueprint over to two variants that converge linearly with line search on
@@ -381,12 +482,17 @@ invariant of Lemma 3.5 along the run, advancing it in progress steps only.
 - Remark 3.11, on rates beyond $O(1/t^2)$ for strongly convex sets, is not formalized.
 - In Section 5 the step sizes of decomposition-invariant pairwise Frank–Wolfe are given as powers of
   $1/2$ in $(\eta_t/2, \eta_t]$, which determines them. Theorem 5.9 needs no unique minimizer.
+- Section 4 also assumes that the gradient is $L$-Lipschitz on $C$, which the proofs of Lemmas 4.1
+  and 4.4 use; the quadratic upper bound over $C$ does not imply it. Lemma 4.2 does not need that
+  all minimizers of the linear functional lie in the face. Lemmas 4.1 to 4.3 hold in real normed
+  spaces, with the distance to $\operatorname{aff}(F)$ in place of $\|(I - \Pi)(x_t - x^\star)\|_2$,
+  and Lemma 4.4 is stated with a direction $u$ in place of the projected gradient. Remark 4.6, on
+  relaxing strict complementarity, is not formalized.
 :::
 
 ## Coverage
 
-This entry covers Sections 3 and 5 of the paper. Section 4 (minimizers in the relative interior of a
-face of a polytope) is planned; kernel herding (Section 6) is out of scope.
+This entry covers Sections 3 to 5 of the paper. Kernel herding (Section 6) is out of scope.
 
 ## The formal statements at a glance
 
