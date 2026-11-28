@@ -378,7 +378,9 @@ public import Lemmata.FWOpenLoop.Statement
 public import Lemmata.FWOpenLoop.Uniform
 public import Lemmata.FWProduct.Main
 public import Lemmata.FWProduct.Objective
+public import Lemmata.FWProduct.Separation
 public import Lemmata.FWProduct.Statement
+public import Lemmata.FWProduct.Width
 public import Lemmata.FanoDiffusion.Corollaries
 public import Lemmata.FanoDiffusion.Entropy
 public import Lemmata.FanoDiffusion.Main
