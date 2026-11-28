@@ -796,6 +796,10 @@ public import Lemmata.ModifiedE8Bell.Visibility
 public import Lemmata.ModifiedE8Bell.VisibilityCompute
 public import Lemmata.ModifiedE8Bell.VisibilityData
 public import Lemmata.ModifiedE8Bell.Witness
+public import Lemmata.OracleComplexity.Entropy
+public import Lemmata.OracleComplexity.Main
+public import Lemmata.OracleComplexity.Statement
+public import Lemmata.OracleComplexity.Tree
 public import Lemmata.PlanarSteinerXC.Assembly
 public import Lemmata.PlanarSteinerXC.CoverGraph
 public import Lemmata.PlanarSteinerXC.CycleSpace

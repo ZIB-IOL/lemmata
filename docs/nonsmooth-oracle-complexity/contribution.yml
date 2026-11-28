@@ -1,0 +1,46 @@
+schema_version: 1
+id: nonsmooth-oracle-complexity
+lean_namespace: Lemmata.OracleComplexity
+subject: math.OC
+cross_lists: [cs.CC, cs.IT]
+topics: [information-theoretic-lower-bounds]
+arxiv: "1407.5144"
+note: >-
+  Formalizes Lemmas III.1 and III.5 of @braun2017lower.
+abstract: >-
+  Information theory gives lower bounds on the number of oracle queries that an optimization
+  algorithm needs. If every answer of the oracle reveals at most $C$ nats about an instance drawn
+  from a finite set $F$, then every deterministic algorithm that identifies the instance with error
+  probability $P_e$ asks at least $(H(F) - h(P_e) - P_e \log(|F| - 1))/C$ queries in expectation,
+  where $h$ is the binary entropy. Oracle emulations transfer such lower bounds from one oracle to
+  another: an algorithm for the emulated oracle runs with the emulating oracle, with the same
+  outputs and the same numbers of queries. Algorithms are query trees, and the instances carry an
+  arbitrary prior.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of Mathlib's binary entropy.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.OracleComplexity.InfoBounded
+    kind: definition
+    page: index.md
+    label: def-nonsmooth-oracle-complexity-information
+  - name: Lemmata.OracleComplexity.info_lower_bound
+    kind: theorem
+    page: index.md
+    label: lem-nonsmooth-oracle-complexity-information
+  - name: Lemmata.OracleComplexity.emulation
+    kind: theorem
+    page: index.md
+    label: lem-nonsmooth-oracle-complexity-emulation
