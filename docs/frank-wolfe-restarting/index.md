@@ -12,8 +12,9 @@ This entry formalizes results of the paper *Restarting Frank–Wolfe: Faster Rat
 Error Bounds* by Thomas Kerdreux, Alexandre d'Aspremont and Sebastian Pokutta
 [@kerdreux2018restarting], currently the strong Wolfe gap bounds (Lemmas 2.3 and 3.6), fractional
 away-step Frank–Wolfe with scheduled restarts (Propositions 4.1, 4.2 and 5.3, Theorem 5.1), its
-analysis under Hölder smoothness (Section 6) and the rate of vanilla Frank–Wolfe over strongly
-convex sets (Theorem 7.3); numbers refer to the arXiv version.
+analysis under Hölder smoothness (Section 6), fractional Frank–Wolfe (Lemma 7.1 and Proposition
+7.2), the rate of vanilla Frank–Wolfe over strongly convex sets (Theorem 7.3) and the appendices
+(Lemmas A.1 and B.1); numbers refer to the arXiv version.
 :::
 
 The Frank–Wolfe algorithm converges at the rate $O(1/t)$ for smooth convex objectives, and its
@@ -250,6 +251,57 @@ $|S_0| - |S_{\tau_k}| + 4 \frac{s}{s-1} e^{\gamma} k$ iterations.
 
 While the condition fails, step size $1$ gives the full steps progress at least $(1 - 1/s) G$.
 
+## Fractional Frank–Wolfe
+
+The same restarts work for vanilla Frank–Wolfe when the minimizers lie in the interior of a general
+compact convex set $\mathcal{C}$, with the Frank–Wolfe gap $g(x)$ in place of the strong Wolfe gap.
+
+```{prf:definition} Fractional Frank–Wolfe and its restarts (Algorithms 3 and 2)
+:label: def-frank-wolfe-restarting-fractional-fw
+:nonumber:
+
+Fractional Frank–Wolfe starts at $x_0 \in \mathcal{C}$ and stops once the Frank–Wolfe gap is at most
+$e^{-\gamma} g(x_0)$; otherwise it steps towards a Frank–Wolfe vertex with exact line search over
+$[0, 1]$. Scheduled restarts run it repeatedly, run $k$ starting at iteration $\tau_k$ with the gap
+$G_k$ there and stopping at $\tau_{k+1}$ with $G_{k+1} \le e^{-\gamma} G_k$.
+```
+
+```{prf:lemma} Frank–Wolfe gap near an interior optimum
+:label: lem-frank-wolfe-restarting-interior
+:enumerator: 7.1
+
+If the closed ball of radius $z > 0$ around $x^\star$ lies in $\mathcal{C}$ and
+$\|x - x^\star\| \le z/2$, then $g(x) \ge \frac{z}{2} \|\nabla f(x)\|$.
+```
+
+The point $x - \frac{z}{2} u$ lies in the ball for every unit vector $u$, so the Frank–Wolfe vertex
+does at least as well as it.
+
+```{prf:proposition} Scheduled restarts of fractional Frank–Wolfe
+:label: prop-frank-wolfe-restarting-fractional-fw
+:enumerator: 7.2
+
+Let $\mathcal{C}$ be compact and convex with diameter at most $D$, let $f$ be convex and $L$-smooth
+with a $(\theta, c)$-Hölderian error bound, $\theta \in [0, 1/2]$, and let the balls of radius
+$z > 0$ around the minimizers, within the affine hull of $\mathcal{C}$, lie in $\mathcal{C}$. Let
+$\gamma > 0$ and $e^{-\gamma} G_0 \le L D^2$. With $r = 1/(1-\theta)$ and
+$K = 2 e^{2\gamma} L D^2 (c/z)^r$, after $T = \tau_R$ iterations
+
+$$
+f(x_T) - f^\star \le \frac{G_0}{(1 + T C_\gamma)^{1/(2-r)}},
+\qquad C_\gamma = \frac{e^{\gamma(2-r)} - 1}{K G_0^{r-2}},
+$$
+
+for $\theta < 1/2$, and $f(x_T) - f^\star \le G_0 e^{-\gamma T/K}$ for $\theta = 1/2$.
+```
+
+The balls around the minimizers give $g(x) \ge \frac{z}{c} (f(x) - f^\star)^{1-\theta}$ at every
+point of $\mathcal{C}$ (Proposition 5.3 of [Affine-invariant accelerated rates for Frank–Wolfe with
+open-loop step-sizes](../frank-wolfe-affine-invariant-open-loop/index.md)), so
+$f(x) - f^\star \le (c/z)^r g(x)^r$. Every iteration of a run decreases $f$ by at least
+$e^{-2\gamma} G_k^2/(2 L D^2)$, so run $k$ takes at most $K G_k^{r-2}$ iterations, and the restarts
+are telescoped as in Theorem 5.1.
+
 ## Vanilla Frank–Wolfe over strongly convex sets
 
 ```{prf:theorem} Strongly convex sets
@@ -266,6 +318,50 @@ $t \ge t_0$, the rate $O(t^{-1/(1-\theta)})$.
 
 This is the case $q = 2$ of Theorem 2.10 of [Frank–Wolfe over uniformly convex
 sets](../frank-wolfe-uniformly-convex-sets/index.md), and the formal proof is that theorem.
+
+## The appendices
+
+Run once with a large $\gamma$, fractional away-step Frank–Wolfe is no faster than Frank–Wolfe.
+
+```{prf:lemma} One run with a large schedule parameter
+:label: lem-frank-wolfe-restarting-one-shot
+:enumerator: A.1
+
+Let $f$ be convex and $L$-smooth and let $D$ bound the diameter of
+$\operatorname{conv}(\mathcal{V})$. As long as Algorithm 1 takes Frank–Wolfe steps, that is the
+Frank–Wolfe gap exceeds $e^{-\gamma} w_0/2$, its iterates satisfy $f(x_t) - f(y) \le 2 L D^2/t$ for
+every $y \in \operatorname{conv}(\mathcal{V})$ and $t \ge 1$.
+```
+
+With exact line search and the Frank–Wolfe gap at least the primal gap $h_t$,
+$h_{t+1} \le h_t - \eta h_t + \eta^2 L D^2/2$ for every $\eta \in [0, 1]$; $\eta = 1$ gives
+$h_1 \le L D^2/2$, and $\eta = h_t/(L D^2)$ gives $h_t \le 2 L D^2/(t + 2)$ by induction. Once
+Algorithm 1 takes an away step or stops, the primal gap is at most $e^{-\gamma} w_0$ by Lemma 2.3,
+so a single run with $e^{-\gamma} w_0 \lt \varepsilon$ reaches accuracy $\varepsilon$ after
+$2 L D^2/\varepsilon$ iterations, but no faster.
+
+```{prf:lemma} A recurrence
+:label: lem-frank-wolfe-restarting-recurrence
+:enumerator: B.1
+
+Let $h_t \ge 0$ satisfy $h_{t+1} \le h_t \max\{1/2, 1 - M h_t^\beta\}$ with $M > 0$ and
+$\beta \in (0, 1]$. If $k \ge 1/(2^\beta - 1)$, $C' \ge 1/(2^\beta - 1)$, $h_0 k^{1/\beta} \le C$
+and $2 (C'/M)^{1/\beta} \le C$, then $h_t \le C/(t + k)^{1/\beta}$ for all $t \ge 0$.
+```
+
+The induction uses $x = 1/(t + k) \le 2^\beta - 1$, where the chord of the convex map
+$y \mapsto y^{1/\beta}$ gives $(1 + x)^{1/\beta} \le 1 + x/(2^\beta - 1) \le 1 + C' x$. If $h_t$ is
+at most half the bound, halving suffices; otherwise $M h_t^\beta \ge C' x$, and
+$(1 - C'x)(1 + C'x) \le 1$ closes the step.
+
+:::{admonition} Errata
+:class: warning
+Lemma B.1 assumes only $k \ge (2 - 2^\beta)/(2^\beta - 1) = 1/(2^\beta - 1) - 1$, and its induction
+step is carried out for $t \ge 1$, so the step from $t = 0$ to $t = 1$ is missing. It fails for
+$\beta = 1$, $M = 1$, $k = 1/100$, $C' = 1$, $C = 2$, $h_0 = 100$ and $h_1 = 50$, which satisfy the
+hypotheses ($h_1 \le h_0 \max\{1/2, 1 - 100\}$ and $C \ge \max\{h_0 k, 2 C'/M\}$), while
+$h_1 \gt C/(1 + k) \approx 1.98$. The lemma holds with $k \ge 1/(2^\beta - 1)$.
+:::
 
 :::{note}
 **Differences from the paper.**
@@ -295,17 +391,24 @@ sets](../frank-wolfe-uniformly-convex-sets/index.md), and the formal proof is th
 - Section 6 assumes the Hölder curvature bound directly. In Theorem 6.2 the paper writes
   $W_0^{\tau}$ in the denominator of $C_\gamma$; the proof gives $W_0^{r - s/(s-1)} = W_0^{-\tau}$
   there, as stated here.
+- Proposition 7.2 bounds the primal gap through balls around the minimizers at every point of
+  $\mathcal{C}$, which gives the constant $(c/z)^r$ and needs no second burn-in condition. With its
+  Lemma 7.1 the paper's argument gives $(2c/z)^r$; it writes $\mu = (cz/2)^{1/(1-\theta)}$ and
+  applies the error bound without $c$. The bound for $\theta = 1/2$ has $2$ where the paper has $8$.
+  The restarts are explicit (Algorithm 2 with Algorithm 3 inside) rather than through the parameter
+  $\Phi_t$ of Algorithm 4.
+- Lemma A.1 is stated as the rate while Frank–Wolfe steps are taken; with Lemma 2.3 it gives the
+  paper's statement. Lemma B.1 assumes $C' \ge 1/(2^\beta - 1)$, which the paper's condition
+  $C' \ge 1/(\beta - (1 - \beta)(2^\beta - 1))$ implies.
 - Theorem 7.3 is stated with explicit constants; its recursion constant $(\alpha/c)/(2L)$ improves
   the paper's $\alpha/(8Lc)$. The case $\theta = 0$ is the classical rate.
 :::
 
 ## Coverage
 
-This entry covers Lemmas 2.3 and 3.6, Algorithms 1 and 2 with Propositions 4.1, 4.2 and 5.3 and
-Theorem 5.1, Section 6 and Theorem 7.3; Corollary 5.2 specializes Theorem 5.1 and is not stated
-separately. Not covered yet are the fractional Frank–Wolfe algorithm (Algorithms 3 and 4, Lemma 7.1,
-Proposition 7.2), the one-shot analysis of Appendix A, the recurrence of Appendix B and the
-experiments.
+This entry covers all results of the paper: Lemmas 2.3 and 3.6, Sections 4 to 7 and the appendices.
+Corollary 5.2 specializes Theorem 5.1 and is not stated separately, Proposition 5.3 is stated for
+$r = 1$ and $r = 2$, and the experiments are not covered.
 
 ## The formal statements at a glance
 

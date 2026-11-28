@@ -387,8 +387,10 @@ public import Lemmata.FWProduct.Separation
 public import Lemmata.FWProduct.Statement
 public import Lemmata.FWProduct.Upper
 public import Lemmata.FWProduct.Width
+public import Lemmata.FWRestart.Appendix
 public import Lemmata.FWRestart.Fractional
 public import Lemmata.FWRestart.Holder
+public import Lemmata.FWRestart.Interior
 public import Lemmata.FWRestart.Main
 public import Lemmata.FWRestart.Restart
 public import Lemmata.FWRestart.Statement

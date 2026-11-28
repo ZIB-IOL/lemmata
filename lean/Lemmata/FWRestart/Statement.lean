@@ -263,4 +263,90 @@ def RobustGamma : Prop :=
       W₀ * Real.exp (-(1 / 2 * T / (Real.exp (2 * (1 / 2)) * K₀))) ≤
         W₀ * Real.exp (-(γ * T / (Real.exp (2 * γ) * K₀)))
 
+section Fractional
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+
+/-- Iteration `t` of fractional Frank–Wolfe (Algorithm 3) over `C` with stopping level `ε`: the
+Frank–Wolfe gap `f'(x_t)(x_t - v)` of a Frank–Wolfe vertex `v ∈ C` exceeds `ε`, so the algorithm
+has not stopped, and the step goes towards `v` with exact line search over `[0, 1]`. -/
+def IsFFWIter (C : Set E) (f : E → ℝ) (ε : ℝ) (x : ℕ → E) (t : ℕ) : Prop :=
+  ∃ v ∈ C, (∀ w ∈ C, fderiv ℝ f (x t) v ≤ fderiv ℝ f (x t) w) ∧
+    ε < fderiv ℝ f (x t) (x t - v) ∧ ∃ η ∈ Set.Icc (0 : ℝ) 1,
+      (∀ s ∈ Set.Icc (0 : ℝ) 1, f (x t - η • (x t - v)) ≤ f (x t - s • (x t - v))) ∧
+        x (t + 1) = x t - η • (x t - v)
+
+/-- `g` is the Frank–Wolfe gap of `x` over `C`: `g = f'(x)(x - v)` for a Frank–Wolfe vertex
+`v ∈ C`. -/
+def IsFWGapAt (C : Set E) (f : E → ℝ) (x : E) (g : ℝ) : Prop :=
+  ∃ v ∈ C, (∀ w ∈ C, fderiv ℝ f x v ≤ fderiv ℝ f x w) ∧ g = fderiv ℝ f x (x - v)
+
+/-- Scheduled restarts of fractional Frank–Wolfe with parameter `γ` (Algorithm 2 with Algorithm 3
+inside): restart times `τ₀ = 0 ≤ τ₁ ≤ ⋯` with Frank–Wolfe gaps `G_k` at `τ_k`; on `[τ_k, τ_{k+1})`
+the iterations are those of Algorithm 3 with stopping level `e^{-γ} G_k`, and at `τ_{k+1}` it has
+stopped: `G_{k+1} ≤ e^{-γ} G_k`. -/
+def IsFFWRestartRun (C : Set E) (f : E → ℝ) (γ : ℝ) (x : ℕ → E) (τ : ℕ → ℕ) (G : ℕ → ℝ) :
+    Prop :=
+  x 0 ∈ C ∧ τ 0 = 0 ∧
+    ∀ k, τ k ≤ τ (k + 1) ∧ IsFWGapAt C f (x (τ k)) (G k) ∧ G (k + 1) ≤ Real.exp (-γ) * G k ∧
+      ∀ t, τ k ≤ t → t < τ (k + 1) → IsFFWIter C f (Real.exp (-γ) * G k) x t
+
+end Fractional
+
+/-- **Lemma 7.1** (scaling of the Frank–Wolfe gap near an interior optimum). If the closed ball of
+radius `z > 0` around `x⋆` lies in `C`, `‖x - x⋆‖ ≤ z/2` and `v ∈ C` minimizes `f'(x)` over `C`,
+then the Frank–Wolfe gap satisfies `f'(x)(x - v) ≥ (z/2) ‖f'(x)‖`. -/
+def InteriorFWScaling : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (z : ℝ)
+    (x xStar v : E), 0 < z → Metric.closedBall xStar z ⊆ C → ‖x - xStar‖ ≤ z / 2 → v ∈ C →
+    (∀ w ∈ C, fderiv ℝ f x v ≤ fderiv ℝ f x w) → z / 2 * ‖fderiv ℝ f x‖ ≤ fderiv ℝ f x (x - v)
+
+/-- **Proposition 7.2** (scheduled restarts of fractional Frank–Wolfe). Let `C` be compact and
+convex with diameter at most `D`, let `f` be convex and `L`-smooth with a `(θ, c)`-Hölderian error
+bound on `C`, `θ ∈ [0, 1/2]`, and let the balls of radius `z > 0` around the minimizers, within the
+affine hull of `C`, lie in `C`. Let `γ > 0` and assume `e^{-γ} G₀ ≤ L D²`. With `r = 1/(1 - θ)` and
+`K = 2 e^{2γ} L D² (c/z)^r`, after `R` restarts and `T = τ_R` iterations,
+`f(x_T) - f⋆ ≤ G₀/(1 + T C_γ)^{1/(2-r)}` with `C_γ = (e^{γ(2-r)} - 1)/(K G₀^{r-2})` when
+`θ < 1/2`, and `f(x_T) - f⋆ ≤ G₀ e^{-γ T/K}` when `θ = 1/2`. -/
+def FractionalFWRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (L : NNReal)
+    (D c θ z γ : ℝ) (x : ℕ → E) (τ : ℕ → ℕ) (G : ℕ → ℝ) (xStar : E),
+    IsCompact C → Convex ℝ C → ConvexOn ℝ Set.univ f → IsSmooth f L →
+    (∀ y ∈ C, ∀ w ∈ C, ‖y - w‖ ≤ D) → IsHolderErrorBound C f c θ → 0 < c →
+    θ ∈ Set.Icc (0 : ℝ) (1 / 2) → 0 < z →
+    (∀ y ∈ minimizers C f, ∀ w ∈ affineSpan ℝ C, ‖w - y‖ ≤ z → w ∈ C) →
+    xStar ∈ minimizers C f → 0 < γ → IsFFWRestartRun C f γ x τ G →
+    Real.exp (-γ) * G 0 ≤ L * D ^ 2 →
+    ∀ R : ℕ,
+      let r := 1 / (1 - θ)
+      let K := 2 * Real.exp (2 * γ) * (L * D ^ 2) * (c / z) ^ r
+      (θ < 1 / 2 → f (x (τ R)) - f xStar ≤
+        G 0 / (1 + (τ R : ℝ) * ((Real.exp (γ * (2 - r)) - 1) / (K * G 0 ^ (r - 2)))) ^
+          (1 / (2 - r))) ∧
+      (θ = 1 / 2 → f (x (τ R)) - f xStar ≤ G 0 * Real.exp (-(γ * τ R / K)))
+
+/-- **Lemma A.1** (one run with a large `γ`). As long as fractional away-step Frank–Wolfe takes
+Frank–Wolfe steps, that is, the Frank–Wolfe gap exceeds `e^{-γ} w₀/2`, it converges like
+Frank–Wolfe: `f(x_t) - f(y) ≤ 2 L D²/t` for `1 ≤ t ≤ T` and every `y ∈ conv V`. -/
+def OneShotRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ) (L : NNReal)
+    (D γ w₀ : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) (T : ℕ),
+    ConvexOn ℝ Set.univ f → IsSmooth f L →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E), ‖y - z‖ ≤ D) →
+    IsFAFWRun V f γ w₀ x S lam T →
+    (∀ t < T, ∀ v ∈ V, (∀ w ∈ V, fderiv ℝ f (x t) v ≤ fderiv ℝ f (x t) w) →
+      Real.exp (-γ) * w₀ / 2 < fderiv ℝ f (x t) (x t - v)) →
+    ∀ y ∈ convexHull ℝ (↑V : Set E), ∀ t : ℕ, 1 ≤ t → t ≤ T →
+      f (x t) - f y ≤ 2 * (L * D ^ 2) / t
+
+/-- **Lemma B.1** (a recurrence and its sublinear rate, corrected). Let `h ≥ 0` satisfy
+`h_{t+1} ≤ h_t max {1/2, 1 - M h_t^β}` with `M > 0` and `β ∈ (0, 1]`. If `k ≥ 1/(2^β - 1)`,
+`C' ≥ 1/(2^β - 1)`, `h₀ k^{1/β} ≤ C` and `2 (C'/M)^{1/β} ≤ C`, then `h_t ≤ C/(t + k)^{1/β}` for
+all `t ≥ 0`. -/
+def RecurrenceRate : Prop :=
+  ∀ (h : ℕ → ℝ) (M β k C' C : ℝ), (∀ t, 0 ≤ h t) → 0 < M → 0 < β → β ≤ 1 →
+    (∀ t, h (t + 1) ≤ h t * max (1 / 2) (1 - M * h t ^ β)) → 1 / (2 ^ β - 1) ≤ k →
+    1 / (2 ^ β - 1) ≤ C' → h 0 * k ^ (1 / β) ≤ C → 2 * (C' / M) ^ (1 / β) ≤ C →
+    ∀ t : ℕ, h t ≤ C / ((t : ℝ) + k) ^ (1 / β)
+
 end Lemmata.FWRestart
