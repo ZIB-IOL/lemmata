@@ -41,6 +41,30 @@ noncomputable def minGap {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] 
     (x v : ℕ → E) (t : ℕ) : ℝ :=
   (Finset.range (t + 1)).inf' Finset.nonempty_range_add_one fun k => fderiv ℝ f (x k) (x k - v k)
 
+/-- The **weak `(M, r)`-growth property** of `(C, f)`: for every `x ∈ C`, every Frank–Wolfe vertex
+`v`, every minimizer `x⋆` and every `η ∈ [0, 1]`,
+`D_f(x + η(v - x), x) (f(x) - f(x⋆))^{1-r} ≤ (M η²/2) g(x)`. -/
+def IsWeakGrowth {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (M r : ℝ) : Prop :=
+  ∀ x ∈ C, ∀ v ∈ C, (∀ y ∈ C, fderiv ℝ f x v ≤ fderiv ℝ f x y) → ∀ xStar ∈ minimizers C f,
+    ∀ η ∈ Set.Icc (0 : ℝ) 1,
+      bregman f (x + η • (v - x)) x * (f x - f xStar) ^ (1 - r) ≤
+        M * η ^ 2 / 2 * fderiv ℝ f x (x - v)
+
+/-- The **gaps `(m, r)`-growth property** of `(C, f)`: `m (f(x) - f(x⋆))^{1-r} ≤ g(x)` for every
+`x ∈ C`, every Frank–Wolfe vertex `v` and every minimizer `x⋆`. -/
+def IsGapsGrowth {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (m r : ℝ) : Prop :=
+  ∀ x ∈ C, ∀ v ∈ C, (∀ y ∈ C, fderiv ℝ f x v ≤ fderiv ℝ f x y) → ∀ xStar ∈ minimizers C f,
+    m * (f x - f xStar) ^ (1 - r) ≤ fderiv ℝ f x (x - v)
+
+/-- The **relaxed gaps growth property** of a run from the threshold `S` on: for every `t ≥ S` and
+every minimizer `x⋆`, either `f(x_t) - f(x⋆) < δ_t` or `m (f(x_t) - f(x⋆))^{1-r} ≤ g_t`. -/
+def IsRelaxedGapsGrowth {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E)
+    (f : E → ℝ) (x v : ℕ → E) (δ : ℕ → ℝ) (m r : ℝ) (S : ℕ) : Prop :=
+  ∀ t, S ≤ t → ∀ xStar ∈ minimizers C f,
+    f (x t) - f xStar < δ t ∨ m * (f (x t) - f xStar) ^ (1 - r) ≤ fderiv ℝ f (x t) (x t - v t)
+
 /-- **Theorem 3.1** (strong `(M, 0)`-growth). Let `C` be convex and `(C, f)` have the strong
 `(M, 0)`-growth property with `M ≥ 0`, and let `ℓ ≥ 2`. Every Frank–Wolfe run with the step sizes
 `η_t = ℓ/(t + ℓ)` has best duality gap at most `η_t M` for all `t ≥ 1`. -/
@@ -104,5 +128,77 @@ def PDRateStrong : Prop :=
     (∀ t : ℕ, ⌈Real.exp (1 / k) * (1 + ℓ) - ℓ⌉₊ ≤ t →
       minGap f x v t ≤ Real.exp (3 + ε * ℓ) * eta ℓ ((t : ℤ) - 1) ^ k *
         max (pdGap f x v 1) ((ℓ * M / (2 * ε)) ^ (1 / (1 - r))))
+
+/-- **Theorem 4.1** (strong `(M, 0)`- and weak `(M, r)`-growth). Let `f` be convex over `C` and
+differentiable at its points with a minimizer `x⋆`, `(C, f)` with the strong `(M, 0)`- and weak
+`(M, r)`-growth properties, `M > 0`, `r ∈ [0, 1)`, `ℓ ≥ 1` and `ε ∈ (0, ℓ)`. Every Frank–Wolfe run
+with `η_t = ℓ/(t + ℓ)` satisfies, for all `t ≥ 1`,
+`h_t ≤ exp(εℓ) max {η_{t-1}^{ℓ-ε} M/2,
+η_{t-1}^{min {ℓ-ε, 1/(1-r), 2}} ((ℓM/(2ε))^{1/(1-r)} + M/2)}`.
+Moreover, either `h_t ≤ (η_t ℓM/(2ε))^{1/(1-r)}` for infinitely many `t`, or there is `R ≥ 1` with
+`h_t ≤ h_R (η_{t-1}/η_{R-1})^{ℓ-ε} exp(εℓ/R)` for all `t ≥ R + 1`. -/
+def WeakRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (M r ε : ℝ) (ℓ : ℕ) (x v : ℕ → E) (xStar : E), ConvexOn ℝ C f →
+    (∀ y ∈ C, DifferentiableAt ℝ f y) → xStar ∈ minimizers C f → 0 < M → 1 ≤ ℓ →
+    r ∈ Set.Ico (0 : ℝ) 1 → ε ∈ Set.Ioo (0 : ℝ) ℓ → IsStrongGrowth C f M 0 →
+    IsWeakGrowth C f M r → IsFWRun C (fderiv ℝ f) x v (fun t => eta ℓ t) →
+    (∀ t : ℕ, 1 ≤ t → f (x t) - f xStar ≤ Real.exp (ε * ℓ) *
+      max (eta ℓ ((t : ℤ) - 1) ^ ((ℓ : ℝ) - ε) * (M / 2))
+        (eta ℓ ((t : ℤ) - 1) ^ (min ((ℓ : ℝ) - ε) (min (1 / (1 - r)) 2)) *
+          ((ℓ * M / (2 * ε)) ^ (1 / (1 - r)) + M / 2))) ∧
+    ((∀ T : ℕ, ∃ t, T ≤ t ∧ f (x t) - f xStar ≤ (eta ℓ t * ℓ * M / (2 * ε)) ^ (1 / (1 - r))) ∨
+      ∃ R : ℕ, 1 ≤ R ∧ ∀ t : ℕ, R + 1 ≤ t → f (x t) - f xStar ≤ (f (x R) - f xStar) *
+        (eta ℓ ((t : ℤ) - 1) / eta ℓ ((R : ℤ) - 1)) ^ ((ℓ : ℝ) - ε) * Real.exp (ε * ℓ / R))
+
+/-- **Lemma 4.2** (the next fast iterate). Under weak `(M, r)`-growth with `ℓ > 1/(1 - r)` and
+`ε ∈ (0, ℓ - 1/(1 - r))`, for every `R ≥ 1` some `i` with `R ≤ i ≤ max {R, U}` satisfies
+`h_i ≤ (η_i ℓM/(2ε))^{1/(1-r)}`, where
+`U = ⌈ℓ (h_R η_R^{ε-ℓ} (2ε/(ℓM))^{1/(1-r)} exp(εℓ/R))^{1/(ℓ-ε-1/(1-r))} - ℓ⌉`. -/
+def WeakRestart : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (M r ε : ℝ) (ℓ : ℕ) (x v : ℕ → E) (xStar : E), ConvexOn ℝ C f →
+    (∀ y ∈ C, DifferentiableAt ℝ f y) → xStar ∈ minimizers C f → 0 < M → 1 ≤ ℓ →
+    r ∈ Set.Ico (0 : ℝ) 1 → 1 / (1 - r) < ℓ → ε ∈ Set.Ioo (0 : ℝ) (ℓ - 1 / (1 - r)) →
+    IsWeakGrowth C f M r → IsFWRun C (fderiv ℝ f) x v (fun t => eta ℓ t) →
+    ∀ R : ℕ, 1 ≤ R →
+      ∃ i, R ≤ i ∧ i ≤ max R ⌈ℓ * ((f (x R) - f xStar) * eta ℓ R ^ (ε - ℓ) *
+          (2 * ε / (ℓ * M)) ^ (1 / (1 - r)) * Real.exp (ε * ℓ / R)) ^
+          (1 / (ℓ - ε - 1 / (1 - r))) - ℓ⌉₊ ∧
+        f (x i) - f xStar ≤ (eta ℓ i * ℓ * M / (2 * ε)) ^ (1 / (1 - r))
+
+/-- **Theorem 5.2** (strong `(M, 0)`-growth and relaxed gaps `(m, r)`-growth). Let `f` be convex
+over `C` and differentiable at its points with a minimizer `x⋆`, `(C, f)` with the strong
+`(M, 0)`-growth property, `M, m > 0`, `r ∈ (0, 1)`, `ℓ ≥ 2`, and let the run satisfy the relaxed
+gaps growth property with `δ_t = (η_t M/m)^{1/(1-r)}` from a threshold
+`S ≥ max {1, ⌈2^{1/r} ℓM/m^{1/r} - ℓ⌉}` on. Then for all `t ≥ S`,
+`h_t ≤ max {h_S (η_{t-1}/η_{S-1})^ℓ, η_{t-1}^{min {ℓ, 1/(1-r), 2}} ((M/m)^{1/(1-r)} + M/2)}`. -/
+def RelaxedGapsRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (M m r : ℝ) (ℓ S : ℕ) (x v : ℕ → E) (xStar : E), ConvexOn ℝ C f →
+    (∀ y ∈ C, DifferentiableAt ℝ f y) → xStar ∈ minimizers C f → 0 < M → 0 < m → 2 ≤ ℓ →
+    r ∈ Set.Ioo (0 : ℝ) 1 → IsStrongGrowth C f M 0 →
+    IsFWRun C (fderiv ℝ f) x v (fun t => eta ℓ t) →
+    max 1 ⌈(2 : ℝ) ^ (1 / r) * ℓ * M / m ^ (1 / r) - ℓ⌉₊ ≤ S →
+    IsRelaxedGapsGrowth C f x v (fun t => (eta ℓ t * M / m) ^ (1 / (1 - r))) m r S →
+    ∀ t : ℕ, S ≤ t → f (x t) - f xStar ≤
+      max ((f (x S) - f xStar) * (eta ℓ ((t : ℤ) - 1) / eta ℓ ((S : ℤ) - 1)) ^ ℓ)
+        (eta ℓ ((t : ℤ) - 1) ^ (min (ℓ : ℝ) (min (1 / (1 - r)) 2)) *
+          ((M / m) ^ (1 / (1 - r)) + M / 2))
+
+/-- **Theorem 5.1** (strong `(M, 0)`-growth and gaps `(m, r)`-growth). Under the gaps
+`(m, r)`-growth property, the bound of Theorem 5.2 holds from
+`S = max {1, ⌈2^{1/r} ℓM/m^{1/r} - ℓ⌉}` on. -/
+def GapsRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (M m r : ℝ) (ℓ : ℕ) (x v : ℕ → E) (xStar : E), ConvexOn ℝ C f →
+    (∀ y ∈ C, DifferentiableAt ℝ f y) → xStar ∈ minimizers C f → 0 < M → 0 < m → 2 ≤ ℓ →
+    r ∈ Set.Ioo (0 : ℝ) 1 → IsStrongGrowth C f M 0 → IsGapsGrowth C f m r →
+    IsFWRun C (fderiv ℝ f) x v (fun t => eta ℓ t) →
+    let S := max 1 ⌈(2 : ℝ) ^ (1 / r) * ℓ * M / m ^ (1 / r) - ℓ⌉₊
+    ∀ t : ℕ, S ≤ t → f (x t) - f xStar ≤
+      max ((f (x S) - f xStar) * (eta ℓ ((t : ℤ) - 1) / eta ℓ ((S : ℤ) - 1)) ^ ℓ)
+        (eta ℓ ((t : ℤ) - 1) ^ (min (ℓ : ℝ) (min (1 / (1 - r)) 2)) *
+          ((M / m) ^ (1 / (1 - r)) + M / 2))
 
 end Lemmata.FWAffineOpenLoop

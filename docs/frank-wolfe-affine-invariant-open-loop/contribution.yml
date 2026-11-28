@@ -11,8 +11,9 @@ abstract: >-
   Frank–Wolfe gap and the best duality gap. Under the strong $(M, r)$-growth property, which bounds
   the Bregman divergence by $M\eta^2/2$ times the $r$-th power of the Frank–Wolfe gap, the best
   duality gap and the smallest Frank–Wolfe gap converge at the rate $O(1/t)$ for $r = 0$,
-  $O(t^{-\ell})$ for $r = 1$, and $O(t^{-\ell+\varepsilon} + t^{-1/(1-r)})$ for $r \in [0, 1)$. The
-  statements hold in real normed spaces, for every Frank–Wolfe run.
+  $O(t^{-\ell})$ for $r = 1$, and $O(t^{-\ell+\varepsilon} + t^{-1/(1-r)})$ for $r \in [0, 1)$. Under
+  the weaker weak growth and (relaxed) gaps growth properties, the primal gap converges at rates up
+  to $O(t^{-2})$. The statements hold in real normed spaces, for every Frank–Wolfe run.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -65,3 +66,31 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-affine-invariant-open-loop-strong-r
+  - name: Lemmata.FWAffineOpenLoop.IsWeakGrowth
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-affine-invariant-open-loop-weak
+  - name: Lemmata.FWAffineOpenLoop.IsGapsGrowth
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-affine-invariant-open-loop-gaps
+  - name: Lemmata.FWAffineOpenLoop.IsRelaxedGapsGrowth
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-affine-invariant-open-loop-relaxed
+  - name: Lemmata.FWAffineOpenLoop.weak_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-affine-invariant-open-loop-weak
+  - name: Lemmata.FWAffineOpenLoop.weak_restart
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-affine-invariant-open-loop-restart
+  - name: Lemmata.FWAffineOpenLoop.relaxed_gaps_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-affine-invariant-open-loop-relaxed
+  - name: Lemmata.FWAffineOpenLoop.gaps_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-affine-invariant-open-loop-gaps-rate
