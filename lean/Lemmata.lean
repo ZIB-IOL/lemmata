@@ -379,6 +379,7 @@ public import Lemmata.FWOpenLoop.Uniform
 public import Lemmata.FWProduct.Facet
 public import Lemmata.FWProduct.Main
 public import Lemmata.FWProduct.Objective
+public import Lemmata.FWProduct.Relint
 public import Lemmata.FWProduct.Separation
 public import Lemmata.FWProduct.Statement
 public import Lemmata.FWProduct.Upper

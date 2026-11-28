@@ -147,4 +147,35 @@ def ProductVertexFacet : Prop :=
     vertexFacetDistance (productVertices V₁ V₂) =
       min (vertexFacetDistance V₁) (vertexFacetDistance V₂)
 
+open Classical in
+/-- **Lemma 4.3**. Let `E` be a finite-dimensional real inner product space and `V` a finite set.
+If a proper exposed face `F` of `conv V`, a point `a` of the affine hull of `F` and a point
+`q ∈ conv (V \ F)` realize the affine pyramidal width, `‖a - q‖ = ŵ`, then `a` lies in the relative
+interior of `conv F`: it lies in `conv F`, and its minimal face is `F` (it lies in no proper face
+of `conv F`). -/
+def AffineWidthRelint : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+    (V : Finset E) (ψ : StrongDual ℝ E) (a q : E), exposedFace V ψ ≠ V →
+    a ∈ affineSpan ℝ (↑(exposedFace V ψ) : Set E) →
+    q ∈ convexHull ℝ (↑(V \ exposedFace V ψ) : Set E) → ‖a - q‖ = affinePyramidalWidth V →
+    a ∈ convexHull ℝ (↑(exposedFace V ψ) : Set E) ∧
+      minFace (exposedFace V ψ) a = exposedFace V ψ
+
+/-- **Corollary 4.4**. In a finite-dimensional real normed space, the affine pyramidal width of
+`conv V` equals its pyramidal width, the facial distance. -/
+def AffineWidthEq : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    (V : Finset E), affinePyramidalWidth V = facialDistance V
+
+/-- **Theorem 4.5**. For finite sets `V₁, V₂` with at least two points each in finite-dimensional
+real inner product spaces, with pyramidal widths (facial distances) `δ₁, δ₂`, the pyramidal width
+of the product `conv V₁ × conv V₂` in the Euclidean product is `√(δ₁² δ₂²/(δ₁² + δ₂²))`. -/
+def ProductWidthEq : Prop :=
+  ∀ {E₁ E₂ : Type u} [NormedAddCommGroup E₁] [InnerProductSpace ℝ E₁] [FiniteDimensional ℝ E₁]
+    [NormedAddCommGroup E₂] [InnerProductSpace ℝ E₂] [FiniteDimensional ℝ E₂]
+    (V₁ : Finset E₁) (V₂ : Finset E₂), 1 < V₁.card → 1 < V₂.card →
+    facialDistance (productVertices V₁ V₂) =
+      Real.sqrt (facialDistance V₁ ^ 2 * facialDistance V₂ ^ 2 /
+        (facialDistance V₁ ^ 2 + facialDistance V₂ ^ 2))
+
 end Lemmata.FWProduct
