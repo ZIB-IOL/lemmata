@@ -242,4 +242,89 @@ def InteriorGapsGrowth : Prop :=
     (∀ y ∈ minimizers C f, ∀ z ∈ affineSpan ℝ C, ‖z - y‖ ≤ ρ → z ∈ C) →
       IsGapsGrowth C f (ρ / μ) θ
 
+/-- **Lemma 5.6** (distance to the active set). Let `K` be convex, and let a Frank–Wolfe run with
+the step sizes `η_t = ℓ/(t + ℓ)`, `ℓ ≥ 2`, have its atoms in `K` from `t = Q` on. Then
+`dist(x_t, K) ≤ (η_t/η_Q)² dist(x_Q, K)` for all `t ≥ Q`. -/
+def DistanceToActiveSet : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C K : Set E)
+    (f' : E → StrongDual ℝ E) (ℓ Q : ℕ) (x v : ℕ → E), Convex ℝ K → 2 ≤ ℓ →
+    IsFWRun C f' x v (fun t => eta ℓ t) → (∀ t, Q ≤ t → v t ∈ K) →
+    ∀ t : ℕ, Q ≤ t →
+      Metric.infDist (x t) K ≤ (eta ℓ t / eta ℓ Q) ^ 2 * Metric.infDist (x Q) K
+
+/-- **Lemma 5.7** (active-set identification). Let `C = conv V` with diameter `D > 0`, `F ⊆ V`,
+and `f` convex over `C`, differentiable at its points, `L`-smooth over `C` with `L > 0` and with
+`L`-Lipschitz derivative on `C`, with unique minimizer `x⋆` and a `(μ, θ)`-Hölderian error bound,
+`μ > 0`, `θ ∈ (0, 1/2]`. Under strict complementarity with `κ > 0`, `f'(x⋆)(p - x⋆) ≥ κ` for
+`p ∈ V \ F` and `f'(x⋆)(p - x⋆) = 0` for `p ∈ F`, every Frank–Wolfe run with `η_t = ℓ/(t + ℓ)`,
+`ℓ ≥ 2`, has its atoms in `conv F` from `t = ⌈ℓ L D² (2 μ L D/κ)^{1/θ}⌉` on. -/
+def OpenLoopActiveSet : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V F : Finset E) (f : E → ℝ)
+    (L μ θ κ : ℝ) (ℓ : ℕ) (x v : ℕ → E) (xStar : E), F ⊆ V →
+    ConvexOn ℝ (convexHull ℝ (↑V : Set E)) f →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), DifferentiableAt ℝ f y) →
+    IsSmoothOn (convexHull ℝ (↑V : Set E)) f L → 0 < L →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E),
+      ‖fderiv ℝ f y - fderiv ℝ f z‖ ≤ L * ‖y - z‖) →
+    0 < Metric.diam (convexHull ℝ (↑V : Set E)) →
+    minimizers (convexHull ℝ (↑V : Set E)) f = {xStar} →
+    IsHolderErrorBound (convexHull ℝ (↑V : Set E)) f μ θ → 0 < μ → θ ∈ Set.Ioc (0 : ℝ) (1 / 2) →
+    0 < κ → (∀ p ∈ V, p ∉ F → κ ≤ fderiv ℝ f xStar (p - xStar)) →
+    (∀ p ∈ F, fderiv ℝ f xStar (p - xStar) = 0) → 2 ≤ ℓ →
+    IsFWRun (convexHull ℝ (↑V : Set E)) (fderiv ℝ f) x v (fun t => eta ℓ t) →
+    ∀ t : ℕ, ⌈(ℓ : ℝ) * L * Metric.diam (convexHull ℝ (↑V : Set E)) ^ 2 *
+        (2 * μ * L * Metric.diam (convexHull ℝ (↑V : Set E)) / κ) ^ (1 / θ)⌉₊ ≤ t →
+      v t ∈ convexHull ℝ (↑F : Set E)
+
+/-- **Proposition 5.4** (minimizers in the relative interior of the optimal face). Let `C` be
+compact and convex with diameter `D`, and `f` convex over `C`, differentiable at its points,
+`L`-smooth over `C` with `L ≥ 0` and `L`-Lipschitz derivative on `C`, with `‖f'(y)‖ ≤ B` on `C`
+and a `(μ, θ)`-Hölderian error bound, `μ > 0`, `θ ∈ [0, 1/2]`. Let `C* ⊆ C` be compact and convex
+and contain the minimizers, every point of its affine hull within distance `ρ > 0` of a minimizer
+lying in `C*` (for a polytope, the optimal face). Let a Frank–Wolfe run with `η_t = ℓ/(t + ℓ)`,
+`ℓ ≥ 2`, have its atoms in `C*` from `t = Q` on, and let `m = ρ/(2^{2-θ} μ)` and
+`M = max {(m/η_Q) (2DB)^{1-θ}, (LD + B) D/η_Q, L D²}`. Then `(C, f)` has the strong
+`(M, 0)`-growth property, and the run has the relaxed gaps `(m, θ)`-growth property with
+`δ_t = (η_t M/m)^{1/(1-θ)}` from `Q` on. -/
+def PolytopeRelaxedGaps : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C Cs : Set E) (f : E → ℝ)
+    (L B μ θ ρ : ℝ) (ℓ Q : ℕ) (x v : ℕ → E), IsCompact C → Convex ℝ C → ConvexOn ℝ C f →
+    (∀ y ∈ C, DifferentiableAt ℝ f y) → IsSmoothOn C f L → 0 ≤ L →
+    (∀ y ∈ C, ∀ z ∈ C, ‖fderiv ℝ f y - fderiv ℝ f z‖ ≤ L * ‖y - z‖) →
+    (∀ y ∈ C, ‖fderiv ℝ f y‖ ≤ B) → IsHolderErrorBound C f μ θ → 0 < μ →
+    θ ∈ Set.Icc (0 : ℝ) (1 / 2) → IsCompact Cs → Convex ℝ Cs → Cs ⊆ C → minimizers C f ⊆ Cs →
+    0 < ρ → (∀ y ∈ minimizers C f, ∀ z ∈ affineSpan ℝ Cs, ‖z - y‖ ≤ ρ → z ∈ Cs) → 2 ≤ ℓ →
+    IsFWRun C (fderiv ℝ f) x v (fun t => eta ℓ t) → (∀ t, Q ≤ t → v t ∈ Cs) →
+    let D := Metric.diam C
+    let m := ρ / (2 ^ (2 - θ) * μ)
+    let M := max (m / eta ℓ Q * (2 * D * B) ^ (1 - θ))
+      (max ((L * D + B) * D / eta ℓ Q) (L * D ^ 2))
+    IsStrongGrowth C f M 0 ∧
+      IsRelaxedGapsGrowth C f x v (fun t => (eta ℓ t * M / m) ^ (1 / (1 - θ))) m θ Q
+
+/-- **Corollary 5.5** (accelerated rate over polytopes). Under the hypotheses of Proposition 5.4
+with `L > 0`, `D > 0` and `θ ∈ (0, 1/2]`, let `S = max {1, ⌈2^{1/θ} ℓ M/m^{1/θ} - ℓ⌉, Q}`. For every
+minimizer `x⋆` and `t ≥ S`,
+`h_t ≤ max {h_S (η_{t-1}/η_{S-1})^ℓ, η_{t-1}^{min {ℓ, 1/(1-θ), 2}} ((M/m)^{1/(1-θ)} + M/2)}`,
+which is `O(t^{-1/(1-θ)})`. -/
+def PolytopeRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C Cs : Set E) (f : E → ℝ)
+    (L B μ θ ρ : ℝ) (ℓ Q : ℕ) (x v : ℕ → E) (xStar : E), IsCompact C → Convex ℝ C →
+    ConvexOn ℝ C f → (∀ y ∈ C, DifferentiableAt ℝ f y) → IsSmoothOn C f L → 0 < L →
+    (∀ y ∈ C, ∀ z ∈ C, ‖fderiv ℝ f y - fderiv ℝ f z‖ ≤ L * ‖y - z‖) →
+    (∀ y ∈ C, ‖fderiv ℝ f y‖ ≤ B) → 0 < Metric.diam C → IsHolderErrorBound C f μ θ → 0 < μ →
+    θ ∈ Set.Ioc (0 : ℝ) (1 / 2) → IsCompact Cs → Convex ℝ Cs → Cs ⊆ C → minimizers C f ⊆ Cs →
+    0 < ρ → (∀ y ∈ minimizers C f, ∀ z ∈ affineSpan ℝ Cs, ‖z - y‖ ≤ ρ → z ∈ Cs) → 2 ≤ ℓ →
+    IsFWRun C (fderiv ℝ f) x v (fun t => eta ℓ t) → (∀ t, Q ≤ t → v t ∈ Cs) →
+    xStar ∈ minimizers C f →
+    let D := Metric.diam C
+    let m := ρ / (2 ^ (2 - θ) * μ)
+    let M := max (m / eta ℓ Q * (2 * D * B) ^ (1 - θ))
+      (max ((L * D + B) * D / eta ℓ Q) (L * D ^ 2))
+    let S := max (max 1 ⌈(2 : ℝ) ^ (1 / θ) * ℓ * M / m ^ (1 / θ) - ℓ⌉₊) Q
+    ∀ t : ℕ, S ≤ t → f (x t) - f xStar ≤
+      max ((f (x S) - f xStar) * (eta ℓ ((t : ℤ) - 1) / eta ℓ ((S : ℤ) - 1)) ^ ℓ)
+        (eta ℓ ((t : ℤ) - 1) ^ (min (ℓ : ℝ) (min (1 / (1 - θ)) 2)) *
+          ((M / m) ^ (1 / (1 - θ)) + M / 2))
+
 end Lemmata.FWAffineOpenLoop

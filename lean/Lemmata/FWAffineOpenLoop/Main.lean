@@ -3,6 +3,7 @@ module
 public import Lemmata.FWAffineOpenLoop.StrongR
 public import Lemmata.FWAffineOpenLoop.Gaps
 public import Lemmata.FWAffineOpenLoop.Sufficient
+public import Lemmata.FWAffineOpenLoop.Polytope
 
 @[expose] public section
 
@@ -52,6 +53,20 @@ theorem uniform_weak_growth : UniformWeakGrowth := Proof.uniform_weak_growth
 
 /-- Proposition 5.3: minimizers in the relative interior give gaps `(ρ/μ, θ)`-growth. -/
 theorem interior_gaps_growth : InteriorGapsGrowth := Proof.interior_gaps_growth
+/-- Lemma 5.6: once the atoms lie in a convex set, the distance to it decays like `η_t²`. -/
+theorem distance_to_active_set : DistanceToActiveSet := Proof.distance_to_active_set
+
+/-- Lemma 5.7: under strict complementarity the atoms lie in the optimal face from an explicit
+iteration on. -/
+theorem open_loop_active_set : OpenLoopActiveSet := Proof.open_loop_active_set
+
+/-- Proposition 5.4: minimizers in the relative interior of the optimal face give strong growth and
+relaxed gaps growth. -/
+theorem polytope_relaxed_gaps : PolytopeRelaxedGaps := Proof.polytope_relaxed_gaps
+
+/-- Corollary 5.5: the accelerated rate `O(t^{-1/(1-θ)})` when the minimizers lie in the relative
+interior of the optimal face. -/
+theorem polytope_rate : PolytopeRate := Proof.polytope_rate
 -- DOCS_END_MAIN
 
 end Lemmata.FWAffineOpenLoop
