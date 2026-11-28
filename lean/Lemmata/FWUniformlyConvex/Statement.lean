@@ -114,4 +114,48 @@ def FTLRegret : Prop :=
           (T : ℝ) ^ (1 - 1 / (q - 1))) ∧
       (q = 2 → ∑ t ∈ Finset.Icc 1 T, c t (x t - u) ≤ 4 * M ^ 2 / (α * L) * (1 + Real.log T))
 
+/-- **Lemma 2.7** (distance to the Frank–Wolfe vertex). Let `C` be convex, `f` convex over `C`
+and differentiable at its points with `L`-Lipschitz derivative on `C` and `‖f'(y)‖ ≥ c > 0` on
+`C`, and let the local scaling inequality hold at `x⋆ ∈ C` with `α > 0` and `q ≥ 2`. For `x ∈ C`
+with `f(x) - f(x⋆) ≤ 1` and a Frank–Wolfe vertex `v` of `x`,
+`‖x - v‖ ≤ H (f(x) - f(x⋆))^{1/(q(q-1))}` with
+`H = 2 max {(2L/(cα))^{1/(q-1)} (2/(cα))^{1/(q(q-1))}, (2/(cα))^{1/q}}`. -/
+def FWVertexDistance : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (L c α q : ℝ) (xStar x v : E), ConvexOn ℝ C f → (∀ y ∈ C, DifferentiableAt ℝ f y) →
+    0 ≤ L → (∀ y ∈ C, ∀ z ∈ C, ‖fderiv ℝ f y - fderiv ℝ f z‖ ≤ L * ‖y - z‖) → 0 < c →
+    (∀ y ∈ C, c ≤ ‖fderiv ℝ f y‖) → 0 < α → 2 ≤ q → xStar ∈ C → IsLocalScaling C f α q xStar →
+    x ∈ C → f x - f xStar ≤ 1 → v ∈ C → (∀ y ∈ C, fderiv ℝ f x v ≤ fderiv ℝ f x y) →
+      ‖x - v‖ ≤ 2 * max ((2 * L / (c * α)) ^ (1 / (q - 1)) * (2 / (c * α)) ^ (1 / (q * (q - 1))))
+        ((2 / (c * α)) ^ (1 / q)) * (f x - f xStar) ^ (1 / (q * (q - 1)))
+
+/-- **Theorem 2.5** (rates under the local scaling inequality), corrected. Let `C` be compact and
+convex, `f` convex and `L`-smooth with `L > 0` and `‖f'(y)‖ ≥ c > 0` on `C`, and let the local
+scaling inequality hold at a minimizer `x⋆` with `α > 0` and `q ≥ 2`. Let `H` be the constant of
+Lemma 2.7 and `a = 1 - 2/(q(q-1))`. Every short-step run with `f(x_S) - f(x⋆) ≤ 1` satisfies
+`h_{t+1} ≤ h_t max {1/2, 1 - h_t^a/(2LH²)}` for `t ≥ S`, where `h_t = f(x_t) - f(x⋆)`. Hence for
+`q = 2` (`a = 0`) the convergence is linear with factor `max {1/2, 1 - 1/(2LH²)}` from `S` on, and
+for `q > 2`, with `K = (LH²)^{1/a}` and `t₀ = max {⌊log_{1/2} K⌋ + 2, 1}`,
+`h_{S+T-1} ≤ 2^{1-T}` for `1 ≤ T < t₀` and `h_{S+T-1} ≤ K/(1 + a(T - t₀)/2)^{1/a}` for `T ≥ t₀`:
+the rate `O(t^{-1/(1-2/(q(q-1)))})`. -/
+def LocalScalingRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (L : NNReal)
+    (c α q : ℝ) (x v : ℕ → E) (γ : ℕ → ℝ) (xStar : E) (S : ℕ),
+    IsCompact C → Convex ℝ C → 0 < (L : ℝ) → ConvexOn ℝ Set.univ f → IsSmooth f L → 0 < c →
+    (∀ y ∈ C, c ≤ ‖fderiv ℝ f y‖) → 0 < α → 2 ≤ q → xStar ∈ minimizers C f →
+    IsLocalScaling C f α q xStar → IsShortStepRun C f L x v γ → f (x S) - f xStar ≤ 1 →
+    let H := 2 * max ((2 * L / (c * α)) ^ (1 / (q - 1)) * (2 / (c * α)) ^ (1 / (q * (q - 1))))
+      ((2 / (c * α)) ^ (1 / q))
+    let a := 1 - 2 / (q * (q - 1))
+    (∀ t : ℕ, S ≤ t → f (x (t + 1)) - f xStar ≤
+      (f (x t) - f xStar) * max (1 / 2) (1 - (f (x t) - f xStar) ^ a / (2 * L * H ^ 2))) ∧
+    (q = 2 → ∀ t : ℕ, S ≤ t → f (x t) - f xStar ≤
+      max (1 / 2) (1 - 1 / (2 * L * H ^ 2)) ^ (t - S) * (f (x S) - f xStar)) ∧
+    (2 < q →
+      let K := ((L : ℝ) * H ^ 2) ^ (1 / a)
+      let t₀ : ℤ := max (⌊Real.logb (1 / 2) K⌋ + 2) 1
+      ∀ T : ℕ, 1 ≤ T →
+        ((T : ℤ) < t₀ → f (x (S + T - 1)) - f xStar ≤ (1 / 2) ^ (T - 1)) ∧
+        (t₀ ≤ (T : ℤ) → f (x (S + T - 1)) - f xStar ≤ K / (1 + a / 2 * ((T : ℝ) - t₀)) ^ (1 / a)))
+
 end Lemmata.FWUniformlyConvex

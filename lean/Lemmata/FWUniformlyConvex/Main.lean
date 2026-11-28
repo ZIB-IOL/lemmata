@@ -3,6 +3,7 @@ module
 public import Lemmata.FWUniformlyConvex.Local
 public import Lemmata.FWUniformlyConvex.Heb
 public import Lemmata.FWUniformlyConvex.Online
+public import Lemmata.FWUniformlyConvex.LocalRate
 
 @[expose] public section
 
@@ -16,6 +17,14 @@ theorem local_scaling_of_locally_uc : LocalScalingOfLocallyUC :=
 /-- Corollary 2.8: a uniformly convex superset whose normal cone at the minimizer contains
 `-∇f(x⋆)` gives the local scaling inequality. -/
 theorem local_scaling_of_superset : LocalScalingOfSuperset := Proof.local_scaling_of_superset
+
+/-- Lemma 2.7: under the local scaling inequality, the distance to the Frank–Wolfe vertex is
+bounded by a power of the primal gap. -/
+theorem fw_vertex_distance : FWVertexDistance := Proof.fw_vertex_distance
+
+/-- Theorem 2.5, corrected: rates of Frank–Wolfe with short steps under the local scaling
+inequality, after the primal gap has dropped below `1`. -/
+theorem local_scaling_rate : LocalScalingRate := Proof.local_scaling_rate
 
 /-- Lemma 2.9: the scaling inequality of uniformly convex sets under a Hölderian error bound. -/
 theorem heb_scaling : HEBScaling := Proof.heb_scaling

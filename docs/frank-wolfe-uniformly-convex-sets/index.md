@@ -10,9 +10,24 @@ numbering:
 :::{note}
 This entry formalizes results of the paper *Projection-Free Optimization on Uniformly Convex Sets*
 by Thomas Kerdreux, Alexandre d'Aspremont and Sebastian Pokutta [@kerdreux2020projection], currently
-the local scaling inequality (Lemma 2.4 and Corollary 2.8), the rates under a Hölderian error bound
-(Lemma 2.9 and Theorem 2.10) and the regret of follow the leader (Lemma 3.2 and Theorem 3.1);
-numbers refer to the arXiv version.
+the local scaling inequality and the rates it gives (Lemmas 2.4 and 2.7, Corollary 2.8 and Theorem
+2.5, corrected), the rates under a Hölderian error bound (Lemma 2.9 and Theorem 2.10) and the regret
+of follow the leader (Lemma 3.2 and Theorem 3.1); numbers refer to the arXiv version.
+:::
+
+:::{admonition} Errata
+:class: warning
+
+**Theorems 2.2 and 2.5, case $q = 2$.** Both state $f(x_T) - f(x^\star) \le (1 - \rho)^T h_0$ with
+$\rho = \max\{1/2, 1 - c\alpha/L\}$, a contraction by $\min\{1/2, c\alpha/L\}$ in every iteration.
+This is false for the short step. The Euclidean unit disk is $(1/2, 2)$-uniformly convex; take
+$f(x) = -x_2$, so $c = 1$, with $L = 10$ and $x_0 = (0, -1)$. The first short step has
+$v_0 = (0, 1)$, gap $g_0 = 2$ and step size $\min\{1, g_0/(L\|x_0 - v_0\|^2)\} = 1/20$, so
+$x_1 = (0, -0.9)$ and $h_1 = 1.9$, while the bound gives $(1 - 0.95) \cdot 2 = 0.1$. The intended
+bound is $\rho^T h_0$. For Theorem 2.2 the corrected statement, with the factor
+$\max\{1/2, 1 - \alpha c/(2L)\}$, is Theorem 2.20 of the basics entry. For Theorem 2.5 the proof
+gives the factor $\max\{1/2, 1 - 1/(2LH^2)\}$ with the constant $H$ of Lemma 2.7, which is the
+version formalized here.
 :::
 
 The Frank–Wolfe algorithm converges at the rate $O(1/t)$ in general, linearly over polytopes with
@@ -80,6 +95,44 @@ the local scaling inequality holds at $x^\star$ for $\mathcal{C}$.
 
 So a set that is not uniformly convex, such as a polytope inscribed in a ball, still has the local
 scaling inequality at minimizers where the gradient points into the ball's normal cone.
+
+## Rates under the local scaling inequality
+
+When the scaling inequality holds only at $x^\star$, the distance between an iterate and its
+Frank–Wolfe vertex is still controlled by the primal gap.
+
+```{prf:lemma} Distance to the Frank–Wolfe vertex
+:label: lem-frank-wolfe-uniformly-convex-sets-vertex-distance
+:enumerator: 2.7
+
+Let $f$ be convex with an $L$-Lipschitz gradient and $\|\nabla f\| \ge c > 0$ on $\mathcal{C}$, and
+let the local scaling inequality hold at $x^\star \in \mathcal{C}$ with $\alpha > 0$ and $q \ge 2$.
+For $x \in \mathcal{C}$ with $f(x) - f(x^\star) \le 1$ and a Frank–Wolfe vertex $v$ of $x$,
+$\|x - v\| \le H (f(x) - f(x^\star))^{1/(q(q-1))}$ with
+$H = 2\max\{(2L/(c\alpha))^{1/(q-1)}(2/(c\alpha))^{1/(q(q-1))}, (2/(c\alpha))^{1/q}\}$.
+```
+
+The local scaling inequality at $x$ with convexity gives
+$\frac{c\alpha}{2}\|x - x^\star\|^q \le f(x) - f(x^\star)$. At $v$, the optimality of $v$ and the
+Lipschitz gradient give $\frac{c\alpha}{2}\|v - x^\star\|^q \le L\|x - x^\star\|\,\|v - x^\star\|$.
+
+```{prf:theorem} Rates under the local scaling inequality, corrected
+:label: thm-frank-wolfe-uniformly-convex-sets-local-rate
+:enumerator: 2.5
+
+Let $\mathcal{C}$ be compact and convex, let $f$ be convex and $L$-smooth with
+$\|\nabla f\| \ge c > 0$ on $\mathcal{C}$, and let the local scaling inequality hold at the
+minimizer $x^\star$ with $\alpha > 0$ and $q \ge 2$. Let $H$ be the constant of Lemma 2.7 and
+$a = 1 - 2/(q(q-1))$. If $f(x_S) - f(x^\star) \le 1$, every run of Frank–Wolfe with short steps
+satisfies $h_{t+1} \le h_t \max\{1/2, 1 - h_t^a/(2LH^2)\}$ for $t \ge S$. For $q = 2$ the
+convergence is therefore linear with factor $\max\{1/2, 1 - 1/(2LH^2)\}$, and for $q > 2$ the
+contraction lemma gives the rate $O(t^{-1/(1 - 2/(q(q-1)))})$ with explicit constants.
+```
+
+By Lemma 2.7, $H^{-q(q-1)}\|x_t - v_t\|^{q(q-1)} \le h_t \le g_t$, a scaling inequality with
+exponent $q(q-1)$, so the progress estimate behind Theorem 2.10 applies with this exponent. The rate
+is slower than the global rate $O(t^{-1/(1-2/q)})$ of Theorem 2.2; whether the local inequality
+gives the global rate is an open question of the paper.
 
 ## Hölderian error bounds
 
@@ -198,14 +251,16 @@ integral.
   $\gamma \to 0, 1$ of the paper's argument, and only needs one of the functionals to be nonzero. In
   Theorem 3.1 the regret is against every comparator in $\mathcal{C}$, and the sum of $t^{-1/(q-1)}$
   is bounded by $\frac{q-1}{q-2}T^{1-1/(q-1)}$ through the integral from $1$.
+- Theorem 2.5 is stated from an iteration $S$ with $f(x_S) - f(x^\star) \le 1$, the burn-in that
+  Lemma 2.7 needs, and with the constants of the contraction lemma of the basics entry; for $q = 2$
+  see the errata.
 :::
 
 ## Coverage
 
-This entry covers Lemmas 2.4, 2.9 and 3.2, Corollary 2.8 and Theorems 2.10 and 3.1; Lemma 2.1 and
-Theorem 2.2 are Proposition 2.19 and Theorem 2.20 of the basics entry. Not covered yet are the rates
-under the local scaling inequality (Lemma 2.7 and Theorem 2.5), the examples of uniformly convex
-sets (Section 4 and Appendix D) and the experiments.
+This entry covers Lemmas 2.4, 2.7, 2.9 and 3.2, Corollary 2.8 and Theorems 2.5, 2.10 and 3.1; Lemma
+2.1 and Theorem 2.2 are Proposition 2.19 and Theorem 2.20 of the basics entry. Not covered yet are
+the examples of uniformly convex sets (Section 4 and Appendix D) and the experiments.
 
 
 ## The formal statements at a glance
