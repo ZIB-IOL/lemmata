@@ -5,6 +5,9 @@ subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2211.14103"
+note: >-
+  Formalizes results from Sections 3.1.2, 3.1.3, 3.1.5, 3.1.6 and 3.2.2 of the book by
+  @braun2025conditional, numbered as in its arXiv version [@braun2022conditional].
 abstract: >-
   Variants of the Frank–Wolfe algorithm from Chapter 3 of the book Conditional Gradient Methods,
   starting with adaptive step sizes (AdaFW, Section 3.1.2). The adaptive strategy keeps an estimate

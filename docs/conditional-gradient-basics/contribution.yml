@@ -5,6 +5,9 @@ subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2211.14103"
+note: >-
+  Formalizes results from Chapters 1 and 2 of the book by @braun2025conditional, numbered as
+  in its arXiv version [@braun2022conditional].
 abstract: >-
   Tools from the first two chapters of the book Conditional Gradient Methods that turn the
   $O(1/t)$ rate of the Frank–Wolfe algorithm into faster rates. For convex functions, the

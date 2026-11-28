@@ -5,6 +5,9 @@ subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2310.04096"
+note: >-
+  Formalizes Sections 3 to 5 of @wirth2023accelerated and its sufficient conditions for the
+  growth properties.
 abstract: >-
   Affine-invariant convergence rates for the Frank–Wolfe algorithm with open-loop step sizes
   $\eta_t = \ell/(t + \ell)$, stated with the Bregman divergence along the Frank–Wolfe segment, the

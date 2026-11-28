@@ -4,6 +4,8 @@ lean_namespace: Lemmata.FrankWolfePS
 subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
+note: >-
+  A short note on arXiv is in preparation.
 abstract: >-
   For every $T \ge 0$, $\beta > 0$ and $D > 2/\beta$, and every randomized method requiring no
   more than $T$ calls to a linear minimization oracle, there is a convex body with $\beta$-Lipschitz

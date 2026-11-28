@@ -5,6 +5,8 @@ subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2505.11259"
+note: >-
+  Formalizes Theorem 4.5, Propositions 4.7, 4.8 and 5.1, and Lemma A.2 of @iommazzo2025linear.
 abstract: >-
   Linear convergence of Frank–Wolfe algorithms over products of polytopes, from the conditioning
   of the factors. The pyramidal width of a product of two polytopes is at least

@@ -5,6 +5,9 @@ subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2604.28006"
+note: >-
+  The Lean formalization accompanying the NeurIPS 2026 paper by @pokutta2026frank, based on
+  Christoph Spiegel's streamlined version of its original Lean development.
 abstract: >-
   Frank–Wolfe converges at the rate $O(1/t)$, and in general no better. If a compact convex
   feasible region, together with its linear minimization oracle, satisfies local dual sharpness
