@@ -1,0 +1,47 @@
+schema_version: 1
+id: frank-wolfe-generalized-self-concordant
+lean_namespace: Lemmata.FWSelfConcordant
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "2105.13913"
+abstract: >-
+  Monotonic Frank–Wolfe with the simple step size $2/(t + 2)$ rejects a step whenever it leaves the
+  domain of the objective or increases it. For generalized self-concordant objectives, which need
+  not be globally smooth and may have a restricted domain, it converges at the rate $O(1/t)$ in the
+  primal gap after a burn-in phase, and the smallest Frank–Wolfe gap converges at the rate
+  $O(1/t)$. The formal statements hold for every convex objective with the local descent property
+  that generalized self-concordance provides along Frank–Wolfe segments from the sublevel set of
+  the starting point, in real normed spaces.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.FWSelfConcordant.IsMFWRun
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-generalized-self-concordant-run
+  - name: Lemmata.FWSelfConcordant.HasLocalDescent
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-generalized-self-concordant-descent
+  - name: Lemmata.FWSelfConcordant.monotonic_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-generalized-self-concordant-rate
+  - name: Lemmata.FWSelfConcordant.monotonic_gap_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-generalized-self-concordant-gap
