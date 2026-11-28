@@ -1,0 +1,67 @@
+schema_version: 1
+id: frank-wolfe-affine-invariant-open-loop
+lean_namespace: Lemmata.FWAffineOpenLoop
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "2310.04096"
+abstract: >-
+  Affine-invariant convergence rates for the Frank–Wolfe algorithm with open-loop step sizes
+  $\eta_t = \ell/(t + \ell)$, stated with the Bregman divergence along the Frank–Wolfe segment, the
+  Frank–Wolfe gap and the best duality gap. Under the strong $(M, r)$-growth property, which bounds
+  the Bregman divergence by $M\eta^2/2$ times the $r$-th power of the Frank–Wolfe gap, the best
+  duality gap and the smallest Frank–Wolfe gap converge at the rate $O(1/t)$ for $r = 0$,
+  $O(t^{-\ell})$ for $r = 1$, and $O(t^{-\ell+\varepsilon} + t^{-1/(1-r)})$ for $r \in [0, 1)$. The
+  statements hold in real normed spaces, for every Frank–Wolfe run.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.FWAffineOpenLoop.bregman
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-affine-invariant-open-loop-bregman
+  - name: Lemmata.FWAffineOpenLoop.pdGap
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-affine-invariant-open-loop-pd
+  - name: Lemmata.FWAffineOpenLoop.minGap
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-affine-invariant-open-loop-min-gap
+  - name: Lemmata.FWAffineOpenLoop.IsStrongGrowth
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-affine-invariant-open-loop-strong
+  - name: Lemmata.FWAffineOpenLoop.pd_rate_strong_zero
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-affine-invariant-open-loop-strong-zero
+  - name: Lemmata.FWAffineOpenLoop.product_bound
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-affine-invariant-open-loop-product
+  - name: Lemmata.FWAffineOpenLoop.pd_rate_strong_one
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-affine-invariant-open-loop-strong-one
+  - name: Lemmata.FWAffineOpenLoop.product_bound_eps
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-affine-invariant-open-loop-product-eps
+  - name: Lemmata.FWAffineOpenLoop.pd_rate_strong
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-affine-invariant-open-loop-strong-r
