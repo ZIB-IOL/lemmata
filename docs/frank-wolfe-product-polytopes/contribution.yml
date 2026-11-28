@@ -7,7 +7,8 @@ topics: [frank-wolfe]
 arxiv: "2505.11259"
 abstract: >-
   Linear convergence of Frank–Wolfe algorithms over products of polytopes, from the conditioning
-  of the factors. The objective $\frac{1}{2k}\sum_{i \lt j}\|x^i - x^j\|^2$ of the approximate
+  of the factors. The pyramidal width of a product of two polytopes is at least
+  $\sqrt{a^2 b^2/(a^2 + b^2)}$ for the affine pyramidal widths $a, b$ of the factors. The objective $\frac{1}{2k}\sum_{i \lt j}\|x^i - x^j\|^2$ of the approximate
   feasibility problem for an intersection of $k$ polytopes, posed over their product, is convex,
   $1$-smooth with a $1$-Lipschitz gradient and $1$-PL, with $\|\nabla f(x)\|^2 = 2f(x)$. The
   expression $\sqrt{a^2 b^2/(a^2 + b^2)}$, which is the pyramidal width of a product with factor
@@ -40,3 +41,19 @@ exports:
     kind: theorem
     page: index.md
     label: lem-frank-wolfe-product-polytopes-preparatory
+  - name: Lemmata.FWProduct.affinePyramidalWidth
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-product-polytopes-affine-width
+  - name: Lemmata.FWProduct.productVertices
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-product-polytopes-product-vertices
+  - name: Lemmata.FWProduct.affine_width_le_facial
+    kind: theorem
+    page: index.md
+    label: cor-frank-wolfe-product-polytopes-affine-le
+  - name: Lemmata.FWProduct.product_width_lower
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-product-polytopes-product-width
