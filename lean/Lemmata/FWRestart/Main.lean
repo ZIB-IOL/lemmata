@@ -1,6 +1,6 @@
 module
 
-public import Lemmata.FWRestart.Restart
+public import Lemmata.FWRestart.Holder
 
 @[expose] public section
 
@@ -27,6 +27,20 @@ theorem burn_in : BurnIn := Proof.burn_in
 /-- Theorem 5.1: the rate of scheduled restarts of fractional away-step Frank–Wolfe under a
 Hölderian error bound. -/
 theorem restart_rate : RestartRate := Proof.restart_rate
+
+/-- Proposition 5.3: for `r = 1` and `r = 2`, the schedule parameter `γ = 1/2` is optimal up to the
+factor `e/(4(√e - 1)) ≈ 1.05`. -/
+theorem robust_gamma : RobustGamma := Proof.robust_gamma
+
+/-- Proposition 6.1: the number of iterations of fractional away-step Frank–Wolfe under Hölder
+smoothness. -/
+theorem holder_complexity : HolderComplexity := Proof.holder_complexity
+
+/-- Theorem 6.2: the rate of scheduled restarts under Hölder smoothness. -/
+theorem holder_restart_rate : HolderRestartRate := Proof.holder_restart_rate
+
+/-- Proposition 6.3: the burn-in phase under Hölder smoothness. -/
+theorem holder_burn_in : HolderBurnIn := Proof.holder_burn_in
 -- DOCS_END_MAIN
 
 end Lemmata.FWRestart

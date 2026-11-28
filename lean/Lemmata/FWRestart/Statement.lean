@@ -185,4 +185,82 @@ def RestartRate : Prop :=
         W 0 / (1 + T * ((Real.exp (γ * (2 - r)) - 1) / (K * W 0 ^ (r - 2)))) ^ (1 / (2 - r))) ∧
       (θ = 1 / 2 → f (x (τ R)) - f xStar ≤ W 0 * Real.exp (-(γ * T / K)))
 
+section Holder
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+
+/-- `f` has Hölder curvature at most `C` with exponent `s` over `conv V`:
+`f(x + η(u - v)) ≤ f(x) + η f'(x)(u - v) + C η^s/s` for `x, u, v ∈ conv V` and `η ∈ [0, 1]`. For an
+`(L, s)`-Hölder smooth `f` this holds with `C = L D^s`, `D` the diameter of `conv V`. -/
+def IsHolderCurvature (V : Finset E) (f : E → ℝ) (C s : ℝ) : Prop :=
+  ∀ x ∈ convexHull ℝ (↑V : Set E), ∀ u ∈ convexHull ℝ (↑V : Set E),
+    ∀ v ∈ convexHull ℝ (↑V : Set E), ∀ η ∈ Set.Icc (0 : ℝ) 1,
+      f (x + η • (u - v)) ≤ f x + η * fderiv ℝ f x (u - v) + C * η ^ s / s
+
+end Holder
+
+/-- **Proposition 6.1** (complexity under Hölder smoothness). Let `f` be convex and differentiable
+with Hölder curvature at most `C` and exponent `s > 1` over `conv V`, and let `w₀ > 0` satisfy
+`e^{-γ} w₀/2 ≤ C` and the strong Wolfe primal bound `f(x₀) - f⋆ ≤ μ w₀^r`. If fractional away-step
+Frank–Wolfe has not stopped before iteration `T`, then
+`T ≤ |S₀| - |S_T| + 2^{1+s/(s-1)} s/(s-1) e^{sγ/(s-1)} μ C^{1/(s-1)} w₀^{r-s/(s-1)}`. -/
+def HolderComplexity : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ)
+    (C s γ w₀ μ r : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) (T : ℕ),
+    ConvexOn ℝ Set.univ f → Differentiable ℝ f → IsHolderCurvature V f C s → 1 < s →
+    0 < w₀ → Real.exp (-γ) * w₀ / 2 ≤ C → IsFAFWRun V f γ w₀ x S lam T →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), f (x 0) - f y ≤ μ * w₀ ^ r) →
+      (T : ℝ) ≤ (S 0).card - (S T).card + 2 ^ (1 + s / (s - 1)) * (s / (s - 1)) *
+        Real.exp (s / (s - 1) * γ) * μ * C ^ (1 / (s - 1)) * w₀ ^ (r - s / (s - 1))
+
+/-- **Proposition 6.3** (burn-in phase under Hölder smoothness). Let `f` be convex and
+differentiable with Hölder curvature at most `C > 0` and exponent `s > 1` over `conv V`, let
+`γ > 0`, and consider scheduled restarts with `W₀ > 0`. Within `N = ⌊log (W₀/(2C))/γ⌋₊` restarts the
+burn-in condition `e^{-γ} W_k/2 ≤ C` holds, after `τ_k ≤ |S₀| - |S_{τ_k}| + 4 s/(s-1) e^γ k`
+iterations. -/
+def HolderBurnIn : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ)
+    (C s γ : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) (τ : ℕ → ℕ) (W : ℕ → ℝ),
+    ConvexOn ℝ Set.univ f → Differentiable ℝ f → IsHolderCurvature V f C s → 1 < s → 0 < C →
+    0 < γ → IsRestartRun V f γ x S lam τ W → 0 < W 0 →
+    ∃ k ≤ ⌊Real.log (W 0 / (2 * C)) / γ⌋₊,
+      Real.exp (-γ) * W k / 2 ≤ C ∧
+        (τ k : ℝ) ≤ (S 0).card - (S (τ k)).card + 4 * (s / (s - 1)) * Real.exp γ * k
+
+/-- **Theorem 6.2** (rate of scheduled restarts under Hölder smoothness). Let `f` be convex and
+differentiable with Hölder curvature at most `C` and exponent `s > 1` over `conv V` and a
+`(θ, c)`-Hölderian error bound, `θ ∈ [0, 1/2]`, with `r = 1/(1 - θ) < s/(s - 1)`; let `δ > 0` have
+the scaling property, `γ > 0`, and assume the burn-in condition `e^{-γ} W₀/2 ≤ C`. With
+`τ = s/(s - 1) - r`, `K = 2^{1+s/(s-1)} s/(s-1) (c/δ)^r C^{1/(s-1)} e^{sγ/(s-1)}` and
+`T̃ = max {0, τ_R - (|S₀| - |S_{τ_R}|)}` after `R` restarts,
+`f(x_{τ_R}) - f⋆ ≤ W₀/(1 + T̃ C_γ)^{1/τ}` with `C_γ = (e^{γτ} - 1)/(K W₀^{r-s/(s-1)})`. -/
+def HolderRestartRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ)
+    (C s c θ δ γ : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) (τ : ℕ → ℕ) (W : ℕ → ℝ)
+    (xStar : E), ConvexOn ℝ Set.univ f → Differentiable ℝ f → IsHolderCurvature V f C s → 1 < s →
+    IsHolderErrorBound (convexHull ℝ (↑V : Set E)) f c θ → 0 < c → θ ∈ Set.Icc (0 : ℝ) (1 / 2) →
+    1 / (1 - θ) < s / (s - 1) → 0 < δ → IsScaling V δ →
+    xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f → 0 < γ → IsRestartRun V f γ x S lam τ W →
+    Real.exp (-γ) * W 0 / 2 ≤ C →
+    ∀ R : ℕ,
+      let r := 1 / (1 - θ)
+      let K := 2 ^ (1 + s / (s - 1)) * (s / (s - 1)) * (c / δ) ^ r * C ^ (1 / (s - 1)) *
+        Real.exp (s / (s - 1) * γ)
+      let T := max 0 ((τ R : ℝ) - ((S 0).card - (S (τ R)).card))
+      f (x (τ R)) - f xStar ≤ W 0 / (1 + T * ((Real.exp (γ * (s / (s - 1) - r)) - 1) /
+        (K * W 0 ^ (r - s / (s - 1))))) ^ (1 / (s / (s - 1) - r))
+
+/-- **Proposition 5.3** (robustness in `γ`, the cases `r = 1` and `r = 2`). Write
+`C_γ = (e^{γ(2-r)} - 1)/(e^{2γ} K₀ W₀^{r-2})` for the constant of Theorem 5.1 with
+`K₀ = 16 L D² (c/δ)^r`. For `r = 1`, the bound `W₀/(1 + T C_{1/2})` of the restart scheme with
+`γ = 1/2` is at most `e/(4(√e - 1)) ≈ 1.05` times the bound `W₀/(1 + T C_γ)` for every `γ > 0`. For
+`r = 2`, the bound `W₀ e^{-γ T/(e^{2γ} K₀)}` is smallest for `γ = 1/2`. -/
+def RobustGamma : Prop :=
+  ∀ (K₀ W₀ T γ : ℝ), 0 < K₀ → 0 < W₀ → 0 ≤ T → 0 < γ →
+    W₀ / (1 + T * ((Real.exp (1 / 2) - 1) / (Real.exp (2 * (1 / 2)) * K₀ * W₀ ^ ((1 : ℝ) - 2)))) ≤
+        Real.exp 1 / (4 * (Real.sqrt (Real.exp 1) - 1)) *
+          (W₀ / (1 + T * ((Real.exp γ - 1) / (Real.exp (2 * γ) * K₀ * W₀ ^ ((1 : ℝ) - 2))))) ∧
+      W₀ * Real.exp (-(1 / 2 * T / (Real.exp (2 * (1 / 2)) * K₀))) ≤
+        W₀ * Real.exp (-(γ * T / (Real.exp (2 * γ) * K₀)))
+
 end Lemmata.FWRestart

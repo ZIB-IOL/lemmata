@@ -23,10 +23,12 @@ universe u
 
 variable {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
-/-- Iterations of Algorithm 1 keep the invariant. -/
-theorem segment_inv {V : Finset E} {f : E → ℝ} {L : NNReal} {D ε : ℝ}
-    (hconv : ConvexOn ℝ Set.univ f) (hsm : IsSmooth f L)
-    (hD : ∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E), ‖y - z‖ ≤ D)
+/-- Iterations of Algorithm 1 keep the invariant, for a curvature bound `φ`. -/
+theorem segment_inv_gen {V : Finset E} {f : E → ℝ} {φ : ℝ → ℝ} {ε : ℝ}
+    (hconv : ConvexOn ℝ Set.univ f)
+    (hcurv : ∀ x ∈ convexHull ℝ (↑V : Set E), ∀ u ∈ convexHull ℝ (↑V : Set E),
+      ∀ v ∈ convexHull ℝ (↑V : Set E), ∀ η ∈ Set.Icc (0 : ℝ) 1,
+        f (x + η • (u - v)) ≤ f x + η * fderiv ℝ f x (u - v) + φ η)
     {x : ℕ → E} {S : ℕ → Finset E} {lam : ℕ → E → ℝ} {t₀ : ℕ}
     (h0 : Inv V (x t₀) (S t₀) (lam t₀)) :
     ∀ n : ℕ, (∀ i < n, IsFAFWIter V f ε x S lam (t₀ + i)) →
@@ -39,7 +41,17 @@ theorem segment_inv {V : Finset E} {f : E → ℝ} {L : NNReal} {D ε : ℝ}
     have hinv := ih (fun i hi => hit i (by omega))
     obtain ⟨v, hvV, hv, a, ha, -, hgap, hstep⟩ := hit n (by omega)
     have hgap' : 2 * (ε / 2) < fderiv ℝ f (x (t₀ + n)) (a - v) := by linarith
-    exact (fafw_step_outcome hconv hsm hD hinv hvV hv ha hgap' hstep).1
+    exact (fafw_step_outcome_gen hconv hcurv hinv hvV hv ha hgap' hstep).1
+
+/-- Iterations of Algorithm 1 keep the invariant. -/
+theorem segment_inv {V : Finset E} {f : E → ℝ} {L : NNReal} {D ε : ℝ}
+    (hconv : ConvexOn ℝ Set.univ f) (hsm : IsSmooth f L)
+    (hD : ∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E), ‖y - z‖ ≤ D)
+    {x : ℕ → E} {S : ℕ → Finset E} {lam : ℕ → E → ℝ} {t₀ : ℕ}
+    (h0 : Inv V (x t₀) (S t₀) (lam t₀)) :
+    ∀ n : ℕ, (∀ i < n, IsFAFWIter V f ε x S lam (t₀ + i)) →
+      Inv V (x (t₀ + n)) (S (t₀ + n)) (lam (t₀ + n)) :=
+  segment_inv_gen hconv (smooth_curv hsm hD) h0
 
 section Restart
 
@@ -52,16 +64,23 @@ theorem restart_iter (hrun : IsRestartRun V f γ x S lam τ W) (k : ℕ) :
   have hle := (hrun.2.2 k).1
   exact (hrun.2.2 k).2.2.2 (τ k + i) (by omega) (by omega)
 
-theorem restart_inv {L : NNReal} {D : ℝ} (hconv : ConvexOn ℝ Set.univ f) (hsm : IsSmooth f L)
-    (hD : ∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E), ‖y - z‖ ≤ D)
+theorem restart_inv_gen {φ : ℝ → ℝ} (hconv : ConvexOn ℝ Set.univ f)
+    (hcurv : ∀ x ∈ convexHull ℝ (↑V : Set E), ∀ u ∈ convexHull ℝ (↑V : Set E),
+      ∀ v ∈ convexHull ℝ (↑V : Set E), ∀ η ∈ Set.Icc (0 : ℝ) 1,
+        f (x + η • (u - v)) ≤ f x + η * fderiv ℝ f x (u - v) + φ η)
     (hrun : IsRestartRun V f γ x S lam τ W) : ∀ k, Inv V (x (τ k)) (S (τ k)) (lam (τ k)) := by
   intro k
   induction k with
   | zero => rw [hrun.2.1]; exact inv_of_weighted hrun.1
   | succ k ih =>
     have hle := (hrun.2.2 k).1
-    have := segment_inv hconv hsm hD ih (τ (k + 1) - τ k) (restart_iter hrun k)
+    have := segment_inv_gen hconv hcurv ih (τ (k + 1) - τ k) (restart_iter hrun k)
     rwa [Nat.add_sub_cancel' hle] at this
+
+theorem restart_inv {L : NNReal} {D : ℝ} (hconv : ConvexOn ℝ Set.univ f) (hsm : IsSmooth f L)
+    (hD : ∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E), ‖y - z‖ ≤ D)
+    (hrun : IsRestartRun V f γ x S lam τ W) : ∀ k, Inv V (x (τ k)) (S (τ k)) (lam (τ k)) :=
+  restart_inv_gen hconv (smooth_curv hsm hD) hrun
 
 theorem restart_gap_nonneg (hinv : ∀ k, Inv V (x (τ k)) (S (τ k)) (lam (τ k)))
     (hrun : IsRestartRun V f γ x S lam τ W) (k : ℕ) : 0 ≤ W k := by
