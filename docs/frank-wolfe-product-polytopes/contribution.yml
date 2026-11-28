@@ -1,0 +1,42 @@
+schema_version: 1
+id: frank-wolfe-product-polytopes
+lean_namespace: Lemmata.FWProduct
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "2505.11259"
+abstract: >-
+  Linear convergence of Frank–Wolfe algorithms over products of polytopes, from the conditioning
+  of the factors. The objective $\frac{1}{2k}\sum_{i \lt j}\|x^i - x^j\|^2$ of the approximate
+  feasibility problem for an intersection of $k$ polytopes, posed over their product, is convex,
+  $1$-smooth with a $1$-Lipschitz gradient and $1$-PL, with $\|\nabla f(x)\|^2 = 2f(x)$. The
+  expression $\sqrt{a^2 b^2/(a^2 + b^2)}$, which is the pyramidal width of a product with factor
+  widths $a$ and $b$, lies between $\min\{a, b\}/\sqrt{2}$ and $\min\{a, b\}$.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.FWProduct.feasibilityObjective
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-product-polytopes-objective
+  - name: Lemmata.FWProduct.feasibility_objective
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-product-polytopes-objective
+  - name: Lemmata.FWProduct.preparatory_bounds
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-product-polytopes-preparatory
