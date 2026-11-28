@@ -348,8 +348,11 @@ public import Lemmata.EnergyShellCrossings.BalancedCrossing
 public import Lemmata.EnergyShellCrossings.EnergyShellCrossing
 public import Lemmata.EnergyShellCrossings.Main
 public import Lemmata.EnergyShellCrossings.Statement
+public import Lemmata.FWOpenLoop.AFW
+public import Lemmata.FWOpenLoop.DIPFW
 public import Lemmata.FWOpenLoop.Interior
 public import Lemmata.FWOpenLoop.Main
+public import Lemmata.FWOpenLoop.SeqGen
 public import Lemmata.FWOpenLoop.Sequence
 public import Lemmata.FWOpenLoop.Statement
 public import Lemmata.FWOpenLoop.Uniform

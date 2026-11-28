@@ -14,7 +14,10 @@ abstract: >-
   a Hölderian error bound holds, when the gradients are bounded away from zero on a uniformly convex
   set, and under a Hölderian error bound on a uniformly convex set. The statements hold in real
   normed spaces, for every Frank–Wolfe run; the scaling inequality in the relative interior is
-  corrected for feasible regions that are not full-dimensional.
+  corrected for feasible regions that are not full-dimensional. Decomposition-invariant pairwise
+  Frank–Wolfe with the step sizes $8/(t + 8)$, rounded down to powers of $1/2$, and away-step
+  Frank–Wolfe with open-loop step sizes and a count of progress steps reach rates up to $O(1/t^2)$
+  under a Hölderian error bound on polytopes.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -71,3 +74,35 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-open-loop-acceleration-unrestricted
+  - name: Lemmata.FWOpenLoop.IsOLAFWStep
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-open-loop-acceleration-olafw-step
+  - name: Lemmata.FWOpenLoop.IsOLAFWRun
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-open-loop-acceleration-olafw-run
+  - name: Lemmata.FWOpenLoop.dipfw_baseline
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-open-loop-acceleration-dipfw-baseline
+  - name: Lemmata.FWOpenLoop.dipfw_open_loop_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-open-loop-acceleration-dipfw
+  - name: Lemmata.FWOpenLoop.drop_step
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-open-loop-acceleration-drop-step
+  - name: Lemmata.FWOpenLoop.progress_steps
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-open-loop-acceleration-progress-steps
+  - name: Lemmata.FWOpenLoop.olafw_baseline
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-open-loop-acceleration-afw-baseline
+  - name: Lemmata.FWOpenLoop.olafw_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-open-loop-acceleration-afw

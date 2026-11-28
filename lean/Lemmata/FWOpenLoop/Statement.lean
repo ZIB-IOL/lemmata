@@ -2,6 +2,7 @@ module
 
 public import Lemmata.FrankWolfe.Statement
 public import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Basic
+public import Lemmata.AwayStepFW.Statement
 
 @[expose] public section
 
@@ -159,5 +160,131 @@ def UnrestrictedRate : Prop :=
       max (eta 4 ((t : ℤ) - 2) ^ (1 / (1 - 2 * θ / q)) * (L * Metric.diam C ^ 2 / 2))
         ((eta 4 ((t : ℤ) - 2) * L * (2 * μ / α) ^ (2 / q)) ^ (1 / (1 - 2 * θ / q)) +
           eta 4 ((t : ℤ) - 2) ^ 2 * (L * Metric.diam C ^ 2 / 2))
+
+/-- **Proposition 5.2** (decomposition-invariant pairwise Frank–Wolfe, rate `O(1/t)`). Let
+`C = conv V` be simplex-like with diameter `δ`, `f` convex over `C`, differentiable at the points of
+`C` and `L`-smooth over `C` with `L ≥ 0`, and `x⋆` a minimizer. For `t ≥ 1` let `γ_t` be the largest
+power of `1/2` that is at most `η_t = 8/(t + 8)`. Every run of decomposition-invariant pairwise
+Frank–Wolfe with these step sizes satisfies `f(x_t) - f(x⋆) ≤ 32 L δ²/(t + 7)` for all `t ≥ 1`. -/
+def DIPFWBaseline : Prop :=
+  ∀ (n : ℕ) (V : Finset (EuclideanSpace ℝ (Fin n))) (f : EuclideanSpace ℝ (Fin n) → ℝ) (L : ℝ)
+    (γ : ℕ → ℝ) (x : ℕ → EuclideanSpace ℝ (Fin n)), AwayStepFW.IsSimplexLike V →
+    ConvexOn ℝ (convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n)))) f →
+    (∀ y ∈ convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n))), DifferentiableAt ℝ f y) →
+    IsSmoothOn (convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n)))) f L → 0 ≤ L →
+    (∀ t : ℕ, 1 ≤ t → (∃ m : ℕ, γ t = (1 / 2) ^ m) ∧ eta 8 t / 2 < γ t ∧ γ t ≤ eta 8 t) →
+    AwayStepFW.IsDIPFWRun V f γ x →
+    ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n)))) f,
+    ∀ t : ℕ, 1 ≤ t → f (x t) - f xStar ≤
+      32 * L * Metric.diam (convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n)))) ^ 2 / (t + 7)
+
+/-- **Theorem 5.3** (decomposition-invariant pairwise Frank–Wolfe, rates up to `O(1/t²)`). In the
+setting of Proposition 5.2, with `L > 0`, `δ > 0`, a unique minimizer `x⋆` and a
+`(μ, θ)`-Hölderian error bound with `μ > 0` and `θ ∈ [0, 1/2]`, every run satisfies, for `t ≥ 1`,
+`h_t ≤ max {η_{t-2}^{1/(1-θ)} Lδ²/2, (η_{t-2} 2μLδ² √‖x⋆‖₀)^{1/(1-θ)} + η_{t-2}² Lδ²/2}`, where
+`‖x⋆‖₀` is the number of nonzero coordinates of `x⋆` and `η_t = 8/(t + 8)`. -/
+def DIPFWOpenLoopRate : Prop :=
+  ∀ (n : ℕ) (V : Finset (EuclideanSpace ℝ (Fin n))) (f : EuclideanSpace ℝ (Fin n) → ℝ)
+    (L μ θ : ℝ) (γ : ℕ → ℝ) (x : ℕ → EuclideanSpace ℝ (Fin n)) (xStar : EuclideanSpace ℝ (Fin n)),
+    AwayStepFW.IsSimplexLike V →
+    ConvexOn ℝ (convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n)))) f →
+    (∀ y ∈ convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n))), DifferentiableAt ℝ f y) →
+    IsSmoothOn (convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n)))) f L → 0 < L →
+    0 < Metric.diam (convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n)))) →
+    IsHolderErrorBound (convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n)))) f μ θ → 0 < μ →
+    θ ∈ Set.Icc (0 : ℝ) (1 / 2) →
+    minimizers (convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n)))) f = {xStar} →
+    (∀ t : ℕ, 1 ≤ t → (∃ m : ℕ, γ t = (1 / 2) ^ m) ∧ eta 8 t / 2 < γ t ∧ γ t ≤ eta 8 t) →
+    AwayStepFW.IsDIPFWRun V f γ x →
+    let δ := Metric.diam (convexHull ℝ (↑V : Set (EuclideanSpace ℝ (Fin n))))
+    let k := ((Finset.univ.filter fun i => xStar i ≠ 0).card : ℝ)
+    ∀ t : ℕ, 1 ≤ t → f (x t) - f xStar ≤
+      max (eta 8 ((t : ℤ) - 2) ^ (1 / (1 - θ)) * (L * δ ^ 2 / 2))
+        ((eta 8 ((t : ℤ) - 2) * (2 * μ * L * δ ^ 2 * √k)) ^ (1 / (1 - θ)) +
+          eta 8 ((t : ℤ) - 2) ^ 2 * (L * δ ^ 2 / 2))
+
+open Classical in
+/-- One step of **away-step Frank–Wolfe with open-loop step sizes** (Algorithm 5 of the paper) from
+the state `(x, S, λ, ℓ)`, where `ℓ` counts the progress steps so far, with Frank–Wolfe vertex `v`,
+away vertex `a` for `g = f'(x)`, smoothness constant `L` and diameter `D`. With
+`η = η_ℓ = 4/(ℓ + 4)`, the Frank–Wolfe step (when `g(a - x) ≤ g(x - v)`) has length
+`γ = min {η, 1}` and the away step `γ = min {η, λ_a/(1 - λ_a)}`; weights and active set are updated
+as usual, and the step is a progress step, `ℓ' = ℓ + 1`, when
+`(η - γ) g(a - v) ≤ (η² - γ²) L D²`, and `ℓ' = ℓ` otherwise. -/
+def IsOLAFWStep {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (L D : ℝ)
+    (g : StrongDual ℝ E) (x : E) (S : Finset E) (lam : E → ℝ) (ℓ : ℕ) (v a : E) (x' : E)
+    (S' : Finset E) (lam' : E → ℝ) (ℓ' : ℕ) : Prop :=
+  let η := eta 4 ℓ
+  if g (a - x) ≤ g (x - v) then
+    let γ := min η 1
+    x' = x + γ • (v - x) ∧ lam' = (fun w => (1 - γ) * lam w + if w = v then γ else 0) ∧
+      S' = (if γ = 1 then {v} else insert v S) ∧
+      ℓ' = if (η - γ) * g (a - v) ≤ (η ^ 2 - γ ^ 2) * (L * D ^ 2) then ℓ + 1 else ℓ
+  else
+    let γ := min η (lam a / (1 - lam a))
+    x' = x + γ • (x - a) ∧ lam' = (fun w => (1 + γ) * lam w - if w = a then γ else 0) ∧
+      S' = (if γ = lam a / (1 - lam a) then S.erase a else S) ∧
+      ℓ' = if (η - γ) * g (a - v) ≤ (η ^ 2 - γ ^ 2) * (L * D ^ 2) then ℓ + 1 else ℓ
+
+open Classical in
+/-- A run of **away-step Frank–Wolfe with open-loop step sizes** on `conv V` for `f` with
+smoothness constant `L`: it starts at a vertex with active set `{x₀}`, weight `1` and no progress
+steps, and every step is a step of `IsOLAFWStep` with the diameter `D` of `V`, some Frank–Wolfe
+vertex (a minimizer of `f'(x_t)` over `V`) and some away vertex (a maximizer over `S_t`). -/
+def IsOLAFWRun {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ)
+    (L : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) (ℓ : ℕ → ℕ) : Prop :=
+  x 0 ∈ V ∧ S 0 = {x 0} ∧ lam 0 = (fun w => if w = x 0 then 1 else 0) ∧ ℓ 0 = 0 ∧
+    ∀ t, ∃ v ∈ V, (∀ w ∈ V, fderiv ℝ f (x t) v ≤ fderiv ℝ f (x t) w) ∧
+      ∃ a ∈ S t, (∀ w ∈ S t, fderiv ℝ f (x t) w ≤ fderiv ℝ f (x t) a) ∧
+        IsOLAFWStep L (Metric.diam (↑V : Set E)) (fderiv ℝ f (x t)) (x t) (S t) (lam t) (ℓ t) v a
+          (x (t + 1)) (S (t + 1)) (lam (t + 1)) (ℓ (t + 1))
+
+/-- **Lemma 5.5** (drop-step characterization). For `A, B > 0`, `g(η) = -ηA + η²B` and
+`γ ∈ [0, η]`, either `g(γ) ≤ g(0)` or `g(γ) ≤ g(η)`. -/
+def DropStep : Prop :=
+  ∀ A B η γ : ℝ, 0 < A → 0 < B → 0 ≤ γ → γ ≤ η →
+    -γ * A + γ ^ 2 * B ≤ 0 ∨ -γ * A + γ ^ 2 * B ≤ -η * A + η ^ 2 * B
+
+/-- **Lemma 5.6** (number of progress steps). Every run of away-step Frank–Wolfe with open-loop step
+sizes has performed at least `⌈t/2⌉` progress steps before iteration `t`: `t ≤ 2 ℓ_t`. -/
+def ProgressSteps : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ) (L : ℝ)
+    (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) (ℓ : ℕ → ℕ),
+    IsOLAFWRun V f L x S lam ℓ → ∀ t, t ≤ 2 * ℓ t
+
+/-- **Proposition 5.7** (away-step Frank–Wolfe with open-loop step sizes, rate `O(1/t)`). Let `f` be
+convex over `conv V`, differentiable at its points and `L`-smooth over it with `L ≥ 0`, and `x⋆` a
+minimizer. Every run satisfies `f(x_t) - f(x⋆) ≤ 16 L δ²/(t + 6)` for all `t ≥ 1`, where `δ` is the
+diameter of `V`. -/
+def OLAFWBaseline : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ) (L : ℝ)
+    (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) (ℓ : ℕ → ℕ),
+    ConvexOn ℝ (convexHull ℝ (↑V : Set E)) f →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), DifferentiableAt ℝ f y) →
+    IsSmoothOn (convexHull ℝ (↑V : Set E)) f L → 0 ≤ L → IsOLAFWRun V f L x S lam ℓ →
+    ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f, ∀ t : ℕ, 1 ≤ t →
+      f (x t) - f xStar ≤ 16 * L * Metric.diam (↑V : Set E) ^ 2 / (t + 6)
+
+/-- **Theorem 5.9** (away-step Frank–Wolfe with open-loop step sizes, rates up to `O(1/t²)`). In the
+setting of Proposition 5.7, with `L > 0`, `δ > 0`, pyramidal width `ω > 0` and a
+`(μ, θ)`-Hölderian error bound with `μ > 0` and `θ ∈ [0, 1/2]`, every run satisfies, for `t ≥ 1`
+and `k = ⌈t/2⌉`, `h_t ≤ max {η_{k-2}^{1/(1-θ)} Lδ²/2, (η_{k-2} 2μLδ²/ω)^{1/(1-θ)} + η_{k-2}² Lδ²/2}`
+with `η_t = 4/(t + 4)`. -/
+def OLAFWRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (f : E → ℝ)
+    (L μ θ : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) (ℓ : ℕ → ℕ),
+    ConvexOn ℝ (convexHull ℝ (↑V : Set E)) f →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), DifferentiableAt ℝ f y) →
+    IsSmoothOn (convexHull ℝ (↑V : Set E)) f L → 0 < L → 0 < Metric.diam (↑V : Set E) →
+    0 < AwayStepFW.pyramidalWidth V →
+    IsHolderErrorBound (convexHull ℝ (↑V : Set E)) f μ θ → 0 < μ → θ ∈ Set.Icc (0 : ℝ) (1 / 2) →
+    IsOLAFWRun V f L x S lam ℓ →
+    let δ := Metric.diam (↑V : Set E)
+    let ω := AwayStepFW.pyramidalWidth V
+    ∀ xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f, ∀ t : ℕ, 1 ≤ t →
+      f (x t) - f xStar ≤
+        max (eta 4 ((((t + 1) / 2 : ℕ) : ℤ) - 2) ^ (1 / (1 - θ)) * (L * δ ^ 2 / 2))
+          ((eta 4 ((((t + 1) / 2 : ℕ) : ℤ) - 2) * (2 * μ * L * δ ^ 2 / ω)) ^ (1 / (1 - θ)) +
+            eta 4 ((((t + 1) / 2 : ℕ) : ℤ) - 2) ^ 2 * (L * δ ^ 2 / 2))
 
 end Lemmata.FWOpenLoop
