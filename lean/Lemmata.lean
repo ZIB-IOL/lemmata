@@ -356,6 +356,11 @@ public import Lemmata.FWAffineOpenLoop.Strong
 public import Lemmata.FWAffineOpenLoop.StrongR
 public import Lemmata.FWAffineOpenLoop.Sufficient
 public import Lemmata.FWAffineOpenLoop.Weak
+public import Lemmata.FWLogAdaptive.Main
+public import Lemmata.FWLogAdaptive.Product
+public import Lemmata.FWLogAdaptive.Rates
+public import Lemmata.FWLogAdaptive.Statement
+public import Lemmata.FWLogAdaptive.Steps
 public import Lemmata.FWOpenLoop.AFW
 public import Lemmata.FWOpenLoop.DIPFW
 public import Lemmata.FWOpenLoop.Face
