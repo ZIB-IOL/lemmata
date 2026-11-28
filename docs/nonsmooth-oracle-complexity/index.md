@@ -10,8 +10,9 @@ numbering:
 :::{note}
 This entry formalizes results of the paper *Lower Bounds on the Oracle Complexity of Nonsmooth
 Convex Optimization via Information Theory* by Gábor Braun, Cristóbal Guzmán and Sebastian Pokutta
-[@braun2017lower], currently the information-theoretic lower bound (Lemma III.1, in expectation) and
-oracle emulation (Lemma III.5); numbers refer to the arXiv version.
+[@braun2017lower], currently the information-theoretic lower bound (Lemma III.1, in expectation),
+the string guessing problem (Proposition III.3) and oracle emulation (Lemma III.5); numbers refer to
+the arXiv version.
 :::
 
 How many oracle queries does an algorithm need to minimize a nonsmooth convex function? The paper
@@ -76,6 +77,35 @@ most $\log |F|$. With $\log |F|$ in place of $H(F)$ the claim holds, and for the
 which is how the paper uses it, the two agree.
 :::
 
+## The string guessing problem
+
+The source of hardness is a hidden binary string $S \in \{0, 1\}^M$, drawn uniformly at random. Its
+oracle accepts guesses of any of the bits and reveals only how far the guesses were right.
+
+```{prf:definition} String guessing oracle (Oracle III.2)
+:label: def-nonsmooth-oracle-complexity-string-oracle
+:nonumber:
+
+A query is a list of guesses $(i_1, b_1), \dots, (i_k, b_k)$ of bits $S_{i_j} = b_j$. The answer is
+the index of the first wrong guess, or that all guesses are right.
+```
+
+```{prf:proposition} String guessing problem
+:label: prop-nonsmooth-oracle-complexity-string-guessing
+:enumerator: III.3
+
+Every deterministic algorithm that identifies a uniformly random string $S \in \{0, 1\}^M$ with the
+string guessing oracle and error probability $P_e$ asks at least
+$((1 - P_e) M - h(P_e)/\log 2)/2 \ge ((1 - P_e) M - 1)/2$ queries in expectation.
+```
+
+The oracle reveals nothing about the bits after the first wrong guess. Hence the strings that reach
+a query form a cylinder: they agree with a partial assignment of the bits. On a cylinder the answer
+has entropy at most $2 \log 2$. A guess of a bit that the cylinder fixes either ends the answer or
+is skipped; a guess of a free bit splits the cylinder into two halves, the answer at this guess on
+one half and a later answer on the other, at the cost of one bit plus half the entropy of the rest.
+Lemma III.1 with $H(S) = M \log 2$, $C = 2 \log 2$ and $\log(2^M - 1) \le M \log 2$ gives the bound.
+
 ```{prf:lemma} Oracle emulation
 :label: lem-nonsmooth-oracle-complexity-emulation
 :enumerator: III.5
@@ -102,10 +132,10 @@ optimization oracles by a string guessing oracle and transfers its lower bound.
 
 ## Coverage
 
-This entry covers the bound in expectation of Lemma III.1 and Lemma III.5. Not covered yet are the
-bound in probability of Lemma III.1, the string guessing problem (Proposition III.3), and the lower
-bounds for the box (Section IV), for $\ell^p$-balls (Section V) and for arbitrary local oracles
-(Section VI).
+This entry covers the bound in expectation of Lemma III.1, Proposition III.3 and Lemma III.5. Not
+covered yet are the bounds in probability of Lemma III.1 and Proposition III.3, and the lower bounds
+for the box (Section IV), for $\ell^p$-balls (Section V) and for arbitrary local oracles (Section
+VI).
 
 ## The formal statements at a glance
 

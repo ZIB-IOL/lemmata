@@ -799,6 +799,7 @@ public import Lemmata.ModifiedE8Bell.Witness
 public import Lemmata.OracleComplexity.Entropy
 public import Lemmata.OracleComplexity.Main
 public import Lemmata.OracleComplexity.Statement
+public import Lemmata.OracleComplexity.StringGuess
 public import Lemmata.OracleComplexity.Tree
 public import Lemmata.PlanarSteinerXC.Assembly
 public import Lemmata.PlanarSteinerXC.CoverGraph

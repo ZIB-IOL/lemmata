@@ -6,16 +6,17 @@ cross_lists: [cs.CC, cs.IT]
 topics: [information-theoretic-lower-bounds]
 arxiv: "1407.5144"
 note: >-
-  Formalizes Lemmas III.1 and III.5 of @braun2017lower.
+  Formalizes Lemmas III.1 and III.5 and Proposition III.3 of @braun2017lower.
 abstract: >-
   Information theory gives lower bounds on the number of oracle queries that an optimization
   algorithm needs. If every answer of the oracle reveals at most $C$ nats about an instance drawn
   from a finite set $F$, then every deterministic algorithm that identifies the instance with error
   probability $P_e$ asks at least $(H(F) - h(P_e) - P_e \log(|F| - 1))/C$ queries in expectation,
-  where $h$ is the binary entropy. Oracle emulations transfer such lower bounds from one oracle to
-  another: an algorithm for the emulated oracle runs with the emulating oracle, with the same
-  outputs and the same numbers of queries. Algorithms are query trees, and the instances carry an
-  arbitrary prior.
+  where $h$ is the binary entropy. For a uniformly random binary string of length $M$ and an oracle
+  that reveals the position of the first wrong guess among guessed bits, this gives at least $((1 -
+  P_e) M - 1)/2$ queries. Oracle emulations transfer such lower bounds from one oracle to another:
+  an algorithm for the emulated oracle runs with the emulating oracle, with the same outputs and the
+  same numbers of queries. Algorithms are query trees, and the instances carry an arbitrary prior.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -44,3 +45,11 @@ exports:
     kind: theorem
     page: index.md
     label: lem-nonsmooth-oracle-complexity-emulation
+  - name: Lemmata.OracleComplexity.stringGuess
+    kind: definition
+    page: index.md
+    label: def-nonsmooth-oracle-complexity-string-oracle
+  - name: Lemmata.OracleComplexity.string_guessing
+    kind: theorem
+    page: index.md
+    label: prop-nonsmooth-oracle-complexity-string-guessing

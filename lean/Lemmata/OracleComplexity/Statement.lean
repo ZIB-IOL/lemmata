@@ -87,4 +87,21 @@ def Emulation : Prop :=
     ∀ t : QueryTree Q₁ A₁ X, ∃ t' : QueryTree Q₂ A₂ X, ∀ f,
       t'.output (oracle₂ f) = t.output (oracle₁ f) ∧ t'.queries (oracle₂ f) = t.queries (oracle₁ f)
 
+/-- The string guessing oracle (Oracle III.2) for a hidden string `S ∈ {0,1}^M`: a query is a list
+of guesses `(i, b)` of bits `S i = b`, and the answer is the index of the first wrong guess, or
+`none` if all guesses are right. -/
+def stringGuess {M : ℕ} (S : Fin M → Bool) (q : List (Fin M × Bool)) : Option ℕ :=
+  q.findIdx? (fun g => S g.1 != g.2)
+
+open Classical in
+/-- **Proposition III.3** (string guessing problem). Let the hidden string `S ∈ {0,1}^M` be
+uniformly random, and let a deterministic query algorithm using the string guessing oracle identify
+`S` with error probability `P_e`. Then the expected number of queries is at least
+`((1 - P_e) M - h(P_e)/log 2)/2`, and hence at least `((1 - P_e) M - 1)/2`. -/
+def StringGuessing : Prop :=
+  ∀ (M : ℕ) (t : QueryTree (List (Fin M × Bool)) (Option ℕ) (Fin M → Bool)),
+    let Pe := ((Finset.univ.filter (fun S => t.output (stringGuess S) ≠ S)).card : ℝ) / 2 ^ M
+    let ET := (∑ S, (t.queries (stringGuess S) : ℝ)) / 2 ^ M
+    ((1 - Pe) * M - Real.binEntropy Pe / Real.log 2) / 2 ≤ ET ∧ ((1 - Pe) * M - 1) / 2 ≤ ET
+
 end Lemmata.OracleComplexity
