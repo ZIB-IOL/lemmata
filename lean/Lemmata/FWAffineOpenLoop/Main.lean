@@ -1,6 +1,7 @@
 module
 
 public import Lemmata.FWAffineOpenLoop.StrongR
+public import Lemmata.FWAffineOpenLoop.Gaps
 
 @[expose] public section
 
@@ -23,6 +24,19 @@ theorem pd_rate_strong_one : PDRateStrongOne := Proof.pd_rate_strong_one
 /-- Theorem 3.4: under strong `(M, r)`-growth, rate `O(t^{-ℓ+ε} + t^{-1/(1-r)})` for the best
 duality gap and the smallest Frank–Wolfe gap. -/
 theorem pd_rate_strong : PDRateStrong := Proof.pd_rate_strong
+/-- Theorem 4.1: under strong `(M, 0)`- and weak `(M, r)`-growth, rate
+`O(t^{-ℓ+ε} + t^{-1/(1-r)} + t^{-2})` for the primal gap, and the dichotomy of the paper. -/
+theorem weak_rate : WeakRate := Proof.weak_rate
+
+/-- Lemma 4.2: a bound on the next iteration whose primal gap is below the threshold. -/
+theorem weak_restart : WeakRestart := Proof.weak_restart
+
+/-- Theorem 5.2: under strong `(M, 0)`-growth and relaxed gaps growth along the run, rate
+`O(t^{-ℓ} + t^{-1/(1-r)} + t^{-2})` for the primal gap. -/
+theorem relaxed_gaps_rate : RelaxedGapsRate := Proof.relaxed_gaps_rate
+
+/-- Theorem 5.1: the same rate under the gaps `(m, r)`-growth property. -/
+theorem gaps_rate : GapsRate := Proof.gaps_rate
 -- DOCS_END_MAIN
 
 end Lemmata.FWAffineOpenLoop

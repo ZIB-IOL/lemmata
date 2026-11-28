@@ -10,8 +10,8 @@ numbering:
 :::{note}
 This entry formalizes the paper *Accelerated Affine-Invariant Convergence Rates of the Frank–Wolfe
 Algorithm with Open-Loop Step-Sizes* by Elias Wirth, Javier Peña and Sebastian Pokutta
-[@wirth2023accelerated], currently its measures of optimality and the rates under strong growth
-(Section 3); numbers refer to the arXiv version.
+[@wirth2023accelerated], currently its measures of optimality and its convergence rates (Sections 3
+to 5); numbers refer to the arXiv version.
 :::
 
 The Frank–Wolfe algorithm is affine invariant: an affine change of variables maps its iterates to
@@ -171,6 +171,113 @@ at most $T_i$ leaves $\mathrm{pd}_{i+1} \le T_i$, and every other step contracts
 $1 - (1 - \varepsilon/\ell)\eta_i$. So $\mathrm{pd}_t$ is at most the value at the start of its last
 stretch of contracting steps times a product that Lemma 3.5 bounds.
 
+## Weak growth
+
+```{prf:definition} Weak growth
+:label: def-frank-wolfe-affine-invariant-open-loop-weak
+:nonumber:
+
+$(C, f)$ has the *weak $(M, r)$-growth property* if
+$D_f(x + \eta(v - x), x)\,(f(x) - f(x^\star))^{1-r} \le \frac{M\eta^2}{2}\, g(x)$ for all $x \in C$,
+all Frank–Wolfe vertices $v$, all minimizers $x^\star$ and all $\eta \in [0, 1]$.
+```
+
+Since $g(x) \ge f(x) - f(x^\star)$, strong $(M, r)$-growth implies weak $(M, r)$-growth. The weaker
+property only controls the primal gap, and the rates are capped at $O(t^{-2})$.
+
+```{prf:theorem} Strong $(M, 0)$-growth and weak $(M, r)$-growth
+:label: thm-frank-wolfe-affine-invariant-open-loop-weak
+:enumerator: 4.1
+
+Let $f$ be convex with a minimizer on $C$, $(C, f)$ with the strong $(M, 0)$- and weak
+$(M, r)$-growth properties, $M > 0$, $r \in [0, 1)$, $\ell \ge 1$ and $\varepsilon \in (0, \ell)$.
+Every Frank–Wolfe run with $\eta_t = \ell/(t + \ell)$ satisfies, for all $t \ge 1$,
+
+$$
+h_t \le e^{\varepsilon\ell} \max\left\{ \eta_{t-1}^{\ell-\varepsilon} \frac{M}{2},\
+\eta_{t-1}^{\min\{\ell-\varepsilon, 1/(1-r), 2\}} \left( \left(\frac{\ell
+M}{2\varepsilon}\right)^{1/(1-r)} +
+\frac{M}{2} \right) \right\}.
+$$
+
+Moreover, either $h_t \le (\eta_t \ell M/(2\varepsilon))^{1/(1-r)}$ for infinitely many $t$, or
+there is $R \ge 1$ with
+$h_t \le h_R (\eta_{t-1}/\eta_{R-1})^{\ell-\varepsilon} e^{\varepsilon\ell/R}$ for all
+$t \ge R + 1$.
+```
+
+A step whose primal gap is at most $T_i = (\eta_i \ell M/(2\varepsilon))^{1/(1-r)}$ leaves at most
+$T_i + \eta_i^2 M/2$, and weak growth turns every other step into a contraction by
+$1 - (1 - \varepsilon/\ell)\eta_i$, since then $D_f \le (\varepsilon/\ell)\eta_i g_i$.
+
+```{prf:lemma} The next fast iterate
+:label: lem-frank-wolfe-affine-invariant-open-loop-restart
+:enumerator: 4.2
+
+Under weak $(M, r)$-growth with $\ell > 1/(1 - r)$ and $\varepsilon \in (0, \ell - 1/(1 - r))$, for
+every $R \ge 1$ some $i$ with $R \le i \le \max\{R, U\}$ satisfies
+$h_i \le (\eta_i \ell M/(2\varepsilon))^{1/(1-r)}$, where
+
+$$
+U = \left\lceil \ell \left( h_R\, \eta_R^{\varepsilon-\ell} \left(\frac{2\varepsilon}{\ell
+M}\right)^{1/(1-r)}
+e^{\varepsilon\ell/R} \right)^{1/(\ell-\varepsilon-1/(1-r))} - \ell \right\rceil.
+$$
+```
+
+Otherwise all steps from $R$ to $\max\{R, U\}$ contract, and the choice of $U$ makes the contracted
+value fall below the threshold.
+
+## Gaps growth
+
+```{prf:definition} Gaps growth
+:label: def-frank-wolfe-affine-invariant-open-loop-gaps
+:nonumber:
+
+$(C, f)$ has the *gaps $(m, r)$-growth property* if $m\,(f(x) - f(x^\star))^{1-r} \le g(x)$ for all
+$x \in C$, all Frank–Wolfe vertices $v$ and all minimizers $x^\star$.
+```
+
+```{prf:definition} Relaxed gaps growth
+:label: def-frank-wolfe-affine-invariant-open-loop-relaxed
+:nonumber:
+
+A run has the *relaxed gaps growth property* with $(\delta_t)$ from the threshold $S$ on if for
+every $t \ge S$ either $h_t < \delta_t$ or $m\, h_t^{1-r} \le g_t$.
+```
+
+The relaxed property depends on the run; it is what polytopes provide when the minimizer lies on the
+boundary.
+
+```{prf:theorem} Strong $(M, 0)$-growth and relaxed gaps growth
+:label: thm-frank-wolfe-affine-invariant-open-loop-relaxed
+:enumerator: 5.2
+
+Let $f$ be convex with a minimizer on $C$, $(C, f)$ with the strong $(M, 0)$-growth property,
+$M, m > 0$, $r \in (0, 1)$, $\ell \ge 2$, and let the run have the relaxed gaps growth property with
+$\delta_t = (\eta_t M/m)^{1/(1-r)}$ from a threshold
+$S \ge \max\{1, \lceil 2^{1/r} \ell M/m^{1/r} - \ell \rceil\}$ on. Then for all $t \ge S$,
+
+$$
+h_t \le \max\left\{ h_S \left(\frac{\eta_{t-1}}{\eta_{S-1}}\right)^\ell,\
+\eta_{t-1}^{\min\{\ell, 1/(1-r), 2\}} \left( \left(\frac{M}{m}\right)^{1/(1-r)} + \frac{M}{2}
+\right)
+\right\}.
+$$
+```
+
+From $S$ on, $(\eta_i M)^r \le m/2$ and, by Theorem 3.1, $h_i \le \eta_i M$; together with gaps
+growth this makes every step with $h_i > \delta_i$ contract the primal gap by $1 - \eta_i$, and
+Lemma 3.3 bounds the product.
+
+```{prf:theorem} Strong $(M, 0)$-growth and gaps growth
+:label: thm-frank-wolfe-affine-invariant-open-loop-gaps-rate
+:enumerator: 5.1
+
+Under the gaps $(m, r)$-growth property, the bound of Theorem 5.2 holds from
+$S = \max\{1, \lceil 2^{1/r} \ell M/m^{1/r} - \ell \rceil\}$ on.
+```
+
 :::{note}
 **Differences from the paper.**
 - The statements hold in real normed spaces, for every Frank–Wolfe run, with the Frank–Wolfe gaps of
@@ -183,13 +290,17 @@ stretch of contracting steps times a product that Lemma 3.5 bounds.
   $t \ge \lceil e^{1/\ell} \ell M/(2(1 - \varepsilon)) - \ell + 1 \rceil$: the proof needs the index
   $R = \lfloor (t + \ell)/e^{1/\ell} - \ell \rfloor$ to satisfy $\eta_R M/2 \le 1 - \varepsilon$ and
   $R \ge S$, which the paper's threshold does not guarantee.
+- In Theorems 5.1 and 5.2, $r \in (0, 1)$: the threshold involves $1/r$. Theorem 5.1 assumes
+  $\ell \ge 2$, as the proof derives it from Theorem 5.2, which uses Theorem 3.1. In Lemma 4.2,
+  $\varepsilon < \ell - 1/(1 - r)$ strictly, since the exponent $1/(\ell - \varepsilon - 1/(1-r))$
+  must be defined, and the range of $i$ is $R \le i \le \max\{R, U\}$: when $U < R$, the iterate $R$
+  itself is below the threshold, while the paper's range $\{R, \dots, U\}$ is empty.
 :::
 
 ## Coverage
 
-This entry currently covers the measures of optimality and Section 3. The rates under weak and
-(relaxed) gaps growth (Sections 4 and 5) and the sufficient conditions for the growth properties are
-planned.
+This entry currently covers the measures of optimality and the convergence rates of Sections 3 to 5.
+The sufficient conditions for the growth properties are planned.
 
 ## The formal statements at a glance
 
