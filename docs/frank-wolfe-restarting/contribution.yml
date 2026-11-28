@@ -6,8 +6,8 @@ cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "1810.02429"
 note: >-
-  Formalizes Lemmas 2.3 and 3.6, Propositions 4.1, 4.2, 5.3, 6.1 and 6.3 and Theorems 5.1, 6.2
-  and 7.3 of @kerdreux2018restarting.
+  Formalizes Lemmas 2.3, 3.6, 7.1, A.1 and B.1, Propositions 4.1, 4.2, 5.3, 6.1, 6.3 and 7.2 and
+  Theorems 5.1, 6.2 and 7.3 of @kerdreux2018restarting.
 abstract: >-
   Hölderian error bounds interpolate between plain convexity and strong convexity, and with them the
   convergence of Frank–Wolfe algorithms between the rate $O(1/t)$ and linear convergence. The strong
@@ -17,8 +17,9 @@ abstract: >-
   $(c/\delta)^{1/(1-\theta)}$ times the strong Wolfe gap to the power $1/(1-\theta)$. Restarting a
   fractional away-step Frank–Wolfe algorithm whenever the strong Wolfe gap has dropped by a constant
   factor gives, after a burn-in phase, the rate $O(T^{-(1-\theta)/(1-2\theta)})$ for $\theta \lt
-  1/2$ and linear convergence for $\theta = 1/2$, with analogous rates under Hölder smoothness. Over
-  strongly convex sets, vanilla Frank–Wolfe with short steps converges at the rate
+  1/2$ and linear convergence for $\theta = 1/2$, with analogous rates under Hölder smoothness. The
+  same restarts of vanilla Frank–Wolfe give these rates when the minimizers lie in the interior.
+  Over strongly convex sets, vanilla Frank–Wolfe with short steps converges at the rate
   $O(t^{-1/(1-\theta)})$. The statements hold in real normed spaces.
 contributors:
   - name: Sebastian Pokutta
@@ -88,3 +89,23 @@ exports:
     kind: theorem
     page: index.md
     label: prop-frank-wolfe-restarting-holder-burn-in
+  - name: Lemmata.FWRestart.IsFFWRestartRun
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-restarting-fractional-fw
+  - name: Lemmata.FWRestart.interior_fw_scaling
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-restarting-interior
+  - name: Lemmata.FWRestart.fractional_fw_rate
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-restarting-fractional-fw
+  - name: Lemmata.FWRestart.one_shot_rate
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-restarting-one-shot
+  - name: Lemmata.FWRestart.recurrence_rate
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-restarting-recurrence

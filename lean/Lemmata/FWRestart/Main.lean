@@ -1,6 +1,6 @@
 module
 
-public import Lemmata.FWRestart.Holder
+public import Lemmata.FWRestart.Appendix
 
 @[expose] public section
 
@@ -41,6 +41,22 @@ theorem holder_restart_rate : HolderRestartRate := Proof.holder_restart_rate
 
 /-- Proposition 6.3: the burn-in phase under Hölder smoothness. -/
 theorem holder_burn_in : HolderBurnIn := Proof.holder_burn_in
+
+/-- Lemma 7.1: near an interior minimizer the Frank–Wolfe gap dominates the norm of the
+gradient. -/
+theorem interior_fw_scaling : InteriorFWScaling := Proof.interior_fw_scaling'
+
+/-- Proposition 7.2: the rate of scheduled restarts of fractional Frank–Wolfe when the minimizers
+lie in the interior. -/
+theorem fractional_fw_rate : FractionalFWRate := Proof.fractional_fw_rate
+
+/-- Lemma A.1: while fractional away-step Frank–Wolfe takes Frank–Wolfe steps, it converges at the
+rate `2 L D²/t`. -/
+theorem one_shot_rate : OneShotRate := Proof.one_shot_rate
+
+/-- Lemma B.1, corrected: the recurrence `h_{t+1} ≤ h_t max {1/2, 1 - M h_t^β}` gives
+`h_t ≤ C/(t + k)^{1/β}` for `k ≥ 1/(2^β - 1)`. -/
+theorem recurrence_rate : RecurrenceRate := Proof.recurrence_rate
 -- DOCS_END_MAIN
 
 end Lemmata.FWRestart
