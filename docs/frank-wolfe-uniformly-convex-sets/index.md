@@ -10,8 +10,9 @@ numbering:
 :::{note}
 This entry formalizes results of the paper *Projection-Free Optimization on Uniformly Convex Sets*
 by Thomas Kerdreux, Alexandre d'Aspremont and Sebastian Pokutta [@kerdreux2020projection], currently
-the local scaling inequality (Lemma 2.4 and Corollary 2.8) and the rates under a Hölderian error
-bound (Lemma 2.9 and Theorem 2.10); numbers refer to the arXiv version.
+the local scaling inequality (Lemma 2.4 and Corollary 2.8), the rates under a Hölderian error bound
+(Lemma 2.9 and Theorem 2.10) and the regret of follow the leader (Lemma 3.2 and Theorem 3.1);
+numbers refer to the arXiv version.
 :::
 
 The Frank–Wolfe algorithm converges at the rate $O(1/t)$ in general, linearly over polytopes with
@@ -128,6 +129,60 @@ With Lemma 2.9, the short step makes progress
 $h_t \min\{1/2, (\alpha/\mu)^{2/q} h_t^{1-2\theta/q}/(2L)\}$, and the contraction lemma of the
 basics entry (Lemma 2.21) turns this recursion into the rate.
 
+## Online linear optimization
+
+In online linear optimization, a learner picks $x_t \in \mathcal{C}$ and then observes a linear loss
+$c_t$; follow the leader picks a minimizer of $c_1 + \dots + c_{t-1}$ over $\mathcal{C}$. Its regret
+can be linear in general, but uniform convexity makes the leader stable.
+
+```{prf:lemma} Stability of linear maximizers
+:label: lem-frank-wolfe-uniformly-convex-sets-stability
+:enumerator: 3.2
+
+Let $\mathcal{C}$ be $(\alpha, q)$-uniformly convex with $\alpha > 0$ and $q \ge 2$, let
+$\phi_1, \phi_2$ be linear functionals, not both zero, and let $v_i \in \mathcal{C}$ maximize
+$\phi_i$ over $\mathcal{C}$. Then
+
+$$
+\langle \phi_1, v_1 - v_2 \rangle \le \left(\frac{1}{\alpha}\right)^{1/(q-1)}
+\frac{\|\phi_1 - \phi_2\|^{1 + 1/(q-1)}}{\max\{\|\phi_1\|, \|\phi_2\|\}^{1/(q-1)}}.
+$$
+```
+
+The scaling inequality at $v_1$ and at $v_2$ gives
+
+$$
+\alpha \max\{\|\phi_1\|, \|\phi_2\|\}\,\|v_1 - v_2\|^q
+\le \langle \phi_1 - \phi_2, v_1 - v_2 \rangle \le \|\phi_1 - \phi_2\|\,\|v_1 - v_2\|,
+$$
+
+which bounds $\|v_1 - v_2\|$.
+
+```{prf:definition} Follow the leader
+:label: def-frank-wolfe-uniformly-convex-sets-ftl
+:nonumber:
+
+For losses $c_1, c_2, \dots$, follow the leader picks, for $t \ge 1$, some $x_t \in \mathcal{C}$
+minimizing $c_1 + \dots + c_{t-1}$ over $\mathcal{C}$.
+```
+
+```{prf:theorem} Regret of follow the leader
+:label: thm-frank-wolfe-uniformly-convex-sets-ftl
+:enumerator: 3.1
+
+Let $\mathcal{C}$ be $(\alpha, q)$-uniformly convex with $\alpha > 0$ and $q \ge 2$, let
+$\|c_t\| \le M$, and let the averages $(c_1 + \dots + c_t)/t$ have norm at least $L_T > 0$ for
+$1 \le t \le T$. The regret $\sum_{t \le T} \langle c_t, x_t - u \rangle$ of follow the leader
+against every $u \in \mathcal{C}$ is at most
+$2M(2M/(\alpha L_T))^{1/(q-1)} \frac{q-1}{q-2} T^{1 - 1/(q-1)}$ for $q > 2$, and
+$\frac{4M^2}{\alpha L_T}(1 + \log T)$ for $q = 2$.
+```
+
+The regret equals $\sum_{t \le T} t\,\langle \nabla F_t, x_t - x_{t+1} \rangle$ for the averages
+$\nabla F_t$; consecutive averages differ by at most $2M/t$, so Lemma 3.2 bounds each term by
+$2M(2M/(\alpha L_T))^{1/(q-1)} t^{-1/(q-1)}$, and the sum of $t^{-1/(q-1)}$ is bounded by an
+integral.
+
 :::{note}
 **Differences from the paper.**
 - The statements hold in real normed spaces; the paper works in $\mathbb{R}^d$.
@@ -139,14 +194,18 @@ basics entry (Lemma 2.21) turns this recursion into the rate.
   the set of minimizers.
 - Theorem 2.10 is stated with the constants of the contraction lemma of the basics entry instead of
   Lemma A.1, and assumes $D > 0$.
+- Lemma 3.2 is proved from the scaling inequality at both maximizers, without the limits
+  $\gamma \to 0, 1$ of the paper's argument, and only needs one of the functionals to be nonzero. In
+  Theorem 3.1 the regret is against every comparator in $\mathcal{C}$, and the sum of $t^{-1/(q-1)}$
+  is bounded by $\frac{q-1}{q-2}T^{1-1/(q-1)}$ through the integral from $1$.
 :::
 
 ## Coverage
 
-This entry covers Lemmas 2.4 and 2.9, Corollary 2.8 and Theorem 2.10; Lemma 2.1 and Theorem 2.2 are
-Proposition 2.19 and Theorem 2.20 of the basics entry. Not covered yet are the rates under the local
-scaling inequality (Lemma 2.7 and Theorem 2.5), online learning with linear oracles (Section 3), the
-examples of uniformly convex sets (Section 4 and Appendix D) and the experiments.
+This entry covers Lemmas 2.4, 2.9 and 3.2, Corollary 2.8 and Theorems 2.10 and 3.1; Lemma 2.1 and
+Theorem 2.2 are Proposition 2.19 and Theorem 2.20 of the basics entry. Not covered yet are the rates
+under the local scaling inequality (Lemma 2.7 and Theorem 2.5), the examples of uniformly convex
+sets (Section 4 and Appendix D) and the experiments.
 
 
 ## The formal statements at a glance
