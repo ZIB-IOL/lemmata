@@ -5,6 +5,7 @@ public import Lemmata.FWProduct.Width
 public import Lemmata.FWProduct.Upper
 public import Lemmata.FWProduct.Facet
 public import Lemmata.FWProduct.Relint
+public import Lemmata.FWProduct.KFold
 
 @[expose] public section
 
@@ -37,6 +38,10 @@ theorem product_width_upper : ProductWidthUpperBound := Proof.product_width_uppe
 
 /-- Theorem 4.5: the pyramidal width of a product of two polytopes is `√(δ₁² δ₂²/(δ₁² + δ₂²))`. -/
 theorem product_width_eq : ProductWidthEq := Proof.product_width_eq
+
+/-- Corollary A.3, with the exact value: the pyramidal width of a product of `k` polytopes is
+`(∑ δ_i^{-2})^{-1/2}`, hence at least `min_i δ_i/√k`. -/
+theorem product_width_many : ProductWidthMany := Proof.product_width_many
 
 /-- Proposition 4.8 for two factors: away-step Frank–Wolfe over the product converges linearly
 under quadratic growth, at a rate governed by `α² = ŵ₁² ŵ₂²/(ŵ₁² + ŵ₂²)`. -/

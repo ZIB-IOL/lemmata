@@ -159,6 +159,33 @@ $\operatorname{conv}(\mathcal{V}_1) \times \operatorname{conv}(\mathcal{V}_2)$ i
 $\sqrt{\delta_1^2 \delta_2^2/(\delta_1^2 + \delta_2^2)}$.
 ```
 
+In reciprocal form, $\delta^{-2} = \delta_1^{-2} + \delta_2^{-2}$, so the formula iterates to
+products of any number of polytopes. The Euclidean product of $k + 1$ copies of a space is isometric
+to the product of one copy with the product of $k$ copies, and the pyramidal width is invariant
+under linear isometries.
+
+```{prf:definition} The product of $k$ polytopes
+:label: cor-frank-wolfe-product-polytopes-many-vertices
+:nonumber:
+
+For finite sets $\mathcal{V}_1, \dots, \mathcal{V}_k$ in a space $E$, the product polytope is the
+convex hull of $\mathcal{V}_1 \times \dots \times \mathcal{V}_k$ in the Euclidean product of $k$
+copies of $E$.
+```
+
+```{prf:corollary} Products of $k$ polytopes
+:label: cor-frank-wolfe-product-polytopes-many
+:enumerator: A.3
+
+Let $\mathcal{V}_1, \dots, \mathcal{V}_k$, $k \ge 1$, be finite sets with at least two points each
+in a finite-dimensional real inner product space, with pyramidal widths $\delta_i$. The pyramidal
+width of their product is
+
+$$
+\delta = \Big(\sum_{i=1}^k \delta_i^{-2}\Big)^{-1/2} \ge \frac{\min_i \delta_i}{\sqrt{k}}.
+$$
+```
+
 ## Linear convergence
 
 The pyramidal width bounds the progress of away-step Frank–Wolfe. The away-step entry shows that the
@@ -286,14 +313,20 @@ term is nondecreasing in $a$ and in $b$.
 - Lemma 4.3 does not assume that the polytope is full-dimensional, and the relative interior is
   expressed by minimal faces: the point lies in the face, and its minimal face is the face itself.
   The proof avoids facets, as explained above.
+- Corollary A.3 is stated with the exact value of the pyramidal width, which the exact two-factor
+  formula gives by induction. Its consequence $\delta \ge \min_i \delta_i/\sqrt{k}$ improves the
+  paper's bound $\min_i \delta_i/\sqrt{2}^{\lceil \log_2(k+1) \rceil}$, which the paper derives by
+  splitting the product in halves and using only the lower bound
+  $\min\{\delta_1, \delta_2\}/\sqrt{2}$ of Lemma A.2. The factors are copies of one space, as in the
+  paper.
 :::
 
 ## Coverage
 
 This entry covers Lemma 4.3, Corollary 4.4, Theorem 4.5 with both bounds and the equality,
-Proposition 4.7, Proposition 4.8 for two factors, Proposition 5.1 and Lemma A.2. Not covered are the
-products of $k$ polytopes (Corollary A.3), the rate via the vertex-facet distance (Proposition 4.9),
-which depends on an unspecified procedure of the algorithm, and the experiments.
+Proposition 4.7, Proposition 4.8 for two factors, Proposition 5.1 and Lemma A.2. It also covers
+Corollary A.3, with the exact value. Not covered are the rate via the vertex-facet distance
+(Proposition 4.9), which depends on an unspecified procedure of the algorithm, and the experiments.
 
 ## The formal statements at a glance
 

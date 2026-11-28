@@ -6,8 +6,8 @@ cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2505.11259"
 note: >-
-  Formalizes Lemma 4.3, Corollary 4.4, Theorem 4.5, Propositions 4.7, 4.8 and 5.1, and Lemma A.2
-  of @iommazzo2025linear.
+  Formalizes Lemma 4.3, Corollary 4.4, Theorem 4.5, Propositions 4.7, 4.8 and 5.1, Lemma A.2
+  and Corollary A.3 of @iommazzo2025linear.
 abstract: >-
   Linear convergence of Frank–Wolfe algorithms over products of polytopes, from the conditioning
   of the factors. The pyramidal width of a polytope equals its affine variant, and the pyramidal
@@ -95,3 +95,11 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-product-polytopes-product-width-eq
+  - name: Lemmata.FWProduct.piVertices
+    kind: definition
+    page: index.md
+    label: cor-frank-wolfe-product-polytopes-many-vertices
+  - name: Lemmata.FWProduct.product_width_many
+    kind: theorem
+    page: index.md
+    label: cor-frank-wolfe-product-polytopes-many
