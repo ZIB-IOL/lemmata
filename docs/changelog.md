@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-28
 
+- **Updated entry:** [Oracle complexity of nonsmooth convex optimization via information theory](nonsmooth-oracle-complexity/index.md), adding the lower bound over the box (Section IV.B) and the locality of the oracles; the one-dimensional oracle now answers a one-sided derivative.
 - **Updated entry:** [Oracle complexity of nonsmooth convex optimization via information theory](nonsmooth-oracle-complexity/index.md), adding the one-dimensional lower bound for nonsmooth convex optimization (Section IV.A), with a correction to Lemma IV.3.
 - **Updated entry:** [Restarting Frank–Wolfe under Hölderian error bounds](frank-wolfe-restarting/index.md), adding fractional Frank–Wolfe with interior minimizers (Section 7) and the appendices, with a correction to Lemma B.1.
 - **Updated entry:** [Restarting Frank–Wolfe under Hölderian error bounds](frank-wolfe-restarting/index.md), adding the analysis under Hölder smoothness (Section 6) and the robustness of the schedule parameter (Proposition 5.3).

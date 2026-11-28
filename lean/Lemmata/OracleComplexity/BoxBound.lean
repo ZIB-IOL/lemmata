@@ -86,10 +86,6 @@ theorem path_of_near {S : Fin M → Bool} {x : ℝ} (hx : |x - boxCenter S M| < 
   intro i
   exact (key M le_rfl i i.2).symm
 
-theorem piece_le_fn (S : Fin M → Bool) {j : ℕ} (hj : j ≤ M) (y : ℝ) :
-    boxPiece S j y ≤ boxFn S y :=
-  Finset.le_sup' (fun j => boxPiece S j y) (Finset.mem_range.mpr (Nat.lt_succ_of_le hj))
-
 theorem box_min (S : Fin M → Bool) (y : ℝ) : boxLevel M - (1 / 8) ^ M ≤ boxFn S y := by
   have h := piece_le_fn S le_rfl y
   have hp : boxPiece S M y = boxLevel M - (1 / 8) ^ M + (1 / 2) ^ M * |y - boxCenter S M| := rfl
@@ -155,17 +151,197 @@ theorem outside_of_deviate {T : Fin M → Bool} {x : ℝ} {k : ℕ} (hk : k < M)
     rw [abs_of_nonpos (by linarith)]
     linarith
 
-/-- Beyond the first deviation, the oracle answer is fixed by the first `k + 1` bits. -/
-theorem boxOracle_of_deviate {T : Fin M → Bool} {x : ℝ} {k : ℕ} (hk : k < M)
+/-- Beyond the first deviation at bit `k`: the deeper pieces lie below the piece of depth `k + 1`;
+if the string leaves the path to the left they lie strictly below, and if it leaves to the right
+their centers lie to the right of `x`. -/
+theorem deep_facts {T : Fin M → Bool} {x : ℝ} {k : ℕ} (hk : k < M)
     (hpre : ∀ i : Fin M, (i : ℕ) < k → T i = pathBit x i) (hdev : T ⟨k, hk⟩ ≠ pathBit x k) :
-    boxOracle T x = boxBest T x (k + 1) := by
+    ∀ j, k + 1 < j → j ≤ M → boxPiece T j x ≤ boxPiece T (k + 1) x ∧
+      ((pathBit x k = true ∧ boxPiece T j x < boxPiece T (k + 1) x) ∨
+        (pathBit x k = false ∧ x < boxCenter T j ∧ x < boxCenter T (k + 1))) := by
+  intro j hj hjM
   have hout := outside_of_deviate hk hpre hdev
-  have hst := boxBest_stable T x (k := k + 1) (fun l hl hlM => by
-    obtain ⟨h1, -⟩ := piece_chain T hout (l - (k + 1)) (by omega)
-    rw [show k + 1 + (l - (k + 1)) = l by omega] at h1
-    exact h1.trans (boxBest_ge T x (k + 1) le_rfl)) (M - (k + 1)) (by omega)
-  rw [show k + 1 + (M - (k + 1)) = M by omega] at hst
-  exact hst
+  have hle : boxPiece T j x ≤ boxPiece T (k + 1) x := by
+    have := (piece_chain T hout (j - (k + 1)) (by omega)).1
+    rwa [show k + 1 + (j - (k + 1)) = j by omega] at this
+  refine ⟨hle, ?_⟩
+  have hc := center_of_path k hk.le hpre
+  have hsucc := boxCenter_succ T hk
+  have hq : (0 : ℝ) < (1 / 4) ^ (k + 1) := by positivity
+  cases hp : pathBit x k
+  · -- the string leaves to the right
+    right
+    refine ⟨rfl, ?_, ?_⟩
+    · have hT : T ⟨k, hk⟩ = true := by
+        cases hT : T ⟨k, hk⟩
+        · exact absurd (hT.trans hp.symm) hdev
+        · rfl
+      have hxle : x ≤ pathCenter x k := by
+        unfold pathBit at hp
+        simpa using hp
+      have hdiff := boxCenter_diff T (k + 1) (j - (k + 1)) (by omega)
+      rw [show k + 1 + (j - (k + 1)) = j by omega] at hdiff
+      rw [hsucc, hT, hc] at hdiff
+      simp only [bitSign, ite_true] at hdiff
+      have h4 : (1 / 4 : ℝ) ^ j ≤ (1 / 4) ^ (k + 1) :=
+        pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)
+      have h5 := (abs_le.mp hdiff).1
+      have h6 : (0 : ℝ) ≤ (1 / 4) ^ j := by positivity
+      linarith
+    · have hT : T ⟨k, hk⟩ = true := by
+        cases hT : T ⟨k, hk⟩
+        · exact absurd (hT.trans hp.symm) hdev
+        · rfl
+      have hxle : x ≤ pathCenter x k := by
+        unfold pathBit at hp
+        simpa using hp
+      rw [hsucc, hT, hc]
+      simp only [bitSign, ite_true]
+      linarith
+  · -- the string leaves to the left
+    left
+    refine ⟨rfl, ?_⟩
+    have hT : T ⟨k, hk⟩ = false := by
+      cases hT : T ⟨k, hk⟩
+      · rfl
+      · exact absurd (hT.trans hp.symm) hdev
+    have hlt : pathCenter x k < x := by
+      unfold pathBit at hp
+      simpa using hp
+    -- strictly outside the interval of depth `k + 1`
+    have hstrict : (1 / 4) ^ (k + 1) < |x - boxCenter T (k + 1)| := by
+      rw [hsucc, hT, hc]
+      simp only [bitSign, Bool.false_eq_true, ite_false]
+      rw [abs_of_pos (by linarith)]
+      linarith
+    have hk2 : k + 1 < M := by omega
+    have h1 := piece_step_strict T hk2 hstrict
+    have hout2 := (piece_step T hk2 hstrict.le).2
+    have h2 := (piece_chain T hout2 (j - (k + 2)) (by omega)).1
+    rw [show k + 1 + 1 + (j - (k + 2)) = j by omega] at h2
+    linarith
+
+open Classical in
+/-- Two strings that leave the greedy path at bit `k` and agree up to bit `k` get the same oracle
+answer at `x`. -/
+theorem oracle_congr_of_deviate {T T' : Fin M → Bool} {x : ℝ} {k : ℕ} (hk : k < M)
+    (hpre : ∀ i : Fin M, (i : ℕ) < k → T i = pathBit x i) (hdev : T ⟨k, hk⟩ ≠ pathBit x k)
+    (hpre' : ∀ i : Fin M, (i : ℕ) < k → T' i = pathBit x i) (hdev' : T' ⟨k, hk⟩ ≠ pathBit x k)
+    (hagree : ∀ i : Fin M, (i : ℕ) < k + 1 → T i = T' i) :
+    boxOracle T x = boxOracle T' x := by
+  have hk2 : k + 1 ≤ M := hk
+  have hsub : Finset.range (k + 2) ⊆ Finset.range (M + 1) := fun j hj =>
+    Finset.mem_range.mpr (by have := Finset.mem_range.mp hj; omega)
+  have hne : (Finset.range (k + 2)).Nonempty := Finset.nonempty_range_add_one
+  -- the value is the maximum of the pieces up to depth `k + 1`
+  have hval : ∀ U : Fin M → Bool, (∀ i : Fin M, (i : ℕ) < k → U i = pathBit x i) →
+      U ⟨k, hk⟩ ≠ pathBit x k →
+      boxFn U x = (Finset.range (k + 2)).sup' hne (fun j => boxPiece U j x) := by
+    intro U hU hU'
+    apply le_antisymm
+    · apply Finset.sup'_le
+      intro j hj
+      have hjM := Nat.lt_succ_iff.mp (Finset.mem_range.mp hj)
+      by_cases hjk : j ≤ k + 1
+      · exact Finset.le_sup' (fun j => boxPiece U j x) (Finset.mem_range.mpr (by omega))
+      · exact ((deep_facts hk hU hU' j (by omega) hjM).1).trans
+          (Finset.le_sup' (fun j => boxPiece U j x) (Finset.mem_range.mpr (by omega)))
+    · exact Finset.sup'_mono _ hsub hne
+  have hpiece : ∀ j < k + 2, boxPiece T j x = boxPiece T' j x ∧
+      pieceLeft T j x = pieceLeft T' j x ∧ pieceRight T j x = pieceRight T' j x :=
+    fun j hj => boxPiece_congr (fun i hi => hagree i (by omega)) x
+  have hfn : boxFn T x = boxFn T' x := by
+    rw [hval T hpre hdev, hval T' hpre' hdev']
+    exact Finset.sup'_congr hne rfl (fun j hj => (hpiece j (Finset.mem_range.mp hj)).1)
+  -- the left derivative is attained up to depth `k + 1`
+  have hleft : ∀ U : Fin M → Bool, (∀ i : Fin M, (i : ℕ) < k → U i = pathBit x i) →
+      U ⟨k, hk⟩ ≠ pathBit x k → boxLeft U x = (Finset.range (k + 2)).inf' hne
+        (fun j => if boxPiece U j x = boxFn U x then pieceLeft U j x else 1) := by
+    intro U hU hU'
+    apply le_antisymm
+    · exact Finset.inf'_mono _ hsub hne
+    · apply Finset.le_inf'
+      intro j hj
+      have hjM := Nat.lt_succ_iff.mp (Finset.mem_range.mp hj)
+      by_cases hjk : j ≤ k + 1
+      · exact Finset.inf'_le _ (Finset.mem_range.mpr (by omega))
+      · obtain ⟨hle, hcase⟩ := deep_facts hk hU hU' j (by omega) hjM
+        by_cases hact : boxPiece U j x = boxFn U x
+        · rcases hcase with ⟨-, hlt⟩ | ⟨-, hxj, hxk⟩
+          · have := piece_le_fn U hk2 x
+            linarith
+          · have hact' : boxPiece U (k + 1) x = boxFn U x :=
+              le_antisymm (piece_le_fn U hk2 x) (hact ▸ hle)
+            have h1 := Finset.inf'_le (fun j => if boxPiece U j x = boxFn U x then
+              pieceLeft U j x else 1) (Finset.mem_range.mpr (by omega : k + 1 < k + 2))
+            rw [ite_eq_left hact']  at h1
+            rw [ite_eq_left hact]
+            refine h1.trans ?_
+            unfold pieceLeft
+            rw [ite_eq_right (not_lt.mpr hxk.le), ite_eq_right (not_lt.mpr hxj.le)]
+            have : (1 / 2 : ℝ) ^ j ≤ (1 / 2) ^ (k + 1) :=
+              pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)
+            linarith
+        · rw [ite_eq_right hact]
+          refine (Finset.inf'_le _ (Finset.mem_range.mpr (by omega : 0 < k + 2))).trans ?_
+          split_ifs
+          · exact pieceLeft_le_one U 0 x
+          · exact le_rfl
+  have hL : boxLeft T x = boxLeft T' x := by
+    rw [hleft T hpre hdev, hleft T' hpre' hdev']
+    refine Finset.inf'_congr hne rfl (fun j hj => ?_)
+    obtain ⟨h1, h2, -⟩ := hpiece j (Finset.mem_range.mp hj)
+    rw [h1, h2, hfn]
+  -- the right derivative, when positive, is attained up to depth `k + 1`
+  have hright : ∀ U : Fin M → Bool, (∀ i : Fin M, (i : ℕ) < k → U i = pathBit x i) →
+      U ⟨k, hk⟩ ≠ pathBit x k →
+      let R := (Finset.range (k + 2)).sup' hne
+        (fun j => if boxPiece U j x = boxFn U x then pieceRight U j x else -1)
+      (0 < boxRight U x ↔ 0 < R) ∧ (0 < R → boxRight U x = R) := by
+    intro U hU hU' R
+    have hRle : R ≤ boxRight U x := Finset.sup'_mono _ hsub hne
+    have hpos : 0 < boxRight U x → boxRight U x ≤ R := by
+      intro h0
+      obtain ⟨j, hj, hjeq⟩ := Finset.exists_mem_eq_sup' Finset.nonempty_range_add_one
+        (fun j => if boxPiece U j x = boxFn U x then pieceRight U j x else -1)
+      have hjM := Nat.lt_succ_iff.mp (Finset.mem_range.mp hj)
+      have hterm : 0 < (if boxPiece U j x = boxFn U x then pieceRight U j x else -1) := by
+        rw [← hjeq]; exact h0
+      by_cases hjk : j ≤ k + 1
+      · unfold boxRight
+        rw [hjeq]
+        exact Finset.le_sup' (fun j => if boxPiece U j x = boxFn U x then pieceRight U j x
+          else -1) (Finset.mem_range.mpr (by omega))
+      · exfalso
+        obtain ⟨-, hcase⟩ := deep_facts hk hU hU' j (by omega) hjM
+        split_ifs at hterm with hact
+        · rcases hcase with ⟨-, hlt⟩ | ⟨-, hxj, -⟩
+          · have := piece_le_fn U hk2 x
+            linarith
+          · unfold pieceRight at hterm
+            rw [ite_eq_left hxj] at hterm
+            have : (0 : ℝ) < (1 / 2) ^ j := by positivity
+            linarith
+        · linarith
+    refine ⟨⟨fun h0 => lt_of_lt_of_le h0 (hpos h0), fun h0 => lt_of_lt_of_le h0 hRle⟩,
+      fun h0 => le_antisymm (hpos (lt_of_lt_of_le h0 hRle)) hRle⟩
+  obtain ⟨hiff, heq⟩ := hright T hpre hdev
+  obtain ⟨hiff', heq'⟩ := hright T' hpre' hdev'
+  have hR : (Finset.range (k + 2)).sup' hne
+      (fun j => if boxPiece T j x = boxFn T x then pieceRight T j x else -1) =
+      (Finset.range (k + 2)).sup' hne
+        (fun j => if boxPiece T' j x = boxFn T' x then pieceRight T' j x else -1) := by
+    refine Finset.sup'_congr hne rfl (fun j hj => ?_)
+    obtain ⟨h1, -, h3⟩ := hpiece j (Finset.mem_range.mp hj)
+    rw [h1, h3, hfn]
+  unfold boxOracle
+  rw [hfn]
+  congr 1
+  by_cases h0 : 0 < boxRight T x
+  · have h0' : 0 < boxRight T' x := hiff'.mpr (hR ▸ hiff.mp h0)
+    rw [ite_eq_left h0, ite_eq_left h0', heq (hiff.mp h0), heq' (hiff'.mp h0'), hR]
+  · have h0' : ¬ 0 < boxRight T' x := fun h => h0 (hiff.mpr (hR ▸ hiff'.mp h))
+    rw [ite_eq_right h0, ite_eq_right h0', hL]
 
 /-- The query of the emulation: the bits of the greedy path. -/
 noncomputable def boxQuery (M : ℕ) (x : ℝ) : List (Fin M × Bool) :=
@@ -228,8 +404,7 @@ theorem box_emul (S : Fin M → Bool) (x : ℝ) :
         have hF' : F ⟨k, hk⟩ = !pathBit x k := by simp [hF, boxFill]
         rw [hF']
         cases hS : S ⟨k, hk⟩ <;> cases hp : pathBit x k <;> simp_all
-    rw [boxOracle_of_deviate hk hpre hdev, boxOracle_of_deviate hk hFpre hFdev,
-      boxBest_congr hagree x (k + 1) le_rfl]
+    exact oracle_congr_of_deviate hk hpre hdev hFpre hFdev hagree
 
 /-- Mapping the outputs of a query tree. -/
 def mapOut {Q A X Y : Type} (g : X → Y) : QueryTree Q A X → QueryTree Q A Y
