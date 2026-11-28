@@ -362,6 +362,81 @@ $(\rho/\mu, \theta)$-growth property.
 This is the gap bound behind Theorem 3.6 of [Acceleration of Frank–Wolfe algorithms with open-loop
 step-sizes](../frank-wolfe-open-loop-acceleration/index.md), and the formal proof reuses it.
 
+## Minimizers in the relative interior of a face
+
+On a polytope, open-loop step sizes accelerate even when the minimizer lies in the relative interior
+of a proper face $\mathcal{C}^*$, a setting where line search and short steps do not beat $O(1/t)$
+by Wolfe's lower bound. Once the atoms lie in $\mathcal{C}^*$, the iterates approach the face
+quickly.
+
+```{prf:lemma} Distance to the active set
+:label: lem-frank-wolfe-affine-invariant-open-loop-distance
+:enumerator: 5.6
+
+Let $K$ be convex, and let a Frank–Wolfe run with $\eta_t = \ell/(t + \ell)$, $\ell \ge 2$, have its
+atoms in $K$ from $t = Q$ on. Then
+$\operatorname{dist}(x_t, K) \le (\eta_t/\eta_Q)^2 \operatorname{dist}(x_Q, K)$ for all $t \ge Q$.
+```
+
+Each step moves toward a point of $K$ and so contracts the distance by $1 - \eta_t$, and
+$(1 - \eta_t)\eta_t^2 \le \eta_{t+1}^2$ for $\ell \ge 2$.
+
+```{prf:proposition} Relaxed gaps growth on the optimal face
+:label: prop-frank-wolfe-affine-invariant-open-loop-face
+:enumerator: 5.4
+
+Let $\mathcal{C}$ be compact and convex with diameter $D$, and let $f$ be convex and $L$-smooth with
+an $L$-Lipschitz gradient, $\|\nabla f\| \le B$ on $\mathcal{C}$ and a $(\mu, \theta)$-Hölderian
+error bound with $\theta \in [0, 1/2]$. Let $\mathcal{C}^* \subseteq \mathcal{C}$ be compact and
+convex, contain the minimizers, and contain every point of $\operatorname{aff}(\mathcal{C}^*)$
+within distance $\rho > 0$ of a minimizer. If a Frank–Wolfe run with $\eta_t = \ell/(t + \ell)$,
+$\ell \ge 2$, has its atoms in $\mathcal{C}^*$ from $t = Q$ on, then, with
+$m = \rho/(2^{2-\theta}\mu)$ and $M = \max\{(m/\eta_Q)(2DB)^{1-\theta}, (LD + B)D/\eta_Q, LD^2\}$,
+the pair $(\mathcal{C}, f)$ has the strong $(M, 0)$-growth property and the run has the relaxed gaps
+$(m, \theta)$-growth property with $\delta_t = (\eta_t M/m)^{1/(1-\theta)}$ from $Q$ on.
+```
+
+The gap at $x_t$ is compared with the gap of $\mathcal{C}^*$ at a nearest point $\bar{x}_t$ of
+$\mathcal{C}^*$, which Proposition 5.3 bounds below by
+$(\rho/\mu)(f(\bar{x}_t) - f^\star)^{1-\theta}$. The comparison costs $(LD + B)\|x_t - \bar{x}_t\|$,
+and $f(\bar{x}_t) \ge f(x_t) - B\|x_t - \bar{x}_t\|$; by Lemma 5.6 both losses are small once
+$f(x_t) - f^\star \ge \delta_t$.
+
+```{prf:corollary} Accelerated rate on the optimal face
+:label: cor-frank-wolfe-affine-invariant-open-loop-face
+:enumerator: 5.5
+
+Under the hypotheses of Proposition 5.4 with $L, D > 0$ and $\theta \in (0, 1/2]$, let
+$S = \max\{1, \lceil 2^{1/\theta}\ell M/m^{1/\theta} - \ell\rceil, Q\}$. For all $t \ge S$,
+
+$$
+f(x_t) - f^\star \le \max\left\{(f(x_S) - f^\star)\left(\frac{\eta_{t-1}}{\eta_{S-1}}\right)^\ell,
+\eta_{t-1}^{\min\{\ell, 1/(1-\theta), 2\}}\left(\left(\frac{M}{m}\right)^{1/(1-\theta)} +
+\frac{M}{2}\right)\right\},
+$$
+
+which is $O(t^{-1/(1-\theta)})$.
+```
+
+On a polytope, strict complementarity makes the atoms lie in the optimal face eventually.
+
+```{prf:lemma} Active-set identification
+:label: lem-frank-wolfe-affine-invariant-open-loop-active
+:enumerator: 5.7
+
+Let $\mathcal{C} = \operatorname{conv}(\mathcal{V})$ with diameter $D > 0$ and
+$F \subseteq \mathcal{V}$, and let $f$ be convex and $L$-smooth with an $L$-Lipschitz gradient,
+$L > 0$, with unique minimizer $x^\star$ and a $(\mu, \theta)$-Hölderian error bound,
+$\theta \in (0, 1/2]$. If $\langle \nabla f(x^\star), p - x^\star \rangle \ge \kappa > 0$ for
+$p \in \mathcal{V} \setminus F$ and $\langle \nabla f(x^\star), p - x^\star \rangle = 0$ for
+$p \in F$, every Frank–Wolfe run with $\eta_t = \ell/(t + \ell)$, $\ell \ge 2$, has its atoms in
+$\operatorname{conv}(F)$ for $t \ge \lceil \ell L D^2 (2\mu L D/\kappa)^{1/\theta}\rceil$.
+```
+
+The baseline rate $f(x_t) - f^\star \le \eta_t L D^2$ (Theorem 3.1 with Proposition 2.8) and the
+error bound bring $\nabla f(x_t)$ close to $\nabla f(x^\star)$, and strict complementarity then
+separates the vertices of $F$ from the others.
+
 :::{note}
 **Differences from the paper.**
 - The statements hold in real normed spaces, for every Frank–Wolfe run, with the Frank–Wolfe gaps of
@@ -383,15 +458,22 @@ step-sizes](../frank-wolfe-open-loop-acceleration/index.md), and the formal proo
   Proposition 3.6 any $p > 0$ is allowed, and in Proposition 5.3 the radius $\rho$ is any radius for
   which the balls of $\operatorname{aff}(\mathcal{C})$ around the minimizers lie in $\mathcal{C}$,
   rather than the distance from the minimizers to the relative boundary.
+- In Section 5.2 the statements hold in real normed spaces, with the diameter $D$ in place of the
+  bound $2$ on the $\mathcal{C}$-norm diameter; for $D = 2$ the constants are the paper's.
+  Proposition 5.4 and Corollary 5.5 hold for every compact convex
+  $\mathcal{C}^* \subseteq \mathcal{C}$ that contains the minimizers and has the radius-$\rho$
+  property, not only for the optimal face of a polytope, and need no uniqueness of the minimizer.
+  $B$ is any bound on the norm of the gradient over $\mathcal{C}$, which is at least the paper's
+  constant. Lemma 5.6 keeps $\operatorname{dist}(x_Q, K)$ instead of bounding it by $2$.
 :::
 
 ## Coverage
 
-This entry covers the measures of optimality, the convergence rates of Sections 3 to 5 and the
-sufficient conditions of Propositions 2.8, 3.6, 4.3 and 5.3. Not covered are the polytope results of
-Section 5 (Proposition 5.4, Corollary 5.5 and Lemmas 5.6 and 5.7, which give the relaxed gaps growth
-property when the minimizer lies in the relative interior of a face), Lemma 2.10 and the examples,
-which concern $\ell_p$-balls, Hanner's inequality (Proposition 2.6) and the numerical experiments.
+This entry covers the measures of optimality, the convergence rates of Sections 3 to 5, the
+sufficient conditions of Propositions 2.8, 3.6, 4.3 and 5.3, and the results for minimizers in the
+relative interior of a face of a polytope (Proposition 5.4, Corollary 5.5 and Lemmas 5.6 and 5.7).
+Not covered are Lemma 2.10 and the examples, which concern $\ell_p$-balls, Hanner's inequality
+(Proposition 2.6) and the numerical experiments.
 
 ## The formal statements at a glance
 

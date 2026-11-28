@@ -350,6 +350,7 @@ public import Lemmata.EnergyShellCrossings.Main
 public import Lemmata.EnergyShellCrossings.Statement
 public import Lemmata.FWAffineOpenLoop.Gaps
 public import Lemmata.FWAffineOpenLoop.Main
+public import Lemmata.FWAffineOpenLoop.Polytope
 public import Lemmata.FWAffineOpenLoop.Products
 public import Lemmata.FWAffineOpenLoop.Statement
 public import Lemmata.FWAffineOpenLoop.Strong

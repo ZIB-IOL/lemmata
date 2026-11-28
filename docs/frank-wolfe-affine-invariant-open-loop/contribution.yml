@@ -14,11 +14,14 @@ abstract: >-
   Frank–Wolfe gap and the best duality gap. Under the strong $(M, r)$-growth property, which bounds
   the Bregman divergence by $M\eta^2/2$ times the $r$-th power of the Frank–Wolfe gap, the best
   duality gap and the smallest Frank–Wolfe gap converge at the rate $O(1/t)$ for $r = 0$,
-  $O(t^{-\ell})$ for $r = 1$, and $O(t^{-\ell+\varepsilon} + t^{-1/(1-r)})$ for $r \in [0, 1)$. Under
-  the weaker weak growth and (relaxed) gaps growth properties, the primal gap converges at rates up
-  to $O(t^{-2})$. Smoothness, uniformly convex feasible regions, Hölderian error bounds and
-  minimizers in the relative interior imply the growth properties. The statements hold in real
-  normed spaces, for every Frank–Wolfe run.
+  $O(t^{-\ell})$ for $r = 1$, and $O(t^{-\ell+\varepsilon} + t^{-1/(1-r)})$ for $r \in [0, 1)$.
+  Under the weaker weak growth and (relaxed) gaps growth properties, the primal gap converges at
+  rates up to $O(t^{-2})$. Smoothness, uniformly convex feasible regions, Hölderian error bounds
+  and minimizers in the relative interior imply the growth properties. On a polytope with the
+  minimizer in the relative interior of a face, the iterates approach the face once its vertices
+  are the atoms, which strict complementarity guarantees, and the rate is
+  $O(t^{-1/(1-\theta)})$ under a Hölderian error bound with exponent $\theta$. The statements
+  hold in real normed spaces, for every Frank–Wolfe run.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -115,3 +118,19 @@ exports:
     kind: theorem
     page: index.md
     label: prop-frank-wolfe-affine-invariant-open-loop-interior
+  - name: Lemmata.FWAffineOpenLoop.distance_to_active_set
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-affine-invariant-open-loop-distance
+  - name: Lemmata.FWAffineOpenLoop.open_loop_active_set
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-affine-invariant-open-loop-active
+  - name: Lemmata.FWAffineOpenLoop.polytope_relaxed_gaps
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-affine-invariant-open-loop-face
+  - name: Lemmata.FWAffineOpenLoop.polytope_rate
+    kind: theorem
+    page: index.md
+    label: cor-frank-wolfe-affine-invariant-open-loop-face

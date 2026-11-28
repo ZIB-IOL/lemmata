@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **Updated entry:** [Affine-invariant accelerated rates for Frank–Wolfe with open-loop step-sizes](frank-wolfe-affine-invariant-open-loop/index.md), adding the results for minimizers in the relative interior of a face of a polytope (Proposition 5.4, Corollary 5.5 and Lemmas 5.6 and 5.7).
 - **Updated entry:** [Linear convergence of Frank–Wolfe over product polytopes](frank-wolfe-product-polytopes/index.md), adding Lemma 4.3 and Corollary 4.4, by which the pyramidal width equals its affine variant, and the exact pyramidal width of a product of two polytopes (Theorem 4.5).
 - **Updated entry:** [Frank–Wolfe with simple steps for generalized self-concordant functions](frank-wolfe-generalized-self-concordant/index.md), adding blended pairwise conditional gradients with backtracking and its linear rate over polytopes (Theorem 3.2).
 - **Updated entry:** [Frank–Wolfe with simple steps for generalized self-concordant functions](frank-wolfe-generalized-self-concordant/index.md), adding away-step Frank–Wolfe with backtracking and its linear rate over polytopes (Theorem 3.2).
