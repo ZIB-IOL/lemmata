@@ -5,6 +5,9 @@ subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2105.13913"
+note: >-
+  Formalizes Algorithm 1 and Theorems 2.4, 2.6, 2.11, 2.15 and 2.16, and Theorem 3.2 for
+  away-step Frank–Wolfe, of @carderera2021simple.
 abstract: >-
   Monotonic Frank–Wolfe with the simple step size $2/(t + 2)$ rejects a step whenever it leaves the
   domain of the objective or increases it. For generalized self-concordant objectives, which need
