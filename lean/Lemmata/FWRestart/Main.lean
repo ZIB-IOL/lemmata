@@ -1,6 +1,6 @@
 module
 
-public import Lemmata.FWRestart.Wolfe
+public import Lemmata.FWRestart.Restart
 
 @[expose] public section
 
@@ -17,6 +17,16 @@ theorem heb_strong_wolfe_bound : HEBStrongWolfeBound := Proof.heb_strong_wolfe_b
 /-- Theorem 7.3: vanilla Frank–Wolfe over strongly convex sets converges at the rate
 `O(t^{-1/(1-θ)})` under a `(θ, c)`-Hölderian error bound. -/
 theorem strongly_convex_set_rate : StronglyConvexSetRate := Proof.strongly_convex_set_rate
+
+/-- Proposition 4.1: the number of iterations of fractional away-step Frank–Wolfe. -/
+theorem fractional_complexity : FractionalComplexity := Proof.fractional_complexity
+
+/-- Proposition 4.2: the burn-in phase of scheduled restarts. -/
+theorem burn_in : BurnIn := Proof.burn_in
+
+/-- Theorem 5.1: the rate of scheduled restarts of fractional away-step Frank–Wolfe under a
+Hölderian error bound. -/
+theorem restart_rate : RestartRate := Proof.restart_rate
 -- DOCS_END_MAIN
 
 end Lemmata.FWRestart
