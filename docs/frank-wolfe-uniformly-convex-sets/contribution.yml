@@ -1,0 +1,60 @@
+schema_version: 1
+id: frank-wolfe-uniformly-convex-sets
+lean_namespace: Lemmata.FWUniformlyConvex
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "2004.11053"
+note: >-
+  Formalizes Lemmas 2.4 and 2.9, Corollary 2.8 and Theorem 2.10 of @kerdreux2020projection.
+abstract: >-
+  Over uniformly convex feasible regions, the Frank–Wolfe algorithm converges faster than at the
+  rate $O(1/t)$. The local scaling inequality
+  $\frac{\alpha}{2}\|\nabla f(x^\star)\| \|x^\star - x\|^q \le
+  \langle \nabla f(x^\star), x - x^\star \rangle$
+  at a minimizer $x^\star$ follows from local uniform convexity at $x^\star$, or from a uniformly
+  convex superset whose normal cone at $x^\star$ contains $-\nabla f(x^\star)$. Under a
+  $(\mu, \theta)$-Hölderian error bound, the scaling inequality of $(\alpha, q)$-uniformly convex
+  sets gives $(\alpha/\mu)\|x - v\|^q h^{1-\theta} \le g$ for the primal gap $h$ and the
+  Frank–Wolfe gap $g$, and Frank–Wolfe with short steps converges at the rate
+  $O(t^{-1/(1-2\theta/q)})$. The statements hold in real normed spaces.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.FWUniformlyConvex.IsLocallyUniformlyConvexAt
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-uniformly-convex-sets-local-uc
+  - name: Lemmata.FWUniformlyConvex.IsLocalScaling
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-uniformly-convex-sets-local-scaling
+  - name: Lemmata.FWUniformlyConvex.local_scaling_of_locally_uc
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-uniformly-convex-sets-local-uc
+  - name: Lemmata.FWUniformlyConvex.local_scaling_of_superset
+    kind: theorem
+    page: index.md
+    label: cor-frank-wolfe-uniformly-convex-sets-superset
+  - name: Lemmata.FWUniformlyConvex.heb_scaling
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-uniformly-convex-sets-heb-scaling
+  - name: Lemmata.FWUniformlyConvex.heb_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-uniformly-convex-sets-heb-rate
