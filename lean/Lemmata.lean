@@ -801,6 +801,11 @@ public import Lemmata.ModifiedE8Bell.VisibilityData
 public import Lemmata.ModifiedE8Bell.Witness
 public import Lemmata.OracleComplexity.Box
 public import Lemmata.OracleComplexity.BoxBound
+public import Lemmata.OracleComplexity.BoxLocal
+public import Lemmata.OracleComplexity.Cube
+public import Lemmata.OracleComplexity.CubeBound
+public import Lemmata.OracleComplexity.CubeEmul
+public import Lemmata.OracleComplexity.Deviation
 public import Lemmata.OracleComplexity.Entropy
 public import Lemmata.OracleComplexity.Main
 public import Lemmata.OracleComplexity.Statement

@@ -129,21 +129,35 @@ depths `0, …, M`. -/
 noncomputable def boxFn {M : ℕ} (S : Fin M → Bool) (x : ℝ) : ℝ :=
   (Finset.range (M + 1)).sup' Finset.nonempty_range_add_one (fun j => boxPiece S j x)
 
-/-- The slope `2^{-j} sign(x - c_j(S))` of the piece of depth `j` at `x`. -/
-noncomputable def pieceSlope {M : ℕ} (S : Fin M → Bool) (j : ℕ) (x : ℝ) : ℝ :=
-  (1 / 2) ^ j * Real.sign (x - boxCenter S j)
+/-- The left slope of the piece of depth `j` at `x`: `2^{-j}` if `x` lies to the right of its
+center, `-2^{-j}` otherwise. -/
+noncomputable def pieceLeft {M : ℕ} (S : Fin M → Bool) (j : ℕ) (x : ℝ) : ℝ :=
+  if boxCenter S j < x then (1 / 2) ^ j else -(1 / 2) ^ j
 
-/-- The maximum of the pieces of depths `0, …, j` at `x`, with the slope of the first piece that
-attains it. -/
-noncomputable def boxBest {M : ℕ} (S : Fin M → Bool) (x : ℝ) : ℕ → ℝ × ℝ
-  | 0 => (boxPiece S 0 x, pieceSlope S 0 x)
-  | j + 1 =>
-    if (boxBest S x j).1 < boxPiece S (j + 1) x then (boxPiece S (j + 1) x, pieceSlope S (j + 1) x)
-    else boxBest S x j
+/-- The right slope of the piece of depth `j` at `x`: `-2^{-j}` if `x` lies to the left of its
+center, `2^{-j}` otherwise. -/
+noncomputable def pieceRight {M : ℕ} (S : Fin M → Bool) (j : ℕ) (x : ℝ) : ℝ :=
+  if x < boxCenter S j then -(1 / 2) ^ j else (1 / 2) ^ j
 
-/-- The first-order oracle of Section IV.A: the value of the hard function and the slope of the
-first piece attaining the maximum. -/
-noncomputable def boxOracle {M : ℕ} (S : Fin M → Bool) (x : ℝ) : ℝ × ℝ := boxBest S x M
+open Classical in
+/-- The left derivative of the hard function at `x`: the smallest left slope of a piece attaining
+the maximum (the other pieces count as `1`, at least every slope). -/
+noncomputable def boxLeft {M : ℕ} (S : Fin M → Bool) (x : ℝ) : ℝ :=
+  (Finset.range (M + 1)).inf' Finset.nonempty_range_add_one
+    (fun j => if boxPiece S j x = boxFn S x then pieceLeft S j x else 1)
+
+open Classical in
+/-- The right derivative of the hard function at `x`: the largest right slope of a piece attaining
+the maximum (the other pieces count as `-1`, at most every slope). -/
+noncomputable def boxRight {M : ℕ} (S : Fin M → Bool) (x : ℝ) : ℝ :=
+  (Finset.range (M + 1)).sup' Finset.nonempty_range_add_one
+    (fun j => if boxPiece S j x = boxFn S x then pieceRight S j x else -1)
+
+/-- The first-order oracle of Section IV.A: the value of the hard function, and its right
+derivative if this is positive, otherwise its left derivative. Both are subgradients, and the
+chosen one is the slope at which the function increases on one side of `x`. -/
+noncomputable def boxOracle {M : ℕ} (S : Fin M → Bool) (x : ℝ) : ℝ × ℝ :=
+  (boxFn S x, if 0 < boxRight S x then boxRight S x else boxLeft S x)
 
 end Box
 
@@ -180,5 +194,85 @@ def BoxLowerBound : Prop :=
     let Pe := ((Finset.univ.filter (fun S : Fin M → Bool =>
       ¬ ∀ y, boxFn S (t.output (boxOracle S)) ≤ boxFn S y + ε)).card : ℝ) / 2 ^ M
     ((1 - Pe) * M - 1) / 2 ≤ (∑ S : Fin M → Bool, (t.queries (boxOracle S) : ℝ)) / 2 ^ M
+
+/-- An oracle `O` for a family of functions `F` is local if instances that agree near `x` get the
+same answer at `x`. -/
+def IsLocalOracle {ι E α : Type*} [TopologicalSpace E] (F : ι → E → ℝ) (O : ι → E → α) : Prop :=
+  ∀ i i' x, (∀ᶠ y in nhds x, F i y = F i' y) → O i x = O i' x
+
+/-- **Lemma IV.5, locality.** The oracle of the hard functions of Section IV.A is local. -/
+def BoxLocal : Prop :=
+  ∀ M : ℕ, IsLocalOracle (fun S : Fin M → Bool => boxFn S) (fun S => boxOracle S)
+
+section Cube
+
+variable {n M : ℕ} [NeZero n]
+
+/-- The hard function of Section IV.B for strings `S₁, …, Sₙ ∈ {0,1}^M`: the maximum over the
+coordinates of the one-dimensional hard functions, `f_S(x) = max_i f_{S_i}(x_i)`. -/
+noncomputable def cubeFn (S : Fin n → Fin M → Bool) (x : Fin n → ℝ) : ℝ :=
+  Finset.univ.sup' Finset.univ_nonempty (fun i => boxFn (S i) (x i))
+
+open Classical in
+/-- The least coordinate whose function attains the maximum. -/
+noncomputable def cubeCoord (S : Fin n → Fin M → Bool) (x : Fin n → ℝ) : Fin n :=
+  (Finset.univ.filter (fun i => boxFn (S i) (x i) = cubeFn S x)).min' (by
+    obtain ⟨i, -, hi⟩ := Finset.exists_mem_eq_sup' Finset.univ_nonempty
+      (fun i => boxFn (S i) (x i))
+    exact ⟨i, Finset.mem_filter.mpr ⟨Finset.mem_univ _, hi.symm⟩⟩)
+
+/-- The single-coordinate oracle of Section IV.B: the value, the least coordinate `i` attaining the
+maximum, and the slope `λ` of the oracle of that coordinate; the subgradient is `λ e_i`. -/
+noncomputable def cubeOracle (S : Fin n → Fin M → Bool) (x : Fin n → ℝ) : ℝ × Fin n × ℝ :=
+  (cubeFn S x, cubeCoord S x, (boxOracle (S (cubeCoord S x)) (x (cubeCoord S x))).2)
+
+/-- The concatenation of `S₁, …, Sₙ` into a string of length `n M`. -/
+def cubeString (S : Fin n → Fin M → Bool) : Fin (n * M) → Bool :=
+  fun p => S (finProdFinEquiv.symm p).1 (finProdFinEquiv.symm p).2
+
+end Cube
+
+/-- The hard functions of Section IV.B are convex and `1`-Lipschitz for the maximum norm, and
+`cubeOracle` is a first-order oracle whose subgradient lies on a coordinate axis. -/
+def CubeOracleValid : Prop :=
+  ∀ (n M : ℕ) [NeZero n] (S : Fin n → Fin M → Bool), ConvexOn ℝ Set.univ (cubeFn S) ∧
+    LipschitzWith 1 (cubeFn S) ∧ ∀ x, (cubeOracle S x).1 = cubeFn S x ∧
+      ∀ y, cubeFn S x + (cubeOracle S x).2.2 * (y (cubeOracle S x).2.1 - x (cubeOracle S x).2.1) ≤
+        cubeFn S y
+
+/-- **Lemma IV.6** (packing). The minimum of `cubeFn S` is `b_M - 8^{-M}`, attained at the point
+with coordinates `c_M(S_i)`, and for `ε < 8^{-M}` a point that is `ε`-optimal for `cubeFn S` and
+`cubeFn S'` has `S = S'`. -/
+def CubePacking : Prop :=
+  ∀ (n M : ℕ) [NeZero n] (S : Fin n → Fin M → Bool),
+    (∀ y, boxLevel M - (1 / 8) ^ M ≤ cubeFn S y) ∧
+    cubeFn S (fun i => boxCenter (S i) M) = boxLevel M - (1 / 8) ^ M ∧
+    ∀ (S' : Fin n → Fin M → Bool) (ε : ℝ) (x : Fin n → ℝ), ε < (1 / 8) ^ M →
+      (∀ y, cubeFn S x ≤ cubeFn S y + ε) → (∀ y, cubeFn S' x ≤ cubeFn S' y + ε) → S = S'
+
+/-- **Lemma IV.7** (emulation). The oracle `cubeOracle` is emulated by the string guessing oracle on
+the concatenation of the strings, of length `n M`. -/
+def CubeEmulation : Prop :=
+  ∀ (n M : ℕ) [NeZero n], ∃ (qe : (Fin n → ℝ) → List (Fin (n * M) × Bool))
+    (ae : (Fin n → ℝ) → Option ℕ → ℝ × Fin n × ℝ), ∀ (S : Fin n → Fin M → Bool) (x : Fin n → ℝ),
+      cubeOracle S x = ae x (stringGuess (cubeString S) (qe x))
+
+/-- **Lemma IV.7, locality.** The oracle of the hard functions of Section IV.B is local. -/
+def CubeLocal : Prop :=
+  ∀ (n M : ℕ) [NeZero n],
+    IsLocalOracle (fun S : Fin n → Fin M → Bool => cubeFn S) (fun S => cubeOracle S)
+
+open Classical in
+/-- **Theorem IV.2.** Let `S₁, …, Sₙ ∈ {0,1}^M` be uniformly random and `ε < 8^{-M}`. Every
+deterministic algorithm that queries the single-coordinate oracle `cubeOracle S` and outputs an
+`ε`-minimizer of `cubeFn S` with error probability `P_e` asks at least `((1 - P_e) n M - 1)/2`
+queries in expectation, that is `Ω((1 - P_e) n log(1/ε))`. -/
+def CubeLowerBound : Prop :=
+  ∀ (n M : ℕ) [NeZero n] (ε : ℝ), ε < (1 / 8) ^ M →
+    ∀ t : QueryTree (Fin n → ℝ) (ℝ × Fin n × ℝ) (Fin n → ℝ),
+      let Pe := ((Finset.univ.filter (fun S : Fin n → Fin M → Bool =>
+        ¬ ∀ y, cubeFn S (t.output (cubeOracle S)) ≤ cubeFn S y + ε)).card : ℝ) / 2 ^ (n * M)
+      ((1 - Pe) * (n * M) - 1) / 2 ≤
+        (∑ S : Fin n → Fin M → Bool, (t.queries (cubeOracle S) : ℝ)) / 2 ^ (n * M)
 
 end Lemmata.OracleComplexity

@@ -6,8 +6,8 @@ cross_lists: [cs.CC, cs.IT]
 topics: [information-theoretic-lower-bounds]
 arxiv: "1407.5144"
 note: >-
-  Formalizes Lemmas III.1, III.5, IV.3 and IV.5, Proposition III.3 and the one-dimensional case
-  of Theorem IV.2 of @braun2017lower.
+  Formalizes Lemmas III.1, III.5, IV.3, IV.5, IV.6 and IV.7, Proposition III.3 and Theorem IV.2
+  of @braun2017lower.
 abstract: >-
   Information theory gives lower bounds on the number of oracle queries that an optimization
   algorithm needs. If every answer of the oracle reveals at most $C$ nats about an instance drawn
@@ -15,13 +15,13 @@ abstract: >-
   probability $P_e$ asks at least $(H(F) - h(P_e) - P_e \log(|F| - 1))/C$ queries in expectation,
   where $h$ is the binary entropy. For a uniformly random binary string of length $M$ and an oracle
   that reveals the position of the first wrong guess among guessed bits, this gives at least $((1 -
-  P_e) M - 1)/2$ queries. Convex $1$-Lipschitz functions on the line that encode a random string of
-  length $M$ in nested intervals have a first-order oracle emulated by this oracle, so finding an
-  $\varepsilon$-minimizer with $\varepsilon \lt 8^{-M}$ also takes at least $((1 - P_e) M - 1)/2$
-  queries, that is $\Omega((1 - P_e) \log(1/\varepsilon))$. Oracle emulations transfer such lower
-  bounds from one oracle to another: an algorithm for the emulated oracle runs with the emulating
-  oracle, with the same outputs and the same numbers of queries. Algorithms are query trees, and the
-  instances carry an arbitrary prior.
+  P_e) M - 1)/2$ queries. Convex $1$-Lipschitz functions on $\mathbb{R}^n$ that encode $n$ random
+  strings of length $M$ in nested intervals have a local single-coordinate first-order oracle
+  emulated by this oracle, so finding an $\varepsilon$-minimizer with $\varepsilon \lt 8^{-M}$ takes
+  at least $((1 - P_e) n M - 1)/2$ queries in expectation, that is $\Omega((1 - P_e) n
+  \log(1/\varepsilon))$. Oracle emulations transfer such lower bounds from one oracle to another: an
+  algorithm for the emulated oracle runs with the emulating oracle, with the same outputs and the
+  same numbers of queries. Algorithms are query trees, and the instances carry an arbitrary prior.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -82,3 +82,39 @@ exports:
     kind: theorem
     page: index.md
     label: thm-nonsmooth-oracle-complexity-box
+  - name: Lemmata.OracleComplexity.IsLocalOracle
+    kind: definition
+    page: index.md
+    label: def-nonsmooth-oracle-complexity-local
+  - name: Lemmata.OracleComplexity.box_local
+    kind: theorem
+    page: index.md
+    label: lem-nonsmooth-oracle-complexity-box-local
+  - name: Lemmata.OracleComplexity.cubeFn
+    kind: definition
+    page: index.md
+    label: def-nonsmooth-oracle-complexity-cube-fn
+  - name: Lemmata.OracleComplexity.cubeOracle
+    kind: definition
+    page: index.md
+    label: def-nonsmooth-oracle-complexity-cube-oracle
+  - name: Lemmata.OracleComplexity.cube_oracle_valid
+    kind: theorem
+    page: index.md
+    label: prop-nonsmooth-oracle-complexity-cube-valid
+  - name: Lemmata.OracleComplexity.cube_packing
+    kind: theorem
+    page: index.md
+    label: lem-nonsmooth-oracle-complexity-cube-packing
+  - name: Lemmata.OracleComplexity.cube_emulation
+    kind: theorem
+    page: index.md
+    label: lem-nonsmooth-oracle-complexity-cube-emulation
+  - name: Lemmata.OracleComplexity.cube_local
+    kind: theorem
+    page: index.md
+    label: lem-nonsmooth-oracle-complexity-cube-local
+  - name: Lemmata.OracleComplexity.cube_lower_bound
+    kind: theorem
+    page: index.md
+    label: thm-nonsmooth-oracle-complexity-cube

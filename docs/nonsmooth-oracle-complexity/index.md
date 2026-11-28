@@ -11,9 +11,9 @@ numbering:
 This entry formalizes results of the paper *Lower Bounds on the Oracle Complexity of Nonsmooth
 Convex Optimization via Information Theory* by Gábor Braun, Cristóbal Guzmán and Sebastian Pokutta
 [@braun2017lower], currently the information-theoretic lower bound (Lemma III.1, in expectation),
-the string guessing problem (Proposition III.3), oracle emulation (Lemma III.5) and the
-one-dimensional lower bound for nonsmooth convex optimization (Section IV.A); numbers refer to the
-arXiv version.
+the string guessing problem (Proposition III.3), oracle emulation (Lemma III.5) and the lower bounds
+for nonsmooth convex optimization over the box with local single-coordinate oracles (Section IV);
+numbers refer to the arXiv version.
 :::
 
 How many oracle queries does an algorithm need to minimize a nonsmooth convex function? The paper
@@ -144,8 +144,9 @@ current interval by a flatter absolute value centered in the new interval.
 :label: def-nonsmooth-oracle-complexity-box-oracle
 :nonumber:
 
-The oracle answers the query $x$ with the value $f_S(x)$ and the slope
-$2^{-j} \operatorname{sign}(x - c_j(S))$ of the first piece $j$ that attains the maximum.
+The oracle answers the query $x$ with the value $f_S(x)$ and the right derivative of $f_S$ at $x$ if
+it is positive, otherwise the left derivative. The one-sided derivatives are the largest right slope
+and the smallest left slope of the pieces that attain the maximum at $x$.
 ```
 
 ```{prf:proposition} The hard functions and their oracle
@@ -174,7 +175,7 @@ Lemma IV.3 claims the packing property for $M = \lfloor \frac13 \log_2(1/\vareps
 which allows $\varepsilon = 8^{-M}$. Then it fails: for $\varepsilon = 1/8$ and $M = 1$ the point
 $0$ is the common endpoint of the intervals of the strings $0$ and $1$, and $f_0(0) = f_1(0) = 1/2$
 exceeds the minimum $3/8$ of both functions by exactly $\varepsilon$. The proof needs
-$\varepsilon \lt 8^{-M}$, as stated here.
+$\varepsilon \lt 8^{-M}$, as stated here. Lemma IV.6 inherits the same boundary case.
 :::
 
 ```{prf:lemma} Emulation by string guessing
@@ -186,8 +187,33 @@ The oracle of the hard functions is emulated by the string guessing oracle on st
 
 The query asks for the bits of the greedy path towards $x$, and the answer reveals the first bit $k$
 where $S$ leaves it. Then $x$ lies outside the interval of the first $k + 1$ bits of $S$, where
-every deeper piece lies below the piece of depth $k + 1$, so the value and the slope of the first
-maximal piece depend only on the first $k + 1$ bits of $S$, which the answer determines.
+every deeper piece lies below the piece of depth $k + 1$. A deeper piece can reach the maximum only
+if $S$ leaves the path to the right of $x$; then its slopes at $x$ are negative and no steeper than
+those of the piece of depth $k + 1$, so it changes neither the left derivative nor a positive right
+derivative. The answer therefore depends only on the first $k + 1$ bits of $S$, which the query
+reveals.
+
+An oracle is *local* if instances that agree near $x$ get the same answer at $x$; a non-local
+first-order oracle could choose its subgradient at a kink to encode the minimizer.
+
+```{prf:definition} Local oracle
+:label: def-nonsmooth-oracle-complexity-local
+:nonumber:
+
+An oracle $O$ for a family of functions $f_s$ is local if $O_s(x) = O_{s'}(x)$ whenever $f_s$ and
+$f_{s'}$ agree on a neighborhood of $x$.
+```
+
+```{prf:lemma} Locality
+:label: lem-nonsmooth-oracle-complexity-box-local
+:enumerator: IV.5
+
+The oracle of the hard functions of Section IV.A is local.
+```
+
+Every piece is affine on each side of $x$ near $x$, and the pieces below the maximum stay below it
+nearby, so $f_S$ is affine on each side of $x$ near $x$ with its one-sided derivatives as slopes.
+Functions that agree near $x$ therefore have the same one-sided derivatives at $x$.
 
 ```{prf:theorem} Lower bound in one dimension
 :label: thm-nonsmooth-oracle-complexity-box
@@ -203,6 +229,87 @@ By Lemmas IV.5 and III.5 the algorithm runs with the string guessing oracle, wit
 queries, and by Lemma IV.3 the greedy path of its output recovers $S$ whenever the output is
 $\varepsilon$-optimal. Proposition III.3 then bounds the number of queries.
 
+## Nonsmooth convex optimization over the box
+
+In $n$ dimensions the instances are $n$-tuples of strings, one for each coordinate.
+
+```{prf:definition} Hard functions of Section IV.B
+:label: def-nonsmooth-oracle-complexity-cube-fn
+:nonumber:
+
+For $S = (S_1, \dots, S_n)$ with $S_i \in \{0, 1\}^M$, the hard function is
+$f_S(x) = \max_i f_{S_i}(x_i)$, with the one-dimensional hard functions $f_{S_i}$.
+```
+
+```{prf:definition} Single-coordinate oracle
+:label: def-nonsmooth-oracle-complexity-cube-oracle
+:nonumber:
+
+The oracle answers the query $x$ with the value $f_S(x)$, the least coordinate $i$ with
+$f_{S_i}(x_i) = f_S(x)$, and the slope $\lambda$ of the one-dimensional oracle of $f_{S_i}$ at
+$x_i$; the subgradient is $\lambda e_i$.
+```
+
+```{prf:proposition} The hard functions and their oracle
+:label: prop-nonsmooth-oracle-complexity-cube-valid
+:nonumber:
+
+The hard functions are convex and $1$-Lipschitz for the maximum norm, and the oracle answers their
+value and a subgradient that lies on a coordinate axis.
+```
+
+```{prf:lemma} Packing
+:label: lem-nonsmooth-oracle-complexity-cube-packing
+:enumerator: IV.6
+
+The minimum of $f_S$ is $b_M - 8^{-M}$, attained at the point with coordinates $c_M(S_i)$, and for
+$\varepsilon \lt 8^{-M}$ a point that is $\varepsilon$-optimal for $f_S$ and for $f_{S'}$ has
+$S = S'$.
+```
+
+All one-dimensional hard functions have the same minimum, so every coordinate of an
+$\varepsilon$-minimizer is $\varepsilon$-minimal for its own function and decodes its string.
+
+```{prf:lemma} Emulation by string guessing
+:label: lem-nonsmooth-oracle-complexity-cube-emulation
+:enumerator: IV.7
+
+The oracle of Section IV.B is emulated by the string guessing oracle on the concatenation of
+$S_1, \dots, S_n$, a string of length $n M$.
+```
+
+A label $(i, k)$ stands for bit $k$ of coordinate $i$; its value is the value of coordinate $i$ if
+$S_i$ first leaves the greedy path towards $x_i$ at bit $k$. These values decrease in $k$. The query
+guesses the bits of all greedy paths in the confidence order: larger values first, then smaller
+coordinates, then smaller bits. If the first wrong guess is at the label $(i, k)$, then $S_i$ leaves
+its path at bit $k$, and every other coordinate either follows its path throughout or has value at
+most that of its first label after $(i, k)$, which comes later in the order. So the value, the least
+coordinate attaining it and its slope are determined by the answer.
+
+```{prf:lemma} Locality
+:label: lem-nonsmooth-oracle-complexity-cube-local
+:enumerator: IV.7
+
+The oracle of Section IV.B is local.
+```
+
+Moving one coordinate changes $f_S$ only through that coordinate. A coordinate that attains the
+maximum raises $f_S$ when moved in the direction of its oracle slope, at that rate, and the other
+coordinates leave $f_S$ unchanged nearby; so the function near $x$ determines the answer.
+
+```{prf:theorem} Lower bound over the box
+:label: thm-nonsmooth-oracle-complexity-cube
+:enumerator: IV.2
+
+Let $S_1, \dots, S_n \in \{0, 1\}^M$ be uniformly random and $\varepsilon \lt 8^{-M}$. Every
+deterministic algorithm that queries the single-coordinate oracle of $f_S$ and outputs an
+$\varepsilon$-minimizer with error probability $P_e$ asks at least $((1 - P_e) n M - 1)/2$ queries
+in expectation, that is $\Omega((1 - P_e) n \log(1/\varepsilon))$.
+```
+
+Concatenation is a bijection between $n$-tuples of strings of length $M$ and strings of length
+$n M$, so Proposition III.3 for strings of length $n M$ applies as in one dimension.
+
 :::{note}
 **Differences from the paper.**
 - Algorithms are deterministic query trees, and the prior on the instances is arbitrary. A
@@ -211,19 +318,19 @@ $\varepsilon$-optimal. Proposition III.3 then bounds the number of queries.
 - Entropies are in nats. Since the bound is homogeneous in the base of the logarithm, dividing by
   $\log 2$ gives the paper's bits.
 - The Fano term is $P_e \log(|F| - 1)$, slightly better than the paper's $P_e \log |F|$.
-- Section IV.A: the oracle answers the slope of the first maximal piece, and the emulation asks for
-  all $M$ bits of the greedy path, which can reveal more than the paper's query. The locality of the
-  oracle, part of Lemma IV.5, is not formalized. Queries may be any real numbers, and the hard
-  functions are defined on the whole line.
+- Section IV: the hard functions are defined on the whole space and queries may be arbitrary. The
+  one-dimensional oracle answers a one-sided derivative, the one at which the function increases,
+  and the emulations ask for all bits of the greedy paths, which can reveal more than the paper's
+  queries. The single-coordinate oracle uses the least coordinate attaining the maximum; the paper's
+  convention would answer $0 \cdot e_1$ at a minimizer.
 :::
 
 ## Coverage
 
-This entry covers the bound in expectation of Lemma III.1, Proposition III.3, Lemma III.5 and the
-one-dimensional case of Section IV (Lemmas IV.3 and IV.5, Theorem IV.2). Not covered yet are the
-bounds in probability of Lemma III.1 and Proposition III.3, the locality of the oracle in Lemma
-IV.5, the multidimensional case (Section IV.B), the lower bounds for $\ell^p$-balls (Section V) and
-for arbitrary local oracles (Section VI).
+This entry covers the bound in expectation of Lemma III.1, Proposition III.3, Lemma III.5 and
+Section IV (Lemmas IV.3 to IV.7, Theorem IV.2), including the locality of the oracles. Not covered
+yet are the bounds in probability of Lemma III.1 and Proposition III.3, the lower bounds for
+$\ell^p$-balls (Section V) and for arbitrary local oracles (Section VI).
 
 ## The formal statements at a glance
 
