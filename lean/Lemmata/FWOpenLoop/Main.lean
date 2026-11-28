@@ -1,6 +1,8 @@
 module
 
 public import Lemmata.FWOpenLoop.Uniform
+public import Lemmata.FWOpenLoop.DIPFW
+public import Lemmata.FWOpenLoop.AFW
 
 @[expose] public section
 
@@ -33,6 +35,25 @@ theorem exterior_rate : ExteriorRate := Proof.exterior_rate
 
 /-- Theorem 3.12: accelerated rates without assumptions on the location of the minimizer. -/
 theorem unrestricted_rate : UnrestrictedRate := Proof.unrestricted_rate
+/-- Proposition 5.2: decomposition-invariant pairwise Frank–Wolfe with the step sizes `8/(t + 8)`
+rounded down to powers of `1/2` converges at the rate `32Lδ²/(t + 7)`. -/
+theorem dipfw_baseline : DIPFWBaseline := Proof.dipfw_baseline
+
+/-- Theorem 5.3: decomposition-invariant pairwise Frank–Wolfe under a Hölderian error bound. -/
+theorem dipfw_open_loop_rate : DIPFWOpenLoopRate := Proof.dipfw_open_loop_rate
+
+/-- Lemma 5.5: the drop-step characterization. -/
+theorem drop_step : DropStep := Proof.drop_step
+
+/-- Lemma 5.6: at least half of the steps are progress steps. -/
+theorem progress_steps : ProgressSteps := Proof.progress_steps
+
+/-- Proposition 5.7: away-step Frank–Wolfe with open-loop step sizes converges at the rate
+`16Lδ²/(t + 6)`. -/
+theorem olafw_baseline : OLAFWBaseline := Proof.olafw_baseline
+
+/-- Theorem 5.9: away-step Frank–Wolfe with open-loop step sizes under a Hölderian error bound. -/
+theorem olafw_rate : OLAFWRate := Proof.olafw_rate
 -- DOCS_END_MAIN
 
 end Lemmata.FWOpenLoop
