@@ -10,7 +10,9 @@ numbering:
 :::{note}
 This entry formalizes the paper *Revisiting the Approximate Carathéodory Problem via the Frank–Wolfe
 Algorithm* by Cyrille W. Combettes and Sebastian Pokutta [@combettes2019revisiting], currently its
-objective (Lemma 3.1) and its lower bound (Theorem 8.1); numbers refer to the arXiv version.
+objective (Lemma 3.1), its cardinality bounds for short steps, for targets in the relative interior
+and for projections onto strongly convex sets (Corollaries 5.1, 5.3 and 7.1), and its lower bound
+(Theorem 8.1); numbers refer to the arXiv version.
 :::
 
 Carathéodory's theorem writes every point $x^\star$ of the convex hull of a set
@@ -63,6 +65,70 @@ remainder is at most $(p - 1)\|h\|_p^2$. The Lipschitz constant then follows fro
 inequality and convexity (Lemma 1.7 of [Conditional gradient methods: smoothness, scaling and linear
 rates](../conditional-gradient-basics/index.md)).
 
+## Cardinality bounds
+
+The iterate $x_t$ of a run that starts at a vertex is a convex combination of $x_0$ and the atoms
+$v_0, \dots, v_{t-1}$.
+
+```{prf:lemma} Sparse iterates
+:label: lem-frank-wolfe-approximate-caratheodory-sparsity
+:nonumber:
+
+Every Frank–Wolfe run that starts at a point of $\mathcal{V}$ and only uses atoms in $\mathcal{V}$
+writes $x_t$ as a convex combination of at most $t + 1$ points of $\mathcal{V}$.
+```
+
+Since $\|x_t - x^\star\|_p^2 = 2(f(x_t) - f(x^\star))$, every convergence rate for $f$ bounds the
+number of vertices. The corollaries below hold for every short-step run, or more generally every run
+whose steps do at least as well as each $s \in [0, 1]$ in the smoothness bound, that starts at a
+vertex and uses vertices as atoms; $\mathcal{V}$ is finite with $\ell_p$-diameter $D$.
+
+```{prf:corollary} The general bound
+:label: cor-frank-wolfe-approximate-caratheodory-short-step
+:enumerator: 5.1
+
+For $x^\star \in \operatorname{conv}(\mathcal{V})$, every such run satisfies
+$\|x_t - x^\star\|_p \le \varepsilon$ as soon as $t + 3 \ge 4(p - 1)D^2/\varepsilon^2$, with $x_t$ a
+convex combination of at most $t + 1$ vertices.
+```
+
+This follows from the rate $2LD^2/(t + 3)$ of Theorem 2.2 of [Conditional gradient methods:
+smoothness, scaling and linear rates](../conditional-gradient-basics/index.md) with $L = p - 1$. If
+$x^\star$ lies in the relative interior, the iterates converge linearly: the error bound of Lemma
+3.1 and an affine ball of radius $r$ around $x^\star$ give $g_t \ge (r/\sqrt{2})\sqrt{h_t}$ (as in
+[Acceleration of Frank–Wolfe algorithms with open-loop
+step-sizes](../frank-wolfe-open-loop-acceleration/index.md)), and every short step contracts the
+primal gap by $1 - 1/K$.
+
+```{prf:corollary} A target in the relative interior
+:label: cor-frank-wolfe-approximate-caratheodory-interior
+:enumerator: 5.3
+
+If every point of the affine hull of $\operatorname{conv}(\mathcal{V})$ within distance $r > 0$ of
+$x^\star$ lies in $\operatorname{conv}(\mathcal{V})$, then with $K = \max\{2, 4(p - 1)D^2/r^2\}$
+every such run satisfies $\|x_t - x^\star\|_p \le \varepsilon$ as soon as
+$t \ge 1 + K \log((p - 1)D^2/\varepsilon^2)$, with $x_t$ a convex combination of at most $t + 1$
+vertices: $O(p (D/r)^2 \log(1/\varepsilon))$ vertices.
+```
+
+The same argument gives sparse approximate projections. For $x^\star \notin \mathcal{C}$, the
+gradient norm $\|x - x^\star\|_p$ is at least $c = \operatorname{dist}_p(x^\star, \mathcal{C})$ on
+$\mathcal{C}$, and over strongly convex sets Theorem 2.20 of the basics entry gives a linear rate.
+
+```{prf:corollary} Sparse approximate projections onto strongly convex sets
+:label: cor-frank-wolfe-approximate-caratheodory-projection
+:enumerator: 7.1
+
+Let $\mathcal{C}$ be compact, convex and $\alpha$-strongly convex with respect to the $\ell_p$-norm,
+with diameter $D$, let $x^\star \notin \mathcal{C}$,
+$c = \operatorname{dist}_p(x^\star, \mathcal{C})$ and $K = \max\{2, 2(p - 1)/(\alpha c)\}$. Every
+short-step run over $\mathcal{C}$ that starts at a point of $\mathcal{V} \subseteq \mathcal{C}$ (for
+instance the extreme points) and uses atoms in $\mathcal{V}$ satisfies
+$\|x_t - x^\star\|_p^2 - c^2 \le \varepsilon^2$ as soon as
+$t \ge 1 + K \log((p - 1)D^2/\varepsilon^2)$, with $x_t$ a convex combination of at most $t + 1$
+points of $\mathcal{V}$.
+```
+
 ## A lower bound
 
 The bound $O(p D_p^2/\varepsilon^2)$ cannot be improved in general. The paper's example uses the
@@ -107,14 +173,18 @@ by the Cauchy–Schwarz inequality.
   The paper uses Sylvester's construction, whose barycenter is $e_1/n^{1/p}$ since its first row is
   all ones and the other rows sum to zero.
 - In Lemma 3.1, gradient domination is stated as the identity $\|\nabla f(x)\| = \|x - x^\star\|_p$.
+- The cardinality bounds are stated with explicit constants and for every run with steps at least as
+  good as the short step, rather than in $O$-notation; the paper's $\ln(1/\varepsilon)$ appears as
+  $\log((p - 1)D^2/\varepsilon^2)$. Corollary 5.1 is stated for short steps; the open-loop version
+  is the theorem of the introduction entry.
 :::
 
 ## Coverage
 
-This entry currently covers Lemma 3.1 and Theorem 8.1. The cardinality bounds of Section 5, which
-apply the rates of Section 4 (several of which are formalized in other entries), the nonsmooth case
-$p \in [1, 2) \cup \{\infty\}$ (Section 6), the sparse approximate projections (Section 7) and the
-experiments are not covered yet.
+This entry covers Lemma 3.1, Corollaries 5.1 (short steps), 5.3 and 7.1, and Theorem 8.1. Not
+covered are Corollary 5.2 (NEP-FW), Corollaries 5.4 and 5.5 and 7.2 (uniformly convex sets), the
+nonsmooth case $p \in [1, 2) \cup \{\infty\}$ (Section 6) and the experiments; the rates of Section
+4 are cited results, several of which are formalized in other entries.
 
 ## The formal statements at a glance
 

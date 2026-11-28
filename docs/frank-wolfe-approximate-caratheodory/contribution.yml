@@ -11,7 +11,9 @@ abstract: >-
   $\frac{1}{2}\|x - x^\star\|_p^2$ adds at most one point per iteration, so its convergence rates
   bound the number of points. For $p \ge 2$ the objective is differentiable, convex,
   $(p - 1)$-smooth with a $(p - 1)$-Lipschitz gradient, $1$-gradient dominated and $\sqrt{2}$-sharp
-  with respect to the $\ell_p$-norm. Approximating the barycenter of the normalized columns of a
+  with respect to the $\ell_p$-norm. The resulting cardinality bounds are $O(p D^2/\varepsilon^2)$
+  in general, $O(p (D/r)^2 \log(1/\varepsilon))$ for a target at distance $r$ from the relative
+  boundary, and logarithmic for approximate projections onto strongly convex sets. Approximating the barycenter of the normalized columns of a
   Hadamard matrix of order $n$ to accuracy $\varepsilon$ needs at least $1/(\varepsilon^2 + 1/n)$
   columns.
 contributors:
@@ -50,3 +52,19 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-approximate-caratheodory-lower-bound
+  - name: Lemmata.FWCaratheodory.run_sparsity
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-approximate-caratheodory-sparsity
+  - name: Lemmata.FWCaratheodory.short_step_cardinality
+    kind: theorem
+    page: index.md
+    label: cor-frank-wolfe-approximate-caratheodory-short-step
+  - name: Lemmata.FWCaratheodory.interior_cardinality
+    kind: theorem
+    page: index.md
+    label: cor-frank-wolfe-approximate-caratheodory-interior
+  - name: Lemmata.FWCaratheodory.projection_cardinality
+    kind: theorem
+    page: index.md
+    label: cor-frank-wolfe-approximate-caratheodory-projection
