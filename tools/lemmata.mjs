@@ -37,7 +37,7 @@ const POLICY_ID = "lemmata-verification-v2";
 const RESERVED_JS = Object.fromEntries([...Object.getOwnPropertyNames(Object.prototype),
   ...Object.getOwnPropertyNames(Function.prototype), "prototype"].map((k) => [k.toLowerCase(), true]));
 const RESERVED_DOCS = new Set(["_static", "_generated", "_build", "_releases", "_status",
-  "index", "healthz", "readyz", "node_modules", "c", "s", "t", "a", "changelog", "abs", "html", "llms", "checked", "about"]);
+  "index", "healthz", "readyz", "node_modules", "c", "s", "t", "a", "m", "changelog", "abs", "html", "llms", "checked", "about", "catalog"]);
 // The page that explains what "checked" means (docs/checked.md), linked from every
 // verification panel; entries are at docs/<id>/, so the link is one level up.
 const CHECKED_PAGE_LINK = "../checked.md";
@@ -53,6 +53,25 @@ const subjectSlug = (id) => id.toLowerCase().replace(/\./g, "-");
 // search. Keyed by the displayed name (git author name, or the manifest's contributors);
 // names only, never emails. Not an identity: two people with one name share a page.
 const AUTHOR_DIR = "a";
+// Month pages at /m/<YYMM>/ (2026-11-28): every entry published that month, newest first, like
+// arXiv's monthly listings. The lists elsewhere print only the newest LIST_SIZE entries; these
+// pages are where every entry is listed in plain HTML (for readers without JavaScript and for
+// crawlers, with the sitemap), each page a month long.
+const MONTH_DIR = "m";
+// Entries printed per list, and per page of the catalog widget (CATALOG_WIDGET), which pages
+// through the rest from /catalog.json. LEMMATA_LIST_SIZE is for tests.
+const LIST_SIZE = Math.max(1, Number(process.env.LEMMATA_LIST_SIZE) || 100);
+// The site's base path (BASE_URL, as for the theme; empty when served at the root), for the
+// links the catalog widget writes itself.
+const BASE_PATH = (process.env.BASE_URL ?? "").replace(/\/+$/, "");
+// KaTeX for the widget's abstracts: the version whose stylesheet the theme loads (from the same
+// CDN, with the theme's integrity hash), and its script, loaded on first use.
+const KATEX = {
+  css: "https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css",
+  css_integrity: "sha384-MlJdn/WNKDGXveldHDdyRP1R4CTHr3FeuDNfhsLPYrq2t0UBkUdK2jyTnXPEK1NQ",
+  js: "https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js",
+  js_integrity: "sha384-VQ8d8WVFw0yHhCk5E8I86oOhv48xLpnDZx5T9GogA/Y84DcCKWXDmSDfn13bzFZY",
+};
 // The collapsible "Cite as" box with the BibTeX under the header. Replaced by a copy button
 // next to the identifier (2026-10-21); kept so it can be switched back on.
 const SHOW_CITE_BOX = false;
@@ -1158,8 +1177,8 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
   const gen = path.join(DOCS, "_generated");
   const subjRoot = path.join(DOCS, SUBJECT_DIR), topicRoot = path.join(DOCS, TOPIC_DIR), oldCatRoot = path.join(DOCS, OLD_CATEGORY_DIR);
   const absRoot = path.join(DOCS, "abs");
-  const authorRoot = path.join(DOCS, AUTHOR_DIR);
-  for (const d of [gen, subjRoot, topicRoot, oldCatRoot, absRoot, authorRoot]) fs.rmSync(d, { recursive: true, force: true });
+  const authorRoot = path.join(DOCS, AUTHOR_DIR), monthRoot = path.join(DOCS, MONTH_DIR);
+  for (const d of [gen, subjRoot, topicRoot, oldCatRoot, absRoot, authorRoot, monthRoot]) fs.rmSync(d, { recursive: true, force: true });
   fs.mkdirSync(path.join(gen, "verification"), { recursive: true });
   const passed = report?.result === "passed";
   // A partial local check's report covers only some entries (report.scope); every other entry
@@ -1473,21 +1492,20 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
   // resolves against the INCLUDING page; `../<id>/index.md` from _generated/ once
   // rendered as a raw href and 404'd).
   // One block per entry, like an arXiv listing: the identifier in its own column (a local
-  // preview has none), the linked title, authors and dates, subjects, topics and status, and
-  // the abstract. Its classes carry what the start page's filter (CATALOG_WIDGET) needs:
+  // preview has none), the linked title, authors and dates, subjects, topics and status. No
+  // abstract (since 2026-11-28): the catalog widget shows it on request, from the index. Its
+  // classes carry what the widget needs while it filters the printed list:
   // lemmata-f-<facet>-<value> for subjects (s, primary and cross-lists), topics (t), status
   // (st) and month of publication (m), and the date of the last change for sorting. Styled
-  // by lemmata.css (.lemmata-catalog, .lemmata-entry-*); without the filter the list is
-  // complete as it is.
-  // The note as plain text for the search, in a block hidden by lemmata.css
-  // (.lemmata-entry-note): each citation replaced by the cited work's authors, year and title,
-  // so that searching for a paper finds the entries that formalize it. No @ or bracket
-  // survives, or MyST would cite the work on the list's page.
+  // by lemmata.css (.lemmata-catalog, .lemmata-entry-*).
+  // The note as plain text for the search (in the index): each citation replaced by the cited
+  // work's authors, year and title, so that searching for a paper finds the entries that
+  // formalize it.
   const bibs = bibIndex();
-  const noteSearch = (note) => esc(note.replace(/(?<![\w@.\/-])-?@([A-Za-z][\w:-]*[\w])/g, (_, key) => {
+  const notePlain = (note) => note.replace(/(?<![\w@.\/-])-?@([A-Za-z][\w:-]*[\w])/g, (_, key) => {
     const b = bibs.get(key);
     return b ? [b.author, b.year, b.title].map(texPlain).filter(Boolean).join(" ") : key;
-  }).replace(/[@[\]]/g, " ").replace(/\s+/g, " ").trim());
+  }).replace(/[@[\]]/g, " ").replace(/\s+/g, " ").trim();
   const entryBlock = (m, rel) => {
     const ident = idents[m.id], p = prov?.entries?.[m.id], n = m.exports.length, month = monthOf(m);
     const classes = ["lemmata-entry", ...(ident ? [] : ["lemmata-entry-noid"]),
@@ -1501,13 +1519,32 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
       "::::{div}", ":class: lemmata-entry-title", "", `[${esc(titleOf(m))}](${entryHref(m, rel)})`, "::::", "",
       "::::{div}", ":class: lemmata-entry-meta", "", ...(who ? [who + "  "] : []),
       [classLine(m, rel), statusText(m, rel), `${n}\u00a0result${n === 1 ? "" : "s"}`].join(" · "), "::::", "",
-      ...(m.notes?.abstract ? ["::::{div}", ":class: lemmata-entry-abstract", "", m.notes.abstract, "::::", ""] : []),
-      ...(m.notes?.note ? ["::::{div}", ":class: lemmata-entry-note", "", noteSearch(m.notes.note), "::::", ""] : []),
       ":::::", ""];
   };
-  // `compact`: abstracts folded (the start page; its filter can unfold them).
-  const entryList = (list, rel, { compact = false } = {}) => ["::::::{div}", `:class: lemmata-catalog${compact ? " lemmata-catalog-compact" : ""}`, "",
-    ...[...list].sort(newestFirst).flatMap((m) => entryBlock(m, rel)), "::::::", ""];
+  // A list, newest first, of at most `limit` entries; `more` (Markdown) says where the rest are.
+  const entryList = (list, rel, { limit = Infinity, more = "" } = {}) => {
+    const sorted = [...list].sort(newestFirst);
+    return ["::::::{div}", ":class: lemmata-catalog", "", ...sorted.slice(0, limit).flatMap((m) => entryBlock(m, rel)),
+      ...(sorted.length > limit && more ? ["::::{div}", ":class: lemmata-catalog-more", "", more, "::::", ""] : []), "::::::", ""];
+  };
+  // The printed lists stop at LIST_SIZE: where the rest are.
+  const moreText = (n, rel) => `The newest ${LIST_SIZE} of ${n} entries are listed here; the search above covers all of them, ` +
+    `and every entry is listed in [its month](${rel}${MONTH_DIR}/index.md).`;
+  // The whole archive for the catalog widget, written to _generated/catalog/index.json and
+  // copied into the site as /catalog.json by site-index: per current entry, newest first, what
+  // a row shows (as entryBlock prints it) and what the search reads (the abstract's source and
+  // the note as plain text). Links are site paths, as the theme writes them.
+  const plainLinks = (s) => s.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
+  const indexEntry = (m) => {
+    const ident = idents[m.id] ?? null, p = prov?.entries?.[m.id], s = statusOf(m);
+    return { id: m.id, ident, href: ident ? `/html/${ident}` : `/${m.dir}`, title: titleOf(m),
+      authors: people(m, p).map((c) => [c.name, c.orcid ? `/${AUTHOR_DIR}/${authorDir(c.orcid)}` : null, c.orcid ?? null]),
+      v1: p ? day(p.first.date) : null, updated: p && day(p.last.date) !== day(p.first.date) ? day(p.last.date) : null,
+      subjects: [m.subject, ...m.crossLists].map((id) => [id, subjectSlug(id)]),
+      topics: m.topics.map((t) => [t, tax.topics.find((x) => x.id === t)?.title ?? t]),
+      status: s, status_text: plainLinks(statusText(m, "")), status_href: s === "computation" ? "/checked#computation" : null,
+      results: m.exports.length, month: monthOf(m), abstract: m.notes?.abstract ?? "", note: m.notes?.note ? notePlain(m.notes.note) : "" };
+  };
 
   // "Contributing" paragraph of the landing page, with the repository address from the
   // build (SOURCE_WEB_URL) rather than written into docs/index.md, so moving the
@@ -1545,17 +1582,28 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
     statuses,
     months: [...new Set(current.map(monthOf).filter(Boolean))].sort().reverse()
       .map((m) => [m, `${MONTHS[Number(m.slice(2)) - 1] ?? m} 20${m.slice(0, 2)}`]),
+    // Where the whole archive is (site-index copies the index there), entries per page, KaTeX.
+    base: BASE_PATH, index: `${BASE_PATH}/catalog.json`, page_size: LIST_SIZE, katex: KATEX,
   };
   fs.mkdirSync(path.join(gen, "catalog"), { recursive: true });
   fs.writeFileSync(path.join(gen, "catalog", "filter.mjs"), CATALOG_WIDGET);
+  fs.writeFileSync(path.join(gen, "catalog", "index.json"),
+    JSON.stringify({ schema_version: 1, entries: [...current].sort(newestFirst).map(indexEntry) }) + "\n");
+  // The widget, with `rel` the path from the including page to docs/ (see the identifier
+  // widget), and on a subject's, topic's or author's page its scope. A backtick in a name must
+  // not end the fence: JSON can spell it \u0060.
+  const catalogWidget = (rel, scope = null) => ["```{anywidget} " + rel + "_generated/catalog/filter.mjs",
+    JSON.stringify(scope ? { ...filterModel, scope } : filterModel).replace(/`/g, "\\u0060"), "```", ""];
+  const nMonth = (mm) => current.filter((m) => monthOf(m) === mm).length;
+  const monthLinks = (rel) => filterModel.months.map(([mm, text]) => `[${text}](${rel}${MONTH_DIR}/${mm}/index.md) (${nMonth(mm)})`);
   const cat = ["## Entries", "", ":::::::{div}", ":class: lemmata-catalog-layout", "",
-    // Path relative to the including page, docs/index.md (see the identifier widget). A
-    // backtick in a name must not end the fence: JSON can spell it \u0060.
-    "```{anywidget} _generated/catalog/filter.mjs", JSON.stringify(filterModel).replace(/`/g, "\\u0060"), "```", "",
+    ...catalogWidget(""),
     // Each count is a code span, so the filter can find and update it.
     "::::{div}", ":class: lemmata-catalog-subjects", "", "**Subjects**", "",
     ...bySize.map((id) => `- [${id}](${subjectHref(id, "")}) \`${nListed(id)}\``), "::::", "",
-    ...entryList(current, "", { compact: true }), ":::::::", ""];
+    ...entryList(current, "", { limit: LIST_SIZE, more: moreText(current.length, "") }), ":::::::", "",
+    // Every entry by plain links, a month at a time.
+    ":::{div}", ":class: lemmata-catalog-months", "", "**By month:** " + monthLinks("").join(" · "), ":::", ""];
   fs.writeFileSync(path.join(gen, "catalog.md"), cat.join("\n"));
 
   // One landing page per entry with an identifier, at /abs/<ident>/ (like arXiv's abstract
@@ -1613,21 +1661,42 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
   // One page per subject at /s/<subject>/ (primary entries, then cross-listed ones) and per
   // topic at /t/<topic>/. Written into the build tree only.
   const page = (title, body) => ["---", "numbering:", "  headings: false", `title: ${JSON.stringify(title)}`, "---", "", ...body].join("\n");
+  // A page's printed lists, in one block that the catalog widget above them hides once it
+  // shows the page's entries itself (scoped to the subject, topic or author).
+  const staticLists = (parts) => [":::::::{div}", ":class: lemmata-catalog-static", "", ...parts, ":::::::", ""];
+  const capped = (list) => entryList(list, "../../", { limit: LIST_SIZE, more: moreText(list.length, "../../") });
   for (const id of usedSubjects) {
     const dir = path.join(subjRoot, subjectSlug(id));
     fs.mkdirSync(dir, { recursive: true });
-    const body = [`Entries whose primary subject is the arXiv class ${id} (${esc(tax.subjects[id])}), newest first, then entries cross-listed to it.`, ""];
-    if (primary.get(id).length) body.push(...entryList(primary.get(id), "../../"), "");
-    if (crossListed.get(id).length) body.push("## Also listed", "", ...entryList(crossListed.get(id), "../../"), "");
+    const body = [`Entries whose primary subject is the arXiv class ${id} (${esc(tax.subjects[id])}), and entries cross-listed to it.`, "",
+      ...catalogWidget("../../", { key: "subject", value: subjectSlug(id) })];
+    const parts = [];
+    if (primary.get(id).length) parts.push(...capped(primary.get(id)));
+    if (crossListed.get(id).length) parts.push("**Also listed**", "", ...capped(crossListed.get(id)));
+    body.push(...staticLists(parts));
     fs.writeFileSync(path.join(dir, "index.md"), page(subjectTitle(tax, id), body));
   }
   for (const t of usedTopics) {
     const dir = path.join(topicRoot, t.id);
     fs.mkdirSync(dir, { recursive: true });
     const body = t.description ? [esc(t.description), ""] : [];
-    body.push(...entryList(current.filter((m) => m.topics.includes(t.id)), "../../"), "");
+    body.push(...catalogWidget("../../", { key: "topic", value: t.id }), ...staticLists(capped(current.filter((m) => m.topics.includes(t.id)))));
     fs.writeFileSync(path.join(dir, "index.md"), page(`Topic: ${t.title}`, body));
   }
+  // Month pages (/m/<YYMM>/): every current entry published that month, newest first, in
+  // full: the plain listing of the whole archive, a month at a time. And /m/, the months.
+  const monthPages = [];
+  for (const [mm, text] of filterModel.months) {
+    const dir = path.join(monthRoot, mm);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "index.md"), page(`Entries of ${text}`, [`Every entry published in ${text}, newest first. ` +
+      "[All months](../index.md)", "", ...entryList(current.filter((m) => monthOf(m) === mm), "../../")]));
+    monthPages.push(`${MONTH_DIR}/${mm}/index.md`);
+  }
+  fs.mkdirSync(monthRoot, { recursive: true });
+  fs.writeFileSync(path.join(monthRoot, "index.md"), page("Entries by month", ["Every entry, by the month it was published in.", "",
+    ...(filterModel.months.length ? monthLinks("../").map((l) => `- ${l}`) : ["*No entry yet.*"]), ""]));
+  monthPages.unshift(`${MONTH_DIR}/index.md`);
   // The old category pages (/c/<id>/) were linked from outside; each now points to the topic
   // that replaces it (topics.yml `replaces`), or to the start page. A MyST page cannot send
   // an HTTP redirect, so it says where the content moved, and the page script forwards.
@@ -1666,7 +1735,7 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
     const lines = ["---", "numbering:", "  headings: false", `title: ${JSON.stringify(a.name)}`, "---", "",
       `ORCID iD: [${a.orcid}](https://orcid.org/${a.orcid})`, "",
       `Entries in the Lemmata Repository credited to ${esc(a.name)}.`, ""];
-    if (cur.length) lines.push(...entryList(cur, "../../"), "");
+    if (cur.length) lines.push(...catalogWidget("../../", { key: "author", value: a.orcid }), ...staticLists(capped(cur)));
     if (gone.length) lines.push("## Withdrawn", "", ...entryList(gone, "../../"), "");
     fs.writeFileSync(path.join(dir, "index.md"), lines.join("\n"));
     authorPages.push(`${AUTHOR_DIR}/${authorDir(a.orcid)}/index.md`);
@@ -1709,6 +1778,7 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
     ...manifests.filter((m) => m.notes?.withdrawn).flatMap((m) => m.pages.map((p) => ({ file: `${m.dir}/${p}`, hidden: true }))),
     ...absPages.map((f) => ({ file: f, hidden: true })),
     ...authorPages.map((f) => ({ file: f, hidden: true })),
+    ...monthPages.map((f) => ({ file: f, hidden: true })),
     ...oldPages.map((f) => ({ file: f, hidden: true }))];
   if (process.env.LEMMATA_THEME) cfg.site.template = process.env.LEMMATA_THEME;
   fs.writeFileSync(path.join(DOCS, "myst.runtime.yml"),
@@ -1780,56 +1850,78 @@ function render({ model, el }) {
 export default { render };
 `;
 
-// The start page's filter, a widget like the identifier line (written by the tools, so
-// contributors cannot change it). MyST mounts it after React has hydrated the page, in a
-// shadow root, so it brings its own styles. It works on the list printed right below it
-// (entryList in prepare): plain MyST output, complete without JavaScript, whose blocks carry
-// their facets as classes, lemmata-f-<facet>-<value>. The search matches every word anywhere
-// in a block's text (identifier, title, authors, subjects, topics, abstract, the TeX of its
-// formulas), ignoring case and accents. Each list of choices counts the entries it would
-// leave, given the other filters. The subjects are a list of choices like the others, and
-// also the list in the page's right column (.lemmata-catalog-subjects): links to the subject
-// pages, which filter instead when clicked plainly (a click with a modifier key still opens
-// the page). Both show the same choice and the same counts.
-// Blocks are only hidden and, for another order, given a CSS `order` -- inline styles, never
-// moved or rewritten, so React's tree stays as it rendered it and an unfiltered block is
-// exactly the static one. The state is kept in the address
-// (?q=&subject=&topic=&status=&month=&sort=&abstracts=1), so a filtered list can be linked.
+// The catalog widget (2026-11-28): search, filters, order and pages over the whole archive,
+// on the start page and, limited to one subject, topic or author, on their pages. Written by
+// the tools like the identifier line, so contributors cannot change it. MyST mounts it after
+// React has hydrated the page, in a shadow root, so it brings its own styles.
+// The page itself prints only the newest LIST_SIZE entries (entryList in prepare): plain MyST
+// output, complete for what it shows without JavaScript, each block carrying its facets as
+// classes, lemmata-f-<facet>-<value>. The whole archive is in /catalog.json (catalogIndex in
+// prepare, copied into the site by site-index). Once that has loaded, the widget hides the
+// printed list (an inline style on its container: React's tree is never changed) and shows
+// its own, in its shadow root, from the index: the matches of the search and the filters, in
+// the chosen order, PAGE at a time with a pager. Until then, or without it (a local preview
+// does not build it), it filters the printed list as before: blocks hidden and, for another
+// order, given a CSS `order`.
+// The search matches every word in the identifier, title, authors, subjects, topics, note
+// (with the titles and authors of the works it cites) and abstract, ignoring case and
+// accents. While there is a search the order is "best match": a word in the title counts
+// most, then in the authors, then in the subjects, topics and note, then in the abstract;
+// ties newest first. Each list of choices counts the entries it would leave, given the other
+// filters. On the start page the subjects are also the list in the right column
+// (.lemmata-catalog-subjects): links to the subject pages, which filter instead when clicked
+// plainly (a click with a modifier key still opens the page). Abstracts, on request, are
+// rendered from their source; their math by KaTeX, loaded on first use (the version whose
+// stylesheet the theme loads, with its integrity hash).
+// The state is kept in the address (?q=&subject=&topic=&status=&month=&sort=&abstracts=1&page=),
+// so a list can be linked and a reader coming back from an entry finds it as they left it.
 // Serialized with toString(): one self-contained function that uses nothing from outside.
 function catalogFilter({ model, el }) {
-  const doc = el.ownerDocument;
+  const doc = el.ownerDocument, win = doc.defaultView;
+  const scope = model.get("scope") || null;                  // { key: subject | topic | author, value }
+  const PAGE = Math.max(1, Number(model.get("page_size")) || 100);
+  const indexUrl = model.get("index") || "", katexCfg = model.get("katex") || null;
+  // The site's base path (BASE_URL; empty at the root), in front of every site path, as the
+  // theme writes the printed list's links.
+  const base = String(model.get("base") || "").replace(/\/+$/, "");
+  const site = (h) => (h && h[0] === "/" && h[1] !== "/" ? base + h : h);
   const facets = [
     ["subject", "s", "Subject", "All subjects", (model.get("subjects") || []).map(([id, value, name]) => [id, value, `${id} — ${name}`])],
     ["topic", "t", "Topic", "All topics", (model.get("topics") || []).map(([id, title]) => [id, id, title])],
     ["status", "st", "Status", "Any status", (model.get("statuses") || []).map(([id, text]) => [id, id, text])],
     ["month", "m", "Published", "Any month", (model.get("months") || []).map(([id, text]) => [id, id, text])],
-  ].map(([key, cls, label, all, values]) => ({ key, cls, label, all, select: null,
-    values: values.map(([param, value, text]) => ({ param, value, text })) }));
-  const sorts = [["new", "Newest first"], ["old", "Oldest first"], ["updated", "Recently updated"], ["title", "Title A–Z"]];
-  const fresh = () => ({ q: "", subject: "", topic: "", status: "", month: "", sort: "new", abstracts: false });
+  ].filter(([key]) => !scope || key !== scope.key)              // a subject's page has no subject filter
+    .map(([key, cls, label, all, values]) => ({ key, cls, label, all, select: null,
+      values: values.map(([param, value, text]) => ({ param, value, text })) }));
+  const sorts = [["match", "Best match"], ["new", "Newest first"], ["old", "Oldest first"], ["updated", "Recently updated"], ["title", "Title A–Z"]];
+  const fresh = () => ({ q: "", subject: "", topic: "", status: "", month: "", sort: "", abstracts: false, page: 1 });
   const state = fresh();
   // From the address; values that name nothing are ignored.
   const params = new URLSearchParams(location.search);
   state.q = params.get("q") || "";
   if (sorts.some(([k]) => k === params.get("sort"))) state.sort = params.get("sort");
   state.abstracts = params.get("abstracts") === "1";
+  state.page = Math.max(1, parseInt(params.get("page") || "1", 10) || 1);
   for (const f of facets) state[f.key] = (f.values.find((v) => v.param === params.get(f.key)) || { value: "" }).value;
+  // The order: as chosen, else best match while searching and newest first otherwise.
+  const sortOf = () => { const s = state.sort || "new"; return s === "match" && !state.q.trim() ? "new" : state.sort ? s : state.q.trim() ? "match" : "new"; };
   const write = () => {
     const p = new URLSearchParams(location.search);
     const put = (k, v) => { if (v) p.set(k, v); else p.delete(k); };
     put("q", state.q.trim());
     for (const f of facets) put(f.key, (f.values.find((v) => v.value === state[f.key]) || {}).param);
-    put("sort", state.sort === "new" ? "" : state.sort);
+    put("sort", state.sort);
     put("abstracts", state.abstracts ? "1" : "");
+    put("page", state.page > 1 ? String(state.page) : "");
     const qs = p.toString(), url = location.pathname + (qs ? "?" + qs : "") + location.hash;
     // replaceState keeps the router's state, as the page script does for anchors.
     if (url !== location.pathname + location.search + location.hash) {
-      try { history.replaceState(history.state, "", url); } catch (e) { /* the list filters all the same */ }
+      try { history.replaceState(history.state, "", url); } catch (e) { /* the list works all the same */ }
     }
   };
 
   // Two rows: how to look (the search, the order, the abstracts); what to show (the filters,
-  // with the count and Clear).
+  // with the count and Clear). Below them the list and the pager, once the index is there.
   const wrap = doc.createElement("div"); wrap.className = "wrap"; wrap.setAttribute("role", "search");
   const row1 = doc.createElement("div"), row2 = doc.createElement("div"); row1.className = row2.className = "row";
   const search = doc.createElement("input");
@@ -1843,7 +1935,7 @@ function catalogFilter({ model, el }) {
   const count = doc.createElement("span"); count.className = "count"; count.setAttribute("aria-live", "polite");
   const clear = doc.createElement("button"); clear.type = "button"; clear.className = "clear"; clear.textContent = "Clear";
   row1.append(search);
-  const order = select(row1, "Order", sorts, state.sort); order.className = "order";
+  const order = select(row1, "Order", sorts, sortOf()); order.className = "order";
   const toggle = doc.createElement("label"); toggle.className = "toggle";
   const abstracts = doc.createElement("input"); abstracts.type = "checkbox"; abstracts.checked = state.abstracts;
   toggle.append(abstracts, "Abstracts");
@@ -1852,6 +1944,8 @@ function catalogFilter({ model, el }) {
   for (const f of facets) if (f.values.length > 1)      // a single value filters nothing
     f.select = select(row2, f.label, [["", f.all], ...f.values.map((v) => [v.value, v.text])], state[f.key]);
   row2.append(count, clear);
+  const list = doc.createElement("div"); list.className = "list"; list.hidden = true;
+  const pager = doc.createElement("nav"); pager.className = "pager"; pager.setAttribute("aria-label", "Pages"); pager.hidden = true;
   const empty = doc.createElement("p"); empty.className = "empty"; empty.textContent = "No entry matches."; empty.hidden = true;
   const style = doc.createElement("style");
   style.textContent = ".wrap{margin:.5rem 0 1.5rem;font-size:.875rem;line-height:1.4}" +
@@ -1860,51 +1954,156 @@ function catalogFilter({ model, el }) {
     "input[type=search],select{font:inherit;color:inherit;background:transparent;border:1px solid color-mix(in srgb,currentColor 28%,transparent);" +
     "border-radius:.375rem;padding:.35rem .5rem;margin:0}" +
     "select{max-width:13rem;cursor:pointer;text-overflow:ellipsis}" +
-    "input[type=search]:focus-visible,select:focus-visible,.clear:focus-visible,.toggle input:focus-visible{outline:2px solid color-mix(in srgb,currentColor 45%,transparent);outline-offset:1px}" +
+    "input[type=search]:focus-visible,select:focus-visible,button:focus-visible,.toggle input:focus-visible{outline:2px solid color-mix(in srgb,currentColor 45%,transparent);outline-offset:1px}" +
     ".toggle{display:inline-flex;align-items:center;gap:.3rem;cursor:pointer;user-select:none;white-space:nowrap}" +
     ".toggle input{margin:0}" +
     ".count{opacity:.75;font-variant-numeric:tabular-nums;white-space:nowrap}" +
     ".clear{font:inherit;color:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;opacity:.8}" +
-    ".clear:hover{opacity:1}.empty{margin:.75rem 0 0;opacity:.8}";
+    ".clear:hover{opacity:1}.empty{margin:.75rem 0 0;opacity:.8}" +
+    // The rows, as lemmata.css draws the printed list (.lemmata-entry-*), and the theme's link colours.
+    ".list{display:flex;flex-direction:column;gap:1.1rem;margin:1.25rem 0 1rem}" +
+    ".entry{display:grid;grid-template-columns:6.25rem minmax(0,1fr);column-gap:1rem;line-height:1.6rem}" +
+    ".entry.noid{grid-template-columns:minmax(0,1fr)}.entry>div{grid-column:-2;min-width:0}" +
+    ".entry>.id{grid-column:1;grid-row:1/span 3;font-size:.875rem;font-variant-numeric:tabular-nums;white-space:nowrap;color:#6b7280}" +
+    ".dark .entry>.id{color:#9ca3af}" +
+    ".title a{color:#1d4ed8;font-weight:500;text-decoration:none}.title a:hover{text-decoration:underline}.dark .title a{color:#60a5fa}" +
+    ".meta{font-size:.875rem;line-height:1.35rem;opacity:.85}" +
+    ".meta a{color:inherit;text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 30%,transparent)}.meta a:hover{text-decoration-color:currentColor}" +
+    ".abstract{font-size:.875rem;line-height:1.5;margin-top:.4rem}.abstract a{color:#1d4ed8}.dark .abstract a{color:#60a5fa}" +
+    ".pager{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem;margin:.25rem 0 1.5rem;font-size:.875rem}" +
+    ".pager button{font:inherit;color:inherit;background:transparent;border:1px solid color-mix(in srgb,currentColor 28%,transparent);" +
+    "border-radius:.375rem;padding:.2rem .55rem;cursor:pointer;font-variant-numeric:tabular-nums}" +
+    ".pager button[aria-current]{font-weight:700;border-color:currentColor;cursor:default}.pager button:disabled{opacity:.4;cursor:default}" +
+    ".pager .gap{padding:0 .2rem;opacity:.6}";
   wrap.append(style, row1, row2, empty);
-  el.append(wrap);
-  // The theme switches dark mode with a class on <html>; the controls' own parts (the
-  // options of a list) follow through color-scheme.
-  const theme = () => { wrap.style.colorScheme = doc.documentElement.classList.contains("dark") ? "dark" : "light"; };
+  el.append(wrap, list, pager);
+  // The theme switches dark mode with a class on <html>; the rows' colours and the controls'
+  // own parts (the options of a list) follow.
+  const theme = () => {
+    const dark = doc.documentElement.classList.contains("dark");
+    wrap.style.colorScheme = dark ? "dark" : "light";
+    for (const x of [list, pager]) x.classList.toggle("dark", dark);
+  };
   const themes = new MutationObserver(theme);
   themes.observe(doc.documentElement, { attributes: true, attributeFilter: ["class"] });
   theme();
 
-  const norm = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const texts = new WeakMap();
-  const textOf = (e) => { let t = texts.get(e); if (t === undefined) { t = norm(e.textContent || ""); texts.set(e, t); } return t; };
+  const norm = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const valuesOf = (e, cls) => { const pre = `lemmata-f-${cls}-`, out = []; for (const c of e.classList) if (c.startsWith(pre)) out.push(c.slice(pre.length)); return out; };
   const updatedOf = (e) => { for (const c of e.classList) if (c.startsWith("lemmata-updated-")) return c.slice(16); return ""; };
-  const titleOf = (e) => ((e.querySelector(".lemmata-entry-title") || e).textContent || "").trim();
+  const titleText = (e) => ((e.querySelector(".lemmata-entry-title") || e).textContent || "").trim();
+  // The printed lists this widget stands for: the start page's, or a page's lists of its
+  // subject, topic or author (lemmata-catalog-static; withdrawn entries stay outside).
+  const printedLists = () => [...doc.querySelectorAll(".lemmata-catalog-layout > .lemmata-catalog, .lemmata-catalog-static")];
+  const printedBlocks = () => printedLists().flatMap((c) => [...c.querySelectorAll(".lemmata-entry")]);
+  // One record per entry, from the printed blocks (until the index is there) or the index.
+  const fromBlocks = () => printedBlocks().map((b, i) => ({ i, el: b, e: null, title: titleText(b), updated: updatedOf(b), authors: [],
+    f: { s: valuesOf(b, "s"), t: valuesOf(b, "t"), st: valuesOf(b, "st"), m: valuesOf(b, "m") },
+    text: [norm(titleText(b)), "", norm(b.textContent), "", ""] }));
+  const fromIndex = (x, i) => ({ i, el: null, e: x, title: x.title || "", updated: x.updated || x.v1 || "",
+    authors: (x.authors || []).map((a) => a[2]).filter(Boolean),
+    f: { s: (x.subjects || []).map((s) => s[1]), t: (x.topics || []).map((t) => t[0]), st: [x.status], m: x.month ? [x.month] : [] },
+    text: [norm(x.title), norm((x.authors || []).map((a) => a[0]).join(" ")),
+      norm([x.ident, ...(x.subjects || []).map((s) => s[0]), ...(x.topics || []).map((t) => t[1])].join(" ")), norm(x.note), norm(x.abstract)] });
+  const WEIGHT = [8, 4, 2, 2, 1];                            // title, authors, ident/subjects/topics, note, abstract
+  let mode = "printed", records = fromBlocks(), first = records[0] ? records[0].el : null;
+  const inScope = (r) => !scope || r.e === null ||
+    (scope.key === "subject" ? r.f.s.includes(scope.value) : scope.key === "topic" ? r.f.t.includes(scope.value) : r.authors.includes(scope.value));
+
+  // Abstracts and titles from their source: $…$ and $$…$$ (\$ is a dollar), `code`, **bold**,
+  // *emphasis* and [links](…); everything else is text. Math waits for KaTeX.
+  let katexAsked = null, mathWaiting = false;
+  const katex = () => {
+    if (win.katex) return Promise.resolve();
+    if (!katexCfg) return Promise.reject(new Error("no KaTeX"));
+    if (!katexAsked) katexAsked = new Promise((ok, no) => {
+      const s = doc.createElement("script"); s.src = katexCfg.js; s.integrity = katexCfg.js_integrity; s.crossOrigin = "anonymous";
+      s.onload = () => ok(); s.onerror = () => no(new Error("KaTeX did not load")); doc.head.append(s);
+      // Its stylesheet inside the shadow root; the fonts come from the page's own copy.
+      const l = doc.createElement("link"); l.rel = "stylesheet"; l.href = katexCfg.css; l.integrity = katexCfg.css_integrity; l.crossOrigin = "anonymous";
+      wrap.append(l);
+    });
+    return katexAsked;
+  };
+  const math = (tex, display) => {
+    const s = doc.createElement("span");
+    if (win.katex) { try { win.katex.render(tex, s, { displayMode: display, throwOnError: false }); return s; } catch (e) { /* as text */ } }
+    else mathWaiting = true;
+    s.textContent = display ? `$$${tex}$$` : `$${tex}$`;
+    return s;
+  };
+  const INLINE = /\\\$|\$\$([\s\S]+?)\$\$|\$((?:\\.|[^$\\])+?)\$|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|\[([^\]]+)\]\(([^)\s]+)\)/g;
+  const inline = (src, out) => {
+    const re = new RegExp(INLINE.source, "g");
+    let last = 0, m;
+    while ((m = re.exec(src))) {
+      if (m.index > last) out.append(src.slice(last, m.index));
+      if (m[0] === "\\$") out.append("$");
+      else if (m[1] !== undefined || m[2] !== undefined) out.append(math(m[1] !== undefined ? m[1] : m[2], m[1] !== undefined));
+      else if (m[3] !== undefined) { const c = doc.createElement("code"); c.textContent = m[3]; out.append(c); }
+      else if (m[4] !== undefined) { const b = doc.createElement("strong"); inline(m[4], b); out.append(b); }
+      else if (m[5] !== undefined) { const i = doc.createElement("em"); inline(m[5], i); out.append(i); }
+      else { const a = doc.createElement("a"); if (/^(https?:\/\/|\/)/.test(m[7])) a.href = site(m[7]); inline(m[6], a); out.append(a); }
+      last = re.lastIndex;
+    }
+    if (last < src.length) out.append(src.slice(last));
+    return out;
+  };
+  const node = (tag, cls, ...kids) => { const n = doc.createElement(tag); if (cls) n.className = cls; n.append(...kids); return n; };
+  const link = (href, text) => { const a = doc.createElement("a"); if (href) a.href = href; a.textContent = text; return a; };
+  const joined = (items, sep) => items.flatMap((x, k) => (k ? [sep, x] : [x]));
+  // One row, as entryBlock prints it: identifier, title, authors and dates, then subjects,
+  // topics, status and the number of results; the abstract on request.
+  const row = (x) => {
+    const r = node("div", x.ident ? "entry" : "entry noid");
+    if (x.ident) r.append(node("div", "id", x.ident));
+    const t = link(site(x.href), ""); inline(x.title || "", t);
+    r.append(node("div", "title", t));
+    const who = joined((x.authors || []).map(([name, href]) => (href ? link(site(href), name) : name)), ", ");
+    const dates = (x.v1 ? `v1\u00a0${x.v1}` : "") + (x.updated && x.updated !== x.v1 ? ` · updated\u00a0${x.updated}` : "");
+    const head = [...who, ...(who.length && dates ? [" · "] : []), ...(dates ? [dates] : [])];
+    const classes = joined((x.subjects || []).map(([id, slug]) => link(site(`/s/${slug}`), id)), " · ");
+    const topics = joined((x.topics || []).map(([id, title]) => link(site(`/t/${id}`), title)), ", ");
+    const n = x.results || 0;
+    const tail = [...classes, ...(topics.length ? [" · ", ...topics] : []), " · ",
+      x.status_href ? link(site(x.status_href), x.status_text) : x.status_text, ` · ${n}\u00a0result${n === 1 ? "" : "s"}`];
+    r.append(node("div", "meta", ...head, ...(head.length ? [doc.createElement("br")] : []), ...tail));
+    if (state.abstracts && x.abstract) r.append(inline(x.abstract, node("div", "abstract")));
+    return r;
+  };
+
   const show = (e, on) => { const v = on ? "" : "none"; if (e.style.display !== v) e.style.display = v; };
   // The subject links of the right column, each with the facet value it stands for (by its
   // text, the arXiv class); their counts are code spans, kept as printed to be restored.
   const printed = new Map();
-  const subjectLinks = () => [...doc.querySelectorAll(".lemmata-catalog-subjects a")].map((a) => {
+  const subjectLinks = () => (subject ? [...doc.querySelectorAll(".lemmata-catalog-subjects a")] : []).map((a) => {
     const num = a.parentElement && a.parentElement.querySelector("code");
     if (num && !printed.has(num)) printed.set(num, num.textContent);
     return { a, v: (subject.values.find((x) => x.param === a.textContent.trim()) || {}).value };
   }).filter((x) => x.v);
-  let first = null;
+  const top = () => { const y = el.getBoundingClientRect().top + win.scrollY - 80; if (win.scrollY > y) win.scrollTo(0, y); };
+  const pageButton = (label, page, current) => {
+    const b = node("button", "", label); b.type = "button";
+    if (current) b.setAttribute("aria-current", "page"); else if (page) b.addEventListener("click", () => { state.page = page; update(); top(); });
+    else b.disabled = true;
+    return b;
+  };
   const apply = () => {
-    const blocks = [...doc.querySelectorAll(".lemmata-catalog .lemmata-entry")];
-    first = blocks[0] || null;
+    if (mode === "printed") { records = fromBlocks(); first = records[0] ? records[0].el : null; }
     const words = norm(state.q).split(/\s+/).filter(Boolean);
-    const fits = (e, skip) => {
-      for (const f of facets) if (f.key !== skip && state[f.key] && !valuesOf(e, f.cls).includes(state[f.key])) return false;
-      if (words.length) { const t = textOf(e); for (const w of words) if (!t.includes(w)) return false; }
-      return true;
-    };
-    let shown = 0;
-    for (const e of blocks) { const on = fits(e); show(e, on); if (on) shown++; }
+    const scoreOf = (r) => { let s = 0; for (const w of words) { let hit = false; r.text.forEach((t, k) => { if (t.includes(w)) { s += WEIGHT[k]; hit = true; } }); if (!hit) return -1; } return s; };
+    const fits = (r, skip) => { for (const f of facets) if (f.key !== skip && state[f.key] && !r.f[f.cls].includes(state[f.key])) return false; return true; };
+    const scoped = records.filter(inScope), score = new Map();
+    for (const r of scoped) score.set(r, words.length ? scoreOf(r) : 0);
+    const found = scoped.filter((r) => score.get(r) >= 0), hits = found.filter((r) => fits(r));
+    const sort = sortOf();
+    const by = { new: (a, b) => a.i - b.i, old: (a, b) => b.i - a.i, title: (a, b) => a.title.localeCompare(b.title) || a.i - b.i,
+      updated: (a, b) => (a.updated < b.updated ? 1 : a.updated > b.updated ? -1 : 0) || a.i - b.i,
+      match: (a, b) => score.get(b) - score.get(a) || a.i - b.i }[sort];
+    hits.sort(by);
     const counts = (f) => {
       const n = new Map();
-      for (const e of blocks) if (fits(e, f.key)) for (const v of valuesOf(e, f.cls)) n.set(v, (n.get(v) || 0) + 1);
+      for (const r of found) if (fits(r, f.key)) for (const v of r.f[f.cls]) n.set(v, (n.get(v) || 0) + 1);
       return n;
     };
     for (const f of facets) {
@@ -1917,42 +2116,72 @@ function catalogFilter({ model, el }) {
       // A choice made elsewhere (a subject in the right column) shows here too.
       if (f.select.value !== state[f.key]) f.select.value = state[f.key];
     }
-    // The right column: counts follow the other filters, the chosen subject is marked.
-    const n = counts(subject);
-    for (const { a, v } of subjectLinks()) {
-      const k = n.get(v) || 0, num = a.parentElement && a.parentElement.querySelector("code");
-      if (num && num.textContent !== String(k)) num.textContent = String(k);
-      if (state.subject === v) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current");
-      const row = a.closest("li") || a, dim = !k && state.subject !== v ? "0.45" : "";
-      if (row.style.opacity !== dim) row.style.opacity = dim;
+    order.value = sort;
+    for (const o of order.options) if (o.value === "match") o.disabled = !words.length;
+    if (subject) {
+      const n = counts(subject);
+      for (const { a, v } of subjectLinks()) {
+        const k = n.get(v) || 0, num = a.parentElement && a.parentElement.querySelector("code");
+        if (num && num.textContent !== String(k)) num.textContent = String(k);
+        if (state.subject === v) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current");
+        const li = a.closest("li") || a, dim = !k && state.subject !== v ? "0.45" : "";
+        if (li.style.opacity !== dim) li.style.opacity = dim;
+      }
     }
-    // The list is printed newest first; any other order is CSS `order` in a flex column.
-    const ranked = blocks.map((e, i) => ({ e, i }));
-    if (state.sort === "old") ranked.reverse();
-    else if (state.sort === "title") ranked.sort((a, b) => titleOf(a.e).localeCompare(titleOf(b.e)) || a.i - b.i);
-    else if (state.sort === "updated") ranked.sort((a, b) => (updatedOf(a.e) < updatedOf(b.e) ? 1 : updatedOf(a.e) > updatedOf(b.e) ? -1 : 0) || a.i - b.i);
-    ranked.forEach(({ e }, k) => { const v = state.sort === "new" ? "" : String(k); if (e.style.order !== v) e.style.order = v; });
-    for (const p of new Set(blocks.map((e) => e.parentElement))) {
-      if (p && getComputedStyle(p).display !== "flex") { p.style.display = "flex"; p.style.flexDirection = "column"; }
+    const total = scoped.length, shown = hits.length, noun = (k) => (k === 1 ? "entry" : "entries");
+    if (mode === "index") {
+      const pages = Math.max(1, Math.ceil(shown / PAGE));
+      if (state.page > pages) state.page = pages;
+      const from = (state.page - 1) * PAGE;
+      mathWaiting = false;
+      list.replaceChildren(...hits.slice(from, from + PAGE).map((r) => row(r.e)));
+      list.hidden = !shown;
+      if (mathWaiting) katex().then(() => { if (mode === "index") apply(); }, () => {});
+      const nums = new Set([1, pages]);
+      for (let k = state.page - 2; k <= state.page + 2; k++) if (k >= 1 && k <= pages) nums.add(k);
+      const seq = [...nums].sort((a, b) => a - b), kids = [pageButton("‹ Previous", state.page > 1 ? state.page - 1 : 0, false)];
+      seq.forEach((k, j) => { if (j && k - seq[j - 1] > 1) kids.push(node("span", "gap", "…")); kids.push(pageButton(String(k), k, k === state.page)); });
+      kids.push(pageButton("Next ›", state.page < pages ? state.page + 1 : 0, false));
+      pager.replaceChildren(...kids); pager.hidden = pages < 2;
+      // "1–100 of 2000 entries", "1–100 of 500 matches", "12 of 2000 entries", "43 entries".
+      const range = shown > PAGE ? `${from + 1}–${Math.min(from + PAGE, shown)} of ` : "";
+      count.textContent = shown === total ? `${range}${total} ${noun(total)}` : shown > PAGE ? `${range}${shown} matches` : `${shown} of ${total} ${noun(total)}`;
+    } else {
+      // The printed list: blocks hidden and, for another order, a CSS `order` in a flex column.
+      const on = new Set(hits);
+      for (const r of records) show(r.el, on.has(r));
+      hits.forEach((r, k) => { const v = sort === "new" ? "" : String(k); if (r.el.style.order !== v) r.el.style.order = v; });
+      for (const r of records) if (!on.has(r) && r.el.style.order) r.el.style.order = "";
+      for (const p of new Set(records.map((r) => r.el.parentElement))) {
+        if (p && getComputedStyle(p).display !== "flex") { p.style.display = "flex"; p.style.flexDirection = "column"; }
+      }
+      count.textContent = shown === total ? `${total} ${noun(total)}` : `${shown} of ${total} ${noun(total)}`;
     }
-    // Abstracts: folded on the start page (lemmata.css), unfolded here on request.
-    for (const e of blocks) for (const a of e.querySelectorAll(".lemmata-entry-abstract")) {
-      const v = state.abstracts ? "block" : "none"; if (a.style.display !== v) a.style.display = v;
-    }
-    const total = blocks.length;
-    count.textContent = shown === total ? `${total} ${total === 1 ? "entry" : "entries"}` : `${shown} of ${total} ${total === 1 ? "entry" : "entries"}`;
+    toggle.hidden = mode !== "index";                       // the printed list has no abstracts
     empty.hidden = shown > 0 || !total;
-    clear.hidden = JSON.stringify(state) === JSON.stringify(fresh());
+    clear.hidden = JSON.stringify({ ...state, page: 1 }) === JSON.stringify(fresh());
   };
   const update = () => { apply(); write(); };
 
+  // The index: once it is there, the list is this widget's. A printed list that React
+  // renders again is hidden again (the observer below).
+  const hidePrinted = () => { for (const c of printedLists()) if (c.style.display !== "none") c.style.display = "none"; };
+  if (indexUrl && win.fetch) {
+    win.fetch(indexUrl, { credentials: "same-origin" }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((data) => {
+        if (!data || !Array.isArray(data.entries)) return;
+        for (const r of records) { r.el.style.display = ""; r.el.style.order = ""; }
+        mode = "index"; records = data.entries.map(fromIndex); hidePrinted(); apply();
+      }, () => { /* no index (a local preview): the printed list stays */ });
+  }
+
   let typing = null;
-  search.addEventListener("input", () => { clearTimeout(typing); typing = setTimeout(() => { state.q = search.value; update(); }, 120); });
+  search.addEventListener("input", () => { clearTimeout(typing); typing = setTimeout(() => { state.q = search.value; state.page = 1; update(); }, 120); });
   search.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && search.value) { e.preventDefault(); search.value = ""; clearTimeout(typing); state.q = ""; update(); }
+    if (e.key === "Escape" && search.value) { e.preventDefault(); search.value = ""; clearTimeout(typing); state.q = ""; state.page = 1; update(); }
   });
-  for (const f of facets) if (f.select) f.select.addEventListener("change", () => { state[f.key] = f.select.value; update(); });
-  order.addEventListener("change", () => { state.sort = order.value; update(); });
+  for (const f of facets) if (f.select) f.select.addEventListener("change", () => { state[f.key] = f.select.value; state.page = 1; update(); });
+  order.addEventListener("change", () => { state.sort = order.value; state.page = 1; update(); });
   abstracts.addEventListener("change", () => { state.abstracts = abstracts.checked; update(); });
   // A plain click on a subject in the right column filters (again: all subjects). Taken on
   // the way down, before the theme's router would follow the link.
@@ -1961,12 +2190,12 @@ function catalogFilter({ model, el }) {
     const a = e.target.closest(".lemmata-catalog-subjects a"); if (!a) return;
     const hit = subjectLinks().find((x) => x.a === a); if (!hit) return;
     e.preventDefault(); e.stopPropagation();
-    state.subject = state.subject === hit.v ? "" : hit.v; update();
+    state.subject = state.subject === hit.v ? "" : hit.v; state.page = 1; update();
   };
-  window.addEventListener("click", onClick, true);
+  win.addEventListener("click", onClick, true);
   clear.addEventListener("click", () => {
     Object.assign(state, fresh()); clearTimeout(typing);
-    search.value = ""; order.value = "new"; abstracts.checked = false;
+    search.value = ""; abstracts.checked = false;
     for (const f of facets) if (f.select) f.select.value = "";
     update(); search.focus();
   });
@@ -1978,20 +2207,23 @@ function catalogFilter({ model, el }) {
     e.preventDefault(); search.focus();
   };
   doc.addEventListener("keydown", onKey);
-  // React may render the list again (new elements); filter those as well.
+  // React may render the printed list again (new elements): filter those, or hide them.
   let pending = null;
   const watch = new MutationObserver(() => {
     clearTimeout(pending);
-    pending = setTimeout(() => { if (doc.querySelector(".lemmata-catalog .lemmata-entry") !== first) apply(); }, 100);
+    pending = setTimeout(() => {
+      if (mode === "index") hidePrinted();
+      else if ((printedBlocks()[0] || null) !== first) apply();
+    }, 100);
   });
   watch.observe(doc.body, { childList: true, subtree: true });
   apply();
-  // Unmounted (the reader left the page): leave the list as it was printed.
+  // Unmounted (the reader left the page): leave the printed list as it was.
   return () => {
-    watch.disconnect(); themes.disconnect(); doc.removeEventListener("keydown", onKey); window.removeEventListener("click", onClick, true);
+    watch.disconnect(); themes.disconnect(); doc.removeEventListener("keydown", onKey); win.removeEventListener("click", onClick, true);
     clearTimeout(pending); clearTimeout(typing);
-    for (const e of doc.querySelectorAll(".lemmata-catalog .lemmata-entry")) { e.style.display = ""; e.style.order = ""; }
-    for (const a of doc.querySelectorAll(".lemmata-catalog .lemmata-entry-abstract")) a.style.display = "";
+    for (const c of printedLists()) c.style.display = "";
+    for (const b of printedBlocks()) { b.style.display = ""; b.style.order = ""; }
     for (const { a } of subjectLinks()) { a.removeAttribute("aria-current"); (a.closest("li") || a).style.opacity = ""; }
     for (const [num, text] of printed) num.textContent = text;
   };
@@ -2023,16 +2255,25 @@ function siteIndex(manifests, tax, report, outDir, { commit, sourceUrl }) {
     const ident = idents[m.id] ?? null, p = prov?.entries?.[m.id], fz = frozen[m.id];
     const url = ident ? `${siteUrl}/abs/${ident}` : `${siteUrl}/${m.dir}/`;
     const old = new Map((fz?.results ?? []).map((x) => [x.name, x]));
+    // Schema 2 (2026-11-28): each computation once per entry, and each result naming the ones
+    // it relies on. Until then every result carried the full claim of each: 90% of the file
+    // (one entry's 128 claims, copied 282 times). The claims are in the release's
+    // verification.json (computation_claims), by name; a frozen entry was not checked in this
+    // build, so its claims, from its last check, stay here.
+    const used = new Map();
     const exports = m.exports.map((e) => { const r = byName.get(e.name);
       const ok = fz ? old.get(e.name)?.status === "checked" : passed && r?.status === "checked";
       const c = fz ? comp.ofFrozen(m, old.get(e.name)) : comp.of(m, r);
+      const uses = [...c.own, ...c.other.flatMap((o) => o.claims)];
+      for (const x of uses) if (!used.has(x.name ?? x.declaration)) used.set(x.name ?? x.declaration, x);
       // verification: kernel-checked | kernel-checked-modulo-computation | checked-by-computation
       return { name: e.name, kind: e.kind, label: e.label, status: ok ? "checked" : "failed",
                verification: { kernel: "kernel-checked", inherited: "kernel-checked-modulo-computation", own: "checked-by-computation" }[c.status],
-               computations: [...c.own, ...c.other.flatMap((o) => o.claims)].map((x) => ({ declaration: x.declaration ?? null,
-                 entry: x.entry?.id ?? null, identifier: x.entry && idents[x.entry.id] ? `lemmata:${idents[x.entry.id]}` : null,
-                 tactic: x.tactic ?? null, source_file: x.source_file ?? null, line: x.line ?? null, claim: x.claim ?? null })),
+               computations: uses.map((x) => x.name ?? x.declaration ?? null),
                axioms: r?.axioms ?? [], source_file: r?.source_file ?? null }; });
+    const computations = [...used.values()].map((x) => ({ name: x.name ?? null, declaration: x.declaration ?? null,
+      entry: x.entry?.id ?? null, identifier: x.entry && idents[x.entry.id] ? `lemmata:${idents[x.entry.id]}` : null,
+      tactic: x.tactic ?? null, source_file: x.source_file ?? null, line: x.line ?? null, ...(fz ? { claim: x.claim ?? null } : {}) }));
     const allOk = exports.every((x) => x.status === "checked");
     const anyComp = exports.some((x) => x.verification !== "kernel-checked");
     return {
@@ -2048,7 +2289,7 @@ function siteIndex(manifests, tax, report, outDir, { commit, sourceUrl }) {
       native_computation: m.native,
       withdrawn: m.notes?.withdrawn ?? null,
       last_checked: fz ? { lean_version: fz.lean_version ?? null, checked_at: fz.checked_at ?? null, commit: fz.commit ?? null } : null,
-      exports, arxiv: m.arxiv,
+      exports, computations, arxiv: m.arxiv,
       // The note as written (inline MyST, citations as @key) and the works it cites, with
       // their DOIs from docs/references.bib (null without one): which paper an entry formalizes.
       note: m.notes?.note ?? null,
@@ -2059,9 +2300,10 @@ function siteIndex(manifests, tax, report, outDir, { commit, sourceUrl }) {
   }).sort((a, b) => (a.identifier ?? "~").localeCompare(b.identifier ?? "~") || a.title.localeCompare(b.title));
 
   fs.writeFileSync(path.join(outDir, "lemmata.json"), JSON.stringify({
-    schema_version: 1, site: siteUrl, source_commit: commit ?? null,
+    schema_version: 2, site: siteUrl, source_commit: commit ?? null,
     checked_means: `formal statements compile, are accepted by Lean's kernel, and use no axioms beyond ${ALLOWED_AXIOMS.join(", ")}; the correspondence between prose and Lean statement is checked by human review`,
-    computation_means: "a result marked kernel-checked-modulo-computation or checked-by-computation also relies on claims that a Bool expression evaluates to true, evaluated by compiled code during the build (native_decide and similar) and not checked by Lean's kernel or re-run by the archive; each such claim is listed under the result's computations, with its source line",
+    computation_means: "a result marked kernel-checked-modulo-computation or checked-by-computation also relies on claims that a Bool expression evaluates to true, evaluated by compiled code during the build (native_decide and similar) and not checked by Lean's kernel or re-run by the archive; each such computation is listed once under its entry's computations, by name with its declaration and source line, and each result names the ones it relies on; the claims themselves are in computation_claims, by name",
+    computation_claims: `${siteUrl}/verification.json`,
     entries,
   }, null, 2) + "\n");
 
@@ -2110,8 +2352,16 @@ function siteIndex(manifests, tax, report, outDir, { commit, sourceUrl }) {
   const xmlEsc = (u) => u.replace(/&/g, "&amp;").replace(/</g, "&lt;");
   const usedSubjects = Object.keys(tax.subjects).filter((id) => entries.some((e) => e.subject === id || e.cross_lists.includes(id)));
   const usedTopics = tax.topics.filter((t) => entries.some((e) => e.topics.some((x) => x.id === t.id)));
+  // The catalog widget's index (prepare writes it with the pages) as /catalog.json; its months
+  // are the month pages.
+  const catalogIndex = path.join(DOCS, "_generated", "catalog", "index.json"), months = [];
+  if (fs.existsSync(catalogIndex)) {
+    fs.copyFileSync(catalogIndex, path.join(outDir, "catalog.json"));
+    for (const e of JSON.parse(fs.readFileSync(catalogIndex, "utf8")).entries ?? []) if (e.month && !months.includes(e.month)) months.push(e.month);
+  }
   const urls = [`${siteUrl}/`, ...usedSubjects.map((id) => `${siteUrl}/${SUBJECT_DIR}/${subjectSlug(id)}/`),
     ...usedTopics.map((t) => `${siteUrl}/${TOPIC_DIR}/${t.id}/`),
+    ...(months.length ? [`${siteUrl}/${MONTH_DIR}/`, ...months.map((mm) => `${siteUrl}/${MONTH_DIR}/${mm}/`)] : []),
     ...entries.map((e) => e.url), ...entries.filter((e) => e.identifier).map((e) => e.url.replace("/abs/", "/html/")),
     `${siteUrl}/checked/`, `${siteUrl}/changelog/`, `${siteUrl}/about/`];
   fs.writeFileSync(path.join(outDir, "sitemap.xml"), ['<?xml version="1.0" encoding="UTF-8"?>',
@@ -2507,7 +2757,7 @@ switch (cmd) {
     const tax = loadTaxonomy(); const ms = loadManifests(tax); finish();
     const report = args[0] ? JSON.parse(fs.readFileSync(args[0], "utf8")) : null;
     siteIndex(ms, tax, report, args[1], { commit: flag("--commit"), sourceUrl: flag("--source-url") });
-    finish(`wrote llms.txt, lemmata.json, sitemap.xml, robots.txt to ${args[1]}`); break;
+    finish(`wrote llms.txt, lemmata.json, catalog.json, sitemap.xml, robots.txt to ${args[1]}`); break;
   }
   case "enhance": {               // after the build: proof titles, folding, Lean collapsing
     finish(`page enhancements added to ${injectEnhancements(args[0])} page(s)`); break;

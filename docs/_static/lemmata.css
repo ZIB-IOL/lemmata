@@ -318,6 +318,13 @@ html.dark .lemmata-entry-id code { color: #9ca3af !important; }
 .lemmata-catalog-compact .lemmata-entry-abstract { display: none; }
 /* An entry's note, as plain text, is in its block only for the filter's search (2026-11-28). */
 .lemmata-entry-note { display: none; }
+/* (The two rules above are for lists printed before the catalog widget's index, 2026-11-28:
+   since then the lists carry neither abstracts nor notes.) The printed lists stop at the
+   newest 100 entries: the line saying where the rest are, and the start page's months. */
+.lemmata-catalog-more { font-size: 0.875rem; opacity: 0.75; }
+.lemmata-catalog-more p { margin: 0; }
+.lemmata-catalog-months { font-size: 0.875rem; margin: 0.25rem 0 2rem; }
+.lemmata-catalog-months p { margin: 0; }
 
 /* The start page's catalog (lemmata-catalog-layout): the filter and the list in the body
    column, the subjects beside them in the right column (the theme's article grid, body-end
