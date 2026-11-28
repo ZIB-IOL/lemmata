@@ -11,7 +11,24 @@ numbering:
 This entry formalizes the paper *Scalable Frank–Wolfe on Generalized Self-concordant Functions via
 Simple Steps* by Alejandro Carderera, Mathieu Besançon and Sebastian Pokutta [@carderera2021simple],
 currently the monotonic Frank–Wolfe algorithm and its convergence rates (Algorithm 1, Theorems 2.4
-and 2.6); numbers refer to the arXiv version.
+and 2.6) and the improved rates of Frank–Wolfe with backtracking (Theorems 2.11, 2.15 and 2.16);
+numbers refer to the arXiv version.
+:::
+
+:::{admonition} Errata
+:class: warning
+
+**Lemma 2.14.** The lemma turns contractions $h_t - h_{t+1} \ge h_t \min\{c_1, c_2 h_t^\alpha\}$
+into rates, with $t_0 = \max\{1, \lfloor \log_{1-c_1}((c_1/c_2)^{1/\alpha}/c_0) \rfloor\}$ and the
+bound $(c_1/c_2)^{1/\alpha}/(1 + c_1\alpha(t - t_0))^{1/\alpha}$ for $t > t_0$. This bound can fail:
+for $c_0 = 2$, $c_1 = 1/2$, $c_2 = 1$ and $\alpha = 1$, the sequence $h_1 = 2$,
+$h_{t+1} = h_t(1 - \min\{1/2, h_t\})$ satisfies the hypotheses with equality, $t_0 = 2$, and
+$h_3 = 1/2$ exceeds the bound $1/3$. The lemma holds with
+$t_0 = \max\{\lfloor \log_{1-c_1}((c_1/c_2)^{1/\alpha}/c_0) \rfloor + 2, 1\}$, the first bound for
+$t < t_0$ and the second for $t \ge t_0$; this is Lemma 2.21 of [Conditional gradient methods:
+smoothness, scaling and linear rates](../conditional-gradient-basics/index.md), where the book's
+version has a similar slip. Theorems 2.15 and 2.16, which use the lemma, are formalized with this
+$t_0$.
 :::
 
 Many objectives in statistics and machine learning, such as the logistic loss or log-barriers, are
@@ -94,6 +111,79 @@ has $g_t \le \gamma_t K$, or every step there is accepted with progress at least
 $\gamma_t g_t - \gamma_t^2 K$; if all gaps exceeded the bound, the accumulated progress would make
 the primal gap negative.
 
+## Frank–Wolfe with backtracking
+
+For improved rates the paper uses the adaptive step size of Pedregosa, Negiar, Askari and Jaggi: a
+backtracking line search finds a smoothness estimate $L_t$ and the step
+$\gamma_t = \min\{1, g_t/(L_t\|v_t - x_t\|^2)\}$ minimizing the quadratic model, with sufficient
+decrease. The estimates stay below $\tilde{L} = \max\{\tau L, L_{-1}\}$ for the backtracking factor
+$\tau$ and the initial estimate $L_{-1}$.
+
+```{prf:definition} Frank–Wolfe with backtracking
+:label: def-frank-wolfe-generalized-self-concordant-backtracking
+:nonumber:
+
+A run of Frank–Wolfe with backtracking picks a Frank–Wolfe vertex $v_t$, a smoothness estimate
+$0 < L_t \le \tilde{L}$ and the step $\gamma_t = \min\{1, g_t/(L_t\|v_t - x_t\|^2)\}$, and sets
+$x_{t+1} = x_t + \gamma_t(v_t - x_t) \in \operatorname{dom} f$ with
+$f(x_{t+1}) \le f(x_t) - \gamma_t g_t + \frac{L_t \gamma_t^2}{2}\|v_t - x_t\|^2$.
+```
+
+Since $\gamma_t$ minimizes the quadratic model with $L_t \le \tilde{L}$, every step does at least as
+well as each $s \in [0, 1]$ in the model with $\tilde{L}$, and the objective decreases; the iterates
+stay in the sublevel set $\mathcal{L}_0$, where generalized self-concordance with a domain
+containing no straight line makes $f$ strongly convex with some modulus $\mu > 0$ (Proposition 2.9,
+a result of Sun and Tran-Dinh). The formal statements assume this local strong convexity.
+
+```{prf:theorem} Minimizer in the interior
+:label: thm-frank-wolfe-generalized-self-concordant-interior
+:enumerator: 2.11
+
+Let $\mathcal{X}$ be compact and convex with diameter $D$, let $f$ be convex with a minimizer
+$x^\star$ on $\mathcal{X} \cap \operatorname{dom} f$ and $\mu$-strongly convex on $\mathcal{L}_0$,
+and let the ball of radius $r > 0$ around $x^\star$ lie in $\mathcal{X}$. Every run of Frank–Wolfe
+with backtracking satisfies
+
+$$
+f(x_t) - f(x^\star) \le \left(1 - \frac{1}{2}\min\left\{1, \frac{\mu r^2}{\tilde{L}
+D^2}\right\}\right)^t
+(f(x_0) - f(x^\star)).
+$$
+```
+
+The ball gives $g_t \ge r\|\nabla f(x_t)\|$ (Proposition 2.10), and strong convexity at the pair
+$(x_t, x^\star)$ gives $f(x_t) - f(x^\star) \le \|\nabla f(x_t)\|^2/(2\mu)$.
+
+Over uniformly convex sets the scaling inequality $\kappa\|\nabla f(x)\|\,\|x - v\|^q \le g(x)$
+(Proposition 2.13) replaces the ball, and the contraction lemma turns the per-step progress into
+rates.
+
+```{prf:theorem} Uniformly convex sets, gradients bounded away from zero
+:label: thm-frank-wolfe-generalized-self-concordant-uc-gradient
+:enumerator: 2.15
+
+Let $\mathcal{X}$ be compact, convex and $(\kappa, q)$-uniformly convex with $q \ge 2$, and let $f$
+be convex with a minimizer on $\mathcal{X} \cap \operatorname{dom} f$ and $\|\nabla f\| \ge c > 0$
+there. Every run of Frank–Wolfe with backtracking satisfies, with $h_t = f(x_t) - f(x^\star)$: for
+$q = 2$, $h_t \le (1 - \frac{1}{2}\min\{1, \kappa c/\tilde{L}\})^t h_0$; for $q > 2$, with
+$\tau = (\tilde{L}^q/(\kappa c)^2)^{1/(q-2)}$ and
+$t_0 = \max\{\lfloor \log_{1/2}(\tau/h_0) \rfloor + 2, 1\}$, $h_t \le h_0 2^{1-t}$ for
+$1 \le t < t_0$ and $h_t \le \tau/(1 + (q-2)(t - t_0)/(2q))^{q/(q-2)}$ for $t \ge t_0$.
+```
+
+```{prf:theorem} Uniformly convex sets, local strong convexity
+:label: thm-frank-wolfe-generalized-self-concordant-uc-strong
+:enumerator: 2.16
+
+Let $\mathcal{X}$ be compact, convex and $(\kappa, q)$-uniformly convex with $q \ge 2$, and let $f$
+be convex with a minimizer on $\mathcal{X} \cap \operatorname{dom} f$ and $\mu$-strongly convex on
+$\mathcal{L}_0$. Every run of Frank–Wolfe with backtracking satisfies, with
+$\tau = (\tilde{L}^q/(\kappa^2\mu))^{1/(q-1)}$ and
+$t_0 = \max\{\lfloor \log_{1/2}(\tau/h_0) \rfloor + 2, 1\}$, $h_t \le h_0 2^{1-t}$ for
+$1 \le t < t_0$ and $h_t \le \tau/(1 + (q-1)(t - t_0)/(2q))^{q/(q-1)}$ for $t \ge t_0$, which is
+$O(t^{-q/(q-1)})$.
+```
+
 :::{note}
 **Differences from the paper.**
 - Generalized self-concordance enters through the local descent property, which the paper derives
@@ -105,14 +195,25 @@ the primal gap negative.
   which the minimum over $1 \le t \le N$ excludes, and $2T_\nu + N - 3$ can vanish; since the local
   descent property for a step bound also holds for every smaller bound, $T$ can always be taken at
   least $1$.
+- Theorems 2.11 and 2.16 assume strong convexity on the sublevel set, which the paper obtains from
+  Proposition 2.9. The bound $f(x_t) - f(x^\star) \le \|\nabla f(x_t)\|^2/(2\mu)$ is proved with the
+  constrained minimizer $x^\star$, which lies in the sublevel set; the paper passes through the
+  unconstrained minimum, where local strong convexity is not available. Theorem 2.11 keeps the
+  minimum with $1$ that the proof gives; the paper drops it, which needs
+  $\mu r^2 \le \tilde{L} D^2$. The ball around $x^\star$ need only lie in $\mathcal{X}$.
+- In Theorems 2.15 and 2.16 the threshold $t_0$ is the corrected one (see the errata), and the first
+  regime reads $h_0 2^{1-t}$ instead of $h_0 2^{-t}$, as the contraction lemma is applied from
+  $t = 1$ with $c_0 = h_0$.
 :::
 
 ## Coverage
 
-This entry currently covers Algorithm 1 and Theorems 2.4 and 2.6. The results of Sun and Tran-Dinh
-behind the local descent property (Proposition 2.1, Lemma 2.3) and Remark 2.2 are cited, not
-formalized. The improved rates (Theorems 2.11, 2.15 and 2.16), the away-step and blended pairwise
-variants (Section 3), the stateless step size variant and the experiments are not covered yet.
+This entry covers Algorithm 1 and Theorems 2.4 and 2.6, and Frank–Wolfe with backtracking with
+Theorems 2.11, 2.15 and 2.16. The results of Sun and Tran-Dinh behind the local descent property and
+the local strong convexity (Propositions 2.1 and 2.9, Lemma 2.3) and Remark 2.2 are cited, not
+formalized; Propositions 2.10 and 2.13 are proved here or in the basics entry. The away-step and
+blended pairwise variants (Section 3), the stateless step size variant and the experiments are not
+covered yet.
 
 ## The formal statements at a glance
 

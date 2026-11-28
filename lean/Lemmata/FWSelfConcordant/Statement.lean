@@ -1,6 +1,7 @@
 module
 
 public import Lemmata.FrankWolfe.Statement
+public import Mathlib.Analysis.SpecialFunctions.Log.Base
 
 @[expose] public section
 
@@ -66,5 +67,83 @@ def MonotonicGapRate : Prop :=
       ∃ t, 1 ≤ t ∧ t ≤ N ∧ fderiv ℝ f (x t) (x t - v t) ≤
         18 * (N : ℝ) / ((N : ℝ) - T) * (((T : ℝ) + 1) / (2 * (T : ℝ) + N - 3) +
           (2 * (N : ℝ) - 2 * T + 3) / (2 * (T : ℝ) + N) ^ 2) * max (f (x 0) - f xStar) K
+
+/-- A run of **Frank–Wolfe with backtracking** (Algorithm 2 with the line search of Algorithm 3) on
+`C` for `f` with domain `D`: every `v_t ∈ C` is a Frank–Wolfe vertex, and the line search returns a
+smoothness estimate `0 < L_t ≤ L̃` and the step `γ_t = min {1, g_t/(L_t ‖v_t - x_t‖²)}` with
+`x_{t+1} = x_t + γ_t (v_t - x_t) ∈ D` and the sufficient decrease
+`f(x_{t+1}) ≤ f(x_t) - γ_t g_t + L_t γ_t²/2 ‖v_t - x_t‖²`, where `g_t = f'(x_t)(x_t - v_t)`. -/
+def IsBFWRun {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (C D : Set E) (f : E → ℝ)
+    (Lmax : ℝ) (x v : ℕ → E) (γ : ℕ → ℝ) : Prop :=
+  x 0 ∈ C ∧ x 0 ∈ D ∧ ∀ t : ℕ, v t ∈ C ∧ (∀ y ∈ C, fderiv ℝ f (x t) (v t) ≤ fderiv ℝ f (x t) y) ∧
+    x (t + 1) = x t + γ t • (v t - x t) ∧ x (t + 1) ∈ D ∧
+    ∃ L : ℝ, 0 < L ∧ L ≤ Lmax ∧
+      γ t = min 1 (fderiv ℝ f (x t) (x t - v t) / (L * ‖v t - x t‖ ^ 2)) ∧
+      f (x (t + 1)) ≤ f (x t) - γ t * fderiv ℝ f (x t) (x t - v t) +
+        L * γ t ^ 2 / 2 * ‖v t - x t‖ ^ 2
+
+/-- **Theorem 2.11** (minimizer in the interior). Let `C` be compact and convex with diameter `D`,
+`f` convex and differentiable on `C ∩ dom f` with a minimizer `x⋆` there, `μ`-strongly convex on
+the sublevel set of `x₀` (for pairs of points in it), and let the closed ball of radius `r > 0`
+around `x⋆` lie in `C`. Every run of Frank–Wolfe with backtracking and estimates at most `L̃`
+satisfies `f(x_t) - f(x⋆) ≤ (1 - min {1, μ r²/(L̃ D²)}/2)^t (f(x₀) - f(x⋆))`. -/
+def InteriorLinearRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C D : Set E) (f : E → ℝ)
+    (Lmax μ r : ℝ) (x v : ℕ → E) (γ : ℕ → ℝ) (xStar : E),
+    IsCompact C → Convex ℝ C → ConvexOn ℝ (C ∩ D) f → (∀ y ∈ C ∩ D, DifferentiableAt ℝ f y) →
+    xStar ∈ minimizers (C ∩ D) f → 0 < Lmax → 0 < μ → 0 < r → Metric.closedBall xStar r ⊆ C →
+    (∀ y ∈ C ∩ D, f y ≤ f (x 0) → ∀ z ∈ C ∩ D, f z ≤ f (x 0) →
+      f y + fderiv ℝ f y (z - y) + μ / 2 * ‖z - y‖ ^ 2 ≤ f z) →
+    IsBFWRun C D f Lmax x v γ →
+    ∀ t : ℕ, f (x t) - f xStar ≤
+      (1 - 1 / 2 * min 1 (μ * r ^ 2 / (Lmax * Metric.diam C ^ 2))) ^ t * (f (x 0) - f xStar)
+
+/-- **Theorem 2.15** (uniformly convex sets, gradients bounded away from zero). Let `C` be compact,
+convex and `(κ, q)`-uniformly convex with `q ≥ 2`, and `f` convex and differentiable on `C ∩ dom f`
+with a minimizer `x⋆` there and `‖f'(y)‖ ≥ c > 0` on `C ∩ dom f`. Every run of Frank–Wolfe with
+backtracking and estimates at most `L̃` satisfies, with `h_t = f(x_t) - f(x⋆)`:
+for `q = 2`, `h_t ≤ (1 - min {1, κ c/L̃}/2)^t h₀`; for `q > 2`, with
+`τ = (L̃^q/(κ c)²)^{1/(q-2)}` and `t₀ = max {⌊log_{1/2}(τ/h₀)⌋ + 2, 1}`,
+`h_t ≤ h₀ (1/2)^{t-1}` for `1 ≤ t < t₀` and `h_t ≤ τ/(1 + (q-2)(t - t₀)/(2q))^{q/(q-2)}` for
+`t ≥ t₀`. -/
+def UniformlyConvexGradientRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C D : Set E) (f : E → ℝ)
+    (Lmax κ q c : ℝ) (x v : ℕ → E) (γ : ℕ → ℝ) (xStar : E),
+    IsCompact C → Convex ℝ C → IsUniformlyConvexSet C κ q → 0 < κ → 2 ≤ q →
+    ConvexOn ℝ (C ∩ D) f → (∀ y ∈ C ∩ D, DifferentiableAt ℝ f y) →
+    xStar ∈ minimizers (C ∩ D) f → 0 < Lmax → 0 < c → (∀ y ∈ C ∩ D, c ≤ ‖fderiv ℝ f y‖) →
+    IsBFWRun C D f Lmax x v γ →
+    (q = 2 → ∀ t : ℕ, f (x t) - f xStar ≤
+      (1 - 1 / 2 * min 1 (κ * c / Lmax)) ^ t * (f (x 0) - f xStar)) ∧
+    (2 < q →
+      let τ := (Lmax ^ q / (κ * c) ^ 2) ^ (1 / (q - 2))
+      let t₀ : ℤ := max (⌊Real.logb (1 / 2) (τ / (f (x 0) - f xStar))⌋ + 2) 1
+      ∀ t : ℕ, 1 ≤ t →
+        ((t : ℤ) < t₀ → f (x t) - f xStar ≤ (f (x 0) - f xStar) * (1 / 2) ^ (t - 1)) ∧
+        (t₀ ≤ (t : ℤ) → f (x t) - f xStar ≤
+          τ / (1 + (q - 2) / (2 * q) * ((t : ℝ) - (t₀ : ℝ))) ^ (q / (q - 2))))
+
+/-- **Theorem 2.16** (uniformly convex sets, local strong convexity). Let `C` be compact, convex
+and `(κ, q)`-uniformly convex with `q ≥ 2`, and `f` convex and differentiable on `C ∩ dom f` with
+a minimizer `x⋆` there and `μ`-strongly convex on the sublevel set of `x₀`. Every run of
+Frank–Wolfe with backtracking and estimates at most `L̃` satisfies, with
+`τ = (L̃^q/(κ² μ))^{1/(q-1)}` and `t₀ = max {⌊log_{1/2}(τ/h₀)⌋ + 2, 1}`,
+`h_t ≤ h₀ (1/2)^{t-1}` for `1 ≤ t < t₀` and `h_t ≤ τ/(1 + (q-1)(t - t₀)/(2q))^{q/(q-1)}` for
+`t ≥ t₀`. -/
+def UniformlyConvexStrongRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C D : Set E) (f : E → ℝ)
+    (Lmax κ q μ : ℝ) (x v : ℕ → E) (γ : ℕ → ℝ) (xStar : E),
+    IsCompact C → Convex ℝ C → IsUniformlyConvexSet C κ q → 0 < κ → 2 ≤ q →
+    ConvexOn ℝ (C ∩ D) f → (∀ y ∈ C ∩ D, DifferentiableAt ℝ f y) →
+    xStar ∈ minimizers (C ∩ D) f → 0 < Lmax → 0 < μ →
+    (∀ y ∈ C ∩ D, f y ≤ f (x 0) → ∀ z ∈ C ∩ D, f z ≤ f (x 0) →
+      f y + fderiv ℝ f y (z - y) + μ / 2 * ‖z - y‖ ^ 2 ≤ f z) →
+    IsBFWRun C D f Lmax x v γ →
+    let τ := (Lmax ^ q / (κ ^ 2 * μ)) ^ (1 / (q - 1))
+    let t₀ : ℤ := max (⌊Real.logb (1 / 2) (τ / (f (x 0) - f xStar))⌋ + 2) 1
+    ∀ t : ℕ, 1 ≤ t →
+      ((t : ℤ) < t₀ → f (x t) - f xStar ≤ (f (x 0) - f xStar) * (1 / 2) ^ (t - 1)) ∧
+      (t₀ ≤ (t : ℤ) → f (x t) - f xStar ≤
+        τ / (1 + (q - 1) / (2 * q) * ((t : ℝ) - (t₀ : ℝ))) ^ (q / (q - 1)))
 
 end Lemmata.FWSelfConcordant

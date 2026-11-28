@@ -10,7 +10,8 @@ abstract: >-
   domain of the objective or increases it. For generalized self-concordant objectives, which need
   not be globally smooth and may have a restricted domain, it converges at the rate $O(1/t)$ in the
   primal gap after a burn-in phase, and the smallest Frank–Wolfe gap converges at the rate
-  $O(1/t)$. The formal statements hold for every convex objective with the local descent property
+  $O(1/t)$. With the backtracking line search of Pedregosa et al., the rate is linear for an
+  interior minimizer and improves over uniformly convex sets. The formal statements hold for every convex objective with the local descent property
   that generalized self-concordance provides along Frank–Wolfe segments from the sublevel set of
   the starting point, in real normed spaces.
 contributors:
@@ -45,3 +46,19 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-generalized-self-concordant-gap
+  - name: Lemmata.FWSelfConcordant.IsBFWRun
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-generalized-self-concordant-backtracking
+  - name: Lemmata.FWSelfConcordant.interior_linear_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-generalized-self-concordant-interior
+  - name: Lemmata.FWSelfConcordant.uniformly_convex_gradient_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-generalized-self-concordant-uc-gradient
+  - name: Lemmata.FWSelfConcordant.uniformly_convex_strong_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-generalized-self-concordant-uc-strong
