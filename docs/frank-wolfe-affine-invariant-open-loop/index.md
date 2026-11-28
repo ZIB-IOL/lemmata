@@ -10,8 +10,33 @@ numbering:
 :::{note}
 This entry formalizes the paper *Accelerated Affine-Invariant Convergence Rates of the Frank–Wolfe
 Algorithm with Open-Loop Step-Sizes* by Elias Wirth, Javier Peña and Sebastian Pokutta
-[@wirth2023accelerated], currently its measures of optimality and its convergence rates (Sections 3
-to 5); numbers refer to the arXiv version.
+[@wirth2023accelerated], its measures of optimality, its convergence rates (Sections 3 to 5) and its
+sufficient conditions for the growth properties; numbers refer to the arXiv version.
+:::
+
+:::{admonition} Errata
+:class: warning
+
+**Lemma 2.10, second part.** For $p \ge 2$, a function that is $L$-smooth with respect to
+$\|\cdot\|_2$ is $L n^{1-2/p}$-smooth with respect to $\|\cdot\|_p$, since
+$\|x\|_2 \le n^{1/2-1/p} \|x\|_p$ enters squared; the lemma states $L n^{1/2-1/p}$. For
+$f(x) = \frac{L}{2}\|x\|_2^2$ on the unit $\ell_4$-ball in $\mathbb{R}^2$, $x = 0$ and $y = (t, t)$,
+the Bregman divergence $D_f(y, x) = L t^2$ exceeds $\frac{L 2^{1/4}}{2}\|y\|_4^2 = 2^{-1/4} L t^2$.
+The strong $(4 L n^{1/2-1/p}, 0)$-growth property fails as well: at $x = 0$ every point of the ball
+is a Frank–Wolfe vertex, and $v = n^{-1/p}(1, \dots, 1)$ gives
+$D_f(\eta v, 0) = \frac{L}{2}\eta^2 n^{1-2/p}$, which exceeds $2 L n^{1/2-1/p}\eta^2$ once
+$n^{1/2-1/p} > 4$. With $n^{1-2/p}$ in place of $n^{1/2-1/p}$ both claims hold. Example 4.4 inherits
+the constant.
+
+**Example 4.4, first part.** For $p \in (1, 2]$, the ball is strongly convex, and Proposition 4.3
+with uniform convexity exponent $2$ and the $(\sqrt{2} n^{1/2-1/p}, 1/2)$-Hölderian error bound
+gives weak growth with $r = 2\theta/2 = 1/2$, not $r = 1$, and weak $(M, 1)$-growth fails for every
+$M$. For the Euclidean unit disk, $f(x) = \frac{1}{2}\|x - y\|_2^2$ with $y = (1, 0)$ and
+$x = (1 - s, s/2)$, the Frank–Wolfe vertex is $v = (2/\sqrt{5}, -1/\sqrt{5})$, the Frank–Wolfe gap
+is $g(x) \approx 0.118\, s$ and
+$D_f(x + \eta(v - x), x) = \frac{\eta^2}{2}\|v - x\|^2 \approx 0.106\, \eta^2$, so the ratio is
+unbounded as $s \to 0$. (The second part of the example calls the conclusion of Proposition 4.3
+strong growth; it is weak growth.)
 :::
 
 The Frank–Wolfe algorithm is affine invariant: an affine change of variables maps its iterates to
@@ -278,6 +303,65 @@ Under the gaps $(m, r)$-growth property, the bound of Theorem 5.2 holds from
 $S = \max\{1, \lceil 2^{1/r} \ell M/m^{1/r} - \ell \rceil\}$ on.
 ```
 
+## Sufficient conditions
+
+Smoothness bounds the Bregman divergence along the Frank–Wolfe segment by
+$\frac{L}{2}\eta^2\|v - x\|^2$, so growth properties follow from bounds on $\|v - x\|$ in terms of
+the Frank–Wolfe gap. The paper measures distances in the $\mathcal{C}$-norm, the gauge of
+$\frac{1}{2}(\mathcal{C} - \mathcal{C})$, which makes all constants affine invariant; the formal
+statements hold for every norm.
+
+```{prf:proposition} Smoothness
+:label: prop-frank-wolfe-affine-invariant-open-loop-smooth
+:enumerator: 2.8
+
+If $\mathcal{C}$ is convex and bounded with diameter $D$ and $f$ is $L$-smooth over $\mathcal{C}$,
+then $(\mathcal{C}, f)$ has the strong $(L D^2, 0)$-growth property. In the $\mathcal{C}$-norm,
+$D \le 2$ and $M = 4L$.
+```
+
+A set $\mathcal{C}$ is *$(\alpha, p)$-uniformly convex* if
+$\gamma x + (1 - \gamma) y + \gamma(1 - \gamma)\alpha\|x - y\|^p z \in \mathcal{C}$ for all
+$x, y \in \mathcal{C}$, $\gamma \in [0, 1]$ and unit vectors $z$. A Frank–Wolfe vertex then
+satisfies $\alpha \|\nabla f(x)\|_* \|x - v\|^p \le g(x)$ (Proposition 2.19 of [Conditional gradient
+methods: smoothness, scaling and linear rates](../conditional-gradient-basics/index.md)).
+
+```{prf:proposition} Uniformly convex sets, gradients bounded away from zero
+:label: prop-frank-wolfe-affine-invariant-open-loop-uniform-strong
+:enumerator: 3.6
+
+If $\mathcal{C}$ is convex and $(\alpha, p)$-uniformly convex, $f$ is $L$-smooth over $\mathcal{C}$
+and $\|\nabla f(x)\|_* \ge \lambda > 0$ on $\mathcal{C}$, then $(\mathcal{C}, f)$ has the strong
+$(L(\alpha\lambda)^{-2/p}, 2/p)$-growth property.
+```
+
+Under a Hölderian error bound the gradient can vanish at the minimizers, but
+$(f(x) - f(x^\star))^{1-\theta} \le \mu \|\nabla f(x)\|_*$ (see [Frank–Wolfe: the
+core](../frank-wolfe-core/index.md)), which yields weak growth.
+
+```{prf:proposition} Uniformly convex sets and Hölderian error bounds
+:label: prop-frank-wolfe-affine-invariant-open-loop-uniform-weak
+:enumerator: 4.3
+
+If $\mathcal{C}$ is compact and $(\alpha, p)$-uniformly convex with $p \ge 2$, and $f$ is convex,
+$L$-smooth over $\mathcal{C}$ and satisfies a $(\mu, \theta)$-Hölderian error bound with
+$\theta \in [0, 1/2]$, then $(\mathcal{C}, f)$ has the weak
+$(L(\mu/\alpha)^{2/p}, 2\theta/p)$-growth property.
+```
+
+```{prf:proposition} Minimizers in the relative interior
+:label: prop-frank-wolfe-affine-invariant-open-loop-interior
+:enumerator: 5.3
+
+If $\mathcal{C}$ is compact, $f$ is convex and satisfies a $(\mu, \theta)$-Hölderian error bound
+with $\theta \in [0, 1/2]$, and every point of $\operatorname{aff}(\mathcal{C})$ within distance
+$\rho > 0$ of a minimizer lies in $\mathcal{C}$, then $(\mathcal{C}, f)$ has the gaps
+$(\rho/\mu, \theta)$-growth property.
+```
+
+This is the gap bound behind Theorem 3.6 of [Acceleration of Frank–Wolfe algorithms with open-loop
+step-sizes](../frank-wolfe-open-loop-acceleration/index.md), and the formal proof reuses it.
+
 :::{note}
 **Differences from the paper.**
 - The statements hold in real normed spaces, for every Frank–Wolfe run, with the Frank–Wolfe gaps of
@@ -295,12 +379,19 @@ $S = \max\{1, \lceil 2^{1/r} \ell M/m^{1/r} - \ell \rceil\}$ on.
   $\varepsilon < \ell - 1/(1 - r)$ strictly, since the exponent $1/(\ell - \varepsilon - 1/(1-r))$
   must be defined, and the range of $i$ is $R \le i \le \max\{R, U\}$: when $U < R$, the iterate $R$
   itself is below the threshold, while the paper's range $\{R, \dots, U\}$ is empty.
+- The sufficient conditions hold for every norm; the paper uses the $\mathcal{C}$-norm. In
+  Proposition 3.6 any $p > 0$ is allowed, and in Proposition 5.3 the radius $\rho$ is any radius for
+  which the balls of $\operatorname{aff}(\mathcal{C})$ around the minimizers lie in $\mathcal{C}$,
+  rather than the distance from the minimizers to the relative boundary.
 :::
 
 ## Coverage
 
-This entry currently covers the measures of optimality and the convergence rates of Sections 3 to 5.
-The sufficient conditions for the growth properties are planned.
+This entry covers the measures of optimality, the convergence rates of Sections 3 to 5 and the
+sufficient conditions of Propositions 2.8, 3.6, 4.3 and 5.3. Not covered are the polytope results of
+Section 5 (Proposition 5.4, Corollary 5.5 and Lemmas 5.6 and 5.7, which give the relaxed gaps growth
+property when the minimizer lies in the relative interior of a face), Lemma 2.10 and the examples,
+which concern $\ell_p$-balls, Hanner's inequality (Proposition 2.6) and the numerical experiments.
 
 ## The formal statements at a glance
 

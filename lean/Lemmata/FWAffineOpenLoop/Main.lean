@@ -2,6 +2,7 @@ module
 
 public import Lemmata.FWAffineOpenLoop.StrongR
 public import Lemmata.FWAffineOpenLoop.Gaps
+public import Lemmata.FWAffineOpenLoop.Sufficient
 
 @[expose] public section
 
@@ -37,6 +38,19 @@ theorem relaxed_gaps_rate : RelaxedGapsRate := Proof.relaxed_gaps_rate
 
 /-- Theorem 5.1: the same rate under the gaps `(m, r)`-growth property. -/
 theorem gaps_rate : GapsRate := Proof.gaps_rate
+/-- Proposition 2.8: smoothness gives the strong `(L D², 0)`-growth property. -/
+theorem smooth_strong_growth : SmoothStrongGrowth := Proof.smooth_strong_growth
+
+/-- Proposition 3.6: uniformly convex sets with gradients bounded away from zero give strong
+`(L (αλ)^{-2/p}, 2/p)`-growth. -/
+theorem uniform_strong_growth : UniformStrongGrowth := Proof.uniform_strong_growth
+
+/-- Proposition 4.3: uniformly convex sets with a Hölderian error bound give weak
+`(L (μ/α)^{2/p}, 2θ/p)`-growth. -/
+theorem uniform_weak_growth : UniformWeakGrowth := Proof.uniform_weak_growth
+
+/-- Proposition 5.3: minimizers in the relative interior give gaps `(ρ/μ, θ)`-growth. -/
+theorem interior_gaps_growth : InteriorGapsGrowth := Proof.interior_gaps_growth
 -- DOCS_END_MAIN
 
 end Lemmata.FWAffineOpenLoop
