@@ -1,6 +1,7 @@
 module
 
 public import Lemmata.CGBasics.Statement
+public import Mathlib.Analysis.InnerProductSpace.PiL2
 
 @[expose] public section
 
@@ -157,5 +158,55 @@ def LocalScalingRate : Prop :=
       ∀ T : ℕ, 1 ≤ T →
         ((T : ℤ) < t₀ → f (x (S + T - 1)) - f xStar ≤ (1 / 2) ^ (T - 1)) ∧
         (t₀ ≤ (T : ℤ) → f (x (S + T - 1)) - f xStar ≤ K / (1 + a / 2 * ((T : ℝ) - t₀)) ^ (1 / a)))
+
+/-- The **modulus of convexity** of a real normed space (Definition 4.1): `δ(ε)` is the infimum of
+`1 - ‖(x + y)/2‖` over `x, y` in the closed unit ball with `‖x - y‖ ≥ ε`. -/
+noncomputable def modulusOfConvexity (E : Type*) [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (ε : ℝ) : ℝ :=
+  sInf {r : ℝ | ∃ x y : E, ‖x‖ ≤ 1 ∧ ‖y‖ ≤ 1 ∧ ε ≤ ‖x - y‖ ∧ r = 1 - ‖(1 / 2 : ℝ) • (x + y)‖}
+
+/-- **Lemma 4.2** (unit balls of uniformly convex spaces). If the modulus of convexity of `E`
+satisfies `δ(ε) ≥ α ε^q` for `ε ∈ [0, 2]` with `α ≥ 0`, the closed unit ball is
+`(α, q)`-uniformly convex. If the closed unit ball is `(α, q)`-uniformly convex, the closed ball of
+radius `r > 0` is `(α/r^{q-1}, q)`-uniformly convex. -/
+def UniformlyConvexBall : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (α q : ℝ),
+    (0 ≤ α → (∀ ε ∈ Set.Icc (0 : ℝ) 2, α * ε ^ q ≤ modulusOfConvexity E ε) →
+      IsUniformlyConvexSet (Metric.closedBall (0 : E) 1) α q) ∧
+    ∀ r : ℝ, 0 < r → IsUniformlyConvexSet (Metric.closedBall (0 : E) 1) α q →
+      IsUniformlyConvexSet (Metric.closedBall (0 : E) r) (α / r ^ (q - 1)) q
+
+/-- **No super-quadratic uniform convexity with smoothness.** On a real normed space with a nonzero
+vector, no `L`-smooth function is `(μ, r)`-uniformly convex,
+`f(y) ≥ f(x) + f'(x)(y - x) + (μ/2)‖x - y‖^r` for all `x, y`, with `μ > 0` and `r > 2`; so the
+exponent in Lemma D.2 is `2`. -/
+def SmoothUniformlyConvexExponent : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (f : E → ℝ) (L : NNReal) (μ r : ℝ),
+    (∃ e : E, e ≠ 0) → IsSmooth f L → 0 < μ →
+    (∀ x y, f x + fderiv ℝ f x (y - x) + μ / 2 * ‖x - y‖ ^ r ≤ f y) → r ≤ 2
+
+/-- **Lemma D.2** (sublevel sets of uniformly convex functions), corrected. Let `f ≥ 0` be
+`L`-smooth with `L > 0` and `(μ, r)`-uniformly convex on `E`, with `μ > 0` and `r ≥ 2`. For
+`w > 0`, the sublevel set `{f ≤ w}` is `(μ/(2√(2wL)), r)`-uniformly convex. -/
+def SublevelUniformlyConvex : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (f : E → ℝ) (L : NNReal) (μ r w : ℝ),
+    (∀ x, 0 ≤ f x) → IsSmooth f L → 0 < (L : ℝ) → 0 < μ → 2 ≤ r →
+    (∀ x y, f x + fderiv ℝ f x (y - x) + μ / 2 * ‖x - y‖ ^ r ≤ f y) → 0 < w →
+    IsUniformlyConvexSet {x | f x ≤ w} (μ / (2 * Real.sqrt (2 * w * L))) r
+
+/-- **Lemma D.3** (norm balls), corrected. If `x ↦ ‖x‖²` is `(μ, s)`-uniformly convex,
+`‖y‖² ≥ ‖x‖² + φ_x(y - x) + (μ/2)‖x - y‖^s` for all `x, y` with `φ_x` its derivative, with `μ > 0`
+and `s ≥ 2`, then the closed ball of radius `ρ > 0` is `(μ/(4ρ), s)`-uniformly convex. -/
+def NormBallUniformlyConvex : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (μ s ρ : ℝ), 0 < μ → 2 ≤ s → 0 < ρ →
+    (∀ x y : E, ‖x‖ ^ 2 + fderiv ℝ (fun v : E => ‖v‖ ^ 2) x (y - x) + μ / 2 * ‖x - y‖ ^ s ≤
+      ‖y‖ ^ 2) →
+    IsUniformlyConvexSet (Metric.closedBall (0 : E) ρ) (μ / (4 * ρ)) s
+
+/-- **The constants of Lemmas D.2 and D.3 as printed are too large.** The closed Euclidean unit disk
+is not `(1, 2)`-uniformly convex, although Lemma D.2 for `f = ‖x‖²/2` with `μ = L = 1` and
+`w = 1/2`, and Lemma D.3 for the Euclidean norm with `μ = 2` and `ρ = 1`, claim it is. -/
+def EuclideanDiskNotUC : Prop :=
+  ¬ IsUniformlyConvexSet (Metric.closedBall (0 : EuclideanSpace ℝ (Fin 2)) 1) 1 2
 
 end Lemmata.FWUniformlyConvex

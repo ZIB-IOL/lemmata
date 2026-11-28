@@ -6,8 +6,8 @@ cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2004.11053"
 note: >-
-  Formalizes Lemmas 2.4, 2.7, 2.9 and 3.2, Corollary 2.8 and Theorems 2.5, 2.10 and 3.1 of
-  @kerdreux2020projection.
+  Formalizes Lemmas 2.4, 2.7, 2.9, 3.2 and 4.2, Corollary 2.8, Theorems 2.5, 2.10 and 3.1,
+  and Lemmas D.2 and D.3 of @kerdreux2020projection.
 abstract: >-
   Over uniformly convex feasible regions, the Frank–Wolfe algorithm converges faster than at the
   rate $O(1/t)$. The local scaling inequality
@@ -81,3 +81,27 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-uniformly-convex-sets-local-rate
+  - name: Lemmata.FWUniformlyConvex.modulusOfConvexity
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-uniformly-convex-sets-modulus
+  - name: Lemmata.FWUniformlyConvex.uniformly_convex_ball
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-uniformly-convex-sets-ball
+  - name: Lemmata.FWUniformlyConvex.smooth_uniformly_convex_exponent
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-uniformly-convex-sets-exponent
+  - name: Lemmata.FWUniformlyConvex.sublevel_uniformly_convex
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-uniformly-convex-sets-sublevel
+  - name: Lemmata.FWUniformlyConvex.norm_ball_uniformly_convex
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-uniformly-convex-sets-norm-ball
+  - name: Lemmata.FWUniformlyConvex.euclidean_disk_not_uc
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-uniformly-convex-sets-disk
