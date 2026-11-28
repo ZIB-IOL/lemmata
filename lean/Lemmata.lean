@@ -387,6 +387,7 @@ public import Lemmata.FWSelfConcordant.Away
 public import Lemmata.FWSelfConcordant.Backtrack
 public import Lemmata.FWSelfConcordant.Main
 public import Lemmata.FWSelfConcordant.Monotonic
+public import Lemmata.FWSelfConcordant.Pairwise
 public import Lemmata.FWSelfConcordant.Statement
 public import Lemmata.FanoDiffusion.Corollaries
 public import Lemmata.FanoDiffusion.Entropy

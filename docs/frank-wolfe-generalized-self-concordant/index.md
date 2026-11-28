@@ -12,8 +12,8 @@ This entry formalizes the paper *Scalable Frank–Wolfe on Generalized Self-conc
 Simple Steps* by Alejandro Carderera, Mathieu Besançon and Sebastian Pokutta [@carderera2021simple],
 currently the monotonic Frank–Wolfe algorithm and its convergence rates (Algorithm 1, Theorems 2.4
 and 2.6) the improved rates of Frank–Wolfe with backtracking (Theorems 2.11, 2.15 and 2.16), and the
-linear rate of away-step Frank–Wolfe with backtracking over polytopes (Theorem 3.2); numbers refer
-to the arXiv version.
+linear rates of away-step Frank–Wolfe and blended pairwise conditional gradients with backtracking
+over polytopes (Theorem 3.2); numbers refer to the arXiv version.
 :::
 
 :::{admonition} Errata
@@ -229,6 +229,37 @@ capped therefore contracts the primal gap, as does a full Frank–Wolfe step; an
 maximal step size drops $a_t$ from the active set without increasing $f$. Since the active set
 starts with one vertex and every other step adds at most one, at least half of the steps contract.
 
+Blended pairwise conditional gradients replace the away step by a pairwise step, which moves weight
+from $a_t$ to the best active vertex $s_t$ when the pairwise gap
+$\langle \nabla f(x_t), a_t - s_t \rangle$ exceeds the Frank–Wolfe gap, with step sizes capped at
+$\lambda_t(a_t)$.
+
+```{prf:definition} Blended pairwise conditional gradients with backtracking
+:label: def-frank-wolfe-generalized-self-concordant-pairwise
+:nonumber:
+
+A run starts at a vertex $x_0 \in \operatorname{dom} f$ with active set $\{x_0\}$. At each step,
+with an away vertex $a_t$ and a local Frank–Wolfe vertex $s_t$ of the active set and a Frank–Wolfe
+vertex $v_t$, it takes the pairwise step $x_{t+1} = x_t + \gamma_t(s_t - a_t)$ if
+$\langle \nabla f(x_t), a_t - s_t \rangle > \langle \nabla f(x_t), x_t - v_t \rangle$ and the
+Frank–Wolfe step otherwise. The step size is the short step for an estimate $0 < L_t \le \tilde{L}$
+clipped at $\lambda_t(a_t)$ or $1$, with $x_{t+1} \in \operatorname{dom} f$ and sufficient decrease,
+and the active set and the weights are updated as in the [BPCG
+entry](../blended-pairwise-conditional-gradients/index.md).
+```
+
+```{prf:theorem} Blended pairwise conditional gradients
+:label: thm-frank-wolfe-generalized-self-concordant-pairwise
+:enumerator: 3.2
+
+Under the hypotheses of the previous theorem, every run of blended pairwise conditional gradients
+with backtracking satisfies the same bound.
+```
+
+Here $\langle \nabla f(x_t), s_t \rangle \le \langle \nabla f(x_t), x_t \rangle$ makes the chosen
+gap at least half of $\langle \nabla f(x_t), a_t - v_t \rangle$ in both cases, and a pairwise step
+with maximal step size drops $a_t$.
+
 :::{note}
 **Differences from the paper.**
 - Generalized self-concordance enters through the local descent property, which the paper derives
@@ -254,6 +285,9 @@ starts with one vertex and every other step adds at most one, at least half of t
   which is the paper's $1 - \mu\delta^2/(4\tilde{L}D^2)$ whenever $\mu\delta^2 \le 2\tilde{L}D^2$.
   Only strong convexity at the pairs $(x_t, x^\star)$ is used, and no convexity or smoothness
   hypothesis beyond the line search is needed.
+- In Algorithm 5 the pairwise direction is $s_t - a_t$ and the pairwise gap is
+  $\langle \nabla f(x_t), a_t - s_t \rangle$; the paper writes $a_t - s_t$ and
+  $\langle \nabla f(a_t), s_t - a_t \rangle$.
 :::
 
 ## Coverage
@@ -261,10 +295,9 @@ starts with one vertex and every other step adds at most one, at least half of t
 This entry covers Algorithm 1 and Theorems 2.4 and 2.6, and Frank–Wolfe with backtracking with
 Theorems 2.11, 2.15 and 2.16. The results of Sun and Tran-Dinh behind the local descent property and
 the local strong convexity (Propositions 2.1 and 2.9, Lemma 2.3) and Remark 2.2 are cited, not
-formalized; Propositions 2.10 and 2.13 are proved here or in the basics entry. Of Section 3, Theorem
-3.2 is covered for away-step Frank–Wolfe; Proposition 3.1 is the scaling property, formalized in the
-away-step entry. The blended pairwise variant, the stateless step size variant and the experiments
-are not covered yet.
+formalized; Propositions 2.10 and 2.13 are proved here or in the basics entry. Section 3 is covered:
+Theorem 3.2 for both algorithms, and Proposition 3.1, the scaling property, is formalized in the
+away-step entry. The stateless step size variant and the experiments are not covered.
 
 ## The formal statements at a glance
 

@@ -183,4 +183,58 @@ def AwayLinearRate : Prop :=
       (1 - min (1 / 2) (μ * δ ^ 2 / (4 * Lmax * Metric.diam (↑V : Set E) ^ 2))) ^
         ⌈((t : ℝ) - 1) / 2⌉₊ * (f (x 0) - f xStar)
 
+open Classical in
+/-- One step of **blended pairwise conditional gradients with backtracking** (Algorithm 5) from the
+state `(x, S, λ)`, with away vertex `a ∈ S`, local Frank–Wolfe vertex `s ∈ S` and Frank–Wolfe vertex
+`w`, for `g = f'(x)` and the smoothness estimate `L`: the pairwise step from `a` to `s` when
+`g(a - s) > g(x - w)`, otherwise the Frank–Wolfe step toward `w`, each with the short step clipped
+at its maximal step size (`λ_a` and `1`). -/
+def IsBBPCGStep {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (L : ℝ) (g : StrongDual ℝ E)
+    (x : E) (S : Finset E) (lam : E → ℝ) (a s w x' : E) (S' : Finset E) (lam' : E → ℝ) : Prop :=
+  if g (x - w) < g (a - s) then
+    let γ := min (g (a - s) / (L * ‖a - s‖ ^ 2)) (lam a)
+    x' = x - γ • (a - s) ∧
+      lam' = (fun u => lam u - (if u = a then γ else 0) + (if u = s then γ else 0)) ∧
+      S' = if γ = lam a ∧ a ≠ s then S.erase a else S
+  else
+    let γ := min (g (x - w) / (L * ‖x - w‖ ^ 2)) 1
+    x' = x - γ • (x - w) ∧ lam' = (fun u => (1 - γ) * lam u + (if u = w then γ else 0)) ∧
+      S' = if γ = 1 then {w} else insert w S
+
+open Classical in
+/-- A run of **blended pairwise conditional gradients with backtracking** on `conv V` for `f` with
+domain `D`: it starts at a vertex in `D` with active set `{x₀}` and weight `1`, and every step is a
+step of `IsBBPCGStep` (with any away vertex and local Frank–Wolfe vertex of the active set and any
+Frank–Wolfe vertex) for a smoothness estimate `L_t ∈ (0, L̃]` from the line search: the new
+iterate lies in `D` and satisfies the sufficient decrease condition. -/
+def IsBBPCGRun {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (D : Set E)
+    (f : E → ℝ) (Lmax : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) : Prop :=
+  x 0 ∈ V ∧ x 0 ∈ D ∧ S 0 = {x 0} ∧ lam 0 = (fun u => if u = x 0 then 1 else 0) ∧
+    ∀ t : ℕ, ∃ L : ℝ, 0 < L ∧ L ≤ Lmax ∧
+      ∃ a ∈ S t, (∀ u ∈ S t, fderiv ℝ f (x t) u ≤ fderiv ℝ f (x t) a) ∧
+      ∃ s ∈ S t, (∀ u ∈ S t, fderiv ℝ f (x t) s ≤ fderiv ℝ f (x t) u) ∧
+      ∃ w ∈ V, (∀ u ∈ V, fderiv ℝ f (x t) w ≤ fderiv ℝ f (x t) u) ∧
+        IsBBPCGStep L (fderiv ℝ f (x t)) (x t) (S t) (lam t) a s w (x (t + 1)) (S (t + 1))
+          (lam (t + 1)) ∧
+        x (t + 1) ∈ D ∧
+        f (x (t + 1)) ≤ f (x t) + fderiv ℝ f (x t) (x (t + 1) - x t) +
+          L / 2 * ‖x (t + 1) - x t‖ ^ 2
+
+/-- **Theorem 3.2** (blended pairwise conditional gradients). Under the hypotheses of
+`AwayLinearRate`, every run of blended pairwise conditional gradients with backtracking and
+estimates at most `L̃` satisfies
+`f(x_t) - f(x⋆) ≤ (1 - min {1/2, μ δ²/(4 L̃ D²)})^⌈(t-1)/2⌉ (f(x₀) - f(x⋆))`. -/
+def PairwiseLinearRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (D : Set E) (f : E → ℝ)
+    (Lmax μ δ : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) (xStar : E),
+    xStar ∈ minimizers (convexHull ℝ (↑V : Set E) ∩ D) f → 0 < Lmax → 0 < μ → 0 < δ →
+    AwayStepFW.IsScaling V δ →
+    (∀ y ∈ convexHull ℝ (↑V : Set E) ∩ D, f y ≤ f (x 0) →
+      ∀ z ∈ convexHull ℝ (↑V : Set E) ∩ D, f z ≤ f (x 0) →
+        f y + fderiv ℝ f y (z - y) + μ / 2 * ‖z - y‖ ^ 2 ≤ f z) →
+    IsBBPCGRun V D f Lmax x S lam →
+    ∀ t : ℕ, f (x t) - f xStar ≤
+      (1 - min (1 / 2) (μ * δ ^ 2 / (4 * Lmax * Metric.diam (↑V : Set E) ^ 2))) ^
+        ⌈((t : ℝ) - 1) / 2⌉₊ * (f (x 0) - f xStar)
+
 end Lemmata.FWSelfConcordant
