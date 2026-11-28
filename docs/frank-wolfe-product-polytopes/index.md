@@ -11,9 +11,10 @@ numbering:
 This entry formalizes the paper *Linear Convergence of the Frank–Wolfe Algorithm over Product
 Polytopes* by Gabriele Iommazzo, David Martínez-Rubio, Francisco Criado, Elias Wirth and Sebastian
 Pokutta [@iommazzo2025linear], currently the bounds on the pyramidal width of a product (Theorem
-4.5), the linear rate of away-step Frank–Wolfe over a product of two polytopes (Proposition 4.8),
-its objective for the feasibility problem (Proposition 5.1) and the preparatory bounds of Lemma A.2;
-numbers refer to the arXiv version.
+4.5), the vertex-facet distance of a product (Proposition 4.7), the linear rate of away-step
+Frank–Wolfe over a product of two polytopes (Proposition 4.8), its objective for the feasibility
+problem (Proposition 5.1) and the preparatory bounds of Lemma A.2; numbers refer to the arXiv
+version.
 :::
 
 Away-step and pairwise Frank–Wolfe converge linearly over polytopes, at a rate governed by a
@@ -139,6 +140,46 @@ $$
 
 By Lemma A.2, $\alpha \ge \min\{\hat{\delta}_1, \hat{\delta}_2\}/\sqrt{2}$.
 
+## The vertex-facet distance of a product
+
+A second condition number of a polytope only involves its facets and its vertices. Facets are the
+maximal proper faces.
+
+```{prf:definition} Facets
+:label: def-frank-wolfe-product-polytopes-facet
+:nonumber:
+
+A facet of $\mathcal{P} = \operatorname{conv}(\mathcal{V})$ is a proper face that is contained in no
+other proper face.
+```
+
+```{prf:definition} Vertex-facet distance
+:label: def-frank-wolfe-product-polytopes-vertex-facet
+:enumerator: 4.6
+
+The vertex-facet distance of $\mathcal{P} = \operatorname{conv}(\mathcal{V})$ is the infimum of
+$\|a - v\|$ over facets $F$, points $a$ of the affine hull of $F$ and vertices $v \notin F$.
+```
+
+Unlike the pyramidal width, the vertex-facet distance does not decrease under products.
+
+```{prf:proposition} Vertex-facet distance of the product
+:label: prop-frank-wolfe-product-polytopes-vertex-facet
+:enumerator: 4.7
+
+For finite sets $\mathcal{V}_1$ and $\mathcal{V}_2$ with at least two points each, the vertex-facet
+distance of $\operatorname{conv}(\mathcal{V}_1) \times \operatorname{conv}(\mathcal{V}_2)$ is the
+smaller of the vertex-facet distances of the factors.
+```
+
+The faces of the product are the products $F_1 \times F_2$ of faces of the factors, including the
+factors themselves. A facet is therefore $F_1 \times \mathcal{P}_2$ for a facet $F_1$ of the first
+factor or $\mathcal{P}_1 \times F_2$ for a facet $F_2$ of the second: if both $F_i$ were proper, the
+proper face $F_1 \times \mathcal{P}_2$ would be larger. The affine hull of
+$F_1 \times \mathcal{P}_2$ projects into the affine hull of $F_1$ and contains $(a_1, b)$ for every
+$a_1$ in the affine hull of $F_1$ and every vertex $b$ of the second factor, so its distances to the
+remaining vertices are those of $F_1$.
+
 ## The feasibility objective
 
 ```{prf:definition} The feasibility objective
@@ -196,10 +237,11 @@ term is nondecreasing in $a$ and in $b$.
 
 ## Coverage
 
-This entry currently covers both bounds of Theorem 4.5 with the easy half of Corollary 4.4,
-Proposition 4.8 for two factors, Proposition 5.1 and Lemma A.2. Lemma 4.3 and the other half of
-Corollary 4.4, the vertex-facet distance (Propositions 4.7 and 4.9) and the products of $k$
-polytopes (Corollary A.3) are planned; the experiments are not covered.
+This entry covers both bounds of Theorem 4.5 with the easy half of Corollary 4.4, Proposition 4.7,
+Proposition 4.8 for two factors, Proposition 5.1 and Lemma A.2. Not covered are Lemma 4.3 and the
+other half of Corollary 4.4, which need the dimension of facets of a polytope, the products of $k$
+polytopes (Corollary A.3), the rate via the vertex-facet distance (Proposition 4.9), which depends
+on an unspecified procedure of the algorithm, and the experiments.
 
 ## The formal statements at a glance
 

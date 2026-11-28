@@ -123,4 +123,28 @@ def ProductAwayLinear : Prop :=
             ((t - 1) / 2) *
           (L * Metric.diam (↑(productVertices V₁ V₂) : Set (WithLp 2 (E₁ × E₂))) ^ 2 / 2)
 
+/-- A **facet** of `conv V`: a proper exposed face (given by its vertex set `F`) that is contained
+in no other proper exposed face. -/
+def IsFacet {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (V F : Finset E) : Prop :=
+  (∃ ψ : StrongDual ℝ E, exposedFace V ψ = F) ∧ F ≠ V ∧
+    ∀ φ : StrongDual ℝ E, F ⊆ exposedFace V φ → exposedFace V φ ≠ V → exposedFace V φ = F
+
+open Classical in
+/-- The **vertex-facet distance** of `conv V` (Definition 4.6): the infimum of `‖a - v‖` over facets
+`F`, points `a` of the affine hull of `F` and vertices `v ∈ V \ F`. -/
+noncomputable def vertexFacetDistance {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (V : Finset E) : ℝ :=
+  sInf {r : ℝ | ∃ F : Finset E, IsFacet V F ∧ ∃ a ∈ affineSpan ℝ (↑F : Set E), ∃ v ∈ V \ F,
+    r = ‖a - v‖}
+
+/-- **Proposition 4.7** (vertex-facet distance of the product). For finite sets `V₁, V₂` with at
+least two points each in real inner product spaces, the vertex-facet distance of
+`conv V₁ × conv V₂` in the Euclidean product is the smaller of the vertex-facet distances of the
+factors. -/
+def ProductVertexFacet : Prop :=
+  ∀ {E₁ E₂ : Type u} [NormedAddCommGroup E₁] [InnerProductSpace ℝ E₁] [NormedAddCommGroup E₂]
+    [InnerProductSpace ℝ E₂] (V₁ : Finset E₁) (V₂ : Finset E₂), 1 < V₁.card → 1 < V₂.card →
+    vertexFacetDistance (productVertices V₁ V₂) =
+      min (vertexFacetDistance V₁) (vertexFacetDistance V₂)
+
 end Lemmata.FWProduct

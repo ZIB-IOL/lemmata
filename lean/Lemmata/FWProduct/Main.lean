@@ -3,6 +3,7 @@ module
 public import Lemmata.FWProduct.Objective
 public import Lemmata.FWProduct.Width
 public import Lemmata.FWProduct.Upper
+public import Lemmata.FWProduct.Facet
 
 @[expose] public section
 
@@ -29,6 +30,9 @@ theorem product_width_upper : ProductWidthUpperBound := Proof.product_width_uppe
 /-- Proposition 4.8 for two factors: away-step Frank–Wolfe over the product converges linearly
 under quadratic growth, at a rate governed by `α² = ŵ₁² ŵ₂²/(ŵ₁² + ŵ₂²)`. -/
 theorem product_away_linear : ProductAwayLinear := Proof.product_away_linear
+/-- Proposition 4.7: the vertex-facet distance of `conv V₁ × conv V₂` is the smaller of the
+vertex-facet distances of the factors. -/
+theorem product_vertex_facet : ProductVertexFacet := Proof.product_vertex_facet
 -- DOCS_END_MAIN
 
 end Lemmata.FWProduct
