@@ -1,0 +1,46 @@
+schema_version: 1
+id: frank-wolfe-restarting
+lean_namespace: Lemmata.FWRestart
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "1810.02429"
+note: >-
+  Formalizes Lemmas 2.3 and 3.6 and Theorem 7.3 of @kerdreux2018restarting.
+abstract: >-
+  Hölderian error bounds interpolate between plain convexity and strong convexity, and with them
+  the convergence of Frank–Wolfe algorithms between the rate $O(1/t)$ and linear convergence. The
+  strong Wolfe gap of an iterate with active set $S$, the sum of its away gap and its Frank–Wolfe
+  gap, bounds the primal gap and vanishes exactly at the minimizers. Under a $(\theta, c)$-Hölderian
+  error bound over a polytope with pyramidal width $\delta$, the primal gap is at most
+  $(c/\delta)^{1/(1-\theta)}$ times the strong Wolfe gap to the power $1/(1-\theta)$. Over strongly
+  convex sets, vanilla Frank–Wolfe with short steps converges at the rate $O(t^{-1/(1-\theta)})$.
+  The statements hold in real normed spaces.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.FWRestart.strong_wolfe_gap
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-restarting-gap
+  - name: Lemmata.FWRestart.heb_strong_wolfe_bound
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-restarting-heb
+  - name: Lemmata.FWRestart.strongly_convex_set_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-restarting-strongly-convex

@@ -387,6 +387,9 @@ public import Lemmata.FWProduct.Separation
 public import Lemmata.FWProduct.Statement
 public import Lemmata.FWProduct.Upper
 public import Lemmata.FWProduct.Width
+public import Lemmata.FWRestart.Main
+public import Lemmata.FWRestart.Statement
+public import Lemmata.FWRestart.Wolfe
 public import Lemmata.FWSelfConcordant.Away
 public import Lemmata.FWSelfConcordant.Backtrack
 public import Lemmata.FWSelfConcordant.Main
