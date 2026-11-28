@@ -1,0 +1,52 @@
+schema_version: 1
+id: frank-wolfe-approximate-caratheodory
+lean_namespace: Lemmata.FWCaratheodory
+subject: math.OC
+cross_lists: [cs.DS, cs.LG]
+topics: [frank-wolfe]
+arxiv: "1911.04415"
+abstract: >-
+  The approximate Carathéodory problem asks for a convex combination of few points of a set that
+  approximates a given point of its convex hull. The Frank–Wolfe algorithm applied to
+  $\frac{1}{2}\|x - x^\star\|_p^2$ adds at most one point per iteration, so its convergence rates
+  bound the number of points. For $p \ge 2$ the objective is differentiable, convex,
+  $(p - 1)$-smooth with a $(p - 1)$-Lipschitz gradient, $1$-gradient dominated and $\sqrt{2}$-sharp
+  with respect to the $\ell_p$-norm. Approximating the barycenter of the normalized columns of a
+  Hadamard matrix of order $n$ to accuracy $\varepsilon$ needs at least $1/(\varepsilon^2 + 1/n)$
+  columns.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.FWCaratheodory.lpObjective
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-approximate-caratheodory-objective
+  - name: Lemmata.FWCaratheodory.lp_objective
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-approximate-caratheodory-objective
+  - name: Lemmata.FWCaratheodory.hadamardVertex
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-approximate-caratheodory-hadamard-vertex
+  - name: Lemmata.FWCaratheodory.hadamardCenter
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-approximate-caratheodory-hadamard-center
+  - name: Lemmata.FWCaratheodory.hadamard_lower_bound
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-approximate-caratheodory-lower-bound
