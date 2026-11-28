@@ -14,11 +14,27 @@ const root = path.resolve(dir);
 const types = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript",
   ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".woff2": "font/woff2",
   ".png": "image/png", ".ico": "image/x-icon", ".xml": "application/xml", ".txt": "text/plain" };
+// The supervisor's redirects for permanent identifier URLs (controller/supervisor.mjs in
+// lemmata-code): /abs/YYMM.NNNNN to the landing page /abs/YYMM-NNNNN/, /html/YYMM.NNNNN to the
+// entry's directory; here inside <base>. Its map: the checkout's .lemmata/identifiers.json (a
+// rendered site lives in <repo>/docs/_build/html), else the site's catalog.json. A local
+// preview has no identifiers, and so no such links.
+const byIdent = (() => {
+  try { return Object.fromEntries(Object.entries(JSON.parse(fs.readFileSync(path.join(root, "../../../.lemmata/identifiers.json"), "utf8")).entries ?? {}).map(([e, i]) => [i, e])); } catch {}
+  try { return Object.fromEntries(JSON.parse(fs.readFileSync(path.join(root, "catalog.json"), "utf8")).entries.filter((e) => e.ident).map((e) => [e.ident, e.id])); } catch {}
+  return {};
+})();
 const server = http.createServer((req, res) => {
   // A malformed escape (%E0%A4%A) is a bad request, not a crash of the test server.
   let url;
   try { url = decodeURIComponent(new URL(req.url, "http://x").pathname); } catch { res.writeHead(400).end(); return; }
   if (!url.startsWith(base + "/")) { res.writeHead(404).end(); return; }
+  const id = url.slice(base.length).match(/^\/(abs|html)\/(\d{4})[.-](\d{5})(v\d+)?\/?$/);
+  if (id) {
+    const entry = byIdent[`${id[2]}.${id[3]}`];
+    if (!entry) { res.writeHead(404).end(); return; }
+    res.writeHead(302, { location: `${base}/${id[1] === "abs" ? `abs/${id[2]}-${id[3]}` : entry}/` }).end(); return;
+  }
   let p = path.join(root, url.slice(base.length));
   // Inside root itself, not a sibling that shares its prefix (/tmp/site vs /tmp/site-x).
   if (p !== root && !p.startsWith(root + path.sep)) { res.writeHead(403).end(); return; }
@@ -193,6 +209,9 @@ while (queue.length && seen.size < LIMIT) {
   if (!r || r.status() >= 400) { broken.push(`${r?.status()} ${url}`); continue; }
   for (const href of await page.locator("a[href]").evaluateAll((as) => as.map((a) => a.href))) {
     if (!href.startsWith(origin)) continue;
+    // The logo leads to the site's stable address, not into the release the page is in
+    // (logo_url in docs/myst.yml): outside a release served under a base path, on purpose.
+    if (base && href === `${origin}/`) continue;
     if (!href.startsWith(`${origin}${base}/`)) { broken.push(`outside the release: ${href} (on ${url})`); continue; }
     // A file, not a page (an entry's downloads: .zip, .cjs, ...): it must exist, but is not
     // opened -- the browser downloads it instead of loading a page.
