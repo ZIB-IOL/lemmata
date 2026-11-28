@@ -6,8 +6,8 @@ cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2105.13913"
 note: >-
-  Formalizes Algorithm 1 and Theorems 2.4, 2.6, 2.11, 2.15 and 2.16, and Theorem 3.2 for
-  away-step Frank–Wolfe, of @carderera2021simple.
+  Formalizes Algorithm 1 and Theorems 2.4, 2.6, 2.11, 2.15, 2.16 and 3.2 of
+  @carderera2021simple.
 abstract: >-
   Monotonic Frank–Wolfe with the simple step size $2/(t + 2)$ rejects a step whenever it leaves the
   domain of the objective or increases it. For generalized self-concordant objectives, which need
@@ -15,10 +15,10 @@ abstract: >-
   primal gap after a burn-in phase, and the smallest Frank–Wolfe gap converges at the rate
   $O(1/t)$. With the backtracking line search of Pedregosa et al., the rate is linear for an
   interior minimizer and improves over uniformly convex sets; over polytopes, away-step
-  Frank–Wolfe with backtracking converges linearly. The formal statements assume the local
-  properties that generalized self-concordance provides on the sublevel set of the starting
-  point, a descent property along Frank–Wolfe segments or strong convexity, in real normed
-  spaces.
+  Frank–Wolfe and blended pairwise conditional gradients with backtracking converge linearly.
+  The formal statements assume the local properties that generalized self-concordance provides
+  on the sublevel set of the starting point, a descent property along Frank–Wolfe segments or
+  strong convexity, in real normed spaces.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -75,3 +75,11 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-generalized-self-concordant-away
+  - name: Lemmata.FWSelfConcordant.IsBBPCGRun
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-generalized-self-concordant-pairwise
+  - name: Lemmata.FWSelfConcordant.pairwise_linear_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-generalized-self-concordant-pairwise
