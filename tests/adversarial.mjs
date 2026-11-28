@@ -292,5 +292,29 @@ function frozenCase(eolName, eol) {
 }
 for (const [name, eol] of LINE_ENDINGS) frozenCase(name, eol);
 
+// The note under an entry's title (2026-11-28): one paragraph, inline only, citations from
+// docs/references.bib, no DOI or arXiv links (MyST would look those up while rendering).
+// Set, not appended: the entry may have a note of its own.
+const setNote = (d, text) => {
+  const f = path.join(d, mf), doc = YAML.parseDocument(fs.readFileSync(f, "utf8"));
+  doc.set("note", text); fs.writeFileSync(f, doc.toString());
+};
+expect("positive control: a note citing references.bib, both ways, with math, is accepted",
+  (d) => setNote(d, "Formalizes Section 2 of @braun2016lazifying [@braun2016lazifying], with $x^2$."), { refused: false });
+expect("a note citing a key that references.bib lacks is refused",
+  (d) => setNote(d, "Formalizes @nosuchkey2099."), { match: /note: citation @nosuchkey2099 is not in docs\/references\.bib/ });
+expect("a note with a directive is refused",
+  (d) => setNote(d, ":::{warning}\nVerified.\n:::"), { match: /note: code fences or directives are not allowed/ });
+expect("a note with HTML is refused",
+  (d) => setNote(d, "<img src=x onerror=alert(1)>"), { match: /note: HTML are not allowed/ });
+expect("a note linking a DOI instead of citing is refused",
+  (d) => setNote(d, "Formalizes [the paper](https://doi.org/10.1000/xyz123)."), { match: /note: cite papers with @key/ });
+expect("a note with doi: is refused",
+  (d) => setNote(d, "Formalizes doi:10.1000/xyz123."), { match: /note: cite papers with @key/ });
+expect("a note of two paragraphs is refused",
+  (d) => setNote(d, "First.\n\nSecond."), { match: /note: one paragraph only/ });
+expect("a note over 1000 characters is refused",
+  (d) => setNote(d, "a".repeat(1001)), { match: /note: longer than 1000 characters/ });
+
 console.log(failed ? `\n${failed} adversarial case(s) FAILED` : "\nall adversarial cases passed");
 process.exit(failed ? 1 : 0);

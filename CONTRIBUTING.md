@@ -114,6 +114,8 @@ subject: math.NT             # primary arXiv class: where it is listed (docs/sub
 cross_lists: [math.CO]       # optional: also listed under these arXiv classes
 topics: [prime-numbers]      # optional: keywords from docs/topics.yml
 arxiv: 2301.01234            # optional: linked under the title; one id or a list
+note: >-                     # optional: one line under the title, e.g. the paper it formalizes
+  Formalizes Sections 3 to 5 of @wirth2022acceleration.
 abstract: >-                 # required: one paragraph, under the header and on the /abs/ page
   ...
 contributors:                # optional: credit these people instead of the git authors
@@ -149,6 +151,11 @@ Rules the tools enforce for these fields:
 - `abstract`, `ai_use` and `acknowledgements` are inline text only: words, `*emphasis*`,
   `[links](…)` and math `$…$` / `$$…$$`. No directives, code fences, headings, lists or HTML;
   write a literal dollar as `\$`; at most 2000 characters each. Use a YAML block (`>-`).
+- `note` says where the entry comes from, e.g. the paper or book it formalizes, cited with
+  `@key` from `docs/references.bib` (every key must be there; no DOI or arXiv links). Same
+  inline rules, one paragraph, at most 1000 characters. It is shown under the title (below
+  the arXiv link) and on the `/abs/` page, found by the start page's search, and given in
+  `lemmata.json` with the DOIs of the works it cites. A longer account belongs in the page.
 - `contributors` items are `First Last`, `{name: …}` or `{first: …, last: …}`, one per
   person; names only, no emails. Add each person's **ORCID iD** as `orcid:` (please do):
   with it, the name links to an author page at `/a/orcid-<ORCID iD>/` with all of that person's

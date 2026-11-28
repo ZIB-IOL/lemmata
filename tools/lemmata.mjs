@@ -64,7 +64,7 @@ const GISCUS = { repo: "ZIB-IOL/lemmata", repoId: "R_kgDOVQjOqA", category: "Com
 const TOPIC_KEYS = new Set(["id", "title", "description", "replaces"]);
 const RESERVED_LEAN = new Set(["Shared"]);
 const MANIFEST_KEYS = new Set(["schema_version", "id", "lean_namespace", "subject", "cross_lists", "topics", "arxiv", "contributors",
-  "ai_use", "acknowledgements", "abstract", "license", "withdrawn", "related", "native_computation", "pages", "exports"]);
+  "ai_use", "acknowledgements", "abstract", "note", "license", "withdrawn", "related", "native_computation", "pages", "exports"]);
 // Computations: `native_computation: true` lets an entry prove facts by having the compiler
 // run them (native_decide, decide +native, bv_decide). The build runs them; nobody re-runs
 // them and Lean's kernel never checks them, so results that rely on one are labelled apart
@@ -93,9 +93,11 @@ const DEFAULT_LICENSE = "CC-BY-4.0";
 // verification panel or include files.
 const NOTE_KEYS = { ai_use: "AI use", acknowledgements: "Acknowledgements" };
 const NOTE_MAX_CHARS = 2000;
-function checkNote(text, at) {
+// The note under an entry's title (contribution.yml `note`) is shorter: a line or two.
+const ENTRY_NOTE_MAX_CHARS = 1000;
+function checkNote(text, at, max = NOTE_MAX_CHARS) {
   if (typeof text !== "string" || !text.trim()) { fail(`${at}: must be non-empty text`); return null; }
-  if (text.length > NOTE_MAX_CHARS) { fail(`${at}: longer than ${NOTE_MAX_CHARS} characters`); return null; }
+  if (text.length > max) { fail(`${at}: longer than ${max} characters`); return null; }
   const bad = [[/^\s*(```|~~~|:::)/m, "code fences or directives"], [/\{[a-z][\w:-]*\}`/i, "roles such as {eval}`...`"],
     [/^\s*#/m, "headings"], [/^\s*\(.*\)=\s*$/m, "labels"], [/<\s*\/?\s*[a-z]/i, "HTML"], [/^\s*[-*+]\s|^\s*\d+\.\s/m, "lists"]];
   for (const [re, what] of bad) if (re.test(text)) { fail(`${at}: ${what} are not allowed (inline text, links and $math$ only)`); return null; }
@@ -348,6 +350,16 @@ function loadManifests(tax = loadTaxonomy()) {
     // entry is never deleted (identifiers are cited, other entries may import its Lean):
     // it is still built and checked, only left out of the sidebar and the listings.
     if (m.withdrawn !== undefined) notes.withdrawn = checkNote(m.withdrawn, `${where}/contribution.yml: withdrawn`);
+    // Note under the title (2026-11-28): where the entry comes from, e.g. the paper or book it
+    // formalizes, cited with @key from docs/references.bib (checked with the pages' citations,
+    // checkCitations). One paragraph, inline like the abstract. Shown on the entry and its
+    // /abs/ page below "Additional material", in lemmata.json with the DOIs of the works it
+    // cites, and to the start page's search.
+    if (m.note !== undefined) {
+      const at = `${where}/contribution.yml: note`, t = checkNote(m.note, at, ENTRY_NOTE_MAX_CHARS);
+      if (t && /\n\s*\n/.test(t)) fail(`${at}: one paragraph only (no empty line)`);
+      else if (t) notes.note = t.replace(/\s+/g, " ");
+    }
     if (m.native_computation !== undefined && m.native_computation !== true)
       fail(`${where}/contribution.yml: native_computation must be true or left out`);
     if (m.license !== undefined && !Object.hasOwn(LICENSES, m.license))
@@ -443,6 +455,11 @@ function checkDois(manifests) {
 // definition) and no hand-written References section; every @key used must be in the bib.
 // Other links (code, data, a project page) are fine.
 const PAPER_LINK_RE = /\]\(\s*(https?:\/\/(?:dx\.|www\.)?(?:doi\.org|arxiv\.org)\/[^)\s]+)|^\s*\[[^\]]+\]:\s*(https?:\/\/(?:dx\.|www\.)?(?:doi\.org|arxiv\.org)\/\S+)/gim;
+// A citation: @key or [@key] (or [-@key]), not an e-mail address or a path.
+const CITE_RE = /(?<![\w@.\/-])\[?-?@([A-Za-z][\w:-]*[\w])/g;
+// The keys a note cites, in order, each once; code spans and math are not citations.
+const citedKeys = (text) => [...new Set([...String(text ?? "").replace(/`[^`]*`/g, "").replace(/\$\$?[^$]*\$\$?/g, "")
+  .matchAll(CITE_RE)].map((m) => m[1]))];
 function checkCitations(manifests) {
   const bib = fs.existsSync(BIB) ? fs.readFileSync(BIB, "utf8") : "";
   // An at-sign outside an entry start (in a % comment, say) makes MyST's parser read an
@@ -464,7 +481,7 @@ function checkCitations(manifests) {
       if (/^\s*(```|~~~|:::)/.test(line)) { inFence = !inFence && /^\s*(```|~~~)/.test(line) ? true : /^\s*(```|~~~)/.test(line) ? false : inFence; return; }
       if (inFence) return;
       const text = line.replace(/`[^`]*`/g, "").replace(/\$\$?[^$]*\$\$?/g, "");
-      for (const m of text.matchAll(/(?<![\w@.\/-])\[?-?@([A-Za-z][\w:-]*[\w])/g))
+      for (const m of text.matchAll(CITE_RE))
         if (!keys.has(m[1])) fail(`${rel}:${i + 1}: citation @${m[1]} is not in docs/references.bib (add the entry; \`node tools/lemmata.mjs doi\` fetches it for a DOI)`);
       if (!entry) return;
       for (const m of text.matchAll(PAPER_LINK_RE))
@@ -473,7 +490,57 @@ function checkCitations(manifests) {
         fail(`${rel}:${i + 1}: no hand-written references section; cite with @key and MyST lists the references at the end of the page`);
     });
   }
+  // An entry's note (contribution.yml) cites like its pages. A DOI in it, linked or as doi:,
+  // MyST would look up online while rendering, which the cluster cannot.
+  for (const m of manifests) {
+    if (!m.notes?.note) continue;
+    const at = `docs/${m.dir}/contribution.yml: note`;
+    for (const key of citedKeys(m.notes.note))
+      if (!keys.has(key)) fail(`${at}: citation @${key} is not in docs/references.bib (add the entry; \`node tools/lemmata.mjs doi\` fetches it for a DOI)`);
+    for (const l of m.notes.note.matchAll(PAPER_LINK_RE)) fail(`${at}: cite papers with @key from docs/references.bib, not a link (${l[1] ?? l[2]})`);
+    for (const d of m.notes.note.matchAll(DOI_LINK_RE)) fail(`${at}: cite papers with @key from docs/references.bib, not a DOI (${d[1]})`);
+  }
 }
+
+// docs/references.bib as key -> fields, enough of BibTeX for our file: `@type{key,` then
+// `name = {value}` (braces may nest), `name = "value"` or a bare word, up to the entry's
+// closing brace. For what an entry's note cites: lemmata.json gives the DOIs, the start
+// page's search the authors, year and title.
+function bibIndex() {
+  const src = fs.existsSync(BIB) ? fs.readFileSync(BIB, "utf8") : "";
+  const out = new Map();
+  for (const head of src.matchAll(/^@(\w+)\s*\{\s*([^,\s]+)\s*,/gm)) {
+    if (/^(comment|string|preamble)$/i.test(head[1]) || out.has(head[2])) continue;
+    const fields = {};
+    let i = head.index + head[0].length;
+    for (;;) {
+      const name = /\s*([A-Za-z][\w-]*)\s*=\s*/y; name.lastIndex = i;
+      const n = name.exec(src); if (!n) break;
+      i = name.lastIndex;
+      let value;
+      if (src[i] === "{") {
+        let depth = 0, j = i;
+        for (; j < src.length; j++) { if (src[j] === "{") depth++; else if (src[j] === "}" && --depth === 0) break; }
+        value = src.slice(i + 1, j); i = j + 1;
+      } else if (src[i] === '"') {
+        const j = src.indexOf('"', i + 1); if (j < 0) break;
+        value = src.slice(i + 1, j); i = j + 1;
+      } else {
+        const bare = /[^,}\s]*/y; bare.lastIndex = i; value = bare.exec(src)[0]; i = bare.lastIndex;
+      }
+      fields[n[1].toLowerCase()] = value.replace(/\s+/g, " ").trim();
+      const comma = /\s*,/y; comma.lastIndex = i;
+      if (!comma.exec(src)) break;
+      i = comma.lastIndex;
+    }
+    out.set(head[2], fields);
+  }
+  return out;
+}
+// BibTeX text as plain text: accented letters kept without their accent command, other
+// commands and braces dropped.
+const texPlain = (s) => String(s ?? "").replace(/\\[`'^"~=.uvHcdbkt]\s*\{?([A-Za-z])\}?/g, "$1")
+  .replace(/\\[A-Za-z]+\s*/g, " ").replace(/[{}\\$]/g, "").replace(/\s+/g, " ").trim();
 // `doi`: append a BibTeX entry from doi.org for every linked DOI that references.bib lacks.
 // `doi <DOI>…` adds those DOIs (an arXiv paper's is 10.48550/arXiv.<id>); without arguments,
 // every DOI linked from the site pages that references.bib lacks. Each entry gets the house
@@ -1348,6 +1415,12 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
       if (lines.at(-1) !== "" && !lines.at(-1).endsWith("  ")) lines[lines.length - 1] += "  ";
       lines.push(`Additional material: ${m.arxiv.map((a) => `[arXiv:${a}](https://arxiv.org/abs/${a})`).join(", ")}`);
     }
+    // The note (contribution.yml `note`) below the additional material: where the entry comes
+    // from. Its citations resolve like the page's own, listed under References at the end.
+    if (m.notes?.note) {
+      if (lines.at(-1) !== "" && !lines.at(-1).endsWith("  ")) lines[lines.length - 1] += "  ";
+      lines.push(`Note: ${m.notes.note}`);
+    }
     lines.push(":::", "");
     // "Cite as": the BibTeX in a collapsed box. Hidden since the copy button replaced it.
     if (SHOW_CITE_BOX) lines.push("::::{dropdown} Cite as", "", "```bibtex", bib, "```", "::::", "");
@@ -1406,6 +1479,15 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
   // (st) and month of publication (m), and the date of the last change for sorting. Styled
   // by lemmata.css (.lemmata-catalog, .lemmata-entry-*); without the filter the list is
   // complete as it is.
+  // The note as plain text for the search, in a block hidden by lemmata.css
+  // (.lemmata-entry-note): each citation replaced by the cited work's authors, year and title,
+  // so that searching for a paper finds the entries that formalize it. No @ or bracket
+  // survives, or MyST would cite the work on the list's page.
+  const bibs = bibIndex();
+  const noteSearch = (note) => esc(note.replace(/(?<![\w@.\/-])-?@([A-Za-z][\w:-]*[\w])/g, (_, key) => {
+    const b = bibs.get(key);
+    return b ? [b.author, b.year, b.title].map(texPlain).filter(Boolean).join(" ") : key;
+  }).replace(/[@[\]]/g, " ").replace(/\s+/g, " ").trim());
   const entryBlock = (m, rel) => {
     const ident = idents[m.id], p = prov?.entries?.[m.id], n = m.exports.length, month = monthOf(m);
     const classes = ["lemmata-entry", ...(ident ? [] : ["lemmata-entry-noid"]),
@@ -1420,6 +1502,7 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
       "::::{div}", ":class: lemmata-entry-meta", "", ...(who ? [who + "  "] : []),
       [classLine(m, rel), statusText(m, rel), `${n}\u00a0result${n === 1 ? "" : "s"}`].join(" · "), "::::", "",
       ...(m.notes?.abstract ? ["::::{div}", ":class: lemmata-entry-abstract", "", m.notes.abstract, "::::", ""] : []),
+      ...(m.notes?.note ? ["::::{div}", ":class: lemmata-entry-note", "", noteSearch(m.notes.note), "::::", ""] : []),
       ":::::", ""];
   };
   // `compact`: abstracts folded (the start page; its filter can unfold them).
@@ -1507,6 +1590,8 @@ function prepare(manifests, tax, report, { commit, sourceUrl }) {
       classLine(m, "../../") +
         (m.arxiv.length ? ` · ${m.arxiv.map((a) => `[arXiv:${a}](https://arxiv.org/abs/${a})`).join(", ")}` : "") +
         ` · **[View the full entry →](${entryHref(m, "../../")})**`, ":::", "",
+      // The note, as on the entry: below the additional material (the arXiv links above).
+      ...(m.notes?.note ? [":::{div}", ":class: lemmata-provenance lemmata-note", "", `Note: ${m.notes.note}`, ":::", ""] : []),
       ...(SHOW_CITE_BOX ? ["::::{dropdown} Cite as", "", "```bibtex", bib, "```", "::::", ""] : []),
       ":::::", "",
       // Not "## Abstract": MyST lifts a section of that name above everything else on the
@@ -1933,6 +2018,7 @@ function siteIndex(manifests, tax, report, outDir, { commit, sourceUrl }) {
   // results of their last check, exactly as the rendered pages show them.
   const frozen = loadFrozen();
   const comp = computationView(manifests, report);
+  const bibs = bibIndex();
   const entries = manifests.map((m) => {
     const ident = idents[m.id] ?? null, p = prov?.entries?.[m.id], fz = frozen[m.id];
     const url = ident ? `${siteUrl}/abs/${ident}` : `${siteUrl}/${m.dir}/`;
@@ -1962,7 +2048,12 @@ function siteIndex(manifests, tax, report, outDir, { commit, sourceUrl }) {
       native_computation: m.native,
       withdrawn: m.notes?.withdrawn ?? null,
       last_checked: fz ? { lean_version: fz.lean_version ?? null, checked_at: fz.checked_at ?? null, commit: fz.commit ?? null } : null,
-      exports, arxiv: m.arxiv, license: m.license, license_url: LICENSES[m.license].url, ai_use: m.notes?.ai_use ?? null, acknowledgements: m.notes?.acknowledgements ?? null,
+      exports, arxiv: m.arxiv,
+      // The note as written (inline MyST, citations as @key) and the works it cites, with
+      // their DOIs from docs/references.bib (null without one): which paper an entry formalizes.
+      note: m.notes?.note ?? null,
+      note_references: citedKeys(m.notes?.note).map((key) => ({ key, doi: bibs.get(key)?.doi || null })),
+      license: m.license, license_url: LICENSES[m.license].url, ai_use: m.notes?.ai_use ?? null, acknowledgements: m.notes?.acknowledgements ?? null,
       bibtex: bibtex(m, titleOf(m), p, { siteUrl, commit, checked: !fz && allOk, computation: anyComp, ident }),
     };
   }).sort((a, b) => (a.identifier ?? "~").localeCompare(b.identifier ?? "~") || a.title.localeCompare(b.title));
