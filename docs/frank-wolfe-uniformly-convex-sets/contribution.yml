@@ -6,7 +6,7 @@ cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2004.11053"
 note: >-
-  Formalizes Lemmas 2.4, 2.9 and 3.2, Corollary 2.8 and Theorems 2.10 and 3.1 of
+  Formalizes Lemmas 2.4, 2.7, 2.9 and 3.2, Corollary 2.8 and Theorems 2.5, 2.10 and 3.1 of
   @kerdreux2020projection.
 abstract: >-
   Over uniformly convex feasible regions, the Frank–Wolfe algorithm converges faster than at the
@@ -73,3 +73,11 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-uniformly-convex-sets-ftl
+  - name: Lemmata.FWUniformlyConvex.fw_vertex_distance
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-uniformly-convex-sets-vertex-distance
+  - name: Lemmata.FWUniformlyConvex.local_scaling_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-uniformly-convex-sets-local-rate
