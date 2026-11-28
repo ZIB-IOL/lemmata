@@ -313,6 +313,8 @@ subject: <subject>                    # primary arXiv class, e.g. math.OC (docs/
 cross_lists: [<class>, …]             # optional; further arXiv classes, never the primary one
 topics: [<topic>, …]                  # optional; ids from docs/topics.yml
 arxiv: 2301.01234                     # optional; one id or a list, e.g. [2301.01234v2, math/0601001]
+note: >-                              # optional; under the title, on /abs/ and in lemmata.json
+  Formalizes Sections 3 to 5 of @wirth2022acceleration.
 abstract: >-                          # REQUIRED; under the header and on the /abs/ page
   One paragraph stating the result; inline text and $math$ only.
 contributors:                         # optional; replaces the names taken from git
@@ -381,8 +383,19 @@ Use a YAML block (`>-`) so math and apostrophes need no quoting.
 
 An entry may also archive the formalization of results **from an existing paper** (preprint
 or published); that is welcome, not only new results. Then link the paper with `arxiv` (and
-a journal version with `related`, `kind: paper`), and say in the prose which of the paper's
-results the entry formalizes, by their numbers in the paper.
+a journal version with `related`, `kind: paper`), name it in `note` (below), and say in the
+prose which of the paper's results the entry formalizes, by their numbers in the paper.
+
+`note` is one short paragraph under the title, below the arXiv link: where the entry comes
+from. An entry that formalizes a paper or a book names it here, cited with `@key` (or
+`[@key]`) from `docs/references.bib`, and says briefly which part, e.g. `Formalizes
+Sections 3 to 5 of @wirth2022acceleration.` It is shown on the entry and its `/abs/` page,
+the start page's search finds it (with the cited works' titles and authors), and
+`lemmata.json` gives it as written, with the DOIs of the works it cites
+(`note_references`). Inline only, like the abstract; one paragraph of at most 1000
+characters; cite papers with `@key`, never with a DOI or an arXiv link. A longer account of
+the sources belongs in the page, e.g. a `:::{note}` box at the top, and `note` is then its
+short version.
 
 `arxiv` links additional material (a paper, a longer write-up) under the title as
 `arXiv:<id>` → `https://arxiv.org/abs/<id>`. Give the bare identifier, without an
