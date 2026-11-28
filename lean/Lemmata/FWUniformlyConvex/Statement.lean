@@ -78,4 +78,40 @@ def HEBRate : Prop :=
         ((t : ℤ) < t₀ → f (x t) - f xStar ≤ L * Metric.diam C ^ 2 / 2 * (1 / 2) ^ (t - 1)) ∧
         (t₀ ≤ (t : ℤ) → f (x t) - f xStar ≤ K / (1 + a / 2 * ((t : ℝ) - t₀)) ^ (1 / a))
 
+/-- **Lemma 3.2** (stability of linear maximizers). Let `C` be `(α, q)`-uniformly convex with
+`α > 0` and `q ≥ 2`, let `φ₁, φ₂` be continuous linear functionals that are not both zero, and let
+`v₁, v₂ ∈ C` maximize `φ₁` and `φ₂` over `C`. Then
+`φ₁(v₁ - v₂) ≤ (1/α)^{1/(q-1)} ‖φ₁ - φ₂‖^{1 + 1/(q-1)}/max {‖φ₁‖, ‖φ₂‖}^{1/(q-1)}`. -/
+def MaximizerStability : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (α q : ℝ)
+    (φ₁ φ₂ : StrongDual ℝ E) (v₁ v₂ : E), IsUniformlyConvexSet C α q → 0 < α → 2 ≤ q →
+    0 < max ‖φ₁‖ ‖φ₂‖ → v₁ ∈ C → (∀ y ∈ C, φ₁ y ≤ φ₁ v₁) → v₂ ∈ C → (∀ y ∈ C, φ₂ y ≤ φ₂ v₂) →
+      φ₁ (v₁ - v₂) ≤ (1 / α) ^ (1 / (q - 1)) * ‖φ₁ - φ₂‖ ^ (1 + 1 / (q - 1)) /
+        (max ‖φ₁‖ ‖φ₂‖) ^ (1 / (q - 1))
+
+/-- **Follow the leader** for online linear optimization over `C` with losses `c_1, c_2, …`: for
+`t ≥ 1`, the action `x_t ∈ C` minimizes the sum `c_1 + ⋯ + c_{t-1}` of the losses observed before
+time `t` over `C`, with any tie-breaking. -/
+def IsFTL {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E)
+    (c : ℕ → StrongDual ℝ E) (x : ℕ → E) : Prop :=
+  ∀ t : ℕ, 1 ≤ t → x t ∈ C ∧
+    ∀ y ∈ C, (∑ τ ∈ Finset.Ico 1 t, c τ) (x t) ≤ (∑ τ ∈ Finset.Ico 1 t, c τ) y
+
+/-- **Theorem 3.1** (regret of follow the leader over uniformly convex sets). Let `C` be
+`(α, q)`-uniformly convex with `α > 0` and `q ≥ 2`, let the losses satisfy `‖c_t‖ ≤ M`, and let
+their averages `(c_1 + ⋯ + c_t)/t` have norm at least `L > 0` for `1 ≤ t ≤ T`. Every run of follow
+the leader has regret `∑_{t ≤ T} c_t(x_t - u)` against every `u ∈ C` at most
+`2M (2M/(α L))^{1/(q-1)} ((q-1)/(q-2)) T^{1-1/(q-1)}` for `q > 2` and `(4M²/(α L))(1 + log T)` for
+`q = 2`. -/
+def FTLRegret : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (α q M L : ℝ)
+    (c : ℕ → StrongDual ℝ E) (x : ℕ → E) (T : ℕ), IsUniformlyConvexSet C α q → 0 < α →
+    2 ≤ q → 0 < L → (∀ t, ‖c t‖ ≤ M) →
+    (∀ t, 1 ≤ t → t ≤ T → L ≤ ‖(1 / (t : ℝ)) • ∑ τ ∈ Finset.Icc 1 t, c τ‖) → IsFTL C c x →
+    ∀ u ∈ C,
+      (2 < q → ∑ t ∈ Finset.Icc 1 T, c t (x t - u) ≤
+        2 * M * (2 * M / (α * L)) ^ (1 / (q - 1)) * ((q - 1) / (q - 2)) *
+          (T : ℝ) ^ (1 - 1 / (q - 1))) ∧
+      (q = 2 → ∑ t ∈ Finset.Icc 1 T, c t (x t - u) ≤ 4 * M ^ 2 / (α * L) * (1 + Real.log T))
+
 end Lemmata.FWUniformlyConvex

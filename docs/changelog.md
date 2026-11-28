@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **Updated entry:** [Frank–Wolfe over uniformly convex sets](frank-wolfe-uniformly-convex-sets/index.md), adding the regret of follow the leader for online linear optimization (Lemma 3.2 and Theorem 3.1).
 - **New entry:** [Frank–Wolfe over uniformly convex sets](frank-wolfe-uniformly-convex-sets/index.md), formalizing the local scaling inequality and the rates under Hölderian error bounds of Kerdreux, d'Aspremont and Pokutta.
 - **Updated entry:** [The approximate Carathéodory problem via Frank–Wolfe](frank-wolfe-approximate-caratheodory/index.md), adding the cardinality bounds over uniformly convex sets (Corollaries 5.4, 5.5 and 7.2).
 - **Updated entry:** [Affine-invariant accelerated rates for Frank–Wolfe with open-loop step-sizes](frank-wolfe-affine-invariant-open-loop/index.md), adding the results for minimizers in the relative interior of a face of a polytope (Proposition 5.4, Corollary 5.5 and Lemmas 5.6 and 5.7).

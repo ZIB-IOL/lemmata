@@ -395,6 +395,7 @@ public import Lemmata.FWSelfConcordant.Statement
 public import Lemmata.FWUniformlyConvex.Heb
 public import Lemmata.FWUniformlyConvex.Local
 public import Lemmata.FWUniformlyConvex.Main
+public import Lemmata.FWUniformlyConvex.Online
 public import Lemmata.FWUniformlyConvex.Statement
 public import Lemmata.FanoDiffusion.Corollaries
 public import Lemmata.FanoDiffusion.Entropy
