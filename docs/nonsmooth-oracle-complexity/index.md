@@ -10,10 +10,11 @@ numbering:
 :::{note}
 This entry formalizes results of the paper *Lower Bounds on the Oracle Complexity of Nonsmooth
 Convex Optimization via Information Theory* by Gábor Braun, Cristóbal Guzmán and Sebastian Pokutta
-[@braun2017lower], currently the information-theoretic lower bound (Lemma III.1, in expectation),
-the string guessing problem (Proposition III.3), oracle emulation (Lemma III.5) and the lower bounds
-for nonsmooth convex optimization over the box with local single-coordinate oracles (Section IV);
-numbers refer to the arXiv version.
+[@braun2017lower], currently the information-theoretic lower bound and the string guessing problem
+in expectation and in probability (Lemma III.1, Proposition III.3), oracle emulation (Lemma III.5),
+the lower bounds for nonsmooth convex optimization over the box (Section IV) and over $\ell^p$-balls
+(Section V) with local single-coordinate oracles, and the maximal oracle (Lemma VI.2); numbers refer
+to the arXiv version.
 :::
 
 How many oracle queries does an algorithm need to minimize a nonsmooth convex function? The paper
@@ -74,9 +75,27 @@ otherwise, so that $H(F) = 6$ bits. An algorithm first asks whether $f = 0$, and
 the index bit by bit; every answer reveals one bit, and $P_e = 0$. Then $\mathbb{P}[T \lt 2] = 1/2$,
 while the bound gives $2/6$. The proof bounds the information $I[F; \Pi \mid \Pi_{\le t}, T \ge t]$
 by $H(F)$, but given the event $T \ge t$ the entropy of the instance can exceed $H(F)$; it is at
-most $\log |F|$. With $\log |F|$ in place of $H(F)$ the claim holds, and for the uniform prior,
-which is how the paper uses it, the two agree.
+most $\log |F|$. This gives the corrected bound below, with the extra term $\log |F| - H(F)$. For
+the uniform prior, which is how the paper uses the claim, this term vanishes and the bound is the
+paper's.
 :::
+
+```{prf:lemma} Information-theoretic lower bound in probability (corrected)
+:label: lem-nonsmooth-oracle-complexity-information-tail
+:enumerator: III.1
+
+Under the hypotheses of Lemma III.1 with $C \ge 0$ and $P_e \le 1/2$, for every $d$
+
+$$
+\mathbb{P}[T \lt d] \log |F| \le \log |F| - H(F) + C d + h(P_e) + P_e \log(|F| - 1).
+$$
+```
+
+Run the chain rule for $d$ steps only: $H(F)$ is at most $C\, \mathbb{E}[\min(T, d)] \le C d$ plus
+the entropy left at the leaves reached before depth $d$ and at the nodes of depth $d$. Fano's
+inequality bounds the former by $h(E) + E \log(|F| - 1)$, where $E \le P_e$ is the probability of an
+error before depth $d$. The entropy left at a node of depth $d$ is at most its probability times
+$\log |F|$, and these add up to $\mathbb{P}[T \ge d] \log |F|$.
 
 ## The string guessing problem
 
@@ -106,6 +125,18 @@ has entropy at most $2 \log 2$. A guess of a bit that the cylinder fixes either 
 is skipped; a guess of a free bit splits the cylinder into two halves, the answer at this guess on
 one half and a later answer on the other, at the cost of one bit plus half the entropy of the rest.
 Lemma III.1 with $H(S) = M \log 2$, $C = 2 \log 2$ and $\log(2^M - 1) \le M \log 2$ gives the bound.
+
+```{prf:proposition} String guessing in probability
+:label: prop-nonsmooth-oracle-complexity-string-tail
+:enumerator: III.3
+
+For every $d$, such an algorithm stops after fewer than $d$ queries with probability at most
+$P_e + (2d + 1)/M$. So $T \ge c M$ holds with probability at least $1 - P_e - 2c - 1/M$, which makes
+the paper's $\mathbb{P}[T = \Omega(M)] = 1 - P_e - o(1)$ precise.
+```
+
+This is the corrected Lemma III.1 for the uniform prior, with $C = 2 \log 2$; bounding $h$ by
+$\log 2$ removes the condition $P_e \le 1/2$.
 
 ```{prf:lemma} Oracle emulation
 :label: lem-nonsmooth-oracle-complexity-emulation
@@ -310,6 +341,166 @@ in expectation, that is $\Omega((1 - P_e) n \log(1/\varepsilon))$.
 Concatenation is a bijection between $n$-tuples of strings of length $M$ and strings of length
 $n M$, so Proposition III.3 for strings of length $n M$ applies as in one dimension.
 
+## Lower bounds over $\ell^p$-balls
+
+Over the unit ball $B_p$ of the $\ell^p$ norm, $1 \le p \lt \infty$, the complexity need not grow
+with the dimension when $\varepsilon$ is large. The instances are signs $s \in \{\pm 1\}^M$ on
+$M \le n$ coordinates.
+
+```{prf:definition} Hard functions of Section V.A
+:label: def-nonsmooth-oracle-complexity-lp-fn
+:nonumber:
+
+For $s \in \{\pm 1\}^M$ and $M \le n$, the hard function is $f_s(x) = \max_{i \le M} s_i x_i$ on
+$\mathbb{R}^n$, minimized over $B_p$.
+```
+
+```{prf:definition} Single-coordinate oracle of Section V.A
+:label: def-nonsmooth-oracle-complexity-lp-oracle
+:nonumber:
+
+The oracle answers the query $x$ with the value $f_s(x)$, the least $i$ with $s_i x_i = f_s(x)$, and
+the sign $s_i$; the subgradient is $s_i e_i$.
+```
+
+```{prf:proposition} The hard functions and their oracle
+:label: prop-nonsmooth-oracle-complexity-lp-valid
+:nonumber:
+
+For $p \ge 1$, the hard functions are convex and $1$-Lipschitz for the $\ell^p$ norm, and the oracle
+answers their value and a subgradient on a coordinate axis.
+```
+
+```{prf:lemma} Packing
+:label: lem-nonsmooth-oracle-complexity-lp-packing
+:enumerator: V.3
+
+Let $p \ge 1$ and $M \varepsilon^p \lt 1$. A point of $B_p$ that is $\varepsilon$-optimal over $B_p$
+for $f_s$ and for $f_{s'}$ has $s = s'$.
+```
+
+The point $x^\star = -M^{-1/p} (s_1, \dots, s_M, 0, \dots, 0)$ lies on the unit sphere of $\ell^p$,
+and $f_s(x^\star) = -M^{-1/p} \lt -\varepsilon$. So an $\varepsilon$-minimizer $x$ over $B_p$ has
+$s_i x_i \le f_s(x) \lt 0$ for all $i$, and the signs of $x$ recover $s$.
+
+:::{admonition} Errata
+:class: warning
+For $1 \le p \lt 2$ the paper aims at the larger bound $\Omega(1/\varepsilon^2)$. It works in the
+orthonormal basis $\xi_i = \nu_i / \sqrt{M}$, where the $\nu_i$ are the rows of the
+Sylvester–Hadamard matrix $H$ of size $M = 2^l \lt \varepsilon^{-2}$, and compares with the point
+with coordinates $-s_i / \sqrt{M}$ in this basis. It claims that this point lies in $B_p$ because
+$\|x\|_p \le \|x\|_2$ for $p \lt 2$, but the inequality goes the other way, and Lemma V.3 fails.
+Averaging the terms of $f_s(x) = \max_i s_i \langle \xi_i, x \rangle$ gives
+$f_s(x) \ge -\|H s\|_\infty / (M \sqrt{M})$ on $B_1$. For $p = 1$, $\varepsilon = 1/4$, $M = n = 8$
+and $s = (1, 1, 1, 1, 1, 1, -1, -1)$, $\|H s\|_\infty = 4$, so
+$f_s \ge -1/(2 \sqrt{8}) \approx -0.177$ on $B_1$ (with equality at the minimum, by linear
+programming), and the same holds for $-s$. The origin is then $\varepsilon$-optimal for both $f_s$
+and $f_{-s}$. The standard basis, used here for all $p$, gives the bound $\Omega(1/\varepsilon^p)$.
+This is the paper's bound for $p \ge 2$ and weaker for $p \lt 2$.
+:::
+
+```{prf:lemma} Emulation by string guessing
+:label: lem-nonsmooth-oracle-complexity-lp-emulation
+:enumerator: V.4
+
+The oracle of Section V.A is emulated by the string guessing oracle on $s$, a string of length $M$.
+```
+
+The query guesses, in the order of decreasing $|x_i|$ and then increasing $i$, the signs
+$s_i = -\operatorname{sign} x_i$, and $s_i = +1$ if $x_i = 0$, which make every term
+$s_i x_i = -|x_i|$. If the first wrong guess is at $j$, then $s_j x_j = |x_j|$, the earlier terms
+are $-|x_i| \le 0$, and the later ones are at most $|x_i| \le |x_j|$, with equality only at larger
+indices. So $f_s(x) = |x_j|$, and the least coordinate attaining it and its sign are determined by
+the answer. If all guesses are right, the answer determines $s$.
+
+```{prf:lemma} Locality
+:label: lem-nonsmooth-oracle-complexity-lp-local
+:enumerator: V.4
+
+The oracle of Section V.A is local.
+```
+
+A coordinate $i$ with $s_i x_i = f_s(x)$ raises $f_s$ at rate $1$ when moved in the direction $s_i$
+and does not raise it in the opposite direction; any other coordinate leaves $f_s$ unchanged nearby.
+So the function near $x$ determines the answer.
+
+```{prf:theorem} Large-scale lower bound over $\ell^p$-balls
+:label: thm-nonsmooth-oracle-complexity-lp
+:enumerator: V.1
+
+Let $p \ge 1$, $M \le n$ and $M \varepsilon^p \lt 1$, and let $s \in \{\pm 1\}^M$ be uniformly
+random. Every deterministic algorithm that queries the single-coordinate oracle of $f_s$ and outputs
+an $\varepsilon$-minimizer of $f_s$ over $B_p$ with error probability $P_e$ asks at least
+$((1 - P_e) M - 1)/2$ queries in expectation. For $\varepsilon \ge n^{-1/p}$ and
+$M = \lfloor \varepsilon^{-p} \rfloor - 1$ this is $\Omega((1 - P_e)/\varepsilon^p)$, independently
+of the dimension.
+```
+
+As in Section IV: the signs of the output decode $s$, Lemma V.4 emulates the oracle, and Proposition
+III.3 applies to strings of length $M$.
+
+For small $\varepsilon$ the box bound takes over. The cube $[-\rho, \rho]^n$ with $\rho = n^{-1/p}$
+lies in $B_p$.
+
+```{prf:definition} Rescaled hard functions
+:label: def-nonsmooth-oracle-complexity-scaled-fn
+:nonumber:
+
+The hard functions of Section IV.B rescaled into the cube are $g_S(x) = \rho f_S(x/\rho)$. Their
+oracle answers $\rho$ times the value and the subgradient of the single-coordinate oracle of $f_S$
+at $x/\rho$.
+```
+
+```{prf:proposition} Low-scale lower bound over $\ell^p$-balls
+:label: prop-nonsmooth-oracle-complexity-low-scale
+:enumerator: V.5
+
+Let $p \ge 1$ and $\varepsilon \lt n^{-1/p} 8^{-M}$. The rescaled hard functions are convex and
+$1$-Lipschitz for the $\ell^p$ norm, their oracle answers the value and a subgradient on a
+coordinate axis, and they attain their minimum in $B_p$. Every deterministic algorithm that queries
+the rescaled oracle and outputs an $\varepsilon$-minimizer of $g_S$ over $B_p$ with error
+probability $P_e$ asks at least $((1 - P_e) n M - 1)/2$ queries in expectation. For
+$\varepsilon \le n^{-1/p - \delta}$ with $\delta \gt 0$ this is
+$\Omega((1 - P_e) n \log(1/\varepsilon))$.
+```
+
+Rescaling keeps the Lipschitz constant $1$ for the maximum norm, which is at most the $\ell^p$ norm,
+and the minimizers have coordinates of absolute value at most $\rho/3$, so they lie in $B_p$. An
+$\varepsilon$-minimizer over $B_p$ is therefore a global $\varepsilon$-minimizer, and it rescales to
+an $(\varepsilon/\rho)$-minimizer of $f_S$. The rescaled oracle is emulated by the oracle of Section
+IV.B, and Theorem IV.2 applies with $\varepsilon/\rho \lt 8^{-M}$.
+
+## Arbitrary local oracles
+
+Section VI extends the lower bounds to all local oracles. Its tool is an oracle that reveals as much
+as a local oracle possibly can.
+
+```{prf:definition} Maximal oracle
+:label: def-nonsmooth-oracle-complexity-maximal
+:enumerator: VI.1
+
+For a family of functions $(f_i)_{i \in I}$, the maximal oracle answers the query $x$ for the
+instance $i$ with the set of instances $j$ with $f_j = f_i$ near $x$.
+```
+
+```{prf:lemma} Maximal oracle
+:label: lem-nonsmooth-oracle-complexity-maximal
+:enumerator: VI.2
+
+The maximal oracle is local, and every local oracle is emulated by it, with the identity as query
+translation.
+```
+
+Instances that agree near $x$ have the same set of instances agreeing with them near $x$. A local
+oracle takes the same value at all instances of this set, so evaluating it at any of them recovers
+its answer.
+
+The paper then shifts the hard functions by random perturbations, so that with probability one no
+query hits a point where the function is not locally linear (Lemmas VI.4 and VI.6). At the other
+points the maximal oracle reveals no more than the single-coordinate oracle, which gives Theorems
+VI.3 and VI.5 and Proposition VI.7. These arguments need families of instances with continuous
+random perturbations and are not formalized.
+
 :::{note}
 **Differences from the paper.**
 - Algorithms are deterministic query trees, and the prior on the instances is arbitrary. A
@@ -323,14 +514,22 @@ $n M$, so Proposition III.3 for strings of length $n M$ applies as in one dimens
   and the emulations ask for all bits of the greedy paths, which can reveal more than the paper's
   queries. The single-coordinate oracle uses the least coordinate attaining the maximum; the paper's
   convention would answer $0 \cdot e_1$ at a minimizer.
+- Lemma III.1 in probability assumes $P_e \le 1/2$, where the binary entropy is increasing.
+- Section V: the hard functions are defined on $\mathbb{R}^n$, queries may be arbitrary, and
+  $\varepsilon$-minimizers are taken over $B_p$. The standard basis is used for all $p \ge 1$ (see
+  the errata above). The oracle answers the least coordinate attaining the maximum and its sign.
+  Proposition V.5 is stated with the explicit condition $\varepsilon \lt n^{-1/p} 8^{-M}$, and the
+  lower bounds of Section V are stated in expectation.
 :::
 
 ## Coverage
 
-This entry covers the bound in expectation of Lemma III.1, Proposition III.3, Lemma III.5 and
-Section IV (Lemmas IV.3 to IV.7, Theorem IV.2), including the locality of the oracles. Not covered
-yet are the bounds in probability of Lemma III.1 and Proposition III.3, the lower bounds for
-$\ell^p$-balls (Section V) and for arbitrary local oracles (Section VI).
+This entry covers Lemma III.1 and Proposition III.3 in expectation and in probability, Lemma III.5,
+Section IV (Lemmas IV.3 to IV.7, Theorem IV.2), Section V with the standard basis (Lemmas V.3 and
+V.4, Theorem V.1, Proposition V.5), including the locality of the oracles, and Definition VI.1 and
+Lemma VI.2. Not covered are Theorem V.1 for $1 \le p \lt 2$ with the rate $\varepsilon^{-2}$, whose
+proof fails (see the errata), Remark V.6, and the perturbation arguments of Section VI (Theorems
+VI.3 and VI.5, Lemmas VI.4 and VI.6, Proposition VI.7).
 
 ## The formal statements at a glance
 
