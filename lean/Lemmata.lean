@@ -356,6 +356,7 @@ public import Lemmata.FWAffineOpenLoop.Strong
 public import Lemmata.FWAffineOpenLoop.StrongR
 public import Lemmata.FWAffineOpenLoop.Sufficient
 public import Lemmata.FWAffineOpenLoop.Weak
+public import Lemmata.FWCaratheodory.Cardinality
 public import Lemmata.FWCaratheodory.Hadamard
 public import Lemmata.FWCaratheodory.Main
 public import Lemmata.FWCaratheodory.Objective
