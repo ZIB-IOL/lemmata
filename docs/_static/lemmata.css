@@ -252,6 +252,8 @@ html.dark.lemmata-outline .myst-outline-item.lemmata-current > a { color: #e6edf
 /* /abs/ page: "View the full entry" as the first thing after the metadata. */
 .lemmata-header .lemmata-view-full { margin: 0.6rem 0 0.2rem; }
 .lemmata-header .lemmata-view-full p { margin: 0; }
+/* The entry's note (contribution.yml `note`) on its /abs/ page, below the line above. */
+.lemmata-header .lemmata-note { margin-top: 0.4rem; }
 
 .s26-file-links a.link .link-icon { display: none !important; }
 
@@ -314,6 +316,8 @@ html.dark .lemmata-entry-id code { color: #9ca3af !important; }
 .lemmata-entry-meta a.link:hover { text-decoration-color: currentColor; }
 .lemmata-entry-abstract { font-size: 0.875rem; line-height: 1.5; margin-top: 0.4rem; }
 .lemmata-catalog-compact .lemmata-entry-abstract { display: none; }
+/* An entry's note, as plain text, is in its block only for the filter's search (2026-11-28). */
+.lemmata-entry-note { display: none; }
 
 /* The start page's catalog (lemmata-catalog-layout): the filter and the list in the body
    column, the subjects beside them in the right column (the theme's article grid, body-end
