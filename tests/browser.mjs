@@ -48,18 +48,24 @@ page.on("response", (r) => { if (r.status() >= 400 && r.url().startsWith(origin)
 await page.goto(`${origin}${base}/`, { waitUntil: "networkidle" });
 check(await page.locator("h1", { hasText: "Lemmata" }).count() > 0, "landing page renders");
 check(await page.locator(".lemmata-catalog .lemmata-entry-title a", { hasText: "Composition of implications" }).count() === 1, "catalog lists entries");
-// The catalog's filter (a widget in a shadow root; Playwright's locators reach into it).
-// Entries are only hidden, so "shown" means laid out.
-const shown = () => page.locator(".lemmata-catalog .lemmata-entry").evaluateAll((es) => es.filter((e) => e.offsetParent !== null).map((e) => e.textContent));
-const filter = page.locator("input[type=search]");
-await filter.waitFor({ timeout: 15000 }).catch(() => {});
+// The catalog (a widget in a shadow root; Playwright's locators reach into it). Once
+// /catalog.json has loaded it shows the entries itself, 100 to a page (its rows: .list .entry),
+// and the printed list is hidden; before that, or without the index, it filters the printed list.
+const host = ".lemmata-catalog-layout .myst-anywidget";
+const indexed = (p, h) => p.waitForFunction((x) => document.querySelector(x)?.shadowRoot?.querySelector(".list .entry"), h, { timeout: 15000 }).catch(() => {});
+const shown = () => page.locator(`${host} .list .entry`).evaluateAll((es) => es.map((e) => e.textContent));
+const filter = page.locator(`${host} input[type=search]`);
+await indexed(page, host);
 check(await filter.count() === 1, "catalog filter loads");
+check((await shown()).length > 0 && await page.locator(".lemmata-catalog-layout > .lemmata-catalog").evaluate((e) => e.style.display) === "none",
+  "the catalog shows the entries from /catalog.json, the printed list hidden");
 if (await filter.count()) {
   const all = (await shown()).length;
   await filter.fill("implications"); await page.waitForTimeout(400);
   const hits = await shown();
-  check(hits.length >= 1 && hits.length < all && hits.every((t) => /implications/i.test(t)), `search filters the list (${hits.length} of ${all})`);
+  check(hits.length >= 1 && hits.length < all && hits.some((t) => /Composition of implications/.test(t)), `search filters the list (${hits.length} of ${all})`);
   check(new URL(page.url()).searchParams.get("q") === "implications", "search kept in the address");
+  check(await page.locator(`${host} select.order`).inputValue() === "match", "a search is ordered by best match");
   await filter.fill(""); await page.waitForTimeout(400);
   const subject = page.locator(".lemmata-catalog-subjects a").first();
   const name = (await subject.textContent()).trim();
@@ -69,6 +75,29 @@ if (await filter.count()) {
     inSubject.length >= 1 && inSubject.length <= all, `a subject in the right column filters in place (${name}: ${inSubject.length})`);
   await subject.click(); await page.waitForTimeout(400);
   check((await shown()).length === all && !new URL(page.url()).search, "clicking it again shows every entry");
+  // Abstracts on request, with their math (KaTeX from its CDN; offline it stays source).
+  await page.locator(`${host} .toggle input`).check(); await page.waitForTimeout(2500);
+  const abs = await page.locator(`${host} .list .abstract`).count();
+  check(abs > 0 && new URL(page.url()).searchParams.get("abstracts") === "1", `abstracts on request (${abs})`);
+  if (await page.evaluate(() => !!window.katex)) check(await page.locator(`${host} .list .abstract .katex`).count() > 0, "their math is rendered");
+  await page.locator(`${host} .toggle input`).uncheck(); await page.waitForTimeout(200);
+}
+check(await page.locator(".lemmata-catalog-months a").count() >= 1, "every entry listed by month, linked below the list");
+// A larger archive: 250 entries (the real ones, repeated) in place of /catalog.json.
+{
+  const real = await page.evaluate(async (u) => (await fetch(u)).json(), `${origin}${base}/catalog.json`);
+  const big = { schema_version: 1, entries: [] };
+  for (let k = 0; big.entries.length < 250; k++) for (const e of real.entries) if (big.entries.length < 250) big.entries.push({ ...e, id: `${e.id}-${k}`, title: `${e.title} (${k})` });
+  const p2 = await browser.newPage();
+  await p2.route("**/catalog.json", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(big) }));
+  await p2.goto(`${origin}${base}/`, { waitUntil: "networkidle" });
+  await indexed(p2, host);
+  const c1 = await p2.locator(`${host} .count`).textContent(), n1 = await p2.locator(`${host} .list .entry`).count();
+  check(n1 === 100 && c1 === "1–100 of 250 entries" && await p2.locator(`${host} .pager`).isVisible(), `100 entries a page, with a pager (${c1})`);
+  await p2.locator(`${host} .pager button`, { hasText: "Next" }).click(); await p2.waitForTimeout(200);
+  check(await p2.locator(`${host} .count`).textContent() === "101–200 of 250 entries" && new URL(p2.url()).searchParams.get("page") === "2",
+    "the next page, kept in the address");
+  await p2.close();
 }
 
 await page.goto(`${origin}${base}/implication-composition/`, { waitUntil: "networkidle" });
@@ -106,7 +135,10 @@ if (await widget.count()) {
 // Cross-page navigation: from a subject page to an entry, client-side, staying inside
 // the release, and landing on the entry's theorem anchor.
 await page.goto(`${origin}${base}/s/math-lo/`, { waitUntil: "networkidle" });
-await page.locator(".lemmata-entry-title a", { hasText: "Composition of implications" }).first().click();
+await indexed(page, ".myst-anywidget");
+check(await page.locator(".lemmata-catalog-static").evaluate((e) => e.style.display) === "none" &&
+  await page.locator(".myst-anywidget .list .entry").count() >= 1, "a subject page shows its entries from the index");
+await page.locator(".myst-anywidget .list .entry .title a", { hasText: "Composition of implications" }).first().click();
 await page.waitForURL(/implication-composition/, { timeout: 10000 }).catch(() => {});
 check(page.url().includes(`${base}/implication-composition`), `subject link navigates inside the release (${page.url().replace(origin, "")})`);
 check(await page.locator("#thm-implication-composition").count() === 1, "target theorem anchor exists");
