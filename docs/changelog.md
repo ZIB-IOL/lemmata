@@ -12,13 +12,13 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-28
 
+- **Updated entry:** [Linear convergence of Frank–Wolfe over product polytopes](frank-wolfe-product-polytopes/index.md), adding the pyramidal width of a product of any number of polytopes (Corollary A.3, with the exact value).
 - **Note under the title:** an entry can say where it comes from, e.g. the paper or book it formalizes, in a line below the arXiv link (`note` in `contribution.yml`), also on its abstract page and in `lemmata.json`.
 - **Entry lists:** the start page and the subject, topic and author pages show the newest 100 entries; their search, filters and order cover the whole archive, 100 per page, best matches first while searching. Abstracts are shown on request. Every entry is also listed under the month it was published in, linked below the start page's list.
 - **`lemmata.json`, schema version 2:** each computation that a result relies on is listed once under its entry, and the result names it; the claims themselves are in the release's `verification.json`. The file is a tenth of its former size.
 
 ## 2026-11-27
 
-- **Updated entry:** [Linear convergence of Frank–Wolfe over product polytopes](frank-wolfe-product-polytopes/index.md), adding the pyramidal width of a product of any number of polytopes (Corollary A.3, with the exact value).
 - **Updated entry:** [Frank–Wolfe over uniformly convex sets](frank-wolfe-uniformly-convex-sets/index.md), adding the examples of uniformly convex sets (Lemma 4.2 and corrected Lemmas D.2 and D.3), with an erratum for the constants of Lemmas D.2 and D.3.
 - **Updated entry:** [Frank–Wolfe over uniformly convex sets](frank-wolfe-uniformly-convex-sets/index.md), adding the rates under the local scaling inequality (Lemma 2.7 and a corrected Theorem 2.5), with an erratum for the linear rates of Theorems 2.2 and 2.5.
 - **Updated entry:** [Frank–Wolfe over uniformly convex sets](frank-wolfe-uniformly-convex-sets/index.md), adding the regret of follow the leader for online linear optimization (Lemma 3.2 and Theorem 3.1).
