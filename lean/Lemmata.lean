@@ -348,6 +348,11 @@ public import Lemmata.EnergyShellCrossings.BalancedCrossing
 public import Lemmata.EnergyShellCrossings.EnergyShellCrossing
 public import Lemmata.EnergyShellCrossings.Main
 public import Lemmata.EnergyShellCrossings.Statement
+public import Lemmata.FWAffineOpenLoop.Main
+public import Lemmata.FWAffineOpenLoop.Products
+public import Lemmata.FWAffineOpenLoop.Statement
+public import Lemmata.FWAffineOpenLoop.Strong
+public import Lemmata.FWAffineOpenLoop.StrongR
 public import Lemmata.FWOpenLoop.AFW
 public import Lemmata.FWOpenLoop.DIPFW
 public import Lemmata.FWOpenLoop.Face
