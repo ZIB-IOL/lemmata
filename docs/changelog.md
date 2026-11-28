@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **Updated entry:** [Linear convergence of Frank–Wolfe over product polytopes](frank-wolfe-product-polytopes/index.md), adding facets, the vertex-facet distance and its value for a product of two polytopes (Proposition 4.7).
 - **Updated entry:** [Linear convergence of Frank–Wolfe over product polytopes](frank-wolfe-product-polytopes/index.md), adding the upper bound for the pyramidal width of a product (Theorem 4.5) and the linear rate of away-step Frank–Wolfe over a product of two polytopes under quadratic growth (Proposition 4.8).
 - **Updated entry:** [Linear convergence of Frank–Wolfe over product polytopes](frank-wolfe-product-polytopes/index.md), adding the affine pyramidal width and the lower bound for the pyramidal width of a product of two polytopes (Theorem 4.5), with a separation lemma for affine hulls and convex hulls.
 - **New entry:** [Linear convergence of Frank–Wolfe over product polytopes](frank-wolfe-product-polytopes/index.md), formalizing the objective of the approximate feasibility problem for an intersection of polytopes from the paper by Iommazzo, Martínez-Rubio, Criado, Wirth and Pokutta (convex, 1-smooth and 1-PL) and the bounds on the pyramidal width formula of a product.
