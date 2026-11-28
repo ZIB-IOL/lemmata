@@ -379,6 +379,7 @@ public import Lemmata.FWOpenLoop.Sequence
 public import Lemmata.FWOpenLoop.Statement
 public import Lemmata.FWOpenLoop.Uniform
 public import Lemmata.FWProduct.Facet
+public import Lemmata.FWProduct.KFold
 public import Lemmata.FWProduct.Main
 public import Lemmata.FWProduct.Objective
 public import Lemmata.FWProduct.Relint

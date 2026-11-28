@@ -178,4 +178,22 @@ def ProductWidthEq : Prop :=
       Real.sqrt (facialDistance V₁ ^ 2 * facialDistance V₂ ^ 2 /
         (facialDistance V₁ ^ 2 + facialDistance V₂ ^ 2))
 
+open Classical in
+/-- The vertex set `V₀ × ⋯ × V_{k-1}` of a product of `k` polytopes, in the Euclidean product of
+`k` copies of `E`. -/
+noncomputable def piVertices {E : Type*} [NormedAddCommGroup E] {k : ℕ} (V : Fin k → Finset E) :
+    Finset (PiLp 2 (fun _ : Fin k => E)) :=
+  (Fintype.piFinset V).image (WithLp.toLp 2)
+
+/-- **Corollary A.3** (products of `k` polytopes), with the exact value. Let `V₀, …, V_k` be finite
+sets with at least two points each in a finite-dimensional real inner product space, with pyramidal
+widths (facial distances) `δ_i`. The pyramidal width of their product, in the Euclidean product, is
+`(∑ δ_i^{-2})^{-1/2}`; hence it is at least `m/√(k+1)` whenever `0 ≤ m ≤ δ_i` for all `i`. -/
+def ProductWidthMany : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+    (k : ℕ) (V : Fin (k + 1) → Finset E), (∀ i, 1 < (V i).card) →
+    facialDistance (piVertices V) = (∑ i, facialDistance (V i) ^ (-2 : ℝ)) ^ (-(1 / 2 : ℝ)) ∧
+    ∀ m : ℝ, 0 ≤ m → (∀ i, m ≤ facialDistance (V i)) →
+      m / Real.sqrt (k + 1) ≤ facialDistance (piVertices V)
+
 end Lemmata.FWProduct
