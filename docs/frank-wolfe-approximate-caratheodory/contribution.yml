@@ -6,7 +6,7 @@ cross_lists: [cs.DS, cs.LG]
 topics: [frank-wolfe]
 arxiv: "1911.04415"
 note: >-
-  Formalizes Lemma 3.1, Corollaries 5.1, 5.3 and 7.1, and Theorem 8.1 of
+  Formalizes Lemma 3.1, Corollaries 5.1, 5.3, 5.4, 5.5, 7.1 and 7.2, and Theorem 8.1 of
   @combettes2019revisiting.
 abstract: >-
   The approximate Carathéodory problem asks for a convex combination of few points of a set that
@@ -16,9 +16,10 @@ abstract: >-
   $(p - 1)$-smooth with a $(p - 1)$-Lipschitz gradient, $1$-gradient dominated and $\sqrt{2}$-sharp
   with respect to the $\ell_p$-norm. The resulting cardinality bounds are $O(p D^2/\varepsilon^2)$
   in general, $O(p (D/r)^2 \log(1/\varepsilon))$ for a target at distance $r$ from the relative
-  boundary, and logarithmic for approximate projections onto strongly convex sets. Approximating the barycenter of the normalized columns of a
-  Hadamard matrix of order $n$ to accuracy $\varepsilon$ needs at least $1/(\varepsilon^2 + 1/n)$
-  columns.
+  boundary, $O(\varepsilon^{-2(q-1)/q})$ over $(\alpha, q)$-uniformly convex sets, and logarithmic
+  for approximate projections onto strongly convex sets. Approximating the barycenter of the
+  normalized columns of a Hadamard matrix of order $n$ to accuracy $\varepsilon$ needs at least
+  $1/(\varepsilon^2 + 1/n)$ columns.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -71,3 +72,11 @@ exports:
     kind: theorem
     page: index.md
     label: cor-frank-wolfe-approximate-caratheodory-projection
+  - name: Lemmata.FWCaratheodory.uniformly_convex_cardinality
+    kind: theorem
+    page: index.md
+    label: cor-frank-wolfe-approximate-caratheodory-uniform
+  - name: Lemmata.FWCaratheodory.uniformly_convex_projection_cardinality
+    kind: theorem
+    page: index.md
+    label: cor-frank-wolfe-approximate-caratheodory-projection-uniform

@@ -2,6 +2,7 @@ module
 
 public import Lemmata.FWCaratheodory.Hadamard
 public import Lemmata.FWCaratheodory.Cardinality
+public import Lemmata.FWCaratheodory.Uniform
 
 @[expose] public section
 
@@ -26,9 +27,18 @@ theorem short_step_cardinality : ShortStepCardinality := Proof.short_step_cardin
 /-- Corollary 5.3: `O(p (D/r)² log(1/ε))` vertices for a target in the relative interior. -/
 theorem interior_cardinality : InteriorCardinality := Proof.interior_cardinality
 
+/-- Corollaries 5.4 and 5.5: over `(α, q)`-uniformly convex sets, `O(ε^{-2(q-1)/q})` atoms suffice,
+`O(1/ε)` for strongly convex sets. -/
+theorem uniformly_convex_cardinality : UniformlyConvexCardinality :=
+  Proof.uniformly_convex_cardinality
+
 /-- Corollary 7.1: `O(p/(α c) log(1/ε))` points for approximate projections onto strongly convex
 sets. -/
 theorem projection_cardinality : ProjectionCardinality := Proof.projection_cardinality
+/-- Corollary 7.2: sparse approximate projections onto `(α, q)`-uniformly convex sets with `q > 2`.
+-/
+theorem uniformly_convex_projection_cardinality : UniformlyConvexProjectionCardinality :=
+  Proof.uniformly_convex_projection_cardinality
 -- DOCS_END_MAIN
 
 end Lemmata.FWCaratheodory

@@ -126,4 +126,51 @@ def ProjectionCardinality : Prop :=
           ∃ S : Finset (PiLp p (fun _ : Fin n => ℝ)), ↑S ⊆ V ∧ S.card ≤ t + 1 ∧
             x t ∈ convexHull ℝ (↑S : Set (PiLp p (fun _ : Fin n => ℝ)))
 
+/-- **Corollaries 5.4 and 5.5** (uniformly convex sets). Let `2 ≤ p < ∞`, let `C ⊆ ℓ_p^n` be
+compact, convex and `(α, q)`-uniformly convex with `q ≥ 2` and diameter `D`, and let `V ⊆ C` and
+`x⋆ ∈ C`. With `L = p - 1`, `K = (L/(2α²))^{1/(q-1)}` and `t₀ = max {⌊log₂ (D²/K)⌋ + 1, 1}`, every
+short-step Frank–Wolfe run for `‖z - x⋆‖_p²/2` over `C` that starts at a point of `V` and uses
+atoms in `V` satisfies `‖x_t - x⋆‖_p ≤ ε` as soon as `t ≥ t₀` and
+`(2LK/ε²)^{(q-1)/q} ≤ 1 + (1 - 1/q)(t - t₀)/2`, with `x_t` a convex combination of at most `t + 1`
+points of `V`. This takes `O(ε^{-2(q-1)/q})` iterations, `O(1/ε)` for strongly convex sets
+(`q = 2`, Corollary 5.4). -/
+def UniformlyConvexCardinality : Prop :=
+  ∀ (n : ℕ) (p : ENNReal) [Fact (1 ≤ p)], 2 ≤ p → p ≠ ⊤ →
+    ∀ (C V : Set (PiLp p (fun _ : Fin n => ℝ))) (α q : ℝ) (xStar : PiLp p (fun _ : Fin n => ℝ))
+      (x v : ℕ → PiLp p (fun _ : Fin n => ℝ)) (γ : ℕ → ℝ),
+      IsCompact C → Convex ℝ C → IsUniformlyConvexSet C α q → 2 ≤ q → 0 < α → V ⊆ C →
+      xStar ∈ C → x 0 ∈ V → (∀ t, v t ∈ V) →
+      IsShortStepRun C (lpObjective xStar) (Real.toNNReal (p.toReal - 1)) x v γ →
+      let L := p.toReal - 1
+      let K := (L / (2 * α ^ 2)) ^ (1 / (q - 1))
+      let t₀ : ℤ := max (⌊Real.logb 2 (Metric.diam C ^ 2 / K)⌋ + 1) 1
+      ∀ ε : ℝ, 0 < ε → ∀ t : ℕ, t₀ ≤ (t : ℤ) →
+        (2 * L * K / ε ^ 2) ^ ((q - 1) / q) ≤ 1 + 1 / 2 * (1 - 1 / q) * ((t : ℝ) - t₀) →
+        ‖x t - xStar‖ ≤ ε ∧ ∃ S : Finset (PiLp p (fun _ : Fin n => ℝ)), ↑S ⊆ V ∧ S.card ≤ t + 1 ∧
+          x t ∈ convexHull ℝ (↑S : Set (PiLp p (fun _ : Fin n => ℝ)))
+
+/-- **Corollary 7.2** (sparse approximate projections onto uniformly convex sets). Let
+`2 ≤ p < ∞`, let `C ⊆ ℓ_p^n` be compact, convex and `(α, q)`-uniformly convex with `q > 2` and
+diameter `D`, let `V ⊆ C`, `x⋆ ∉ C` and `c = dist(x⋆, C)`. With `L = p - 1`,
+`K = (L/(α c))^{2/(q-2)}` and `t₀ = max {⌊log₂ (D²/K)⌋ + 1, 1}`, every short-step Frank–Wolfe run
+for `‖z - x⋆‖_p²/2` over `C` that starts at a point of `V` and uses atoms in `V` satisfies
+`‖x_t - x⋆‖_p² - c² ≤ ε²` as soon as `t ≥ t₀` and `(2LK/ε²)^{(q-2)/q} ≤ 1 + (1/2 - 1/q)(t - t₀)`,
+with `x_t` a convex combination of at most `t + 1` points of `V`. -/
+def UniformlyConvexProjectionCardinality : Prop :=
+  ∀ (n : ℕ) (p : ENNReal) [Fact (1 ≤ p)], 2 ≤ p → p ≠ ⊤ →
+    ∀ (C V : Set (PiLp p (fun _ : Fin n => ℝ))) (α q : ℝ) (xStar : PiLp p (fun _ : Fin n => ℝ))
+      (x v : ℕ → PiLp p (fun _ : Fin n => ℝ)) (γ : ℕ → ℝ),
+      IsCompact C → Convex ℝ C → IsUniformlyConvexSet C α q → 2 < q → 0 < α → V ⊆ C →
+      xStar ∉ C → x 0 ∈ V → (∀ t, v t ∈ V) →
+      IsShortStepRun C (lpObjective xStar) (Real.toNNReal (p.toReal - 1)) x v γ →
+      let L := p.toReal - 1
+      let c := Metric.infDist xStar C
+      let K := (L / (α * c)) ^ (2 / (q - 2))
+      let t₀ : ℤ := max (⌊Real.logb 2 (Metric.diam C ^ 2 / K)⌋ + 1) 1
+      ∀ ε : ℝ, 0 < ε → ∀ t : ℕ, t₀ ≤ (t : ℤ) →
+        (2 * L * K / ε ^ 2) ^ ((q - 2) / q) ≤ 1 + (1 / 2 - 1 / q) * ((t : ℝ) - t₀) →
+        ‖x t - xStar‖ ^ 2 - c ^ 2 ≤ ε ^ 2 ∧
+          ∃ S : Finset (PiLp p (fun _ : Fin n => ℝ)), ↑S ⊆ V ∧ S.card ≤ t + 1 ∧
+            x t ∈ convexHull ℝ (↑S : Set (PiLp p (fun _ : Fin n => ℝ)))
+
 end Lemmata.FWCaratheodory
