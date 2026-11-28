@@ -1,0 +1,68 @@
+schema_version: 1
+id: frank-wolfe-log-adaptive-open-loop
+lean_namespace: Lemmata.FWLogAdaptive
+subject: math.OC
+cross_lists: [cs.LG]
+topics: [frank-wolfe]
+arxiv: "2505.09886"
+abstract: >-
+  Convergence rates for the Frank–Wolfe algorithm with adaptive open-loop step sizes
+  $\eta_t = g(t)/(t + g(t))$, where $g \ge 2$ is nondecreasing and the step sizes are
+  nonincreasing. A cumulative-product bound for these step sizes, corrected to the range in which it
+  holds, gives rates under the strong and weak growth properties of the affine-invariant analysis.
+  For the log-adaptive step sizes $g(t) = 2 + \log(t + 1)$, the best duality gap converges at the
+  rate $\tilde O(t^{-1/(1-r)})$ under strong $(M, r)$-growth and the primal gap at the rate
+  $\tilde O(t^{-1/(1-r)} + t^{-2})$ under weak growth, with explicit constants. The statements hold
+  in real normed spaces, for every Frank–Wolfe run.
+contributors:
+  - name: Sebastian Pokutta
+    orcid: "0000-0001-7365-3000"
+ai_use: >-
+  The formalization and this page were developed with Claude (Anthropic) under the author's
+  direction and review, on top of the shared entry Frank–Wolfe: the core.
+acknowledgements: >-
+  This research was conducted in the context of the Agentic AI for Mathematics
+  (EF-LiOpt-3) project at the Berlin Mathematics Research Center MATH$^+$
+  (EXC-2046/2, project ID 390685689), funded by the Deutsche Forschungsgemeinschaft
+  (DFG, German Research Foundation) under Germany's Excellence Strategy.
+  This work has been partially supported by OpenAI's Academic Researchers program.
+license: CC-BY-4.0
+pages:
+  - index.md
+exports:
+  - name: Lemmata.FWLogAdaptive.etaG
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-log-adaptive-open-loop-eta
+  - name: Lemmata.FWLogAdaptive.IsAdmissible
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-log-adaptive-open-loop-admissible
+  - name: Lemmata.FWLogAdaptive.logStep
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-log-adaptive-open-loop-log-step
+  - name: Lemmata.FWLogAdaptive.logStep_admissible
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-log-adaptive-open-loop-log-admissible
+  - name: Lemmata.FWLogAdaptive.product_bound
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-log-adaptive-open-loop-product
+  - name: Lemmata.FWLogAdaptive.strong_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-log-adaptive-open-loop-strong
+  - name: Lemmata.FWLogAdaptive.log_strong_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-log-adaptive-open-loop-log-strong
+  - name: Lemmata.FWLogAdaptive.weak_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-log-adaptive-open-loop-weak
+  - name: Lemmata.FWLogAdaptive.log_weak_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-log-adaptive-open-loop-log-weak

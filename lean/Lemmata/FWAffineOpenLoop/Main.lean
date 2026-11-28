@@ -25,6 +25,7 @@ theorem pd_rate_strong_one : PDRateStrongOne := Proof.pd_rate_strong_one
 /-- Theorem 3.4: under strong `(M, r)`-growth, rate `O(t^{-ℓ+ε} + t^{-1/(1-r)})` for the best
 duality gap and the smallest Frank–Wolfe gap. -/
 theorem pd_rate_strong : PDRateStrong := Proof.pd_rate_strong
+
 /-- Theorem 4.1: under strong `(M, 0)`- and weak `(M, r)`-growth, rate
 `O(t^{-ℓ+ε} + t^{-1/(1-r)} + t^{-2})` for the primal gap, and the dichotomy of the paper. -/
 theorem weak_rate : WeakRate := Proof.weak_rate

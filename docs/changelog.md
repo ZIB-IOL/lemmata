@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **New entry:** [Log-adaptive open-loop step-sizes for Frank–Wolfe](frank-wolfe-log-adaptive-open-loop/index.md), formalizing the paper by Wirth, Peña and Pokutta: the strengthened cumulative-product bound for adaptive open-loop step sizes (corrected to the range in which it holds), the rates under strong and weak growth, and the log-adaptive step sizes with rates Õ(t^(−1/(1−r))) and Õ(t^(−1/(1−r)) + t^(−2)).
 - **Updated entry:** [Affine-invariant accelerated rates for Frank–Wolfe with open-loop step-sizes](frank-wolfe-affine-invariant-open-loop/index.md), adding the sufficient conditions for the growth properties (Propositions 2.8, 3.6, 4.3 and 5.3) and errata for Lemma 2.10 and Example 4.4.
 - **Updated entry:** [Affine-invariant accelerated rates for Frank–Wolfe with open-loop step-sizes](frank-wolfe-affine-invariant-open-loop/index.md), adding the rates under weak growth (Theorem 4.1 with its dichotomy, Lemma 4.2) and under (relaxed) gaps growth (Theorems 5.1 and 5.2).
 - **New entry:** [Affine-invariant accelerated rates for Frank–Wolfe with open-loop step-sizes](frank-wolfe-affine-invariant-open-loop/index.md), formalizing the measures of optimality and Section 3 of the paper by Wirth, Peña and Pokutta: under strong growth, the best duality gap and the smallest Frank–Wolfe gap converge at the rates O(1/t), O(t^(−ℓ)) and O(t^(−ℓ+ε) + t^(−1/(1−r))), with the telescoping bounds for the step sizes.
