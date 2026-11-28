@@ -807,9 +807,13 @@ public import Lemmata.OracleComplexity.CubeBound
 public import Lemmata.OracleComplexity.CubeEmul
 public import Lemmata.OracleComplexity.Deviation
 public import Lemmata.OracleComplexity.Entropy
+public import Lemmata.OracleComplexity.LowScale
+public import Lemmata.OracleComplexity.Lp
 public import Lemmata.OracleComplexity.Main
+public import Lemmata.OracleComplexity.Maximal
 public import Lemmata.OracleComplexity.Statement
 public import Lemmata.OracleComplexity.StringGuess
+public import Lemmata.OracleComplexity.Tail
 public import Lemmata.OracleComplexity.Tree
 public import Lemmata.PlanarSteinerXC.Assembly
 public import Lemmata.PlanarSteinerXC.CoverGraph

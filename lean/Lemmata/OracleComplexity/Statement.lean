@@ -78,6 +78,22 @@ def InfoLowerBound : Prop :=
           (∑ f ∈ Finset.univ.filter (fun f => t.output (oracle f) ≠ f), p f) *
             Real.log ((Fintype.card F : ℝ) - 1)
 
+open Classical in
+/-- **Lemma III.1** (in probability, corrected). Under the hypotheses of Lemma III.1 with `C ≥ 0`
+and `P_e ≤ 1/2`, for every `d` the probability that the algorithm stops after fewer than `d`
+queries satisfies `P[T < d] log|F| ≤ log|F| - H(F) + C d + h(P_e) + P_e log(|F| - 1)`. For the
+uniform distribution `log|F| = H(F)`, and this is the bound of the paper. -/
+def InfoTailBound : Prop :=
+  ∀ {F Q A : Type u} [Fintype F] (p : F → ℝ) (oracle : F → Q → A) (C : ℝ) (t : QueryTree Q A F)
+    (d : ℕ), (∀ f, 0 ≤ p f) → ∑ f, p f = 1 → 0 ≤ C → InfoBounded p oracle C t Finset.univ →
+    ∑ f ∈ Finset.univ.filter (fun f => t.output (oracle f) ≠ f), p f ≤ 1 / 2 →
+      (∑ f ∈ Finset.univ.filter (fun f => t.queries (oracle f) < d), p f) *
+          Real.log (Fintype.card F) ≤
+        Real.log (Fintype.card F) - ∑ f, Real.negMulLog (p f) + C * d +
+          Real.binEntropy (∑ f ∈ Finset.univ.filter (fun f => t.output (oracle f) ≠ f), p f) +
+          (∑ f ∈ Finset.univ.filter (fun f => t.output (oracle f) ≠ f), p f) *
+            Real.log ((Fintype.card F : ℝ) - 1)
+
 /-- **Lemma III.5** (oracle emulation). If the oracle `O₁` is emulated by the oracle `O₂`, with
 query translation `qe` and answer translation `ae` such that `O₁(x) = ae(x, O₂(qe(x)))` on every
 instance, then every algorithm for `O₁` turns into an algorithm for `O₂` with the same output and
@@ -105,6 +121,17 @@ def StringGuessing : Prop :=
     let Pe := ((Finset.univ.filter (fun S => t.output (stringGuess S) ≠ S)).card : ℝ) / 2 ^ M
     let ET := (∑ S, (t.queries (stringGuess S) : ℝ)) / 2 ^ M
     ((1 - Pe) * M - Real.binEntropy Pe / Real.log 2) / 2 ≤ ET ∧ ((1 - Pe) * M - 1) / 2 ≤ ET
+
+open Classical in
+/-- **Proposition III.3** (in probability). For a uniformly random string of length `M ≥ 1` and
+every `d`, an algorithm with the string guessing oracle and error probability `P_e` stops after
+fewer than `d` queries with probability at most `P_e + (2d + 1)/M`; so `T ≥ cM` holds with
+probability at least `1 - P_e - 2c - 1/M`. -/
+def StringGuessingTail : Prop :=
+  ∀ (M : ℕ) (t : QueryTree (List (Fin M × Bool)) (Option ℕ) (Fin M → Bool)) (d : ℕ), 0 < M →
+    ((Finset.univ.filter (fun S => t.queries (stringGuess S) < d)).card : ℝ) / 2 ^ M ≤
+      ((Finset.univ.filter (fun S => t.output (stringGuess S) ≠ S)).card : ℝ) / 2 ^ M +
+        (2 * d + 1) / M
 
 section Box
 
@@ -274,5 +301,131 @@ def CubeLowerBound : Prop :=
         ¬ ∀ y, cubeFn S (t.output (cubeOracle S)) ≤ cubeFn S y + ε)).card : ℝ) / 2 ^ (n * M)
       ((1 - Pe) * (n * M) - 1) / 2 ≤
         (∑ S : Fin n → Fin M → Bool, (t.queries (cubeOracle S) : ℝ)) / 2 ^ (n * M)
+
+section LpBall
+
+variable {n M : ℕ} [NeZero M]
+
+/-- The unit ball of the `ℓ^p` norm in `ℝⁿ`. -/
+def lpBall (p : ℝ) (n : ℕ) : Set (Fin n → ℝ) := {x | ∑ i, |x i| ^ p ≤ 1}
+
+/-- The hard function of Section V.A for signs `s ∈ {±1}^M` on the first `M ≤ n` coordinates:
+`f_s(x) = max_{i < M} s_i x_i`. -/
+noncomputable def lpFn (h : M ≤ n) (s : Fin M → Bool) (x : Fin n → ℝ) : ℝ :=
+  Finset.univ.sup' Finset.univ_nonempty (fun i : Fin M => bitSign (s i) * x (Fin.castLE h i))
+
+open Classical in
+/-- The least coordinate whose term attains the maximum. -/
+noncomputable def lpCoord (h : M ≤ n) (s : Fin M → Bool) (x : Fin n → ℝ) : Fin M :=
+  (Finset.univ.filter (fun i => bitSign (s i) * x (Fin.castLE h i) = lpFn h s x)).min' (by
+    obtain ⟨i, -, hi⟩ := Finset.exists_mem_eq_sup' Finset.univ_nonempty
+      (fun i : Fin M => bitSign (s i) * x (Fin.castLE h i))
+    exact ⟨i, Finset.mem_filter.mpr ⟨Finset.mem_univ _, hi.symm⟩⟩)
+
+/-- The single-coordinate oracle of Section V.A: the value, the least maximizing coordinate `i`
+and the sign `s_i`; the subgradient is `s_i e_i`. -/
+noncomputable def lpOracle (h : M ≤ n) (s : Fin M → Bool) (x : Fin n → ℝ) : ℝ × Fin n × ℝ :=
+  (lpFn h s x, Fin.castLE h (lpCoord h s x), bitSign (s (lpCoord h s x)))
+
+end LpBall
+
+/-- The hard functions of Section V.A are convex and `1`-Lipschitz for the `ℓ^p` norm, `p ≥ 1`, and
+`lpOracle` answers their value and a subgradient on a coordinate axis. -/
+def LpOracleValid : Prop :=
+  ∀ (n M : ℕ) [NeZero M] (h : M ≤ n) (p : ℝ), 1 ≤ p → ∀ s : Fin M → Bool,
+    ConvexOn ℝ Set.univ (lpFn h s) ∧
+    (∀ x y, |lpFn h s x - lpFn h s y| ≤ (∑ i, |x i - y i| ^ p) ^ (1 / p)) ∧
+    ∀ x, (lpOracle h s x).1 = lpFn h s x ∧
+      ∀ y, lpFn h s x + (lpOracle h s x).2.2 * (y (lpOracle h s x).2.1 - x (lpOracle h s x).2.1) ≤
+        lpFn h s y
+
+/-- **Lemma V.3** (packing, standard basis). Let `p ≥ 1` and `M ε^p < 1`. A point of the unit
+`ℓ^p` ball that is `ε`-optimal over the ball for `f_s` and for `f_{s'}` has `s = s'`. -/
+def LpPacking : Prop :=
+  ∀ (n M : ℕ) [NeZero M] (h : M ≤ n) (p ε : ℝ), 1 ≤ p → 0 < ε → M * ε ^ p < 1 →
+    ∀ (s s' : Fin M → Bool) (x : Fin n → ℝ), x ∈ lpBall p n →
+      (∀ y ∈ lpBall p n, lpFn h s x ≤ lpFn h s y + ε) →
+      (∀ y ∈ lpBall p n, lpFn h s' x ≤ lpFn h s' y + ε) → s = s'
+
+/-- **Lemma V.4** (emulation). The oracle `lpOracle` is emulated by the string guessing oracle on
+strings of length `M`. -/
+def LpEmulation : Prop :=
+  ∀ (n M : ℕ) [NeZero M] (h : M ≤ n), ∃ (qe : (Fin n → ℝ) → List (Fin M × Bool))
+    (ae : (Fin n → ℝ) → Option ℕ → ℝ × Fin n × ℝ),
+      ∀ (s : Fin M → Bool) (x : Fin n → ℝ), lpOracle h s x = ae x (stringGuess s (qe x))
+
+/-- **Lemma V.4, locality.** The oracle of Section V.A is local. -/
+def LpLocal : Prop :=
+  ∀ (n M : ℕ) [NeZero M] (h : M ≤ n),
+    IsLocalOracle (fun s : Fin M → Bool => lpFn h s) (fun s => lpOracle h s)
+
+open Classical in
+/-- **Theorem V.1** (large-scale case, standard basis). Let `p ≥ 1`, `M ≤ n` and `M ε^p < 1`, and
+let `s ∈ {±1}^M` be uniformly random. Every deterministic algorithm that queries `lpOracle s` and
+outputs an `ε`-minimizer of `f_s` over the unit `ℓ^p` ball with error probability `P_e` asks at
+least `((1 - P_e) M - 1)/2` queries in expectation; with `M ≈ ε^{-p} ≤ n` this is
+`Ω((1 - P_e)/ε^p)`. -/
+def LpLowerBound : Prop :=
+  ∀ (n M : ℕ) [NeZero M] (h : M ≤ n) (p ε : ℝ), 1 ≤ p → 0 < ε → M * ε ^ p < 1 →
+    ∀ t : QueryTree (Fin n → ℝ) (ℝ × Fin n × ℝ) (Fin n → ℝ),
+      let Pe := ((Finset.univ.filter (fun s : Fin M → Bool =>
+        ¬ (t.output (lpOracle h s) ∈ lpBall p n ∧
+          ∀ y ∈ lpBall p n, lpFn h s (t.output (lpOracle h s)) ≤ lpFn h s y + ε))).card : ℝ) /
+        2 ^ M
+      ((1 - Pe) * M - 1) / 2 ≤ (∑ s : Fin M → Bool, (t.queries (lpOracle h s) : ℝ)) / 2 ^ M
+
+section LowScale
+
+variable {n M : ℕ} [NeZero n]
+
+/-- The hard functions of Section IV.B rescaled into the cube of side `2ρ`:
+`g_S(x) = ρ f_S(x/ρ)`. -/
+noncomputable def scaledFn (ρ : ℝ) (S : Fin n → Fin M → Bool) (x : Fin n → ℝ) : ℝ :=
+  ρ * cubeFn S (fun i => x i / ρ)
+
+/-- The rescaled single-coordinate oracle: the value `ρ f_S(x/ρ)` and the subgradient of
+`cubeOracle` at `x/ρ`. -/
+noncomputable def scaledOracle (ρ : ℝ) (S : Fin n → Fin M → Bool) (x : Fin n → ℝ) :
+    ℝ × Fin n × ℝ :=
+  (ρ * (cubeOracle S (fun i => x i / ρ)).1, (cubeOracle S (fun i => x i / ρ)).2)
+
+end LowScale
+
+open Classical in
+/-- **Proposition V.5** (low-scale case). Let `p ≥ 1`, `ρ = n^{-1/p}` and `ε < ρ 8^{-M}`. The
+rescaled hard functions are convex and `1`-Lipschitz for the `ℓ^p` norm, the rescaled oracle answers
+their value and a subgradient on a coordinate axis, they attain their minimum in the unit `ℓ^p`
+ball, and every deterministic algorithm that queries the rescaled single-coordinate oracle and
+outputs an `ε`-minimizer over the ball with error probability `P_e` asks at least
+`((1 - P_e) n M - 1)/2` queries in expectation; for `ε ≤ n^{-1/p - δ}` this is
+`Ω((1 - P_e) n log(1/ε))`. -/
+def LowScaleLowerBound : Prop :=
+  ∀ (n M : ℕ) [NeZero n] (p ε : ℝ), 1 ≤ p → ε < (n : ℝ) ^ (-1 / p) * (1 / 8) ^ M →
+    let ρ := (n : ℝ) ^ (-1 / p)
+    (∀ S : Fin n → Fin M → Bool, ConvexOn ℝ Set.univ (scaledFn ρ S) ∧
+      (∀ x y, |scaledFn ρ S x - scaledFn ρ S y| ≤ (∑ i, |x i - y i| ^ p) ^ (1 / p)) ∧
+      (∀ x, (scaledOracle ρ S x).1 = scaledFn ρ S x ∧ ∀ y, scaledFn ρ S x +
+        (scaledOracle ρ S x).2.2 * (y (scaledOracle ρ S x).2.1 - x (scaledOracle ρ S x).2.1) ≤
+          scaledFn ρ S y) ∧
+      ∃ z ∈ lpBall p n, ∀ y, scaledFn ρ S z ≤ scaledFn ρ S y) ∧
+    ∀ t : QueryTree (Fin n → ℝ) (ℝ × Fin n × ℝ) (Fin n → ℝ),
+      let Pe := ((Finset.univ.filter (fun S : Fin n → Fin M → Bool =>
+        ¬ (t.output (scaledOracle ρ S) ∈ lpBall p n ∧ ∀ y ∈ lpBall p n,
+          scaledFn ρ S (t.output (scaledOracle ρ S)) ≤ scaledFn ρ S y + ε))).card : ℝ) /
+        2 ^ (n * M)
+      ((1 - Pe) * (n * M) - 1) / 2 ≤
+        (∑ S : Fin n → Fin M → Bool, (t.queries (scaledOracle ρ S) : ℝ)) / 2 ^ (n * M)
+
+/-- The maximal oracle of a family of functions (Definition VI.1): at `x` it answers the set of
+instances that agree with the given one near `x`. -/
+def maxOracle {ι E : Type*} [TopologicalSpace E] (F : ι → E → ℝ) (i : ι) (x : E) : Set ι :=
+  {j | ∀ᶠ y in nhds x, F j y = F i y}
+
+/-- **Lemma VI.2** (maximal oracle). The maximal oracle is local, and every local oracle is
+emulated by it with the identity as query translation. -/
+def MaximalOracle : Prop :=
+  ∀ {ι E α : Type u} [TopologicalSpace E] [Nonempty α] (F : ι → E → ℝ) (O : ι → E → α),
+    IsLocalOracle F (maxOracle F) ∧
+      (IsLocalOracle F O → ∃ ae : E → Set ι → α, ∀ i x, O i x = ae x (maxOracle F i x))
 
 end Lemmata.OracleComplexity
