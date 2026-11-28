@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-28
 
+- **Updated entry:** [Restarting Frank–Wolfe under Hölderian error bounds](frank-wolfe-restarting/index.md), adding fractional away-step Frank–Wolfe with its burn-in phase and the rate of scheduled restarts (Propositions 4.1 and 4.2, Theorem 5.1).
 - **New entry:** [Restarting Frank–Wolfe under Hölderian error bounds](frank-wolfe-restarting/index.md), formalizing the strong Wolfe gap bounds and the rate of vanilla Frank–Wolfe over strongly convex sets of Kerdreux, d'Aspremont and Pokutta.
 - **Updated entry:** [Linear convergence of Frank–Wolfe over product polytopes](frank-wolfe-product-polytopes/index.md), adding the pyramidal width of a product of any number of polytopes (Corollary A.3, with the exact value).
 - **Note under the title:** an entry can say where it comes from, e.g. the paper or book it formalizes, in a line below the arXiv link (`note` in `contribution.yml`), also on its abstract page and in `lemmata.json`.

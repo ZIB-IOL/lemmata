@@ -6,16 +6,20 @@ cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "1810.02429"
 note: >-
-  Formalizes Lemmas 2.3 and 3.6 and Theorem 7.3 of @kerdreux2018restarting.
+  Formalizes Lemmas 2.3 and 3.6, Propositions 4.1 and 4.2 and Theorems 5.1 and 7.3 of
+  @kerdreux2018restarting.
 abstract: >-
-  Hölderian error bounds interpolate between plain convexity and strong convexity, and with them
-  the convergence of Frank–Wolfe algorithms between the rate $O(1/t)$ and linear convergence. The
-  strong Wolfe gap of an iterate with active set $S$, the sum of its away gap and its Frank–Wolfe
-  gap, bounds the primal gap and vanishes exactly at the minimizers. Under a $(\theta, c)$-Hölderian
+  Hölderian error bounds interpolate between plain convexity and strong convexity, and with them the
+  convergence of Frank–Wolfe algorithms between the rate $O(1/t)$ and linear convergence. The strong
+  Wolfe gap of an iterate with active set $S$, the sum of its away gap and its Frank–Wolfe gap,
+  bounds the primal gap and vanishes exactly at the minimizers. Under a $(\theta, c)$-Hölderian
   error bound over a polytope with pyramidal width $\delta$, the primal gap is at most
-  $(c/\delta)^{1/(1-\theta)}$ times the strong Wolfe gap to the power $1/(1-\theta)$. Over strongly
-  convex sets, vanilla Frank–Wolfe with short steps converges at the rate $O(t^{-1/(1-\theta)})$.
-  The statements hold in real normed spaces.
+  $(c/\delta)^{1/(1-\theta)}$ times the strong Wolfe gap to the power $1/(1-\theta)$. Restarting a
+  fractional away-step Frank–Wolfe algorithm whenever the strong Wolfe gap has dropped by a constant
+  factor gives, after a burn-in phase, the rate $O(T^{-(1-\theta)/(1-2\theta)})$ for $\theta \lt
+  1/2$ and linear convergence for $\theta = 1/2$. Over strongly convex sets, vanilla Frank–Wolfe
+  with short steps converges at the rate $O(t^{-1/(1-\theta)})$. The statements hold in real normed
+  spaces.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -44,3 +48,23 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-restarting-strongly-convex
+  - name: Lemmata.FWRestart.IsFAFWRun
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-restarting-fractional
+  - name: Lemmata.FWRestart.fractional_complexity
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-restarting-complexity
+  - name: Lemmata.FWRestart.burn_in
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-restarting-burn-in
+  - name: Lemmata.FWRestart.IsRestartRun
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-restarting-restarts
+  - name: Lemmata.FWRestart.restart_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-restarting-restarts
