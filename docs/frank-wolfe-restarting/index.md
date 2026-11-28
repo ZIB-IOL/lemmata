@@ -11,8 +11,9 @@ numbering:
 This entry formalizes results of the paper *Restarting Frank–Wolfe: Faster Rates Under Hölderian
 Error Bounds* by Thomas Kerdreux, Alexandre d'Aspremont and Sebastian Pokutta
 [@kerdreux2018restarting], currently the strong Wolfe gap bounds (Lemmas 2.3 and 3.6), fractional
-away-step Frank–Wolfe with scheduled restarts (Propositions 4.1 and 4.2, Theorem 5.1) and the rate
-of vanilla Frank–Wolfe over strongly convex sets (Theorem 7.3); numbers refer to the arXiv version.
+away-step Frank–Wolfe with scheduled restarts (Propositions 4.1, 4.2 and 5.3, Theorem 5.1), its
+analysis under Hölder smoothness (Section 6) and the rate of vanilla Frank–Wolfe over strongly
+convex sets (Theorem 7.3); numbers refer to the arXiv version.
 :::
 
 The Frank–Wolfe algorithm converges at the rate $O(1/t)$ for smooth convex objectives, and its
@@ -160,6 +161,95 @@ run. For $\theta < 1/2$ the numbers $u_k = W_k^{r-2}$ grow by at least the facto
 per run, so their sum up to $R$ is at most $(u_R - u_0)/(e^{\gamma(2-r)} - 1)$, which gives
 $u_R \ge u_0 (1 + \tilde{T} C_\gamma)$.
 
+The schedule parameter $\gamma$ enters only through the constant, and $\gamma = 1/2$ is a robust
+choice.
+
+```{prf:proposition} Robustness in the schedule parameter
+:label: prop-frank-wolfe-restarting-robust
+:enumerator: 5.3
+
+Write $C_\gamma = (e^{\gamma(2-r)} - 1)/(e^{2\gamma} K_0 W_0^{r-2})$ for the constant of Theorem
+5.1, with $K_0 = 16 L D^2 (c/\delta)^r$. For $r = 1$ and every $\gamma > 0$,
+
+$$
+\frac{W_0}{1 + \tilde{T} C_{1/2}} \le \frac{e}{4(\sqrt{e} - 1)} \cdot
+\frac{W_0}{1 + \tilde{T} C_\gamma},
+$$
+
+and for $r = 2$ the bound $W_0 e^{-\gamma \tilde{T}/(e^{2\gamma} K_0)}$ is smallest at
+$\gamma = 1/2$.
+```
+
+For $r = 1$, $C_\gamma$ is proportional to $e^{-\gamma} - e^{-2\gamma} \le 1/4$, which is
+$e/(4(\sqrt{e} - 1)) \approx 1.05$ times its value at $\gamma = 1/2$; for $r = 2$ the exponent is
+proportional to $\gamma e^{-2\gamma}$, which is largest at $\gamma = 1/2$.
+
+## Hölder smoothness
+
+Hölder smoothness interpolates between nonsmooth and smooth objectives. In the analysis it only
+enters through the curvature term of a step.
+
+```{prf:definition} Hölder curvature
+:label: def-frank-wolfe-restarting-holder
+:nonumber:
+
+The function $f$ has Hölder curvature at most $C$ with exponent $s$ over
+$\operatorname{conv}(\mathcal{V})$ if
+$f(x + \eta(u - v)) \le f(x) + \eta \langle \nabla f(x), u - v \rangle + C \eta^s/s$ for all
+$x, u, v \in \operatorname{conv}(\mathcal{V})$ and $\eta \in [0, 1]$. An $(L, s)$-Hölder smooth
+function has Hölder curvature at most $L D^s$.
+```
+
+```{prf:proposition} Complexity under Hölder smoothness
+:label: prop-frank-wolfe-restarting-holder-complexity
+:enumerator: 6.1
+
+Let $f$ be convex and differentiable with Hölder curvature at most $C$ and exponent $s > 1$, and let
+$w_0 > 0$ satisfy $e^{-\gamma} w_0/2 \le C$ and $f(x_0) - f^\star \le \mu w_0^r$. If Algorithm 1 has
+not stopped before iteration $T$, then
+
+$$
+T \le |S_0| - |S_T| + 2^{1+\frac{s}{s-1}} \frac{s}{s-1} e^{\frac{s}{s-1}\gamma}
+\mu\, C^{\frac{1}{s-1}} w_0^{r - \frac{s}{s-1}}.
+$$
+```
+
+A full step now decreases $f$ by $\eta G - C\eta^s/s$ with $G = e^{-\gamma} w_0/2$; at
+$\eta_0 = (G/C)^{1/(s-1)} \le 1$ this is $(1 - 1/s) G \eta_0$, and the count is as in Proposition
+4.1.
+
+```{prf:theorem} Rate of scheduled restarts under Hölder smoothness
+:label: thm-frank-wolfe-restarting-holder
+:enumerator: 6.2
+
+Let $f$ be as in Proposition 6.1 with a $(\theta, c)$-Hölderian error bound,
+$r = 1/(1-\theta) < s/(s-1)$, let $\delta > 0$ have the scaling property, let $\gamma > 0$, and
+assume $e^{-\gamma} W_0/2 \le C$. With $\tau = s/(s-1) - r$,
+$K = 2^{1+\frac{s}{s-1}} \frac{s}{s-1} (c/\delta)^r C^{\frac{1}{s-1}} e^{\frac{s}{s-1}\gamma}$ and
+$\tilde{T} = \max\{0, \tau_R - (|S_0| - |S_{\tau_R}|)\}$,
+
+$$
+f(x_{\tau_R}) - f^\star \le \frac{W_0}{(1 + \tilde{T} C_\gamma)^{1/\tau}},
+\qquad C_\gamma = \frac{e^{\gamma\tau} - 1}{K W_0^{r - \frac{s}{s-1}}}.
+$$
+```
+
+The proof is that of Theorem 5.1 with the exponent $2 - r$ replaced by $\tau$: run $k$ costs at most
+$K W_k^{-\tau}$ iterations beyond the change in the active set, and $W_k^{-\tau}$ grows by the
+factor $e^{\gamma\tau}$ per run.
+
+```{prf:proposition} Burn-in phase under Hölder smoothness
+:label: prop-frank-wolfe-restarting-holder-burn-in
+:enumerator: 6.3
+
+Let $f$ be as in Proposition 6.1 with $C > 0$ and let $\gamma > 0$. Scheduled restarts with
+$W_0 > 0$ reach the condition $e^{-\gamma} W_k/2 \le C$ at some restart
+$k \le \lfloor \log(W_0/(2C))/\gamma \rfloor$, after at most
+$|S_0| - |S_{\tau_k}| + 4 \frac{s}{s-1} e^{\gamma} k$ iterations.
+```
+
+While the condition fails, step size $1$ gives the full steps progress at least $(1 - 1/s) G$.
+
 ## Vanilla Frank–Wolfe over strongly convex sets
 
 ```{prf:theorem} Strongly convex sets
@@ -195,17 +285,26 @@ sets](../frank-wolfe-uniformly-convex-sets/index.md), and the formal proof is th
   telescopes $W_k^{r-2}$; the paper bounds $W_k^{r-2}$ by $(W_0 e^{-\gamma k})^{r-2}$, which is not
   justified since $W_k \le W_0 e^{-\gamma k}$ and $r - 2 \le 0$, but the stated rate holds. The
   count $\tilde{T}$ is replaced by $\max\{0, \tilde{T}\}$, because a Frank–Wolfe step with step size
-  $1$ resets the active set to a single vertex, so $\tilde{T}$ can be negative.
+  $1$ resets the active set to a single vertex, so $\tilde{T}$ can be negative. Theorem 6.2 is
+  treated the same way.
+- Proposition 5.3 states the factor $\sqrt{e/(4(\sqrt{e} - 1))}$. Its proof bounds the ratio of the
+  two bounds at $r = 1$ by this square root, but there the exponent $1/(2 - r)$ is $1$ and the ratio
+  tends to $e/(4(\sqrt{e} - 1))$ as $\tilde{T}$ grows. The entry states the cases $r = 1$, with this
+  factor, and $r = 2$; for $1 \lt r \lt 2$ the proof uses that the ratio decreases in $r$, which is
+  not shown.
+- Section 6 assumes the Hölder curvature bound directly. In Theorem 6.2 the paper writes
+  $W_0^{\tau}$ in the denominator of $C_\gamma$; the proof gives $W_0^{r - s/(s-1)} = W_0^{-\tau}$
+  there, as stated here.
 - Theorem 7.3 is stated with explicit constants; its recursion constant $(\alpha/c)/(2L)$ improves
   the paper's $\alpha/(8Lc)$. The case $\theta = 0$ is the classical rate.
 :::
 
 ## Coverage
 
-This entry covers Lemmas 2.3 and 3.6, Algorithms 1 and 2 with Propositions 4.1 and 4.2 and Theorem
-5.1, and Theorem 7.3; Corollary 5.2 specializes Theorem 5.1 and is not stated separately. Not
-covered are the robustness in $\gamma$ (Proposition 5.3), the Hölder smooth versions (Section 6),
-the fractional Frank–Wolfe algorithm (Section 7), the one-shot analysis of Appendix A and the
+This entry covers Lemmas 2.3 and 3.6, Algorithms 1 and 2 with Propositions 4.1, 4.2 and 5.3 and
+Theorem 5.1, Section 6 and Theorem 7.3; Corollary 5.2 specializes Theorem 5.1 and is not stated
+separately. Not covered yet are the fractional Frank–Wolfe algorithm (Algorithms 3 and 4, Lemma 7.1,
+Proposition 7.2), the one-shot analysis of Appendix A, the recurrence of Appendix B and the
 experiments.
 
 ## The formal statements at a glance

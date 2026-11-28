@@ -133,19 +133,39 @@ theorem gap_nonneg {V : Finset E} {g : StrongDual ℝ E} {x : E} {S : Finset E} 
   rw [map_sub]
   linarith
 
-/-- The outcome of one step of Algorithm 1 before stopping: the invariant is kept, `f` does not
-increase, and either the step is a drop step (the active set shrinks by one) or the active set
-grows by at most one and `f` decreases by `η G - η² L D²/2` for every `η ∈ [0, 1]`. -/
-theorem fafw_step_outcome {V : Finset E} {f : E → ℝ} {L : NNReal} {D G : ℝ}
-    (hconv : ConvexOn ℝ Set.univ f) (hsm : IsSmooth f L)
-    (hD : ∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E), ‖y - z‖ ≤ D)
+/-- The quadratic curvature bound of an `L`-smooth function over a set of diameter at most `D`. -/
+theorem smooth_curv {V : Finset E} {f : E → ℝ} {L : NNReal} {D : ℝ} (hsm : IsSmooth f L)
+    (hD : ∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E), ‖y - z‖ ≤ D) :
+    ∀ x ∈ convexHull ℝ (↑V : Set E), ∀ u ∈ convexHull ℝ (↑V : Set E),
+      ∀ v ∈ convexHull ℝ (↑V : Set E), ∀ η ∈ Set.Icc (0 : ℝ) 1,
+        f (x + η • (u - v)) ≤ f x + η * fderiv ℝ f x (u - v) + η ^ 2 * (L * D ^ 2) / 2 := by
+  intro x _ u hu v hv η hη
+  have h1 := Lemmata.FrankWolfe.descent_lemma f L hsm x (x + η • (u - v))
+  rw [add_sub_cancel_left, map_smul, smul_eq_mul, norm_smul, Real.norm_eq_abs,
+    abs_of_nonneg hη.1] at h1
+  have h3 : (η * ‖u - v‖) ^ 2 ≤ η ^ 2 * D ^ 2 := by
+    rw [mul_pow]
+    exact mul_le_mul_of_nonneg_left (pow_le_pow_left₀ (norm_nonneg _) (hD u hu v hv) 2)
+      (sq_nonneg η)
+  have h4 : (L : ℝ) / 2 * (η * ‖u - v‖) ^ 2 ≤ (L : ℝ) / 2 * (η ^ 2 * D ^ 2) :=
+    mul_le_mul_of_nonneg_left h3 (by positivity)
+  nlinarith
+
+/-- The outcome of one step of Algorithm 1 before stopping, for a curvature bound `φ`: the
+invariant is kept, `f` does not increase, and either the step is a drop step (the active set shrinks
+by one) or the active set grows by at most one and `f` decreases by `η G - φ(η)` for every
+`η ∈ [0, 1]`. -/
+theorem fafw_step_outcome_gen {V : Finset E} {f : E → ℝ} {φ : ℝ → ℝ} {G : ℝ}
+    (hconv : ConvexOn ℝ Set.univ f)
+    (hcurv : ∀ x ∈ convexHull ℝ (↑V : Set E), ∀ u ∈ convexHull ℝ (↑V : Set E),
+      ∀ v ∈ convexHull ℝ (↑V : Set E), ∀ η ∈ Set.Icc (0 : ℝ) 1,
+        f (x + η • (u - v)) ≤ f x + η * fderiv ℝ f x (u - v) + φ η)
     {x : E} {S : Finset E} {lam : E → ℝ} (h : Inv V x S lam) {v a : E}
     (hvV : v ∈ V) (hv : ∀ w ∈ V, fderiv ℝ f x v ≤ fderiv ℝ f x w) (ha : a ∈ S)
     (hgap : 2 * G < fderiv ℝ f x (a - v))
     {x' : E} {S' : Finset E} {lam' : E → ℝ} (hstep : IsFAFWStep f G x S lam v a x' S' lam') :
     Inv V x' S' lam' ∧ f x' ≤ f x ∧
-      ((S'.card ≤ S.card + 1 ∧
-          ∀ η ∈ Set.Icc (0 : ℝ) 1, f x' ≤ f x - η * G + η ^ 2 * (L * D ^ 2) / 2) ∨
+      ((S'.card ≤ S.card + 1 ∧ ∀ η ∈ Set.Icc (0 : ℝ) 1, f x' ≤ f x - η * G + φ η) ∨
         S'.card + 1 = S.card) := by
   classical
   set g := fderiv ℝ f x with hg
@@ -153,20 +173,16 @@ theorem fafw_step_outcome {V : Finset E} {f : E → ℝ} {L : NNReal} {D G : ℝ
   have hvC : v ∈ convexHull ℝ (↑V : Set E) := subset_convexHull ℝ _ (Finset.mem_coe.mpr hvV)
   have haC : a ∈ convexHull ℝ (↑V : Set E) :=
     subset_convexHull ℝ _ (Finset.mem_coe.mpr (h.sub ha))
-  have hdesc : ∀ u : E, ‖u‖ ≤ D → G < g u → ∀ s ∈ Set.Icc (0 : ℝ) 1,
-      f (x - s • u) ≤ f x - s * G + s ^ 2 * (L * D ^ 2) / 2 := by
-    intro u hu hGu s hs
-    have h1 := Lemmata.FrankWolfe.descent_lemma f L hsm x (x - s • u)
-    have e : x - s • u - x = -(s • u) := by abel
-    rw [e, map_neg, map_smul, smul_eq_mul, norm_neg, norm_smul, Real.norm_eq_abs,
-      abs_of_nonneg hs.1] at h1
-    have h2 : s * G ≤ s * g u := mul_le_mul_of_nonneg_left hGu.le hs.1
-    have h3 : (s * ‖u‖) ^ 2 ≤ s ^ 2 * D ^ 2 := by
-      rw [mul_pow]
-      exact mul_le_mul_of_nonneg_left (pow_le_pow_left₀ (norm_nonneg _) hu 2) (sq_nonneg s)
-    have h4 : (L : ℝ) / 2 * (s * ‖u‖) ^ 2 ≤ (L : ℝ) / 2 * (s ^ 2 * D ^ 2) :=
-      mul_le_mul_of_nonneg_left h3 (by positivity)
-    nlinarith
+  have hdesc : ∀ p ∈ convexHull ℝ (↑V : Set E), ∀ q ∈ convexHull ℝ (↑V : Set E),
+      G < g (q - p) → ∀ s ∈ Set.Icc (0 : ℝ) 1, f (x - s • (q - p)) ≤ f x - s * G + φ s := by
+    intro p hp q hq hGu s hs
+    have h1 := hcurv x hxC p hp q hq s hs
+    have e : x + s • (p - q) = x - s • (q - p) := by
+      rw [← neg_sub q p, smul_neg, ← sub_eq_add_neg]
+    have e2 : g (p - q) = -g (q - p) := by rw [← map_neg, neg_sub]
+    rw [e, e2] at h1
+    have h2 : s * G ≤ s * g (q - p) := mul_le_mul_of_nonneg_left hGu.le hs.1
+    linarith
   unfold IsFAFWStep at hstep
   split_ifs at hstep with hfw
   · obtain ⟨η, hη, hmin, hx', hlam', hS'⟩ := hstep
@@ -182,7 +198,7 @@ theorem fafw_step_outcome {V : Finset E} {f : E → ℝ} {L : NNReal} {D G : ℝ
       · exact Finset.card_insert_le v S
     · intro s hs
       rw [hx']
-      exact (hmin s hs).trans (hdesc (x - v) (hD x hxC v hvC) hfw s hs)
+      exact (hmin s hs).trans (hdesc v hvC x hxC hfw s hs)
   · push Not at hfw
     obtain ⟨η, hη, hmin, hx', hlam', hS'⟩ := hstep
     have hGa : G < g (a - x) := by
@@ -204,15 +220,31 @@ theorem fafw_step_outcome {V : Finset E} {f : E → ℝ} {L : NNReal} {D G : ℝ
         refine ⟨by rw [hS', ite_eq_right hd]; omega, fun s hs => ?_⟩
         have hηlt : η < lam a / (1 - lam a) := lt_of_le_of_ne hη.2 hd
         rw [hx']
-        exact (ls_extend hconv hηlt hη.1 hmin hs.1).trans (hdesc (a - x) (hD a haC x hxC) hGa s hs)
+        exact (ls_extend hconv hηlt hη.1 hmin hs.1).trans (hdesc x hxC a haC hGa s hs)
 
-/-- The potential bound over `n` consecutive iterations of Algorithm 1 with stopping level `ε`,
-for a lower bound `P > 0` of the progress `η₀ ε/2 - η₀² L D²/2` of the full steps. -/
-theorem segment_bound {V : Finset E} {f : E → ℝ} {L : NNReal} {D ε P η₀ : ℝ}
+/-- The outcome of one step of Algorithm 1 before stopping, for an `L`-smooth `f`. -/
+theorem fafw_step_outcome {V : Finset E} {f : E → ℝ} {L : NNReal} {D G : ℝ}
     (hconv : ConvexOn ℝ Set.univ f) (hsm : IsSmooth f L)
     (hD : ∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E), ‖y - z‖ ≤ D)
-    (hη₀ : η₀ ∈ Set.Icc (0 : ℝ) 1) (hP : 0 < P)
-    (hPle : P ≤ η₀ * (ε / 2) - η₀ ^ 2 * (L * D ^ 2) / 2)
+    {x : E} {S : Finset E} {lam : E → ℝ} (h : Inv V x S lam) {v a : E}
+    (hvV : v ∈ V) (hv : ∀ w ∈ V, fderiv ℝ f x v ≤ fderiv ℝ f x w) (ha : a ∈ S)
+    (hgap : 2 * G < fderiv ℝ f x (a - v))
+    {x' : E} {S' : Finset E} {lam' : E → ℝ} (hstep : IsFAFWStep f G x S lam v a x' S' lam') :
+    Inv V x' S' lam' ∧ f x' ≤ f x ∧
+      ((S'.card ≤ S.card + 1 ∧
+          ∀ η ∈ Set.Icc (0 : ℝ) 1, f x' ≤ f x - η * G + η ^ 2 * (L * D ^ 2) / 2) ∨
+        S'.card + 1 = S.card) :=
+  fafw_step_outcome_gen hconv (smooth_curv hsm hD) h hvV hv ha hgap hstep
+
+/-- The potential bound over `n` consecutive iterations of Algorithm 1 with stopping level `ε`,
+for a curvature bound `φ` and a lower bound `P > 0` of the progress `η₀ ε/2 - φ(η₀)` of the full
+steps. -/
+theorem segment_bound_gen {V : Finset E} {f : E → ℝ} {φ : ℝ → ℝ} {ε P η₀ : ℝ}
+    (hconv : ConvexOn ℝ Set.univ f)
+    (hcurv : ∀ x ∈ convexHull ℝ (↑V : Set E), ∀ u ∈ convexHull ℝ (↑V : Set E),
+      ∀ v ∈ convexHull ℝ (↑V : Set E), ∀ η ∈ Set.Icc (0 : ℝ) 1,
+        f (x + η • (u - v)) ≤ f x + η * fderiv ℝ f x (u - v) + φ η)
+    (hη₀ : η₀ ∈ Set.Icc (0 : ℝ) 1) (hP : 0 < P) (hPle : P ≤ η₀ * (ε / 2) - φ η₀)
     {x : ℕ → E} {S : ℕ → Finset E} {lam : ℕ → E → ℝ} {t₀ : ℕ}
     (h0 : Inv V (x t₀) (S t₀) (lam t₀)) :
     ∀ n : ℕ, (∀ i < n, IsFAFWIter V f ε x S lam (t₀ + i)) →
@@ -226,7 +258,7 @@ theorem segment_bound {V : Finset E} {f : E → ℝ} {L : NNReal} {D ε P η₀ 
     obtain ⟨hinv, hb⟩ := ih (fun i hi => hit i (by omega))
     obtain ⟨v, hvV, hv, a, ha, -, hgap, hstep⟩ := hit n (by omega)
     have hgap' : 2 * (ε / 2) < fderiv ℝ f (x (t₀ + n)) (a - v) := by linarith
-    obtain ⟨hinv', hdec, hcase⟩ := fafw_step_outcome hconv hsm hD hinv hvV hv ha hgap' hstep
+    obtain ⟨hinv', hdec, hcase⟩ := fafw_step_outcome_gen hconv hcurv hinv hvV hv ha hgap' hstep
     rw [show t₀ + (n + 1) = t₀ + n + 1 by omega]
     refine ⟨hinv', ?_⟩
     have hsplit : 2 * (f (x t₀) - f (x (t₀ + n + 1))) / P =
@@ -246,6 +278,19 @@ theorem segment_bound {V : Finset E} {f : E → ℝ} {L : NNReal} {D ε P η₀ 
         div_nonneg (by linarith) hP.le
       have hc : ((S (t₀ + n + 1)).card : ℝ) + 1 = (S (t₀ + n)).card := by exact_mod_cast hcard
       linarith
+
+/-- The potential bound over `n` consecutive iterations of Algorithm 1 for an `L`-smooth `f`. -/
+theorem segment_bound {V : Finset E} {f : E → ℝ} {L : NNReal} {D ε P η₀ : ℝ}
+    (hconv : ConvexOn ℝ Set.univ f) (hsm : IsSmooth f L)
+    (hD : ∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E), ‖y - z‖ ≤ D)
+    (hη₀ : η₀ ∈ Set.Icc (0 : ℝ) 1) (hP : 0 < P)
+    (hPle : P ≤ η₀ * (ε / 2) - η₀ ^ 2 * (L * D ^ 2) / 2)
+    {x : ℕ → E} {S : ℕ → Finset E} {lam : ℕ → E → ℝ} {t₀ : ℕ}
+    (h0 : Inv V (x t₀) (S t₀) (lam t₀)) :
+    ∀ n : ℕ, (∀ i < n, IsFAFWIter V f ε x S lam (t₀ + i)) →
+      Inv V (x (t₀ + n)) (S (t₀ + n)) (lam (t₀ + n)) ∧
+        (n : ℝ) ≤ (S t₀).card - (S (t₀ + n)).card + 2 * (f (x t₀) - f (x (t₀ + n))) / P :=
+  segment_bound_gen hconv (smooth_curv hsm hD) hη₀ hP hPle h0
 
 /-- The algebra of Proposition 4.1: `2 μ w₀^r/P = 16 e^{2γ} C μ w₀^{r-2}` for
 `P = (e^{-γ} w₀/2)²/(2C)`. -/

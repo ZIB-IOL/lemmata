@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-28
 
+- **Updated entry:** [Restarting Frank–Wolfe under Hölderian error bounds](frank-wolfe-restarting/index.md), adding the analysis under Hölder smoothness (Section 6) and the robustness of the schedule parameter (Proposition 5.3).
 - **Updated entry:** [Oracle complexity of nonsmooth convex optimization via information theory](nonsmooth-oracle-complexity/index.md), adding the string guessing problem (Proposition III.3).
 - **New entry:** [Oracle complexity of nonsmooth convex optimization via information theory](nonsmooth-oracle-complexity/index.md), formalizing the information-theoretic lower bound on the expected number of queries and oracle emulation of Braun, Guzmán and Pokutta.
 - **Updated entry:** [Restarting Frank–Wolfe under Hölderian error bounds](frank-wolfe-restarting/index.md), adding fractional away-step Frank–Wolfe with its burn-in phase and the rate of scheduled restarts (Propositions 4.1 and 4.2, Theorem 5.1).

@@ -6,8 +6,8 @@ cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "1810.02429"
 note: >-
-  Formalizes Lemmas 2.3 and 3.6, Propositions 4.1 and 4.2 and Theorems 5.1 and 7.3 of
-  @kerdreux2018restarting.
+  Formalizes Lemmas 2.3 and 3.6, Propositions 4.1, 4.2, 5.3, 6.1 and 6.3 and Theorems 5.1, 6.2
+  and 7.3 of @kerdreux2018restarting.
 abstract: >-
   Hölderian error bounds interpolate between plain convexity and strong convexity, and with them the
   convergence of Frank–Wolfe algorithms between the rate $O(1/t)$ and linear convergence. The strong
@@ -17,9 +17,9 @@ abstract: >-
   $(c/\delta)^{1/(1-\theta)}$ times the strong Wolfe gap to the power $1/(1-\theta)$. Restarting a
   fractional away-step Frank–Wolfe algorithm whenever the strong Wolfe gap has dropped by a constant
   factor gives, after a burn-in phase, the rate $O(T^{-(1-\theta)/(1-2\theta)})$ for $\theta \lt
-  1/2$ and linear convergence for $\theta = 1/2$. Over strongly convex sets, vanilla Frank–Wolfe
-  with short steps converges at the rate $O(t^{-1/(1-\theta)})$. The statements hold in real normed
-  spaces.
+  1/2$ and linear convergence for $\theta = 1/2$, with analogous rates under Hölder smoothness. Over
+  strongly convex sets, vanilla Frank–Wolfe with short steps converges at the rate
+  $O(t^{-1/(1-\theta)})$. The statements hold in real normed spaces.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -68,3 +68,23 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-restarting-restarts
+  - name: Lemmata.FWRestart.robust_gamma
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-restarting-robust
+  - name: Lemmata.FWRestart.IsHolderCurvature
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-restarting-holder
+  - name: Lemmata.FWRestart.holder_complexity
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-restarting-holder-complexity
+  - name: Lemmata.FWRestart.holder_restart_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-restarting-holder
+  - name: Lemmata.FWRestart.holder_burn_in
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-restarting-holder-burn-in
