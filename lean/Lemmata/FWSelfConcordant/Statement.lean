@@ -2,6 +2,7 @@ module
 
 public import Lemmata.FrankWolfe.Statement
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
+public import Lemmata.AwayStepFW.Statement
 
 @[expose] public section
 
@@ -145,5 +146,41 @@ def UniformlyConvexStrongRate : Prop :=
       ((t : ℤ) < t₀ → f (x t) - f xStar ≤ (f (x 0) - f xStar) * (1 / 2) ^ (t - 1)) ∧
       (t₀ ≤ (t : ℤ) → f (x t) - f xStar ≤
         τ / (1 + (q - 1) / (2 * q) * ((t : ℝ) - (t₀ : ℝ))) ^ (q / (q - 1)))
+
+open Classical in
+/-- A run of **away-step Frank–Wolfe with backtracking** (Algorithm 4) on `conv V` for `f` with
+domain `D`: it starts at a vertex in `D` with active set `{x₀}` and weight `1`, and every step is
+an away-step Frank–Wolfe step (`AwayStepFW.IsAFWStep`, with any Frank–Wolfe vertex and any away
+vertex) whose smoothness estimate `L_t ∈ (0, L̃]` comes from the line search: the new iterate lies
+in `D` and satisfies the sufficient decrease condition. -/
+def IsBAFWRun {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (D : Set E)
+    (f : E → ℝ) (Lmax : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) : Prop :=
+  x 0 ∈ V ∧ x 0 ∈ D ∧ S 0 = {x 0} ∧ lam 0 = (fun w => if w = x 0 then 1 else 0) ∧
+    ∀ t : ℕ, ∃ L : ℝ, 0 < L ∧ L ≤ Lmax ∧
+      ∃ v ∈ V, (∀ w ∈ V, fderiv ℝ f (x t) v ≤ fderiv ℝ f (x t) w) ∧
+      ∃ a ∈ S t, (∀ w ∈ S t, fderiv ℝ f (x t) w ≤ fderiv ℝ f (x t) a) ∧
+        AwayStepFW.IsAFWStep L (fderiv ℝ f (x t)) (x t) (S t) (lam t) v a (x (t + 1)) (S (t + 1))
+          (lam (t + 1)) ∧
+        x (t + 1) ∈ D ∧
+        f (x (t + 1)) ≤ f (x t) + fderiv ℝ f (x t) (x (t + 1) - x t) +
+          L / 2 * ‖x (t + 1) - x t‖ ^ 2
+
+/-- **Theorem 3.2** (away-step Frank–Wolfe). Let `x⋆` minimize `f` on `conv V ∩ dom f`, let `f` be
+`μ`-strongly convex on the sublevel set of `x₀` (for pairs of points in it), and let `δ > 0` have
+the scaling property of the pyramidal width of `conv V`, whose diameter is `D`. Every run of
+away-step Frank–Wolfe with backtracking and estimates at most `L̃` satisfies
+`f(x_t) - f(x⋆) ≤ (1 - min {1/2, μ δ²/(4 L̃ D²)})^⌈(t-1)/2⌉ (f(x₀) - f(x⋆))`. -/
+def AwayLinearRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V : Finset E) (D : Set E) (f : E → ℝ)
+    (Lmax μ δ : ℝ) (x : ℕ → E) (S : ℕ → Finset E) (lam : ℕ → E → ℝ) (xStar : E),
+    xStar ∈ minimizers (convexHull ℝ (↑V : Set E) ∩ D) f → 0 < Lmax → 0 < μ → 0 < δ →
+    AwayStepFW.IsScaling V δ →
+    (∀ y ∈ convexHull ℝ (↑V : Set E) ∩ D, f y ≤ f (x 0) →
+      ∀ z ∈ convexHull ℝ (↑V : Set E) ∩ D, f z ≤ f (x 0) →
+        f y + fderiv ℝ f y (z - y) + μ / 2 * ‖z - y‖ ^ 2 ≤ f z) →
+    IsBAFWRun V D f Lmax x S lam →
+    ∀ t : ℕ, f (x t) - f xStar ≤
+      (1 - min (1 / 2) (μ * δ ^ 2 / (4 * Lmax * Metric.diam (↑V : Set E) ^ 2))) ^
+        ⌈((t : ℝ) - 1) / 2⌉₊ * (f (x 0) - f xStar)
 
 end Lemmata.FWSelfConcordant

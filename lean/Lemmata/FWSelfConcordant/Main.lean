@@ -2,6 +2,7 @@ module
 
 public import Lemmata.FWSelfConcordant.Monotonic
 public import Lemmata.FWSelfConcordant.Backtrack
+public import Lemmata.FWSelfConcordant.Away
 
 @[expose] public section
 
@@ -26,6 +27,9 @@ theorem uniformly_convex_gradient_rate : UniformlyConvexGradientRate :=
 convexity. -/
 theorem uniformly_convex_strong_rate : UniformlyConvexStrongRate :=
   Proof.uniformly_convex_strong_rate
+/-- Theorem 3.2 for away-step Frank–Wolfe with backtracking: a linear rate over polytopes under
+local strong convexity, through the pyramidal width. -/
+theorem away_linear_rate : AwayLinearRate := Proof.away_linear_rate
 -- DOCS_END_MAIN
 
 end Lemmata.FWSelfConcordant
