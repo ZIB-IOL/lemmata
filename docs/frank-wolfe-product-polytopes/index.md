@@ -10,11 +10,11 @@ numbering:
 :::{note}
 This entry formalizes the paper *Linear Convergence of the Frank–Wolfe Algorithm over Product
 Polytopes* by Gabriele Iommazzo, David Martínez-Rubio, Francisco Criado, Elias Wirth and Sebastian
-Pokutta [@iommazzo2025linear], currently the bounds on the pyramidal width of a product (Theorem
-4.5), the vertex-facet distance of a product (Proposition 4.7), the linear rate of away-step
-Frank–Wolfe over a product of two polytopes (Proposition 4.8), its objective for the feasibility
-problem (Proposition 5.1) and the preparatory bounds of Lemma A.2; numbers refer to the arXiv
-version.
+Pokutta [@iommazzo2025linear], currently the equivalence of the pyramidal width and its affine
+variant (Lemma 4.3 and Corollary 4.4), the pyramidal width of a product (Theorem 4.5), the
+vertex-facet distance of a product (Proposition 4.7), the linear rate of away-step Frank–Wolfe over
+a product of two polytopes (Proposition 4.8), its objective for the feasibility problem (Proposition
+5.1) and the preparatory bounds of Lemma A.2; numbers refer to the arXiv version.
 :::
 
 Away-step and pairwise Frank–Wolfe converge linearly over polytopes, at a rate governed by a
@@ -54,8 +54,44 @@ The affine pyramidal width is at most the pyramidal width:
 $\hat{\delta}_{\mathcal{P}} \le \delta_{\mathcal{P}}$.
 ```
 
-The paper also proves the reverse inequality, so the two widths coincide (Corollary 4.4, via Lemma
-4.3: a closest point in the affine hull of a minimizing face lies in its relative interior).
+The reverse inequality holds as well: a closest point in the affine hull of a minimizing face lies
+in the face, even in its relative interior.
+
+```{prf:lemma} Closest points lie in the relative interior
+:label: lem-frank-wolfe-product-polytopes-relint
+:enumerator: 4.3
+
+Let $\mathcal{V}$ be a finite set in a finite-dimensional real inner product space. If a proper face
+$F$ of $\mathcal{P} = \operatorname{conv}(\mathcal{V})$, a point $a$ of the affine hull of $F$ and a
+point $q$ of the convex hull of the vertices outside $F$ satisfy
+$\|a - q\| = \hat{\delta}_{\mathcal{P}}$, then $a$ lies in the relative interior of $F$: it lies in
+$F$ and in no proper face of $F$.
+```
+
+```{prf:corollary} Widths equivalence
+:label: cor-frank-wolfe-product-polytopes-widths
+:enumerator: 4.4
+
+In a finite-dimensional real normed space, $\hat{\delta}_{\mathcal{P}} = \delta_{\mathcal{P}}$.
+```
+
+The paper's proof picks a facet of $F$ whose affine hull separates $a$ from $F$. The formal proof
+avoids facets. Suppose that $a$ lies in the affine hull of $F$ but not in $F$. The segment from $a$
+to the barycenter $b$ of the vertices of $F$ enters $F$ at a point $p'$ whose minimal face $G$ is a
+proper face of $F$: a point whose minimal face is all of $F$ can move in every direction of the
+affine hull of $F$ without leaving $F$, which follows from Farkas' lemma. Splitting $b$ into the
+barycenter of the vertices of $G$ and the barycenter $r$ of the other vertices of $F$, the segment
+from $a$ to $r$ meets the affine hull of $G$ at $z = a + \tau(r - a)$ with $\tau > 0$. The point
+$q + \tau(r - q)$ lies in the convex hull of the vertices outside $G$, and
+
+$$
+\|z - (q + \tau(r - q))\| = (1 - \tau)\|a - q\|.
+$$
+
+The face $G$ has fewer vertices, so induction on the number of vertices gives Corollary 4.4, and for
+a minimizing face $F$ the strict decrease forces $a \in F$. If $a$ lies in a proper face $G$ of $F$,
+moving $q$ toward a vertex of $F$ outside $G$ decreases the distance, because $a - q$ is orthogonal
+to the affine hull of $F$; so $a$ lies in the relative interior.
 
 ```{prf:definition} The product polytope
 :label: def-frank-wolfe-product-polytopes-product-vertices
@@ -110,6 +146,19 @@ $\operatorname{conv}(\mathcal{V}_1) \times \operatorname{conv}(\mathcal{V}_2)$ i
 $\sqrt{\delta_1^2 \delta_2^2/(\delta_1^2 + \delta_2^2)}$.
 ```
 
+With Corollary 4.4 the two bounds agree, which is the theorem as stated in the paper.
+
+```{prf:theorem} The pyramidal width of a product
+:label: thm-frank-wolfe-product-polytopes-product-width-eq
+:enumerator: 4.5
+
+If $\mathcal{V}_1$ and $\mathcal{V}_2$ are finite sets with at least two points each in
+finite-dimensional real inner product spaces, with pyramidal widths $\delta_1$ and $\delta_2$, then
+the pyramidal width of
+$\operatorname{conv}(\mathcal{V}_1) \times \operatorname{conv}(\mathcal{V}_2)$ is
+$\sqrt{\delta_1^2 \delta_2^2/(\delta_1^2 + \delta_2^2)}$.
+```
+
 ## Linear convergence
 
 The pyramidal width bounds the progress of away-step Frank–Wolfe. The away-step entry shows that the
@@ -138,7 +187,8 @@ D^2}\right\}\right)^{\lfloor (t-1)/2 \rfloor}
 $$
 ```
 
-By Lemma A.2, $\alpha \ge \min\{\hat{\delta}_1, \hat{\delta}_2\}/\sqrt{2}$.
+By Lemma A.2, $\alpha \ge \min\{\hat{\delta}_1, \hat{\delta}_2\}/\sqrt{2}$, and by Corollary 4.4 the
+affine pyramidal widths are the pyramidal widths of the factors.
 
 ## The vertex-facet distance of a product
 
@@ -219,12 +269,12 @@ term is nondecreasing in $a$ and in $b$.
 
 :::{note}
 **Differences from the paper.**
-- Theorem 4.5 is stated as two bounds: below by the affine pyramidal widths of the factors, above by
-  their pyramidal widths (for factors with at least two vertices, as in the paper's definition).
-  With Corollary 4.4 (the two widths coincide, not yet formalized), the bounds agree and give the
-  paper's equality. The proof of the lower bound also treats the faces $F_1 \times \mathcal{P}_2$
-  and $\mathcal{P}_1 \times F_2$ of the product, which the paper's argument, written for two proper
-  factor faces, does not mention.
+- Theorem 4.5 is also stated as two bounds: below by the affine pyramidal widths of the factors, in
+  any real inner product space, and above by their pyramidal widths, for factors with at least two
+  vertices as in the paper's definition. The equality uses Corollary 4.4 and is stated in finite
+  dimensions, as in the paper. The proof of the lower bound also treats the faces
+  $F_1 \times \mathcal{P}_2$ and $\mathcal{P}_1 \times F_2$ of the product, which the paper's
+  argument, written for two proper factor faces, does not mention.
 - The objective of Proposition 5.1 is defined on the Euclidean product of copies of any real inner
   product space, and the proof uses the orthogonal projection onto the complement of the diagonal
   instead of the Hessian.
@@ -233,15 +283,17 @@ term is nondecreasing in $a$ and in $b$.
   functions, which is a statement about unconstrained minimization; the proof uses quadratic growth.
   For two factors the rate constant $\alpha \ge \min\{\hat{\delta}_1, \hat{\delta}_2\}/\sqrt{2}$ is
   better than the paper's $\min\{\delta_1, \delta_2\}/2$ for $k = 2$.
+- Lemma 4.3 does not assume that the polytope is full-dimensional, and the relative interior is
+  expressed by minimal faces: the point lies in the face, and its minimal face is the face itself.
+  The proof avoids facets, as explained above.
 :::
 
 ## Coverage
 
-This entry covers both bounds of Theorem 4.5 with the easy half of Corollary 4.4, Proposition 4.7,
-Proposition 4.8 for two factors, Proposition 5.1 and Lemma A.2. Not covered are Lemma 4.3 and the
-other half of Corollary 4.4, which need the dimension of facets of a polytope, the products of $k$
-polytopes (Corollary A.3), the rate via the vertex-facet distance (Proposition 4.9), which depends
-on an unspecified procedure of the algorithm, and the experiments.
+This entry covers Lemma 4.3, Corollary 4.4, Theorem 4.5 with both bounds and the equality,
+Proposition 4.7, Proposition 4.8 for two factors, Proposition 5.1 and Lemma A.2. Not covered are the
+products of $k$ polytopes (Corollary A.3), the rate via the vertex-facet distance (Proposition 4.9),
+which depends on an unspecified procedure of the algorithm, and the experiments.
 
 ## The formal statements at a glance
 

@@ -5,6 +5,9 @@ subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2311.05313"
+note: >-
+  Formalizes Lemmas 4.1–4.3, Theorems 4.4, 4.5 and 4.7, Proposition 4.6, Lemmas 4.9–4.11 and
+  Theorem 5.1 of @pokutta2023short.
 abstract: >-
   Baseline results for the Frank–Wolfe algorithm, formalized from a short introduction to the
   method. The primal gap is bounded by the dual gap and the Frank–Wolfe gap, and the

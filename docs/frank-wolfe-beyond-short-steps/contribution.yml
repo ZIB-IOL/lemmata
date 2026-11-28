@@ -5,6 +5,9 @@ subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2501.18773"
+note: >-
+  Formalizes the primal-dual short steps of @martinezrubio2025beyond, without the optimistic
+  Frank–Wolfe algorithm (Theorem 3.1) and the gradient descent variant (Proposition 4.2).
 abstract: >-
   Primal-dual short steps for the Frank–Wolfe algorithm. The primal-dual gap
   $G_t = f(x_{t+1}) - L_t$, where $L_t$ is a weighted average of the Frank–Wolfe lower bounds

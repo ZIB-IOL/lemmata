@@ -4,6 +4,7 @@ public import Lemmata.FWProduct.Objective
 public import Lemmata.FWProduct.Width
 public import Lemmata.FWProduct.Upper
 public import Lemmata.FWProduct.Facet
+public import Lemmata.FWProduct.Relint
 
 @[expose] public section
 
@@ -20,12 +21,22 @@ theorem preparatory_bounds : PreparatoryBounds := Proof.preparatory_bounds
 (the facial distance). -/
 theorem affine_width_le_facial : AffineWidthLeFacial := Proof.affine_width_le_facial
 
+/-- Lemma 4.3: a point of the affine hull of a face that realizes the affine pyramidal width lies in
+the relative interior of the face. -/
+theorem affine_width_relint : AffineWidthRelint := Proof.affine_width_relint
+
+/-- Corollary 4.4: the affine pyramidal width equals the pyramidal width. -/
+theorem affine_width_eq : AffineWidthEq := Proof.affine_width_eq
+
 /-- Theorem 4.5, the lower bound: the pyramidal width of `conv V₁ × conv V₂` is at least
 `√(ŵ₁² ŵ₂²/(ŵ₁² + ŵ₂²))` for the affine pyramidal widths `ŵ₁, ŵ₂` of the factors. -/
 theorem product_width_lower : ProductWidthLowerBound := Proof.product_width_lower
 /-- Theorem 4.5, the upper bound: for factors with at least two vertices, the pyramidal width of
 `conv V₁ × conv V₂` is at most `√(δ₁² δ₂²/(δ₁² + δ₂²))` for the pyramidal widths `δ₁, δ₂`. -/
 theorem product_width_upper : ProductWidthUpperBound := Proof.product_width_upper
+
+/-- Theorem 4.5: the pyramidal width of a product of two polytopes is `√(δ₁² δ₂²/(δ₁² + δ₂²))`. -/
+theorem product_width_eq : ProductWidthEq := Proof.product_width_eq
 
 /-- Proposition 4.8 for two factors: away-step Frank–Wolfe over the product converges linearly
 under quadratic growth, at a rate governed by `α² = ŵ₁² ŵ₂²/(ŵ₁² + ŵ₂²)`. -/
