@@ -799,6 +799,8 @@ public import Lemmata.ModifiedE8Bell.Visibility
 public import Lemmata.ModifiedE8Bell.VisibilityCompute
 public import Lemmata.ModifiedE8Bell.VisibilityData
 public import Lemmata.ModifiedE8Bell.Witness
+public import Lemmata.OracleComplexity.Box
+public import Lemmata.OracleComplexity.BoxBound
 public import Lemmata.OracleComplexity.Entropy
 public import Lemmata.OracleComplexity.Main
 public import Lemmata.OracleComplexity.Statement

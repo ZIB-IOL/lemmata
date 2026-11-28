@@ -1,6 +1,8 @@
 module
 
 public import Mathlib.Analysis.SpecialFunctions.BinaryEntropy
+public import Mathlib.Basic.Real.Sign
+public import Mathlib.Topology.EMetricSpace.Lipschitz
 
 @[expose] public section
 
@@ -103,5 +105,80 @@ def StringGuessing : Prop :=
     let Pe := ((Finset.univ.filter (fun S => t.output (stringGuess S) ≠ S)).card : ℝ) / 2 ^ M
     let ET := (∑ S, (t.queries (stringGuess S) : ℝ)) / 2 ^ M
     ((1 - Pe) * M - Real.binEntropy Pe / Real.log 2) / 2 ≤ ET ∧ ((1 - Pe) * M - 1) / 2 ≤ ET
+
+section Box
+
+/-- `+1` for the bit `1` (right) and `-1` for the bit `0` (left). -/
+def bitSign (b : Bool) : ℝ := if b then 1 else -1
+
+/-- The center `c_j(S) = ∑_{i<j} ±4^{-(i+1)}` of the interval `[c_j - 4^{-j}, c_j + 4^{-j}]` of the
+first `j` bits of `S`: each bit moves to the left or right quarter of the current interval. -/
+noncomputable def boxCenter {M : ℕ} (S : Fin M → Bool) (j : ℕ) : ℝ :=
+  ∑ i : Fin M, if (i : ℕ) < j then bitSign (S i) * (1 / 4) ^ ((i : ℕ) + 1) else 0
+
+/-- The levels `b_j = 1 - 4/7 (1 - 8^{-j})`: `b₀ = 1` and `b_{j+1} = b_j - 2^{-3j-1}`. -/
+noncomputable def boxLevel (j : ℕ) : ℝ := 1 - 4 / 7 * (1 - (1 / 8) ^ j)
+
+/-- The piece of depth `j`: `b_j - 8^{-j} + 2^{-j} |x - c_j(S)|`, equal to `b_j` at the endpoints of
+the interval of the first `j` bits. -/
+noncomputable def boxPiece {M : ℕ} (S : Fin M → Bool) (j : ℕ) (x : ℝ) : ℝ :=
+  boxLevel j - (1 / 8) ^ j + (1 / 2) ^ j * |x - boxCenter S j|
+
+/-- The hard function of Section IV.A for the string `S ∈ {0,1}^M`: the maximum of the pieces of
+depths `0, …, M`. -/
+noncomputable def boxFn {M : ℕ} (S : Fin M → Bool) (x : ℝ) : ℝ :=
+  (Finset.range (M + 1)).sup' Finset.nonempty_range_add_one (fun j => boxPiece S j x)
+
+/-- The slope `2^{-j} sign(x - c_j(S))` of the piece of depth `j` at `x`. -/
+noncomputable def pieceSlope {M : ℕ} (S : Fin M → Bool) (j : ℕ) (x : ℝ) : ℝ :=
+  (1 / 2) ^ j * Real.sign (x - boxCenter S j)
+
+/-- The maximum of the pieces of depths `0, …, j` at `x`, with the slope of the first piece that
+attains it. -/
+noncomputable def boxBest {M : ℕ} (S : Fin M → Bool) (x : ℝ) : ℕ → ℝ × ℝ
+  | 0 => (boxPiece S 0 x, pieceSlope S 0 x)
+  | j + 1 =>
+    if (boxBest S x j).1 < boxPiece S (j + 1) x then (boxPiece S (j + 1) x, pieceSlope S (j + 1) x)
+    else boxBest S x j
+
+/-- The first-order oracle of Section IV.A: the value of the hard function and the slope of the
+first piece attaining the maximum. -/
+noncomputable def boxOracle {M : ℕ} (S : Fin M → Bool) (x : ℝ) : ℝ × ℝ := boxBest S x M
+
+end Box
+
+/-- The hard functions of Section IV.A are convex and `1`-Lipschitz, and `boxOracle` is a
+first-order oracle for them: it answers the value and a subgradient. -/
+def BoxOracleValid : Prop :=
+  ∀ (M : ℕ) (S : Fin M → Bool), ConvexOn ℝ Set.univ (boxFn S) ∧ LipschitzWith 1 (boxFn S) ∧
+    ∀ x, (boxOracle S x).1 = boxFn S x ∧ ∀ y, boxFn S x + (boxOracle S x).2 * (y - x) ≤ boxFn S y
+
+/-- **Lemma IV.3** (packing). The hard function `boxFn S` has minimum `b_M - 8^{-M}`, attained at
+`c_M(S)`, and for `ε < 8^{-M}` a point that is `ε`-optimal for two hard functions `boxFn S` and
+`boxFn S'` has `S = S'`. -/
+def BoxPacking : Prop :=
+  ∀ (M : ℕ) (S : Fin M → Bool), (∀ y, boxLevel M - (1 / 8) ^ M ≤ boxFn S y) ∧
+    boxFn S (boxCenter S M) = boxLevel M - (1 / 8) ^ M ∧
+    ∀ (S' : Fin M → Bool) (ε x : ℝ), ε < (1 / 8) ^ M → (∀ y, boxFn S x ≤ boxFn S y + ε) →
+      (∀ y, boxFn S' x ≤ boxFn S' y + ε) → S = S'
+
+/-- **Lemma IV.5** (emulation by string guessing). The oracle `boxOracle` is emulated by the
+string guessing oracle on strings of length `M`: there are a query translation `q` and an answer
+translation `a` with `boxOracle S x = a(x, O_S(q(x)))` for every string `S` and point `x`. -/
+def BoxEmulation : Prop :=
+  ∀ M : ℕ, ∃ (qe : ℝ → List (Fin M × Bool)) (ae : ℝ → Option ℕ → ℝ × ℝ),
+    ∀ (S : Fin M → Bool) (x : ℝ), boxOracle S x = ae x (stringGuess S (qe x))
+
+open Classical in
+/-- **Theorem IV.2, one-dimensional case.** Let `S ∈ {0,1}^M` be uniformly random and
+`ε < 8^{-M}`. Every deterministic algorithm that queries the oracle `boxOracle S` and outputs an
+`ε`-minimizer of `boxFn S` with error probability `P_e` asks at least `((1 - P_e) M - 1)/2` queries
+in expectation; with `M = ⌊log₂(1/ε)/3⌋` (when this is below `log₂(1/ε)/3`) this is
+`Ω((1 - P_e) log(1/ε))`. -/
+def BoxLowerBound : Prop :=
+  ∀ (M : ℕ) (ε : ℝ), ε < (1 / 8) ^ M → ∀ t : QueryTree ℝ (ℝ × ℝ) ℝ,
+    let Pe := ((Finset.univ.filter (fun S : Fin M → Bool =>
+      ¬ ∀ y, boxFn S (t.output (boxOracle S)) ≤ boxFn S y + ε)).card : ℝ) / 2 ^ M
+    ((1 - Pe) * M - 1) / 2 ≤ (∑ S : Fin M → Bool, (t.queries (boxOracle S) : ℝ)) / 2 ^ M
 
 end Lemmata.OracleComplexity
