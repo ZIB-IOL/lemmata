@@ -5,6 +5,8 @@ subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2205.12838"
+note: >-
+  Formalizes Sections 3 to 5 of @wirth2022acceleration.
 abstract: >-
   The Frank–Wolfe algorithm with the open-loop step sizes $\eta_t = 4/(t + 4)$ converges at the
   rate $8L\delta^2/(t + 3)$, and faster when the primal gaps obey the recursion

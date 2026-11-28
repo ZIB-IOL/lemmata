@@ -5,6 +5,8 @@ subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2505.09886"
+note: >-
+  Formalizes @wirth2025adaptive.
 abstract: >-
   Convergence rates for the Frank–Wolfe algorithm with adaptive open-loop step sizes
   $\eta_t = g(t)/(t + g(t))$, where $g \ge 2$ is nondecreasing and the step sizes are

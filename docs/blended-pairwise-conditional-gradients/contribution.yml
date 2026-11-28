@@ -5,6 +5,8 @@ subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "2110.12650"
+note: >-
+  Formalizes @tsuji2021sparser, without its application to kernel herding.
 abstract: >-
   Blended pairwise conditional gradients (BPCG) combine pairwise steps inside the active set with
   Frank–Wolfe steps: a step moves weight from the away vertex to the best vertex of the active set

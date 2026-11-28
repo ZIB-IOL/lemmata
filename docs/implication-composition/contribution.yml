@@ -16,6 +16,8 @@ exports:
     label: cor-implication-composition-le
 contributors:
   - {name: Sebastian Pokutta, orcid: 0000-0001-7365-3000}
+note: >-
+  An example: it shows what an entry can contain, on a deliberately simple result.
 abstract: >-
   If $P \to Q$ and $Q \to R$ then $P \to R$. The archive's worked example: a result small
   enough to read at a glance, used to show numbered results, a diagram, an interactive

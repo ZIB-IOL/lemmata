@@ -4,6 +4,8 @@ lean_namespace: Lemmata.FanoDiffusion
 subject: cs.IT
 topics: [information-theoretic-lower-bounds]
 arxiv: "1504.05492"
+note: >-
+  Formalizes the note by @braun2015information.
 abstract: >-
   Fano's inequality bounds the probability of reconstructing a hidden random variable from
   observations by their mutual information. The information diffusion inequality behind it holds

@@ -5,6 +5,9 @@ subject: math.OC
 cross_lists: [cs.LG]
 topics: [frank-wolfe]
 arxiv: "1610.05120"
+note: >-
+  Formalizes @braun2016lazifying, without its lazy local and online variants (Sections 3.3 and
+  5).
 abstract: >-
   Lazy conditional gradient algorithms replace the linear optimization oracle of the Frank–Wolfe
   algorithm by a weak separation oracle, which only has to return a point that improves the linear
