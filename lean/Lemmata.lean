@@ -362,6 +362,7 @@ public import Lemmata.FWCaratheodory.Hadamard
 public import Lemmata.FWCaratheodory.Main
 public import Lemmata.FWCaratheodory.Objective
 public import Lemmata.FWCaratheodory.Statement
+public import Lemmata.FWCaratheodory.Uniform
 public import Lemmata.FWLogAdaptive.Main
 public import Lemmata.FWLogAdaptive.Product
 public import Lemmata.FWLogAdaptive.Rates

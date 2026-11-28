@@ -111,6 +111,24 @@ $t \ge 1 + K \log((p - 1)D^2/\varepsilon^2)$, with $x_t$ a convex combination of
 vertices: $O(p (D/r)^2 \log(1/\varepsilon))$ vertices.
 ```
 
+Over uniformly convex sets the target need not be interior. Since
+$\|\nabla f(x)\| = \|x - x^\star\|_p$ and $f \ge 0 = f(x^\star)$, the objective is
+$\sqrt{1/2}$-gradient dominated, and Theorem 2.24 of the basics entry gives a rate.
+
+```{prf:corollary} Uniformly convex sets
+:label: cor-frank-wolfe-approximate-caratheodory-uniform
+:enumerator: 5.5
+
+Let $\mathcal{C}$ be compact, convex and $(\alpha, q)$-uniformly convex with respect to the
+$\ell_p$-norm, with $q \ge 2$ and diameter $D$, and let $x^\star \in \mathcal{C}$. With $L = p - 1$,
+$K = (L/(2\alpha^2))^{1/(q-1)}$ and $t_0 = \max\{\lfloor \log_2(D^2/K)\rfloor + 1, 1\}$, every
+short-step run over $\mathcal{C}$ that starts at a point of $\mathcal{V} \subseteq \mathcal{C}$ and
+uses atoms in $\mathcal{V}$ satisfies $\|x_t - x^\star\|_p \le \varepsilon$ as soon as $t \ge t_0$
+and $(2LK/\varepsilon^2)^{(q-1)/q} \le 1 + (1 - 1/q)(t - t_0)/2$, with $x_t$ a convex combination of
+at most $t + 1$ points of $\mathcal{V}$. This takes $O(\varepsilon^{-2(q-1)/q})$ iterations, and
+$O(1/\varepsilon)$ for strongly convex sets ($q = 2$, Corollary 5.4).
+```
+
 The same argument gives sparse approximate projections. For $x^\star \notin \mathcal{C}$, the
 gradient norm $\|x - x^\star\|_p$ is at least $c = \operatorname{dist}_p(x^\star, \mathcal{C})$ on
 $\mathcal{C}$, and over strongly convex sets Theorem 2.20 of the basics entry gives a linear rate.
@@ -127,6 +145,22 @@ instance the extreme points) and uses atoms in $\mathcal{V}$ satisfies
 $\|x_t - x^\star\|_p^2 - c^2 \le \varepsilon^2$ as soon as
 $t \ge 1 + K \log((p - 1)D^2/\varepsilon^2)$, with $x_t$ a convex combination of at most $t + 1$
 points of $\mathcal{V}$.
+```
+
+For uniformly convex sets with $q > 2$, Theorem 2.20 of the basics entry gives a sublinear rate
+instead.
+
+```{prf:corollary} Sparse approximate projections onto uniformly convex sets
+:label: cor-frank-wolfe-approximate-caratheodory-projection-uniform
+:enumerator: 7.2
+
+Let $\mathcal{C}$ be compact, convex and $(\alpha, q)$-uniformly convex with respect to the
+$\ell_p$-norm, with $q > 2$ and diameter $D$, let $x^\star \notin \mathcal{C}$ and
+$c = \operatorname{dist}_p(x^\star, \mathcal{C})$. With $L = p - 1$, $K = (L/(\alpha c))^{2/(q-2)}$
+and $t_0 = \max\{\lfloor \log_2(D^2/K)\rfloor + 1, 1\}$, every such run satisfies
+$\|x_t - x^\star\|_p^2 - c^2 \le \varepsilon^2$ as soon as $t \ge t_0$ and
+$(2LK/\varepsilon^2)^{(q-2)/q} \le 1 + (1/2 - 1/q)(t - t_0)$, with $x_t$ a convex combination of at
+most $t + 1$ points of $\mathcal{V}$.
 ```
 
 ## A lower bound
@@ -176,15 +210,17 @@ by the Cauchy–Schwarz inequality.
 - The cardinality bounds are stated with explicit constants and for every run with steps at least as
   good as the short step, rather than in $O$-notation; the paper's $\ln(1/\varepsilon)$ appears as
   $\log((p - 1)D^2/\varepsilon^2)$. Corollary 5.1 is stated for short steps; the open-loop version
-  is the theorem of the introduction entry.
+  is the theorem of the introduction entry. Corollaries 5.4, 5.5 and 7.2 have thresholds with the
+  constants of the rates in the basics entry; they lead to the paper's orders in $\varepsilon$.
 :::
 
 ## Coverage
 
-This entry covers Lemma 3.1, Corollaries 5.1 (short steps), 5.3 and 7.1, and Theorem 8.1. Not
-covered are Corollary 5.2 (NEP-FW), Corollaries 5.4 and 5.5 and 7.2 (uniformly convex sets), the
-nonsmooth case $p \in [1, 2) \cup \{\infty\}$ (Section 6) and the experiments; the rates of Section
-4 are cited results, several of which are formalized in other entries.
+This entry covers Lemma 3.1, Corollaries 5.1 (short steps), 5.3, 5.4, 5.5, 7.1 and 7.2, and Theorem
+8.1. Not covered are Corollary 5.2, which uses a version of the nearest extreme point oracle with
+diameters in the $\ell_2$-norm and of a sublevel set that the conditional gradient entries do not
+formalize, the nonsmooth case $p \in [1, 2) \cup \{\infty\}$ (Section 6) and the experiments; the
+rates of Section 4 are cited results, several of which are formalized in other entries.
 
 ## The formal statements at a glance
 
