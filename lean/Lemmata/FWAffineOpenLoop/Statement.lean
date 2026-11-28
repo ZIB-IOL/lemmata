@@ -201,4 +201,45 @@ def GapsRate : Prop :=
         (eta ℓ ((t : ℤ) - 1) ^ (min (ℓ : ℝ) (min (1 / (1 - r)) 2)) *
           ((M / m) ^ (1 / (1 - r)) + M / 2))
 
+/-- **Proposition 2.8** (smoothness gives strong `(M, 0)`-growth). If `C` is convex and bounded and
+`f` is `L`-smooth over `C` with `L ≥ 0`, then `(C, f)` has the strong `(L D², 0)`-growth property,
+where `D = diam C`. For the `C`-norm of the paper, `D ≤ 2` and `M = 4L`. -/
+def SmoothStrongGrowth : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (L : ℝ),
+    Convex ℝ C → Bornology.IsBounded C → 0 ≤ L → IsSmoothOn C f L →
+      IsStrongGrowth C f (L * Metric.diam C ^ 2) 0
+
+/-- **Proposition 3.6** (uniformly convex sets, gradients bounded away from zero). If `C` is convex
+and `(α, p)`-uniformly convex with `α, p > 0`, `f` is `L`-smooth over `C` with `L ≥ 0` and
+`‖f'(x)‖ ≥ λ > 0` on `C`, then `(C, f)` has the strong `(L (αλ)^{-2/p}, 2/p)`-growth property. -/
+def UniformStrongGrowth : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (α p L lam : ℝ),
+    Convex ℝ C → IsUniformlyConvexSet C α p → 0 < α → 0 < p → 0 ≤ L → 0 < lam →
+    IsSmoothOn C f L → (∀ x ∈ C, lam ≤ ‖fderiv ℝ f x‖) →
+      IsStrongGrowth C f (L * (α * lam) ^ (-(2 / p))) (2 / p)
+
+/-- **Proposition 4.3** (uniformly convex sets and Hölderian error bounds). If `C` is compact and
+`(α, p)`-uniformly convex with `α > 0` and `p ≥ 2`, and `f` is convex, differentiable at the points
+of `C`, `L`-smooth over `C` with `L ≥ 0` and satisfies a `(μ, θ)`-Hölderian error bound with `μ > 0`
+and `θ ∈ [0, 1/2]`, then `(C, f)` has the weak `(L (μ/α)^{2/p}, 2θ/p)`-growth property. -/
+def UniformWeakGrowth : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ)
+    (α p L μ θ : ℝ),
+    IsCompact C → ConvexOn ℝ C f → (∀ x ∈ C, DifferentiableAt ℝ f x) →
+    IsUniformlyConvexSet C α p → 0 < α → 2 ≤ p → 0 ≤ L → IsSmoothOn C f L →
+    IsHolderErrorBound C f μ θ → 0 < μ → θ ∈ Set.Icc (0 : ℝ) (1 / 2) →
+      IsWeakGrowth C f (L * (μ / α) ^ (2 / p)) (2 * θ / p)
+
+/-- **Proposition 5.3** (minimizers in the relative interior). If `C` is compact, `f` is convex,
+differentiable at the points of `C` and satisfies a `(μ, θ)`-Hölderian error bound with `μ > 0` and
+`θ ∈ [0, 1/2]`, and every point of the affine hull of `C` within distance `ρ > 0` of a minimizer
+lies in `C`, then `(C, f)` has the gaps `(ρ/μ, θ)`-growth property. -/
+def InteriorGapsGrowth : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (C : Set E) (f : E → ℝ) (μ θ ρ : ℝ),
+    IsCompact C → ConvexOn ℝ C f → (∀ x ∈ C, DifferentiableAt ℝ f x) →
+    IsHolderErrorBound C f μ θ → 0 < μ → θ ∈ Set.Icc (0 : ℝ) (1 / 2) → 0 < ρ →
+    (∀ y ∈ minimizers C f, ∀ z ∈ affineSpan ℝ C, ‖z - y‖ ≤ ρ → z ∈ C) →
+      IsGapsGrowth C f (ρ / μ) θ
+
 end Lemmata.FWAffineOpenLoop

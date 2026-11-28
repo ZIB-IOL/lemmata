@@ -354,6 +354,7 @@ public import Lemmata.FWAffineOpenLoop.Products
 public import Lemmata.FWAffineOpenLoop.Statement
 public import Lemmata.FWAffineOpenLoop.Strong
 public import Lemmata.FWAffineOpenLoop.StrongR
+public import Lemmata.FWAffineOpenLoop.Sufficient
 public import Lemmata.FWAffineOpenLoop.Weak
 public import Lemmata.FWOpenLoop.AFW
 public import Lemmata.FWOpenLoop.DIPFW

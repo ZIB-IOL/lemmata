@@ -13,7 +13,9 @@ abstract: >-
   duality gap and the smallest Frank–Wolfe gap converge at the rate $O(1/t)$ for $r = 0$,
   $O(t^{-\ell})$ for $r = 1$, and $O(t^{-\ell+\varepsilon} + t^{-1/(1-r)})$ for $r \in [0, 1)$. Under
   the weaker weak growth and (relaxed) gaps growth properties, the primal gap converges at rates up
-  to $O(t^{-2})$. The statements hold in real normed spaces, for every Frank–Wolfe run.
+  to $O(t^{-2})$. Smoothness, uniformly convex feasible regions, Hölderian error bounds and
+  minimizers in the relative interior imply the growth properties. The statements hold in real
+  normed spaces, for every Frank–Wolfe run.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -94,3 +96,19 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-affine-invariant-open-loop-gaps-rate
+  - name: Lemmata.FWAffineOpenLoop.smooth_strong_growth
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-affine-invariant-open-loop-smooth
+  - name: Lemmata.FWAffineOpenLoop.uniform_strong_growth
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-affine-invariant-open-loop-uniform-strong
+  - name: Lemmata.FWAffineOpenLoop.uniform_weak_growth
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-affine-invariant-open-loop-uniform-weak
+  - name: Lemmata.FWAffineOpenLoop.interior_gaps_growth
+    kind: theorem
+    page: index.md
+    label: prop-frank-wolfe-affine-invariant-open-loop-interior
