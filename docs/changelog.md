@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-28
 
+- **New entry:** [Oracle complexity of nonsmooth convex optimization via information theory](nonsmooth-oracle-complexity/index.md), formalizing the information-theoretic lower bound on the expected number of queries and oracle emulation of Braun, Guzmán and Pokutta.
 - **Updated entry:** [Restarting Frank–Wolfe under Hölderian error bounds](frank-wolfe-restarting/index.md), adding fractional away-step Frank–Wolfe with its burn-in phase and the rate of scheduled restarts (Propositions 4.1 and 4.2, Theorem 5.1).
 - **New entry:** [Restarting Frank–Wolfe under Hölderian error bounds](frank-wolfe-restarting/index.md), formalizing the strong Wolfe gap bounds and the rate of vanilla Frank–Wolfe over strongly convex sets of Kerdreux, d'Aspremont and Pokutta.
 - **Updated entry:** [Linear convergence of Frank–Wolfe over product polytopes](frank-wolfe-product-polytopes/index.md), adding the pyramidal width of a product of any number of polytopes (Corollary A.3, with the exact value).
