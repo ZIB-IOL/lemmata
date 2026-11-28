@@ -82,4 +82,45 @@ def ProductWidthLowerBound : Prop :=
       (affinePyramidalWidth V₁ ^ 2 + affinePyramidalWidth V₂ ^ 2)) ≤
       facialDistance (productVertices V₁ V₂)
 
+/-- **Theorem 4.5**, the upper bound. For finite sets `V₁, V₂` with at least two points each in real
+inner product spaces, with pyramidal widths (facial distances) `δ₁, δ₂`, the pyramidal width of the
+product `conv V₁ × conv V₂` in the Euclidean product is at most `√(δ₁² δ₂²/(δ₁² + δ₂²))`. -/
+def ProductWidthUpperBound : Prop :=
+  ∀ {E₁ E₂ : Type u} [NormedAddCommGroup E₁] [InnerProductSpace ℝ E₁] [NormedAddCommGroup E₂]
+    [InnerProductSpace ℝ E₂] (V₁ : Finset E₁) (V₂ : Finset E₂), 1 < V₁.card → 1 < V₂.card →
+    facialDistance (productVertices V₁ V₂) ≤
+      Real.sqrt (facialDistance V₁ ^ 2 * facialDistance V₂ ^ 2 /
+        (facialDistance V₁ ^ 2 + facialDistance V₂ ^ 2))
+
+/-- **Proposition 4.8**, for a product of two polytopes and quadratic growth. Let `E₁, E₂` be
+finite-dimensional real inner product spaces, `V₁, V₂` finite sets with positive affine pyramidal
+widths `ŵ₁, ŵ₂`, and `α² = ŵ₁² ŵ₂²/(ŵ₁² + ŵ₂²)`. Let `f` be convex and `L`-smooth with `L > 0` and
+have `μ`-quadratic growth on the product polytope `P = conv V₁ × conv V₂`:
+`μ/2 dist(y, Ω*)² ≤ f(y) - f(x⋆)` for `y ∈ P`, where `Ω*` is the set of minimizers. Every run of
+away-step Frank–Wolfe over `P` satisfies
+`f(x_t) - f(x⋆) ≤ (1 - min {1/2, μ α²/(16 L D²)})^⌊(t-1)/2⌋ L D²/2` for `t ≥ 1`, where `D` is the
+diameter of `V₁ × V₂`. -/
+def ProductAwayLinear : Prop :=
+  ∀ {E₁ E₂ : Type u} [NormedAddCommGroup E₁] [InnerProductSpace ℝ E₁] [FiniteDimensional ℝ E₁]
+    [NormedAddCommGroup E₂] [InnerProductSpace ℝ E₂] [FiniteDimensional ℝ E₂]
+    (V₁ : Finset E₁) (V₂ : Finset E₂) (f : WithLp 2 (E₁ × E₂) → ℝ) (L : NNReal) (μ : ℝ)
+    (x : ℕ → WithLp 2 (E₁ × E₂)) (S : ℕ → Finset (WithLp 2 (E₁ × E₂)))
+    (lam : ℕ → WithLp 2 (E₁ × E₂) → ℝ),
+    0 < (L : ℝ) → 0 < μ → 0 < affinePyramidalWidth V₁ → 0 < affinePyramidalWidth V₂ →
+    ConvexOn ℝ Set.univ f → IsSmooth f L →
+    (∀ y ∈ convexHull ℝ (↑(productVertices V₁ V₂) : Set (WithLp 2 (E₁ × E₂))),
+      ∀ xStar ∈ minimizers (convexHull ℝ (↑(productVertices V₁ V₂) : Set (WithLp 2 (E₁ × E₂)))) f,
+        μ / 2 * Metric.infDist y
+          (minimizers (convexHull ℝ (↑(productVertices V₁ V₂) : Set (WithLp 2 (E₁ × E₂)))) f) ^ 2 ≤
+          f y - f xStar) →
+    IsAFWRun (productVertices V₁ V₂) f L x S lam →
+    ∀ xStar ∈ minimizers (convexHull ℝ (↑(productVertices V₁ V₂) : Set (WithLp 2 (E₁ × E₂)))) f,
+    ∀ t : ℕ, 1 ≤ t →
+      f (x t) - f xStar ≤
+        (1 - min (1 / 2) (μ * (affinePyramidalWidth V₁ ^ 2 * affinePyramidalWidth V₂ ^ 2 /
+            (affinePyramidalWidth V₁ ^ 2 + affinePyramidalWidth V₂ ^ 2)) /
+          (16 * L * Metric.diam (↑(productVertices V₁ V₂) : Set (WithLp 2 (E₁ × E₂))) ^ 2))) ^
+            ((t - 1) / 2) *
+          (L * Metric.diam (↑(productVertices V₁ V₂) : Set (WithLp 2 (E₁ × E₂))) ^ 2 / 2)
+
 end Lemmata.FWProduct

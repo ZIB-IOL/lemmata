@@ -10,9 +10,10 @@ numbering:
 :::{note}
 This entry formalizes the paper *Linear Convergence of the Frank–Wolfe Algorithm over Product
 Polytopes* by Gabriele Iommazzo, David Martínez-Rubio, Francisco Criado, Elias Wirth and Sebastian
-Pokutta [@iommazzo2025linear], currently the lower bound for the pyramidal width of a product
-(Theorem 4.5), its objective for the feasibility problem (Proposition 5.1) and the preparatory
-bounds of Lemma A.2; numbers refer to the arXiv version.
+Pokutta [@iommazzo2025linear], currently the bounds on the pyramidal width of a product (Theorem
+4.5), the linear rate of away-step Frank–Wolfe over a product of two polytopes (Proposition 4.8),
+its objective for the feasibility problem (Proposition 5.1) and the preparatory bounds of Lemma A.2;
+numbers refer to the arXiv version.
 :::
 
 Away-step and pairwise Frank–Wolfe converge linearly over polytopes, at a rate governed by a
@@ -86,6 +87,58 @@ remaining vertices with margin $1/N$. If $F_2$ is the whole second factor (or $F
 first), the face is at distance at least $\hat{\delta}_1$ (or $\hat{\delta}_2$), which exceeds the
 bound by Lemma A.2.
 
+For the matching upper bound, the paper's pyramidal width (the facial distance) of each factor is
+attained by a proper face $F_i$ and points $p_i \in F_i$, $q_i$ in the hull of the remaining
+vertices, at distance $\delta_i$; this needs at least two vertices, as in the paper's definition.
+The point $p = (p_1, p_2)$ lies in the face $F_1 \times F_2$, the point
+$q = \theta (p_1, q_2) + (1 - \theta)(q_1, p_2)$ with
+$\theta = \delta_1^2/(\delta_1^2 + \delta_2^2)$ lies in the hull of the remaining vertices, and
+
+$$
+\|p - q\|^2 = (1 - \theta)^2 \delta_1^2 + \theta^2 \delta_2^2 =
+\frac{\delta_1^2\delta_2^2}{\delta_1^2 + \delta_2^2}.
+$$
+
+```{prf:theorem} The pyramidal width of a product, upper bound
+:label: thm-frank-wolfe-product-polytopes-product-width-upper
+:enumerator: 4.5
+
+If $\mathcal{V}_1$ and $\mathcal{V}_2$ have at least two points each, with pyramidal widths
+$\delta_1$ and $\delta_2$, then the pyramidal width of
+$\operatorname{conv}(\mathcal{V}_1) \times \operatorname{conv}(\mathcal{V}_2)$ is at most
+$\sqrt{\delta_1^2 \delta_2^2/(\delta_1^2 + \delta_2^2)}$.
+```
+
+## Linear convergence
+
+The pyramidal width bounds the progress of away-step Frank–Wolfe. The away-step entry shows that the
+facial distance is a scaling constant, so the lower bound of Theorem 4.5 is one for the product, and
+the linear rate under sharpness of [Conditional gradient methods: AdaFW, LazyFW, LazyAFW, NEP-FW and
+BCG](../conditional-gradient-improvements/index.md) (Corollary 3.33 with $\theta = 1/2$) applies.
+Sharpness with exponent $1/2$ is quadratic growth.
+
+```{prf:proposition} Linear rates via the pyramidal width of the product
+:label: prop-frank-wolfe-product-polytopes-rate
+:enumerator: 4.8
+
+Let $\mathcal{V}_1$ and $\mathcal{V}_2$ be finite sets in finite-dimensional real inner product
+spaces with positive affine pyramidal widths,
+$\alpha^2 = \hat{\delta}_1^2\hat{\delta}_2^2/(\hat{\delta}_1^2 + \hat{\delta}_2^2)$, and let $f$ be
+convex and $L$-smooth with $\mu$-quadratic growth on
+$\mathcal{P} = \operatorname{conv}(\mathcal{V}_1) \times \operatorname{conv}(\mathcal{V}_2)$:
+$\frac{\mu}{2}\operatorname{dist}(y, \Omega^\star)^2 \le f(y) - f^\star$. Every run of away-step
+Frank–Wolfe over $\mathcal{P}$ satisfies, with $D$ the diameter of
+$\mathcal{V}_1 \times \mathcal{V}_2$,
+
+$$
+f(x_t) - f^\star \le \left(1 - \min\left\{\frac{1}{2}, \frac{\mu \alpha^2}{16 L
+D^2}\right\}\right)^{\lfloor (t-1)/2 \rfloor}
+\frac{L D^2}{2}.
+$$
+```
+
+By Lemma A.2, $\alpha \ge \min\{\hat{\delta}_1, \hat{\delta}_2\}/\sqrt{2}$.
+
 ## The feasibility objective
 
 ```{prf:definition} The feasibility objective
@@ -125,22 +178,28 @@ term is nondecreasing in $a$ and in $b$.
 
 :::{note}
 **Differences from the paper.**
-- Theorem 4.5 is stated with the affine pyramidal widths of the factors in the lower bound. With
-  Corollary 4.4 (the two widths coincide, not yet formalized), this is the paper's lower bound; the
-  matching upper bound is not formalized yet. The proof also treats the faces
-  $F_1 \times \mathcal{P}_2$ and $\mathcal{P}_1 \times F_2$ of the product, which the paper's
-  argument, written for two proper factor faces, does not mention.
+- Theorem 4.5 is stated as two bounds: below by the affine pyramidal widths of the factors, above by
+  their pyramidal widths (for factors with at least two vertices, as in the paper's definition).
+  With Corollary 4.4 (the two widths coincide, not yet formalized), the bounds agree and give the
+  paper's equality. The proof of the lower bound also treats the faces $F_1 \times \mathcal{P}_2$
+  and $\mathcal{P}_1 \times F_2$ of the product, which the paper's argument, written for two proper
+  factor faces, does not mention.
 - The objective of Proposition 5.1 is defined on the Euclidean product of copies of any real inner
   product space, and the proof uses the orthogonal projection onto the complement of the diagonal
   instead of the Hessian.
+- Proposition 4.8 is stated for two factors and assumes quadratic growth on the product polytope.
+  The paper assumes the PL inequality and uses its equivalence with quadratic growth for convex
+  functions, which is a statement about unconstrained minimization; the proof uses quadratic growth.
+  For two factors the rate constant $\alpha \ge \min\{\hat{\delta}_1, \hat{\delta}_2\}/\sqrt{2}$ is
+  better than the paper's $\min\{\delta_1, \delta_2\}/2$ for $k = 2$.
 :::
 
 ## Coverage
 
-This entry currently covers the lower bound of Theorem 4.5 with the easy half of Corollary 4.4,
-Proposition 5.1 and Lemma A.2. Lemma 4.3 and the other half of Corollary 4.4, the upper bound of
-Theorem 4.5, the vertex-facet distance (Proposition 4.7), the products of $k$ polytopes (Corollary
-A.3) and the linear rates (Propositions 4.8 and 4.9) are planned; the experiments are not covered.
+This entry currently covers both bounds of Theorem 4.5 with the easy half of Corollary 4.4,
+Proposition 4.8 for two factors, Proposition 5.1 and Lemma A.2. Lemma 4.3 and the other half of
+Corollary 4.4, the vertex-facet distance (Propositions 4.7 and 4.9) and the products of $k$
+polytopes (Corollary A.3) are planned; the experiments are not covered.
 
 ## The formal statements at a glance
 
