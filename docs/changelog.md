@@ -12,6 +12,7 @@ Newest first. Add an item in the same pull request as the change it describes.
 
 ## 2026-11-27
 
+- **Updated entry:** [Frank–Wolfe over uniformly convex sets](frank-wolfe-uniformly-convex-sets/index.md), adding the examples of uniformly convex sets (Lemma 4.2 and corrected Lemmas D.2 and D.3), with an erratum for the constants of Lemmas D.2 and D.3.
 - **Updated entry:** [Frank–Wolfe over uniformly convex sets](frank-wolfe-uniformly-convex-sets/index.md), adding the rates under the local scaling inequality (Lemma 2.7 and a corrected Theorem 2.5), with an erratum for the linear rates of Theorems 2.2 and 2.5.
 - **Updated entry:** [Frank–Wolfe over uniformly convex sets](frank-wolfe-uniformly-convex-sets/index.md), adding the regret of follow the leader for online linear optimization (Lemma 3.2 and Theorem 3.1).
 - **New entry:** [Frank–Wolfe over uniformly convex sets](frank-wolfe-uniformly-convex-sets/index.md), formalizing the local scaling inequality and the rates under Hölderian error bounds of Kerdreux, d'Aspremont and Pokutta.

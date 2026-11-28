@@ -11,8 +11,9 @@ numbering:
 This entry formalizes results of the paper *Projection-Free Optimization on Uniformly Convex Sets*
 by Thomas Kerdreux, Alexandre d'Aspremont and Sebastian Pokutta [@kerdreux2020projection], currently
 the local scaling inequality and the rates it gives (Lemmas 2.4 and 2.7, Corollary 2.8 and Theorem
-2.5, corrected), the rates under a Hölderian error bound (Lemma 2.9 and Theorem 2.10) and the regret
-of follow the leader (Lemma 3.2 and Theorem 3.1); numbers refer to the arXiv version.
+2.5, corrected), the rates under a Hölderian error bound (Lemma 2.9 and Theorem 2.10) the regret of
+follow the leader (Lemma 3.2 and Theorem 3.1) and the examples of uniformly convex sets (Lemma 4.2
+and Lemmas D.2 and D.3, corrected); numbers refer to the arXiv version.
 :::
 
 :::{admonition} Errata
@@ -28,6 +29,16 @@ bound is $\rho^T h_0$. For Theorem 2.2 the corrected statement, with the factor
 $\max\{1/2, 1 - \alpha c/(2L)\}$, is Theorem 2.20 of the basics entry. For Theorem 2.5 the proof
 gives the factor $\max\{1/2, 1 - 1/(2LH^2)\}$ with the constant $H$ of Lemma 2.7, which is the
 version formalized here.
+
+**Lemmas D.2 and D.3.** Lemma D.2 states that the sublevel set $\{f \le w\}$ of a nonnegative
+$L$-smooth $(\mu, r)$-uniformly convex function is $(\mu/\sqrt{2wL}, r)$-uniformly convex, and Lemma
+D.3 that the ball of radius $\rho$ of a norm with $(\mu, s)$-uniformly convex square is
+$(\mu/(2\rho), s)$-uniformly convex. Their proofs give half these constants, $\mu/(2\sqrt{2wL})$ and
+$\mu/(4\rho)$, and the printed ones are false. For $f = \|x\|^2/2$ on the Euclidean plane, with
+$\mu = L = 1$ and $w = 1/2$, and for the Euclidean norm, with $\mu = 2$ and $\rho = 1$, both lemmas
+claim that the unit disk is $(1, 2)$-uniformly convex. But $x = (3/5, 4/5)$, $y = (3/5, -4/5)$ and
+$\eta = 1/2$ give the point $(31/25, 0)$ outside the disk. The corrected constants are the best
+possible here, since the disk is $(1/2, 2)$-uniformly convex.
 :::
 
 The Frank–Wolfe algorithm converges at the rate $O(1/t)$ in general, linearly over polytopes with
@@ -236,6 +247,80 @@ $\nabla F_t$; consecutive averages differ by at most $2M/t$, so Lemma 3.2 bounds
 $2M(2M/(\alpha L_T))^{1/(q-1)} t^{-1/(q-1)}$, and the sum of $t^{-1/(q-1)}$ is bounded by an
 integral.
 
+## Examples of uniformly convex sets
+
+The norm balls of uniformly convex spaces are the main examples. The modulus of convexity of a
+normed space is
+$\delta(\varepsilon) = \inf\{1 - \|(x + y)/2\| : \|x\|, \|y\| \le 1, \|x - y\| \ge \varepsilon\}$.
+
+```{prf:definition} Modulus of convexity
+:label: def-frank-wolfe-uniformly-convex-sets-modulus
+:enumerator: 4.1
+
+The modulus of convexity of a real normed space is the function $\delta$ above, with the infimum
+over pairs of points of the closed unit ball.
+```
+
+```{prf:lemma} Unit balls of uniformly convex spaces
+:label: lem-frank-wolfe-uniformly-convex-sets-ball
+:enumerator: 4.2
+
+If $\delta(\varepsilon) \ge \alpha\varepsilon^q$ for $\varepsilon \in [0, 2]$ with $\alpha \ge 0$,
+the closed unit ball is $(\alpha, q)$-uniformly convex. If the closed unit ball is
+$(\alpha, q)$-uniformly convex, the ball of radius $r > 0$ is $(\alpha/r^{q-1}, q)$-uniformly
+convex.
+```
+
+For $\eta \le 1/2$, the point $\eta x + (1 - \eta) y$ is a convex combination of the midpoint, whose
+norm is at most $1 - \delta(\|x - y\|)$, and of $y$; so its norm is at most
+$1 - 2\eta\,\delta(\|x - y\|)$, which leaves room for the shift $\eta(1 - \eta)\alpha\|x - y\|^q$.
+
+Sublevel sets of uniformly convex functions are a second source. A function is $(\mu, r)$-uniformly
+convex if $f(y) \ge f(x) + \langle \nabla f(x), y - x \rangle + \frac{\mu}{2}\|x - y\|^r$ for all
+$x, y$.
+
+```{prf:proposition} Smoothness caps the exponent
+:label: prop-frank-wolfe-uniformly-convex-sets-exponent
+:nonumber:
+
+On a real normed space with a nonzero vector, no $L$-smooth function is $(\mu, r)$-uniformly convex
+with $\mu > 0$ and $r > 2$.
+```
+
+Along a line, uniform convexity bounds the Bregman distance below by $\frac{\mu}{2}t^r$ and
+smoothness bounds it above by $\frac{L}{2}t^2$, which fails for large $t$ when $r > 2$.
+
+```{prf:lemma} Sublevel sets, corrected
+:label: lem-frank-wolfe-uniformly-convex-sets-sublevel
+:enumerator: D.2
+
+Let $f \ge 0$ be $L$-smooth with $L > 0$ and $(\mu, r)$-uniformly convex with $\mu > 0$ and
+$r \ge 2$. For $w > 0$, the sublevel set $\{f \le w\}$ is $(\mu/(2\sqrt{2wL}), r)$-uniformly convex.
+```
+
+By the proposition, $r = 2$. At $z = \eta x + (1 - \eta) y$, uniform convexity gives
+$f(z) \le w - \frac{\mu}{2}\eta(1 - \eta)\|x - y\|^2$; smoothness and $\|\nabla f(z)\|^2 \le 2Lf(z)$
+give $f(z + u) \le (\sqrt{f(z)} + \sqrt{L/2}\,\|u\|)^2$, and concavity of the square root leaves
+room for $\|u\| = \eta(1 - \eta)\frac{\mu}{2\sqrt{2wL}}\|x - y\|^2$.
+
+```{prf:lemma} Norm balls, corrected
+:label: lem-frank-wolfe-uniformly-convex-sets-norm-ball
+:enumerator: D.3
+
+If $x \mapsto \|x\|^2$ is $(\mu, s)$-uniformly convex with $\mu > 0$ and $s \ge 2$, the ball of
+radius $\rho > 0$ is $(\mu/(4\rho), s)$-uniformly convex.
+```
+
+Here $s = 2$ by homogeneity, and the triangle inequality replaces smoothness in the argument for
+Lemma D.2.
+
+```{prf:proposition} The Euclidean disk
+:label: prop-frank-wolfe-uniformly-convex-sets-disk
+:nonumber:
+
+The closed Euclidean unit disk is not $(1, 2)$-uniformly convex.
+```
+
 :::{note}
 **Differences from the paper.**
 - The statements hold in real normed spaces; the paper works in $\mathbb{R}^d$.
@@ -254,13 +339,21 @@ integral.
 - Theorem 2.5 is stated from an iteration $S$ with $f(x_S) - f(x^\star) \le 1$, the burn-in that
   Lemma 2.7 needs, and with the constants of the contraction lemma of the basics entry; for $q = 2$
   see the errata.
+- Lemma 4.2 is stated for moduli of convexity of power type,
+  $\delta(\varepsilon) \ge \alpha\varepsilon^q$ on $[0, 2]$, the case used in the paper; the formal
+  modulus is $0$ when its defining set is empty.
+- In Lemmas D.2 and D.3 the constants are those of the proofs (see the errata), and for exponents
+  above $2$ the hypotheses cannot hold on a nontrivial space, so these lemmas are about $r = s = 2$.
+  Lemma D.3 assumes uniform convexity of the square of the norm with its derivative, on any real
+  normed space; the paper uses a finite-dimensional space.
 :::
 
 ## Coverage
 
-This entry covers Lemmas 2.4, 2.7, 2.9 and 3.2, Corollary 2.8 and Theorems 2.5, 2.10 and 3.1; Lemma
-2.1 and Theorem 2.2 are Proposition 2.19 and Theorem 2.20 of the basics entry. Not covered yet are
-the examples of uniformly convex sets (Section 4 and Appendix D) and the experiments.
+This entry covers Lemmas 2.4, 2.7, 2.9, 3.2 and 4.2, Corollary 2.8, Theorems 2.5, 2.10 and 3.1, and
+Lemmas D.2 and D.3; Lemma 2.1 and Theorem 2.2 are Proposition 2.19 and Theorem 2.20 of the basics
+entry. Not covered are the sharp moduli of convexity of $\ell_p$, $L_p$ and Schatten spaces that
+Section 4 cites, Lemma B.1 on gauges, and the experiments.
 
 
 ## The formal statements at a glance
