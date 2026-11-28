@@ -17,7 +17,9 @@ abstract: >-
   corrected for feasible regions that are not full-dimensional. Decomposition-invariant pairwise
   Frank–Wolfe with the step sizes $8/(t + 8)$, rounded down to powers of $1/2$, and away-step
   Frank–Wolfe with open-loop step sizes and a count of progress steps reach rates up to $O(1/t^2)$
-  under a Hölderian error bound on polytopes.
+  under a Hölderian error bound on polytopes. For a strongly convex objective whose minimizer lies in
+  the relative interior of a face of a polytope, with strict complementarity, the atoms identify
+  the face and Frank–Wolfe with open-loop step sizes converges at the rate $O(1/t^2)$.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -106,3 +108,23 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-open-loop-acceleration-afw
+  - name: Lemmata.FWOpenLoop.active_set_identification
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-open-loop-acceleration-active-set
+  - name: Lemmata.FWOpenLoop.scaling_boundary
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-open-loop-acceleration-scaling-boundary
+  - name: Lemmata.FWOpenLoop.distance_to_face
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-open-loop-acceleration-distance-face
+  - name: Lemmata.FWOpenLoop.scaling_cvx
+    kind: theorem
+    page: index.md
+    label: lem-frank-wolfe-open-loop-acceleration-scaling-cvx
+  - name: Lemmata.FWOpenLoop.polytope_face_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-open-loop-acceleration-face

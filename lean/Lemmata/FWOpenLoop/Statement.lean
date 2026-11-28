@@ -3,6 +3,7 @@ module
 public import Lemmata.FrankWolfe.Statement
 public import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Basic
 public import Lemmata.AwayStepFW.Statement
+public import Mathlib.Analysis.InnerProductSpace.Basic
 
 @[expose] public section
 
@@ -286,5 +287,131 @@ def OLAFWRate : Prop :=
         max (eta 4 ((((t + 1) / 2 : ℕ) : ℤ) - 2) ^ (1 / (1 - θ)) * (L * δ ^ 2 / 2))
           ((eta 4 ((((t + 1) / 2 : ℕ) : ℤ) - 2) * (2 * μ * L * δ ^ 2 / ω)) ^ (1 / (1 - θ)) +
             eta 4 ((((t + 1) / 2 : ℕ) : ℤ) - 2) ^ 2 * (L * δ ^ 2 / 2))
+
+/-- **Lemma 4.1** (active set identification). Let `C = conv V` with diameter `δ > 0`, `F ⊆ V`, and
+`f` convex over `C`, differentiable at its points, `L`-smooth over `C` with `L > 0` and with
+`L`-Lipschitz derivative on `C`, with unique minimizer `x⋆` and a `(μ, θ)`-Hölderian error bound,
+`μ > 0`, `θ ∈ (0, 1/2]`. Under strict complementarity with `κ > 0`, `f'(x⋆)(p - x⋆) ≥ κ` for
+`p ∈ V \ F` and `f'(x⋆)(p - x⋆) = 0` for `p ∈ F`, every Frank–Wolfe run with `η_t = 4/(t + 4)` has
+its atoms in `conv F` from `t = ⌈8Lδ² (2μLδ/κ)^{1/θ}⌉` on. -/
+def ActiveSetIdentification : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V F : Finset E) (f : E → ℝ)
+    (L μ θ κ : ℝ) (x v : ℕ → E) (xStar : E), F ⊆ V →
+    ConvexOn ℝ (convexHull ℝ (↑V : Set E)) f →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), DifferentiableAt ℝ f y) →
+    IsSmoothOn (convexHull ℝ (↑V : Set E)) f L → 0 < L →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E),
+      ‖fderiv ℝ f y - fderiv ℝ f z‖ ≤ L * ‖y - z‖) →
+    0 < Metric.diam (convexHull ℝ (↑V : Set E)) →
+    minimizers (convexHull ℝ (↑V : Set E)) f = {xStar} →
+    IsHolderErrorBound (convexHull ℝ (↑V : Set E)) f μ θ → 0 < μ → θ ∈ Set.Ioc (0 : ℝ) (1 / 2) →
+    0 < κ → (∀ p ∈ V, p ∉ F → κ ≤ fderiv ℝ f xStar (p - xStar)) →
+    (∀ p ∈ F, fderiv ℝ f xStar (p - xStar) = 0) →
+    IsFWRun (convexHull ℝ (↑V : Set E)) (fderiv ℝ f) x v (fun t => eta 4 t) →
+    ∀ t : ℕ, ⌈8 * L * Metric.diam (convexHull ℝ (↑V : Set E)) ^ 2 *
+        (2 * μ * L * Metric.diam (convexHull ℝ (↑V : Set E)) / κ) ^ (1 / θ)⌉₊ ≤ t →
+      v t ∈ convexHull ℝ (↑F : Set E)
+
+/-- **Lemma 4.2** (scaling at the boundary, Bach). Let `C = conv V`, `f` convex over `C` and
+differentiable at its points, and `x⋆` a minimizer in the affine hull of `F ⊆ V` such that every
+point of that affine hull within distance `β > 0` of `x⋆` lies in `C`. For `x ∈ C`, an atom `p`
+minimizing `f'(x)` over `C` and every direction `u` of the affine hull of `F` with `‖u‖ ≤ 1`,
+`β f'(x)(u) ≤ f'(x)(x - p)`. In a Euclidean space the supremum over `u` is the norm of the gradient
+projected onto these directions, which is the paper's statement. -/
+def ScalingBoundary : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V F : Finset E) (f : E → ℝ) (β : ℝ)
+    (xStar : E), ConvexOn ℝ (convexHull ℝ (↑V : Set E)) f →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), DifferentiableAt ℝ f y) →
+    xStar ∈ minimizers (convexHull ℝ (↑V : Set E)) f → xStar ∈ affineSpan ℝ (↑F : Set E) → 0 < β →
+    (∀ y ∈ affineSpan ℝ (↑F : Set E), ‖y - xStar‖ ≤ β → y ∈ convexHull ℝ (↑V : Set E)) →
+    ∀ x ∈ convexHull ℝ (↑V : Set E), ∀ p ∈ convexHull ℝ (↑V : Set E),
+      (∀ y ∈ convexHull ℝ (↑V : Set E), fderiv ℝ f x p ≤ fderiv ℝ f x y) →
+      ∀ u ∈ vectorSpan ℝ (↑F : Set E), ‖u‖ ≤ 1 → β * fderiv ℝ f x u ≤ fderiv ℝ f x (x - p)
+
+/-- **Lemma 4.3** (distance to the optimal face). Under the assumptions of Lemma 4.1, with the
+minimizer `x⋆` in the affine hull of `F` and `β > 0`, let
+`S = max {⌈8Lδ² (μ/β)^{1/θ}⌉, ⌈8Lδ² (2μLδ/κ)^{1/θ}⌉}`. Every Frank–Wolfe run with
+`η_t = 4/(t + 4)` is within distance `(η_t/η_S)⁴ β` of the affine hull of `F` for all `t ≥ S`. In a
+Euclidean space this distance is `‖(I - Π)(x_t - x⋆)‖`. -/
+def DistanceToFace : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E] (V F : Finset E) (f : E → ℝ)
+    (L μ θ β κ : ℝ) (x v : ℕ → E) (xStar : E), F ⊆ V →
+    ConvexOn ℝ (convexHull ℝ (↑V : Set E)) f →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), DifferentiableAt ℝ f y) →
+    IsSmoothOn (convexHull ℝ (↑V : Set E)) f L → 0 < L →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E),
+      ‖fderiv ℝ f y - fderiv ℝ f z‖ ≤ L * ‖y - z‖) →
+    0 < Metric.diam (convexHull ℝ (↑V : Set E)) →
+    minimizers (convexHull ℝ (↑V : Set E)) f = {xStar} → xStar ∈ affineSpan ℝ (↑F : Set E) →
+    IsHolderErrorBound (convexHull ℝ (↑V : Set E)) f μ θ → 0 < μ → θ ∈ Set.Ioc (0 : ℝ) (1 / 2) →
+    0 < β → 0 < κ → (∀ p ∈ V, p ∉ F → κ ≤ fderiv ℝ f xStar (p - xStar)) →
+    (∀ p ∈ F, fderiv ℝ f xStar (p - xStar) = 0) →
+    IsFWRun (convexHull ℝ (↑V : Set E)) (fderiv ℝ f) x v (fun t => eta 4 t) →
+    let δ := Metric.diam (convexHull ℝ (↑V : Set E))
+    let S := max ⌈8 * L * δ ^ 2 * (μ / β) ^ (1 / θ)⌉₊
+      ⌈8 * L * δ ^ 2 * (2 * μ * L * δ / κ) ^ (1 / θ)⌉₊
+    ∀ t : ℕ, S ≤ t →
+      Metric.infDist (x t) (affineSpan ℝ (↑F : Set E)) ≤ (eta 4 t / eta 4 S) ^ 4 * β
+
+/-- **Lemma 4.4** (scaling from strong convexity near the optimal face). In a real inner product
+space, let `C = conv V` with diameter `δ > 0`, `F ⊆ V`, `f` `α`-strongly convex on `C` with
+`α > 0`, differentiable at the points of `C`, `L`-smooth over `C` with `L > 0` and with
+`L`-Lipschitz derivative on `C`, with unique minimizer `x⋆` in the affine hull of `F`, such that
+every point of that affine hull within distance `β > 0` of `x⋆` lies in `C`, and with strict
+complementarity with `κ > 0`. Let `M = sup_{y ∈ C} ‖f'(y)‖` and
+`S = max {⌈16Lδ²/(αβ²)⌉, ⌈64L³δ⁴/(ακ²)⌉}`. Every Frank–Wolfe run with `η_t = 4/(t + 4)` satisfies,
+for `t ≥ S`, `h_t ≤ (η_t/η_S)⁴ βM` or there is a direction `u` of the affine hull of `F` with
+`‖u‖ ≤ 1` and
+`f'(x_t)(u) ≥ √(α/2) √h_t - (η_t/η_S)² √(αβM/2) - (η_t/η_S)⁴ Lβ`. -/
+def ScalingCVX : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] (V F : Finset E) (f : E → ℝ)
+    (L α β κ : ℝ) (x v : ℕ → E) (xStar : E), F ⊆ V →
+    StrongConvexOn (convexHull ℝ (↑V : Set E)) α f → 0 < α →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), DifferentiableAt ℝ f y) →
+    IsSmoothOn (convexHull ℝ (↑V : Set E)) f L → 0 < L →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E),
+      ‖fderiv ℝ f y - fderiv ℝ f z‖ ≤ L * ‖y - z‖) →
+    0 < Metric.diam (convexHull ℝ (↑V : Set E)) →
+    minimizers (convexHull ℝ (↑V : Set E)) f = {xStar} → xStar ∈ affineSpan ℝ (↑F : Set E) →
+    0 < β → (∀ y ∈ affineSpan ℝ (↑F : Set E), ‖y - xStar‖ ≤ β → y ∈ convexHull ℝ (↑V : Set E)) →
+    0 < κ → (∀ p ∈ V, p ∉ F → κ ≤ fderiv ℝ f xStar (p - xStar)) →
+    (∀ p ∈ F, fderiv ℝ f xStar (p - xStar) = 0) →
+    IsFWRun (convexHull ℝ (↑V : Set E)) (fderiv ℝ f) x v (fun t => eta 4 t) →
+    let δ := Metric.diam (convexHull ℝ (↑V : Set E))
+    let M := sSup ((fun y => ‖fderiv ℝ f y‖) '' convexHull ℝ (↑V : Set E))
+    let S := max ⌈16 * L * δ ^ 2 / (α * β ^ 2)⌉₊ ⌈64 * L ^ 3 * δ ^ 4 / (α * κ ^ 2)⌉₊
+    ∀ t : ℕ, S ≤ t → f (x t) - f xStar ≤ (eta 4 t / eta 4 S) ^ 4 * β * M ∨
+      ∃ u ∈ vectorSpan ℝ (↑F : Set E), ‖u‖ ≤ 1 ∧
+        √(α / 2) * √(f (x t) - f xStar) - (eta 4 t / eta 4 S) ^ 2 * √(α * β * M / 2) -
+          (eta 4 t / eta 4 S) ^ 4 * L * β ≤ fderiv ℝ f (x t) u
+
+/-- **Theorem 4.5** (minimizer in the relative interior of a face). Under the assumptions of
+Lemma 4.4, with `A = √α β/(2√2)`, `B = Lδ²/2 + β√(αβM)/(2√2 η_S) + Lβ²/(2η_S)`, `D = βM` and
+`E = Lδ²/2`, every Frank–Wolfe run with `η_t = 4/(t + 4)` satisfies, for `t ≥ S`,
+`h_t ≤ η_{t-2}² max {h_S/η_{S-1}², B²/A² + B, D/η_S² + E}`. -/
+def PolytopeFaceRate : Prop :=
+  ∀ {E : Type u} [NormedAddCommGroup E] [InnerProductSpace ℝ E] (V F : Finset E) (f : E → ℝ)
+    (L α β κ : ℝ) (x v : ℕ → E) (xStar : E), F ⊆ V →
+    StrongConvexOn (convexHull ℝ (↑V : Set E)) α f → 0 < α →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), DifferentiableAt ℝ f y) →
+    IsSmoothOn (convexHull ℝ (↑V : Set E)) f L → 0 < L →
+    (∀ y ∈ convexHull ℝ (↑V : Set E), ∀ z ∈ convexHull ℝ (↑V : Set E),
+      ‖fderiv ℝ f y - fderiv ℝ f z‖ ≤ L * ‖y - z‖) →
+    0 < Metric.diam (convexHull ℝ (↑V : Set E)) →
+    minimizers (convexHull ℝ (↑V : Set E)) f = {xStar} → xStar ∈ affineSpan ℝ (↑F : Set E) →
+    0 < β → (∀ y ∈ affineSpan ℝ (↑F : Set E), ‖y - xStar‖ ≤ β → y ∈ convexHull ℝ (↑V : Set E)) →
+    0 < κ → (∀ p ∈ V, p ∉ F → κ ≤ fderiv ℝ f xStar (p - xStar)) →
+    (∀ p ∈ F, fderiv ℝ f xStar (p - xStar) = 0) →
+    IsFWRun (convexHull ℝ (↑V : Set E)) (fderiv ℝ f) x v (fun t => eta 4 t) →
+    let δ := Metric.diam (convexHull ℝ (↑V : Set E))
+    let M := sSup ((fun y => ‖fderiv ℝ f y‖) '' convexHull ℝ (↑V : Set E))
+    let S := max ⌈16 * L * δ ^ 2 / (α * β ^ 2)⌉₊ ⌈64 * L ^ 3 * δ ^ 4 / (α * κ ^ 2)⌉₊
+    let cA := √α * β / (2 * √2)
+    let cB := L * δ ^ 2 / 2 + β * √(α * β * M) / (eta 4 S * 2 * √2) + L * β ^ 2 / (eta 4 S * 2)
+    let cD := β * M
+    let cE := L * δ ^ 2 / 2
+    ∀ t : ℕ, S ≤ t → f (x t) - f xStar ≤ eta 4 ((t : ℤ) - 2) ^ 2 *
+      max (max ((f (x S) - f xStar) / eta 4 ((S : ℤ) - 1) ^ 2) (cB ^ 2 / cA ^ 2 + cB))
+        (cD / eta 4 S ^ 2 + cE)
 
 end Lemmata.FWOpenLoop

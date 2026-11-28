@@ -3,6 +3,7 @@ module
 public import Lemmata.FWOpenLoop.Uniform
 public import Lemmata.FWOpenLoop.DIPFW
 public import Lemmata.FWOpenLoop.AFW
+public import Lemmata.FWOpenLoop.FaceRate
 
 @[expose] public section
 
@@ -54,6 +55,20 @@ theorem olafw_baseline : OLAFWBaseline := Proof.olafw_baseline
 
 /-- Theorem 5.9: away-step Frank–Wolfe with open-loop step sizes under a Hölderian error bound. -/
 theorem olafw_rate : OLAFWRate := Proof.olafw_rate
+/-- Lemma 4.1: from some iteration on, the atoms lie in the optimal face. -/
+theorem active_set_identification : ActiveSetIdentification := Proof.active_set_identification
+
+/-- Lemma 4.2: the scaling inequality relative to the affine hull of the optimal face. -/
+theorem scaling_boundary : ScalingBoundary := Proof.scaling_boundary
+
+/-- Lemma 4.3: the distance to the affine hull of the optimal face decays like `(η_t/η_S)⁴`. -/
+theorem distance_to_face : DistanceToFace := Proof.distance_to_face
+
+/-- Lemma 4.4: a lower bound on the derivative along the optimal face, from strong convexity. -/
+theorem scaling_cvx : ScalingCVX := Proof.scaling_cvx
+
+/-- Theorem 4.5: rate `O(1/t²)` when the minimizer lies in the relative interior of a face. -/
+theorem polytope_face_rate : PolytopeFaceRate := Proof.polytope_face_rate
 -- DOCS_END_MAIN
 
 end Lemmata.FWOpenLoop

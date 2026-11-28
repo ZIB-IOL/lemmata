@@ -350,6 +350,8 @@ public import Lemmata.EnergyShellCrossings.Main
 public import Lemmata.EnergyShellCrossings.Statement
 public import Lemmata.FWOpenLoop.AFW
 public import Lemmata.FWOpenLoop.DIPFW
+public import Lemmata.FWOpenLoop.Face
+public import Lemmata.FWOpenLoop.FaceRate
 public import Lemmata.FWOpenLoop.Interior
 public import Lemmata.FWOpenLoop.Main
 public import Lemmata.FWOpenLoop.SeqGen
