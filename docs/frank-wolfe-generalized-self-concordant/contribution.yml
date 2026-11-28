@@ -11,9 +11,11 @@ abstract: >-
   not be globally smooth and may have a restricted domain, it converges at the rate $O(1/t)$ in the
   primal gap after a burn-in phase, and the smallest Frank–Wolfe gap converges at the rate
   $O(1/t)$. With the backtracking line search of Pedregosa et al., the rate is linear for an
-  interior minimizer and improves over uniformly convex sets. The formal statements hold for every convex objective with the local descent property
-  that generalized self-concordance provides along Frank–Wolfe segments from the sublevel set of
-  the starting point, in real normed spaces.
+  interior minimizer and improves over uniformly convex sets; over polytopes, away-step
+  Frank–Wolfe with backtracking converges linearly. The formal statements assume the local
+  properties that generalized self-concordance provides on the sublevel set of the starting
+  point, a descent property along Frank–Wolfe segments or strong convexity, in real normed
+  spaces.
 contributors:
   - name: Sebastian Pokutta
     orcid: "0000-0001-7365-3000"
@@ -62,3 +64,11 @@ exports:
     kind: theorem
     page: index.md
     label: thm-frank-wolfe-generalized-self-concordant-uc-strong
+  - name: Lemmata.FWSelfConcordant.IsBAFWRun
+    kind: definition
+    page: index.md
+    label: def-frank-wolfe-generalized-self-concordant-away
+  - name: Lemmata.FWSelfConcordant.away_linear_rate
+    kind: theorem
+    page: index.md
+    label: thm-frank-wolfe-generalized-self-concordant-away

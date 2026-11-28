@@ -11,8 +11,9 @@ numbering:
 This entry formalizes the paper *Scalable Frank–Wolfe on Generalized Self-concordant Functions via
 Simple Steps* by Alejandro Carderera, Mathieu Besançon and Sebastian Pokutta [@carderera2021simple],
 currently the monotonic Frank–Wolfe algorithm and its convergence rates (Algorithm 1, Theorems 2.4
-and 2.6) and the improved rates of Frank–Wolfe with backtracking (Theorems 2.11, 2.15 and 2.16);
-numbers refer to the arXiv version.
+and 2.6) the improved rates of Frank–Wolfe with backtracking (Theorems 2.11, 2.15 and 2.16), and the
+linear rate of away-step Frank–Wolfe with backtracking over polytopes (Theorem 3.2); numbers refer
+to the arXiv version.
 :::
 
 :::{admonition} Errata
@@ -184,6 +185,50 @@ $1 \le t < t_0$ and $h_t \le \tau/(1 + (q-1)(t - t_0)/(2q))^{q/(q-1)}$ for $t \g
 $O(t^{-q/(q-1)})$.
 ```
 
+## Away-step Frank–Wolfe over polytopes
+
+Over a polytope $\mathcal{X} = \operatorname{conv} V$, away steps remove the dependence on the
+position of the minimizer. Away-step Frank–Wolfe keeps an active set $\mathcal{S}_t \subseteq V$
+with weights representing $x_t$; at each step it compares the Frank–Wolfe gap with the away gap
+$\langle \nabla f(x_t), a_t - x_t \rangle$ for the worst active vertex $a_t$, moves toward $v_t$ or
+away from $a_t$, and uses the backtracking line search with step sizes capped at $1$ or at the
+weight ratio $\lambda_t(a_t)/(1 - \lambda_t(a_t))$.
+
+```{prf:definition} Away-step Frank–Wolfe with backtracking
+:label: def-frank-wolfe-generalized-self-concordant-away
+:nonumber:
+
+A run starts at a vertex $x_0 \in \operatorname{dom} f$ with active set $\{x_0\}$, and every step is
+an away-step Frank–Wolfe step, with active set and weights updated as in the [away-step
+entry](../away-step-frank-wolfe/index.md), whose step size is the short step for a smoothness
+estimate $0 < L_t \le \tilde{L}$ clipped at the maximal step size, with
+$x_{t+1} \in \operatorname{dom} f$ and sufficient decrease.
+```
+
+```{prf:theorem} Away-step Frank–Wolfe
+:label: thm-frank-wolfe-generalized-self-concordant-away
+:enumerator: 3.2
+
+Let $x^\star$ minimize $f$ on $\operatorname{conv} V \cap \operatorname{dom} f$, let $f$ be
+$\mu$-strongly convex on $\mathcal{L}_0$, and let $\delta > 0$ be the pyramidal width of
+$\operatorname{conv} V$, whose diameter is $D$. Every run of away-step Frank–Wolfe with backtracking
+satisfies
+
+$$
+f(x_t) - f(x^\star) \le
+\left(1 - \min\left\{\frac{1}{2}, \frac{\mu\delta^2}{4\tilde{L}D^2}\right\}\right)^{\lceil (t-1)/2
+\rceil}
+(f(x_0) - f(x^\star)).
+$$
+```
+
+Strong convexity at $(x_t, x^\star)$ and the scaling inequality of the pyramidal width give
+$f(x_t) - f(x^\star) \le \langle \nabla f(x_t), a_t - v_t \rangle^2/(2\mu\delta^2)$, and the chosen
+gap is at least half of $\langle \nabla f(x_t), a_t - v_t \rangle$. A step whose step size is not
+capped therefore contracts the primal gap, as does a full Frank–Wolfe step; an away step with
+maximal step size drops $a_t$ from the active set without increasing $f$. Since the active set
+starts with one vertex and every other step adds at most one, at least half of the steps contract.
+
 :::{note}
 **Differences from the paper.**
 - Generalized self-concordance enters through the local descent property, which the paper derives
@@ -204,6 +249,11 @@ $O(t^{-q/(q-1)})$.
 - In Theorems 2.15 and 2.16 the threshold $t_0$ is the corrected one (see the errata), and the first
   regime reads $h_0 2^{1-t}$ instead of $h_0 2^{-t}$, as the contraction lemma is applied from
   $t = 1$ with $c_0 = h_0$.
+- Theorem 3.2 holds for any constant $\delta > 0$ with the scaling property of the pyramidal width,
+  in any normed space; its contraction factor is $1 - \min\{1/2, \mu\delta^2/(4\tilde{L}D^2)\}$,
+  which is the paper's $1 - \mu\delta^2/(4\tilde{L}D^2)$ whenever $\mu\delta^2 \le 2\tilde{L}D^2$.
+  Only strong convexity at the pairs $(x_t, x^\star)$ is used, and no convexity or smoothness
+  hypothesis beyond the line search is needed.
 :::
 
 ## Coverage
@@ -211,9 +261,10 @@ $O(t^{-q/(q-1)})$.
 This entry covers Algorithm 1 and Theorems 2.4 and 2.6, and Frank–Wolfe with backtracking with
 Theorems 2.11, 2.15 and 2.16. The results of Sun and Tran-Dinh behind the local descent property and
 the local strong convexity (Propositions 2.1 and 2.9, Lemma 2.3) and Remark 2.2 are cited, not
-formalized; Propositions 2.10 and 2.13 are proved here or in the basics entry. The away-step and
-blended pairwise variants (Section 3), the stateless step size variant and the experiments are not
-covered yet.
+formalized; Propositions 2.10 and 2.13 are proved here or in the basics entry. Of Section 3, Theorem
+3.2 is covered for away-step Frank–Wolfe; Proposition 3.1 is the scaling property, formalized in the
+away-step entry. The blended pairwise variant, the stateless step size variant and the experiments
+are not covered yet.
 
 ## The formal statements at a glance
 
